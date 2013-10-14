@@ -5,7 +5,7 @@ Grade book
 
 $Id$
 """
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,7 +21,8 @@ from nti.dataserver import mimetype
 from nti.dataserver import containers as nti_containers
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
-from nti.utils.schema import AdaptingFieldProperty
+from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
 
@@ -30,12 +31,10 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Co
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 @interface.implementer(grades_interfaces.IGradeBookPart, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class GradeBookPart(zcontained.Contained, nti_containers.CheckingLastModifiedBTreeContainer):
+class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, SchemaConfigured, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	# name = AdaptingFieldProperty(grades_interfaces.IGradeBookPart['name'])
-	# order = AdaptingFieldProperty(grades_interfaces.IGradeBookPart['order'])
-	# weight = AdaptingFieldProperty(grades_interfaces.IGradeBookPart['weight'])
+	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
 
 	def __str__(self):
 		return self.name
@@ -45,15 +44,10 @@ class GradeBookPart(zcontained.Contained, nti_containers.CheckingLastModifiedBTr
 
 
 @interface.implementer(grades_interfaces.IGradeBookEntry, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class GradeBookEntry(Persistent, CreatedModDateTrackingObject, zcontained.Contained):
+class GradeBookEntry(Persistent, CreatedModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
-	#__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
-	# name = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['name'])
-	# order = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['order'])
-	# NTIID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['NTIID'])
-	# weight = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['weight'])
-	# questionSetID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['questionSetID'])
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
 	def __str__(self):
 		return self.name

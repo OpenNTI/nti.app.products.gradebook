@@ -20,10 +20,8 @@
 	<adapter factory=".externalization.GradesObjectIO"
 			 for=".interfaces.IGrade" />
 	
-	<!--
 	<adapter factory=".externalization.GradesExternalizer" />
-	-->
-	
+		
 	<!-- mime factories -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
