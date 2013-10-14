@@ -7,11 +7,11 @@ entry_points = {
 }
 
 setup(
-    name = 'nti.app.client_preferences',
+    name = 'nti.app.products.gradebook',
     version = VERSION,
     author = 'Jason Madden',
     author_email = 'jason@nextthought.com',
-    description = "Support for client readable/writable preferences",
+    description = "Support for storing gradebooks",
     long_description = codecs.open('README.rst', encoding='utf-8').read(),
     license = 'Proprietary',
     keywords = 'pyramid preference',
@@ -32,7 +32,6 @@ setup(
 	namespace_packages=['nti', 'nti.app'],
 	install_requires=[
 		'setuptools',
-		'zope.preference'
 		# NOTE: We actually depend on nti.dataserver
 		# as well, but for the sake of legacy
 		# deployments, we do not yet declare that.
