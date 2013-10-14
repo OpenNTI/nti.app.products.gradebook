@@ -41,7 +41,7 @@ class GradesExternalizer(object):
 	def toExternalObject(self):
 		result = LocatedExternalDict({CLASS:'Grades', MIMETYPE:self.grades.mimeType})
 		items = result['Items'] = {}
-		for username, grades in self.grades:
+		for username, grades in self.grades.items():
 			lst = items[username] = []
 			for g in grades:
 				ext = externalization.to_external_object(g)
@@ -54,7 +54,7 @@ class GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, grades_interfaces):
 		return (grades_interfaces.IGradeBookEntry, grades_interfaces.IGradeBookPart,
-				grades_interfaces.IGradeBook, grades_interfaces.IGrade)
+				grades_interfaces.IGradeBook, grades_interfaces.IGrade, grades_interfaces.IGrades)
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):

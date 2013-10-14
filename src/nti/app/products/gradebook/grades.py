@@ -21,8 +21,8 @@ from persistent.mapping import PersistentMapping
 from nti.dataserver import mimetype
 from nti.dataserver.datastructures import ModDateTrackingObject
 
+from nti.externalization import internalization
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.internalization import update_from_external_object
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -66,11 +66,29 @@ class Grades(PersistentMapping):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
+	def index(self, username, grade, grades=()):
+		if grades_interfaces.IGrade.providedBy(grade):
+			grade = grade.NTIID
+		idx = -1
+		grades = grades or self.get(username, ())
+		grade = unicode(grade)
+		for i, g in enumerate(grades):
+			if g.NTIID == grade:
+				idx = i
+				break
+		return idx
+
+	def find_grade(self, username, grade):
+		grades = self.get(username, ())
+		idx = self.index(username, grade, grades)
+		return grades[idx] if idx != -1 else None
+
 	def add_grade(self, username, grade):
 		grades = self.get(username, None)
 		if grades is None:
-			grades = self['username'] = BList()
-		idx = grades.index(grade)
+			grades = self[username] = BList()
+
+		idx = self.index(username, grade, grades)
 		if idx == -1:
 			grades.append(grade)
 		else:
@@ -83,21 +101,11 @@ class Grades(PersistentMapping):
 		return list(grades) if grades else None
 
 	def remove_grade(self, username, grade):
-		result = False
-		grades = self.get(username, None)
-		if grades:
-			if grades_interfaces.IGrade.providedBy(grade):
-				grade = grade.NTIID
-			idx = -1
-			grade = unicode(grade)
-			for i, g in enumerate(grades):
-				if g.NTIID == grade:
-					idx = i
-					break
-			if idx != -1:
-				grades.pop(idx)
-				result = True
-		return result
+		grades = self.get(username, ())
+		idx = self.index(username, grade, grades)
+		if idx != -1:
+			grades.pop(idx)
+		return idx != -1
 
 	def clear(self, username):
 		grades = self.pop(username, None)
@@ -112,7 +120,8 @@ class Grades(PersistentMapping):
 		for username, grades in items.items():
 			for grade_ext in grades:
 				modified = True
-				grade = Grade()
-				update_from_external_object(grade, grade_ext)
+				grade = internalization.find_factory_for(grade_ext)() 
+				internalization.update_from_external_object(grade, grade_ext)
 				self.set_grade(username, grade)
 		return modified
+
