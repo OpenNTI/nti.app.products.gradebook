@@ -29,9 +29,10 @@ setup(
         ],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
-	namespace_packages=['nti', 'nti.app'],
+	namespace_packages=['nti', 'nti.app', 'nti.app.products'],
 	install_requires=[
 		'setuptools',
+		'nti.dataserver',
 	],
 	entry_points=entry_points
 )
