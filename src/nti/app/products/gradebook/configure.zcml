@@ -1,0 +1,31 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<include package="nti.externalization" />
+	
+	<adapter factory=".externalization._GradesObjectIO"
+			 for=".interfaces.IGradeBookEntry" />
+
+	<adapter factory=".externalization._GradesObjectIO"
+			 for=".interfaces.IGradeBookPart" />
+
+	<adapter factory=".externalization._GradesObjectIO"
+			 for=".interfaces.IGradeBook" />
+
+	<adapter factory=".externalization._GradesObjectIO"
+			 for=".interfaces.IGrade" />
+			 
+	<adapter factory=".externalization.GradesExternalizer" />
+		
+	<!-- mime factories -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<ext:registerMimeFactories module=".submission" />
+	<ext:registerMimeFactories module=".question" />
+
+</configure>
