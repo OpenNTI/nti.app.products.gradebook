@@ -32,11 +32,6 @@ setup(
 	namespace_packages=['nti', 'nti.app'],
 	install_requires=[
 		'setuptools',
-		# NOTE: We actually depend on nti.dataserver
-		# as well, but for the sake of legacy
-		# deployments, we do not yet declare that.
-		# We will declare it when everything is in
-		# buildout
 	],
 	entry_points=entry_points
 )
