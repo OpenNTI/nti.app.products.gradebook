@@ -19,7 +19,7 @@ from zc.blist import BList
 from persistent.mapping import PersistentMapping
 
 from nti.dataserver import mimetype
-from nti.dataserver.datastructures import CreatedModDateTrackingObject
+from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.internalization import update_from_external_object
@@ -30,7 +30,7 @@ from nti.utils.schema import createDirectFieldProperties
 from . import interfaces as grades_interfaces
 
 @interface.implementer(grades_interfaces.IGrade, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class Grade(SchemaConfigured, CreatedModDateTrackingObject):
+class Grade(ModDateTrackingObject, SchemaConfigured):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 

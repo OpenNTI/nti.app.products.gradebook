@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
@@ -33,26 +33,22 @@ class IGradeBookPart(IContainer, IContained):
 	A Section of a grade book e.g. Quizzes, Exams, etc..
 	"""
 	containers(b'.IGradeBook')
-	contains(IGradeBookEntry)
+	contains(b'.IGradeBookEntry')
 	__parent__.required = False
 
 	name = dmschema.ValidTextLine(title="Part name", required=True)
-
 	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
 						  min=0.0,
 						  max=1.0,
 						  default=1.0,
 						  required=True)
-
 	order = schema.Int(title="The part order", min=1)
 
 class IGradeBook(IContainer, IContained):
 	"""
 	Grade book definition
 	"""
-	contains(IGradeBookPart)
-	__parent__.required = False
-
+	contains(b'.IGradeBookPart')
 
 class IGrade(interface.Interface):
 	"""

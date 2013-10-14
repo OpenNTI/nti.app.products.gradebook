@@ -5,8 +5,8 @@ gradebook externalization
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+# from __future__ import print_function, unicode_literals, absolute_import, division
+# __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -49,7 +49,7 @@ class GradesExternalizer(object):
 		return result
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
-class _GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
+class GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, grades_interfaces):
@@ -60,4 +60,4 @@ class _GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	def _ap_enumerate_module_names(cls):
 		return ('gradebook', 'grades')
 
-_GradesObjectIO.__class_init__()
+GradesObjectIO.__class_init__()

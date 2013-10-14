@@ -27,17 +27,15 @@ from . import interfaces as grades_interfaces
 
 @interface.implementer(grades_interfaces.IGradeBook, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
-
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 @interface.implementer(grades_interfaces.IGradeBookPart, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
+class GradeBookPart(zcontained.Contained, nti_containers.CheckingLastModifiedBTreeContainer):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
-	name = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['name'])
-	order = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['order'])
-	weight = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['weight'])
+	# name = AdaptingFieldProperty(grades_interfaces.IGradeBookPart['name'])
+	# order = AdaptingFieldProperty(grades_interfaces.IGradeBookPart['order'])
+	# weight = AdaptingFieldProperty(grades_interfaces.IGradeBookPart['weight'])
 
 	def __str__(self):
 		return self.name
@@ -49,13 +47,13 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, zcontaine
 @interface.implementer(grades_interfaces.IGradeBookEntry, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class GradeBookEntry(Persistent, CreatedModDateTrackingObject, zcontained.Contained):
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	#__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	name = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['name'])
-	order = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['order'])
-	NTIID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['NTIID'])
-	weight = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['weight'])
-	questionSetID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['questionSetID'])
+	# name = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['name'])
+	# order = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['order'])
+	# NTIID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['NTIID'])
+	# weight = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['weight'])
+	# questionSetID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['questionSetID'])
 
 	def __str__(self):
 		return self.name
