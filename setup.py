@@ -33,6 +33,7 @@ setup(
 	install_requires=[
 		'setuptools',
 		'nti.dataserver',
+		'nti.testing',
 	],
 	entry_points=entry_points
 )

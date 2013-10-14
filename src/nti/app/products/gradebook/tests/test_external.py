@@ -9,15 +9,20 @@ __docformat__ = "restructuredtext en"
 
 from nti.externalization import externalization
 
-from nti.app.products.gradebook import grades
-from nti.app.products.gradebook.tests import ConfiguringTestBase
+from .. import grades
+from nti.testing.base import SharedConfiguringTestBase
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from hamcrest import (assert_that, is_, is_not, has_length, none, has_property)
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_key
+from hamcrest import has_entry
 
-class TestExternal(ConfiguringTestBase):
+class TestExternal(SharedConfiguringTestBase):
+
+	set_up_packages = ('nti.dataserver', 'nti.app.products.gradebook')
 
 	@WithMockDSTrans
 	def test_grade(self):
