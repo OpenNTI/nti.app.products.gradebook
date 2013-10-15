@@ -16,11 +16,11 @@ from nti.utils import schema as dmschema
 
 # ## NTIID values
 
-NTIID_TYPE_GRADE_BOOK = 'GradeBook'
+NTIID_TYPE_GRADE_BOOK = 'gradebook'
 
-NTIID_TYPE_GRADE_BOOK_PART = 'GradeBookPart'
+NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 
-NTIID_TYPE_GRADE_BOOK_ENTRY = 'GradeBookEntry'
+NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
 class IGradeBookEntry(IContained):
 

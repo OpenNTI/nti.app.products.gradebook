@@ -15,12 +15,7 @@ from nti.externalization import internalization
 from .. import grades
 from nti.testing.base import SharedConfiguringTestBase
 
-from hamcrest import assert_that
-from hamcrest import none
-from hamcrest import is_
-from hamcrest import is_not
-from hamcrest import has_entry
-from hamcrest import has_property
+from hamcrest import (assert_that, none, is_, is_not, has_entry, has_property)
 
 class TestExternal(SharedConfiguringTestBase):
 
