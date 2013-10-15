@@ -106,7 +106,7 @@ class GradeBookEntry(Persistent,
 		return self.name
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight, self.NTIID)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight, self.questionSetID)
 
 	def __eq__(self, other):
 		try:
