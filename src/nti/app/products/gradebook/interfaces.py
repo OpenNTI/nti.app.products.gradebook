@@ -14,11 +14,18 @@ from zope.container.interfaces import IContainer, IContained
 
 from nti.utils import schema as dmschema
 
+# ## NTIID values
+
+NTIID_TYPE_GRADE_BOOK = 'GradeBook'
+
+NTIID_TYPE_GRADE_BOOK_PART = 'GradeBookPart'
+
+NTIID_TYPE_GRADE_BOOK_ENTRY = 'GradeBookEntry'
+
 class IGradeBookEntry(IContained):
 
 	containers(b'.IGradeBookPart')
 
-	NTIID = dmschema.ValidTextLine(title="entry ntiid", required=True)
 	questionSetID = dmschema.ValidTextLine(title="question id", required=False)
 	name = dmschema.ValidTextLine(title="entry name", required=True)
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
