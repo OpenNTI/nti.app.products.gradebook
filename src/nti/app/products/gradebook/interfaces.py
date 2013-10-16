@@ -25,6 +25,7 @@ NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 class IGradeBookEntry(IContained):
 
 	containers(b'.IGradeBookPart')
+	__parent__.required = False
 
 	questionSetID = dmschema.ValidTextLine(title="question id", required=False)
 	name = dmschema.ValidTextLine(title="entry name", required=True)

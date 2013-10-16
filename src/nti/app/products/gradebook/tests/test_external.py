@@ -9,17 +9,24 @@ __docformat__ = "restructuredtext en"
 
 import random
 
+from nti.dataserver.users import User
+
 from nti.externalization import externalization
 from nti.externalization import internalization
 
 from .. import grades
-from nti.testing.base import SharedConfiguringTestBase
+from .. import gradebook
+
+from .  import ConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from hamcrest import (assert_that, none, is_, is_not, has_entry, has_property)
 
-class TestExternal(SharedConfiguringTestBase):
+class TestExternal(ConfiguringTestBase):
 
-	set_up_packages = ('nti.dataserver', 'nti.app.products.gradebook')
+	def _create_user(self, username='nt@nti.com', password='temp001'):
+		usr = User.create_user(self.ds, username=username, password=password)
+		return usr
 
 	def test_grade(self):
 		g = grades.Grade(entry="quiz1", grade=85.0, autograde=80.2)
@@ -72,3 +79,21 @@ class TestExternal(SharedConfiguringTestBase):
 				assert_that(new_grade, has_property('grade', grade.grade))
 				assert_that(new_grade, has_property('autograde'), is_(grade.autograde))
 		
+	@WithMockDSTrans
+	def test_gradebook(self):
+		class Parent(object):
+			__parent__ = None
+			__name__ = 'parent'
+
+		gb = gradebook.GradeBook()
+		gb.__parent__ = Parent()
+		gb.__name__ = 'CS1330'
+		gb.creator = self._create_user()
+
+		ext = externalization.to_external_object(gb)
+		assert_that(ext, has_entry(u'Class', 'GradeBook'))
+		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
+		assert_that(ext, has_entry(u'Creator', 'nt@nti.com'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:nt@nti.com-gradebook-parent.CS1330'))
+

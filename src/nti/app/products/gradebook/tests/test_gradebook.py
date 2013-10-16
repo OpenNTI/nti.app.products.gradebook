@@ -10,16 +10,27 @@ __docformat__ = "restructuredtext en"
 from .. import gradebook
 from .. import interfaces as grades_interfaces
 
-from nti.testing.base import SharedConfiguringTestBase
+from .  import ConfiguringTestBase
+
 from nti.testing.matchers import verifiably_provides, validly_provides
 
 from hamcrest import assert_that
 
-class TestGradeBook(SharedConfiguringTestBase):
-
-    set_up_packages = ('nti.dataserver', 'nti.app.products.gradebook')
+class TestGradeBook(ConfiguringTestBase):
 
     def test_interfaces(self):
         gb = gradebook.GradeBook()
         assert_that(gb, validly_provides(grades_interfaces.IGradeBook))
         assert_that(gb, verifiably_provides(grades_interfaces.IGradeBook))
+
+        gbp = gradebook.GradeBookPart()
+        gbp.order = 1
+        gbp.name = 'part'
+        assert_that(gbp, validly_provides(grades_interfaces.IGradeBookPart))
+        assert_that(gbp, verifiably_provides(grades_interfaces.IGradeBookPart))
+
+        gbe = gradebook.GradeBookEntry()
+        gbe.order = 1
+        gbe.name = 'entry'
+        assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
+        assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
