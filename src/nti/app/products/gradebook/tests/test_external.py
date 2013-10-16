@@ -97,3 +97,41 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:nt@nti.com-gradebook-parent.CS1330'))
 
+	@WithMockDSTrans
+	def test_gradebookpart(self):
+
+		gb = gradebook.GradeBookPart()
+		gb.__parent__ = gradebook.GradeBook()
+		gb.__name__ = 'part.xyz'
+		gb.order = 1
+		gb.name = 'CS1330-1'
+		gb.weight = 0.95
+
+		ext = externalization.to_external_object(gb)
+		assert_that(ext, has_entry(u'Class', 'GradeBookPart'))
+		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
+		assert_that(ext, has_entry(u'name', 'CS1330-1'))
+		assert_that(ext, has_entry(u'order', 1))
+		assert_that(ext, has_entry(u'weight', 0.95))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
+
+	@WithMockDSTrans
+	def test_gradebookentry(self):
+
+		gb = gradebook.GradeBookEntry()
+		gb.__parent__ = gradebook.GradeBookPart()
+		gb.__name__ = 'part.xyz'
+		gb.order = 2
+		gb.name = 'quiz-1'
+		gb.weight = 0.55
+		gb.questionSetID = 'myquestion'
+
+		ext = externalization.to_external_object(gb)
+		assert_that(ext, has_entry(u'Class', 'GradeBookEntry'))
+		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
+		assert_that(ext, has_entry(u'name', 'quiz-1'))
+		assert_that(ext, has_entry(u'order', 2))
+		assert_that(ext, has_entry(u'weight', 0.55))
+		assert_that(ext, has_entry(u'questionSetID', 'myquestion'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
+

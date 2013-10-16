@@ -73,9 +73,7 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _NTIIDMixin):
 @interface.implementer(grades_interfaces.IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
-					_NTIIDMixin,
-					SchemaConfigured):
+class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, SchemaConfigured):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
@@ -94,7 +92,6 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 					   zmime_interfaces.IContentTypeAware)
 class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
-					 _NTIIDMixin,
 					 SchemaConfigured):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
