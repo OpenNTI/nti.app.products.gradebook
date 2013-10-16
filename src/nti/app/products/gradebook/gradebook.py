@@ -88,13 +88,17 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _CreatorNTIID
 					   zmime_interfaces.IContentTypeAware)
 class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 					SchemaConfigured,
-					_NTIIDMixin):
+					zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
 	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK.lower()
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
+
+	@property
+	def PartID(self):
+		return self.__name__
 
 	@property
 	def TotalEntryWeight(self):
@@ -114,13 +118,15 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
 					 SchemaConfigured,
-					 _NTIIDMixin):
+					 zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
-	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART.lower()
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
+
+	@property
+	def EntryID(self):
+		return self.__name__
 
 	def __str__(self):
 		return self.name

@@ -36,27 +36,23 @@ class Grade(ModDateTrackingObject, SchemaConfigured):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
-	@property
-	def NTIID(self):
-		return self.entry
-
 	def __eq__(self, other):
 		try:
 			return self is other or (grades_interfaces.IGrade.providedBy(Grade)
-									 and self.entry == other.entry)
+									 and self.entryId == other.entryId)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.entry)
+		xhash ^= hash(self.entryId)
 		return xhash
 
 	def __str__(self):
-		return "%s,%s" % (self.entry, self.grade)
+		return "%s,%s" % (self.entryId, self.grade)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entry, self.grade, self.autograde)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entryId, self.grade, self.autograde)
 
 @interface.implementer(grades_interfaces.IGrades, 
 					   ext_interfaces.IInternalObjectUpdater,
@@ -68,12 +64,17 @@ class Grades(PersistentMapping):
 
 	def index(self, username, grade, grades=()):
 		if grades_interfaces.IGrade.providedBy(grade):
-			grade = grade.NTIID
+			entryId = grade.entryId
+		elif grades_interfaces.IGradeBookEntry.providedBy(grade):
+			entryId = grade.EntryID
+		else:
+			entryId = unicode(grade)
+
 		idx = -1
 		grades = grades or self.get(username, ())
 		grade = unicode(grade)
 		for i, g in enumerate(grades):
-			if g.NTIID == grade:
+			if g.entryId == entryId:
 				idx = i
 				break
 		return idx

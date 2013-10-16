@@ -29,11 +29,11 @@ class TestExternal(ConfiguringTestBase):
 		return usr
 
 	def test_grade(self):
-		g = grades.Grade(entry="quiz1", grade=85.0, autograde=80.2)
+		g = grades.Grade(entryId="quiz1", grade=85.0, autograde=80.2)
 		ext = externalization.to_external_object(g)
 		assert_that(ext, has_entry(u'Class', 'Grade'))
 		assert_that(ext, has_entry(u'grade', is_(85.0)))
-		assert_that(ext, has_entry(u'entry', 'quiz1'))
+		assert_that(ext, has_entry(u'entryId', 'quiz1'))
 		assert_that(ext, has_entry(u'autograde', is_(80.2)))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.grade'))
 		assert_that(ext, has_entry(u'Last Modified', is_not(none())))
@@ -41,7 +41,7 @@ class TestExternal(ConfiguringTestBase):
 		factory = internalization.find_factory_for(ext)
 		newgrade = factory()
 		internalization.update_from_external_object(newgrade, ext)
-		assert_that(newgrade, has_property('entry', 'quiz1'))
+		assert_that(newgrade, has_property('entryId', 'quiz1'))
 		assert_that(newgrade, has_property('grade', is_(85.0)))
 		assert_that(newgrade, has_property('autograde', is_(80.2)))
 
@@ -52,7 +52,7 @@ class TestExternal(ConfiguringTestBase):
 		for _ in range(r):
 			username = 'u%s' % random.randint(1, 5)
 			entry = 'e%s' % random.randint(1, 5)
-			grade = grades.Grade(entry=entry, 
+			grade = grades.Grade(entryId=entry,
 								 grade=float(random.randint(1, 100)),
 								 autograde=float(random.randint(1, 100)))
 			if store.index(username, grade) == -1:
@@ -119,7 +119,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'weight', 0.95))
 		assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:gradebook-gradebookpart-cs1313gb.quizzes'))
+		assert_that(ext, has_entry(u'PartID', 'quizzes'))
 
 	@WithMockDSTrans
 	def test_gradebookentry(self):
@@ -143,5 +143,5 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'weight', 0.55))
 		assert_that(ext, has_entry(u'questionSetID', 'myquestion'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:gradebookpart-gradebookentry-quizzes.quiz1'))
+		assert_that(ext, has_entry(u'EntryID', 'quiz1'))
 

@@ -25,12 +25,12 @@ class TestGradeBook(ConfiguringTestBase):
 
         gbp = gradebook.GradeBookPart()
         gbp.order = 1
-        gbp.name = 'part'
+        gbp.__name__ = gbp.name = 'part'
         assert_that(gbp, validly_provides(grades_interfaces.IGradeBookPart))
         assert_that(gbp, verifiably_provides(grades_interfaces.IGradeBookPart))
 
         gbe = gradebook.GradeBookEntry()
         gbe.order = 1
-        gbe.name = 'entry'
+        gbe.__name__ = gbe.name = 'entry'
         assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
         assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))

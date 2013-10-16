@@ -36,6 +36,8 @@ class IGradeBookEntry(IContained):
 
 	order = schema.Int(title="The entry order", min=1)
 
+	EntryID = dmschema.ValidTextLine(title="Entry ID", readonly=True)
+	
 class IGradeBookPart(IContainer, IContained):
 	"""
 	A Section of a grade book e.g. Quizzes, Exams, etc..
@@ -52,8 +54,8 @@ class IGradeBookPart(IContainer, IContained):
 						  required=True)
 	order = schema.Int(title="The part order", min=1)
 
+	PartID = dmschema.ValidTextLine(title="Part ID", readonly=True)
 	TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
-
 
 class IGradeBook(IContainer, IContained):
 	"""
@@ -66,7 +68,7 @@ class IGrade(interface.Interface):
 	"""
 	Grade entry
 	"""
-	entry = dmschema.ValidTextLine(title="grade entry ntiid", required=True)
+	entryId = dmschema.ValidTextLine(title="grade entry id", required=True)
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
