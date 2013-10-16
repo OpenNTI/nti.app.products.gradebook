@@ -22,7 +22,13 @@ NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
-class IGradeBookEntry(IContained):
+class ICloneable(interface.Interface):
+	def clone():
+		"""
+		clone this object
+		"""
+
+class IGradeBookEntry(IContained, ICloneable):
 
 	containers(b'.IGradeBookPart')
 	__parent__.required = False
@@ -38,7 +44,7 @@ class IGradeBookEntry(IContained):
 
 	EntryID = dmschema.ValidTextLine(title="Entry ID", readonly=True)
 	
-class IGradeBookPart(IContainer, IContained):
+class IGradeBookPart(IContainer, IContained, ICloneable):
 	"""
 	A Section of a grade book e.g. Quizzes, Exams, etc..
 	"""
@@ -57,7 +63,7 @@ class IGradeBookPart(IContainer, IContained):
 	PartID = dmschema.ValidTextLine(title="Part ID", readonly=True)
 	TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
 
-class IGradeBook(IContainer, IContained):
+class IGradeBook(IContainer, IContained, ICloneable):
 	"""
 	Grade book definition
 	"""
