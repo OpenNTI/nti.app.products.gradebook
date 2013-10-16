@@ -32,14 +32,14 @@ from nti.utils.schema import createDirectFieldProperties
 from . import interfaces as grades_interfaces
 
 class _NTIIDMixin(zcontained.Contained):
-	creator = None
 
 	_ntiid_type = None
-	_ntiid_include_parent_name = False
+	_ntiid_default_provider = None
+	_ntiid_include_parent_name = True
 
 	@property
-	def _ntiid_creator_username(self):
-		return self.creator.username if self.creator else nti_interfaces.SYSTEM_USER_NAME
+	def _ntiid_provider(self):
+		return self._ntiid_default_provider
 
 	@property
 	def _ntiid_specific_part(self):
@@ -53,32 +53,53 @@ class _NTIIDMixin(zcontained.Contained):
 		except (AttributeError):  # Not ready yet
 			return None
 
-	@CachedProperty('_ntiid_creator_username', '_ntiid_specific_part')
+	@CachedProperty('_ntiid_provider', '_ntiid_specific_part')
 	def NTIID(self):
-		creator_name = self._ntiid_creator_username
-		if creator_name:
+		provider = self._ntiid_provider
+		if provider:
 			return make_ntiid(date=NTIID_DATE,
-							  provider=creator_name,
+							  provider=provider,
 							  nttype=self._ntiid_type,
 							  specific=self._ntiid_specific_part)
+
+class _CreatorNTIIDMixin(_NTIIDMixin):
+
+	creator = None
+	_ntiid_default_provider = nti_interfaces.SYSTEM_USER_NAME
+
+	@property
+	def _ntiid_provider(self):
+		return self.creator.username if self.creator else self._ntiid_default_provider
 
 @interface.implementer(grades_interfaces.IGradeBook,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _NTIIDMixin):
+class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _CreatorNTIIDMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
-	_ntiid_include_parent_name = True
+
+	@property
+	def TotalPartWeight(self):
+		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
+		return result
 
 @interface.implementer(grades_interfaces.IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, SchemaConfigured):
+class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
+					SchemaConfigured,
+					_NTIIDMixin):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
+	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK.lower()
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
+
+	@property
+	def TotalEntryWeight(self):
+		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
+		return result
 
 	def __str__(self):
 		return self.name
@@ -92,10 +113,12 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, SchemaCon
 					   zmime_interfaces.IContentTypeAware)
 class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
-					 SchemaConfigured):
+					 SchemaConfigured,
+					 _NTIIDMixin):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
+	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART.lower()
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 

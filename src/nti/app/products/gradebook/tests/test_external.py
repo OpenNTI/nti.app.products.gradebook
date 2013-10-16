@@ -94,39 +94,48 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'Class', 'GradeBook'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'Creator', 'nt@nti.com'))
+		assert_that(ext, has_entry(u'TotalPartWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:nt@nti.com-gradebook-parent.CS1330'))
 
 	@WithMockDSTrans
 	def test_gradebookpart(self):
 
-		gb = gradebook.GradeBookPart()
-		gb.__parent__ = gradebook.GradeBook()
-		gb.__name__ = 'part.xyz'
-		gb.order = 1
-		gb.name = 'CS1330-1'
-		gb.weight = 0.95
+		gb = gradebook.GradeBook()
+		gb.__name__ = 'cs1313gb'
 
-		ext = externalization.to_external_object(gb)
+		gbp = gradebook.GradeBookPart()
+		gbp.__parent__ = gb
+		gbp.__name__ = 'quizzes'
+		gbp.order = 1
+		gbp.name = 'quizzes'
+		gbp.weight = 0.95
+
+		ext = externalization.to_external_object(gbp)
 		assert_that(ext, has_entry(u'Class', 'GradeBookPart'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
-		assert_that(ext, has_entry(u'name', 'CS1330-1'))
+		assert_that(ext, has_entry(u'name', 'quizzes'))
 		assert_that(ext, has_entry(u'order', 1))
 		assert_that(ext, has_entry(u'weight', 0.95))
+		assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:gradebook-gradebookpart-cs1313gb.quizzes'))
 
 	@WithMockDSTrans
 	def test_gradebookentry(self):
 
-		gb = gradebook.GradeBookEntry()
-		gb.__parent__ = gradebook.GradeBookPart()
-		gb.__name__ = 'part.xyz'
-		gb.order = 2
-		gb.name = 'quiz-1'
-		gb.weight = 0.55
-		gb.questionSetID = 'myquestion'
+		gbp = gradebook.GradeBookPart()
+		gbp.__name__ = 'quizzes'
 
-		ext = externalization.to_external_object(gb)
+		gbe = gradebook.GradeBookEntry()
+		gbe.__parent__ = gbp
+		gbe.__name__ = 'quiz1'
+		gbe.order = 2
+		gbe.name = 'quiz-1'
+		gbe.weight = 0.55
+		gbe.questionSetID = 'myquestion'
+
+		ext = externalization.to_external_object(gbe)
 		assert_that(ext, has_entry(u'Class', 'GradeBookEntry'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'name', 'quiz-1'))
@@ -134,4 +143,5 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'weight', 0.55))
 		assert_that(ext, has_entry(u'questionSetID', 'myquestion'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:gradebookpart-gradebookentry-quizzes.quiz1'))
 

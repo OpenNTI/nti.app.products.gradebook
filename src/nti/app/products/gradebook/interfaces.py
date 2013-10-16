@@ -52,11 +52,15 @@ class IGradeBookPart(IContainer, IContained):
 						  required=True)
 	order = schema.Int(title="The part order", min=1)
 
+	TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
+
+
 class IGradeBook(IContainer, IContained):
 	"""
 	Grade book definition
 	"""
 	contains(b'.IGradeBookPart')
+	TotalPartWeight = schema.Float(title="Part weight sum", readonly=True)
 
 class IGrade(interface.Interface):
 	"""
