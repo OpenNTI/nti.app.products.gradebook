@@ -45,6 +45,7 @@ class TestGradeBook(ConfiguringTestBase):
 		entry = gradebook.GradeBookEntry()
 		entry.order = 2
 		entry.weight = 0.9
+		entry.questionSetID = 'xyzq'
 		entry.__name__ = entry.name = 'entry'
 		part[entry.__name__] = entry
 
@@ -68,3 +69,5 @@ class TestGradeBook(ConfiguringTestBase):
 		assert_that(cl_entry, has_property('name', 'entry'))
 		assert_that(cl_entry, has_property('order', 2))
 		assert_that(cl_entry, has_property('weight', 0.9))
+		assert_that(cl_entry, has_property('questionSetID', 'xyzq'))
+
