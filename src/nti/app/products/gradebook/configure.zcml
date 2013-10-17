@@ -8,6 +8,10 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 			
+	<adapter factory=".gradebook._GradeBookFactory"
+			 for="nti.app.products.courses.interfaces.ICourseInstance"
+			 provides=".interfaces.IGradeBook" />
+			 
 	<adapter factory=".externalization.GradesObjectIO"
 			 for=".interfaces.IGradeBookEntry" />
 

@@ -10,12 +10,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
+from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
 from persistent import Persistent
+
+from nti.app.products.courses import interfaces as course_interfaces
 
 from nti.dataserver import mimetype
 from nti.dataserver import containers as nti_containers
@@ -71,6 +75,7 @@ class _CreatorNTIIDMixin(_NTIIDMixin):
 	def _ntiid_provider(self):
 		return self.creator.username if self.creator else self._ntiid_default_provider
 
+@component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGradeBook,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
@@ -92,6 +97,8 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _CreatorNTIID
 	def TotalPartWeight(self):
 		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
 		return result
+
+_GradeBookFactory = an_factory(GradeBook)
 
 @interface.implementer(grades_interfaces.IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
@@ -133,7 +140,6 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 
 	def __repr__(self):
 		return "%s(%s,%s)" % (self.__class__.__name__, self.name, self.weight)
-
 
 @interface.implementer(grades_interfaces.IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
