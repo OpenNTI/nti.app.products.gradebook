@@ -78,6 +78,16 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _CreatorNTIID
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
 
+	def clone(self):
+		result = self.__class__()
+		result.__parent__, result.__name__ = (None, self.__name__)
+		# clone entries
+		for part in self.values():
+			cloned = part.clone()
+			cloned.__parent__ = self
+			result[cloned.__name__] = cloned
+		return result
+
 	@property
 	def TotalPartWeight(self):
 		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
@@ -95,6 +105,19 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK.lower()
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
+
+	def clone(self):
+		result = self.__class__()
+		result.name = self.name
+		result.order = self.order
+		result.weight = self.weight
+		result.__parent__, result.__name__ = (None, self.__name__)
+		# clone entries
+		for entry in self.values():
+			cloned = entry.clone()
+			cloned.__parent__ = self
+			result[cloned.__name__] = cloned
+		return result
 
 	@property
 	def PartID(self):
@@ -123,6 +146,15 @@ class GradeBookEntry(Persistent,
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
+
+	def clone(self):
+		result = self.__class__()
+		result.name = self.name
+		result.order = self.order
+		result.weight = self.weight
+		result.questionSetID = self.questionSetID
+		result.__parent__, result.__name__ = (None, self.__name__)
+		return result
 
 	@property
 	def EntryID(self):

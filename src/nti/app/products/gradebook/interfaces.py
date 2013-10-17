@@ -39,7 +39,6 @@ class IGradeBookEntry(IContained, ICloneable):
 						  min=0.0,
 						  max=1.0,
 						  default=1.0)
-
 	order = schema.Int(title="The entry order", min=1)
 
 	EntryID = dmschema.ValidTextLine(title="Entry ID", readonly=True)
