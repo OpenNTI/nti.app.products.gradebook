@@ -133,6 +133,10 @@ class GradeBookPart(Implicit,
 		return result
 
 	@property
+	def id(self):
+		return self.PartID
+
+	@property
 	def PartID(self):
 		return self.__name__
 
@@ -168,6 +172,10 @@ class GradeBookEntry(Persistent,
 		result.questionSetID = self.questionSetID
 		result.__parent__, result.__name__ = (None, self.__name__)
 		return result
+
+	@property
+	def id(self):
+		return self.EntryID
 
 	@property
 	def EntryID(self):
