@@ -28,6 +28,7 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.ntiids.ntiids import make_ntiid
 
+from nti.utils._compat import Implicit
 from nti.utils.property import CachedProperty
 from nti.utils.schema import SchemaConfigured
 from nti.ntiids.ntiids import DATE as NTIID_DATE
@@ -79,7 +80,10 @@ class _CreatorNTIIDMixin(_NTIIDMixin):
 @interface.implementer(grades_interfaces.IGradeBook,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, _CreatorNTIIDMixin):
+class GradeBook(Implicit,
+				nti_containers.AcquireObjectsOnReadMixin,
+				nti_containers.CheckingLastModifiedBTreeContainer,
+				_CreatorNTIIDMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
 
@@ -103,7 +107,9 @@ _GradeBookFactory = an_factory(GradeBook)
 @interface.implementer(grades_interfaces.IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
+class GradeBookPart(Implicit,
+					nti_containers.AcquireObjectsOnReadMixin,
+					nti_containers.CheckingLastModifiedBTreeContainer,
 					SchemaConfigured,
 					zcontained.Contained):
 
@@ -147,7 +153,8 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
 					 SchemaConfigured,
-					 zcontained.Contained):
+					 zcontained.Contained,
+					 Implicit):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
