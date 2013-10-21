@@ -21,10 +21,11 @@ from persistent import Persistent
 
 from nti.app.products.courses import interfaces as course_interfaces
 
-from nti.dataserver import mimetype
 from nti.dataserver import containers as nti_containers
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
+
+from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -84,7 +85,9 @@ class GradeBook(Implicit,
 				nti_containers.AcquireObjectsOnReadMixin,
 				nti_containers.CheckingLastModifiedBTreeContainer,
 				_CreatorNTIIDMixin):
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+
+	mimeType = mime_type = MIME_BASE + u'.gradebook'
+
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
 
 	def clone(self):
@@ -113,7 +116,8 @@ class GradeBookPart(Implicit,
 					SchemaConfigured,
 					zcontained.Contained):
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
+
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
 	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK.lower()
 
@@ -160,7 +164,7 @@ class GradeBookEntry(Persistent,
 					 zcontained.Contained,
 					 Implicit):
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	mimeType = mime_type = MIME_BASE + u'.gradebookentry'
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
