@@ -33,6 +33,7 @@ setup(
 		'setuptools',
 		'nti.app.products.courses',
 		'nti.dataserver',
+		'nti.app.testing',
 		'nti.testing',
 	],
 	entry_points=entry_points
