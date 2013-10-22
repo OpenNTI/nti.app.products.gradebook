@@ -99,6 +99,7 @@ class GradeBook(Implicit,
 			cloned.__parent__ = self
 			result[cloned.__name__] = cloned
 		return result
+	copy = clone
 
 	@property
 	def TotalPartWeight(self):
@@ -135,6 +136,7 @@ class GradeBookPart(Implicit,
 			cloned.__parent__ = self
 			result[cloned.__name__] = cloned
 		return result
+	copy = clone
 
 	@property
 	def id(self):
@@ -176,6 +178,7 @@ class GradeBookEntry(Persistent,
 		result.questionSetID = self.questionSetID
 		result.__parent__, result.__name__ = (None, self.__name__)
 		return result
+	copy = clone
 
 	@property
 	def id(self):

@@ -8,7 +8,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
-from zope.interface.common.mapping import IMapping
+from zope.interface.common import mapping
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
 
@@ -23,6 +23,7 @@ NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
 class ICloneable(interface.Interface):
+
 	def clone():
 		"""
 		clone this object
@@ -43,7 +44,7 @@ class IGradeBookEntry(IContained, ICloneable):
 
 	EntryID = dmschema.ValidTextLine(title="Entry ID", readonly=True)
 	
-class IGradeBookPart(IContainer, IContained, ICloneable):
+class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 	"""
 	A Section of a grade book e.g. Quizzes, Exams, etc..
 	"""
@@ -62,7 +63,7 @@ class IGradeBookPart(IContainer, IContained, ICloneable):
 	PartID = dmschema.ValidTextLine(title="Part ID", readonly=True)
 	TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
 
-class IGradeBook(IContainer, IContained, ICloneable):
+class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 	"""
 	Grade book definition
 	"""
@@ -77,7 +78,7 @@ class IGrade(interface.Interface):
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
-class IGrades(IMapping):
+class IGrades(mapping.IMapping):
 	"""
 	User grades
 	"""
