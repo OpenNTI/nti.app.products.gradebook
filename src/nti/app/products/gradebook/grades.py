@@ -39,20 +39,20 @@ class Grade(ModDateTrackingObject, SchemaConfigured):
 	def __eq__(self, other):
 		try:
 			return self is other or (grades_interfaces.IGrade.providedBy(Grade)
-									 and self.entryId == other.entryId)
+									 and self.nttid == other.nttid)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.entryId)
+		xhash ^= hash(self.nttid)
 		return xhash
 
 	def __str__(self):
-		return "%s,%s" % (self.entryId, self.grade)
+		return "%s,%s" % (self.nttid, self.grade)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entryId, self.grade, self.autograde)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.nttid, self.grade, self.autograde)
 
 @interface.implementer(grades_interfaces.IGrades, 
 					   ext_interfaces.IInternalObjectUpdater,
@@ -64,17 +64,17 @@ class Grades(PersistentMapping):
 
 	def index(self, username, grade, grades=()):
 		if grades_interfaces.IGrade.providedBy(grade):
-			entryId = grade.entryId
+			nttid = grade.nttid
 		elif grades_interfaces.IGradeBookEntry.providedBy(grade):
-			entryId = grade.EntryID
+			nttid = grade.NTIID
 		else:
-			entryId = unicode(grade)
+			nttid = unicode(grade)
 
 		idx = -1
 		grades = grades or self.get(username, ())
 		grade = unicode(grade)
 		for i, g in enumerate(grades):
-			if g.entryId == entryId:
+			if g.nttid == nttid:
 				idx = i
 				break
 		return idx

@@ -71,7 +71,7 @@ class IGrade(interface.Interface):
 	"""
 	Grade entry
 	"""
-	entryId = dmschema.ValidTextLine(title="grade entry id", required=True)
+	nttid = dmschema.ValidTextLine(title="grade entry nttid", required=True)
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
