@@ -75,7 +75,8 @@ class _CreatorNTIIDMixin(_NTIIDMixin):
 
 	@property
 	def _ntiid_provider(self):
-		return self.creator.username if self.creator else self._ntiid_default_provider
+		return self.creator.username if getattr(self, 'creator', None) is not None \
+									 else self._ntiid_default_provider
 
 @component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGradeBook,
@@ -87,7 +88,6 @@ class GradeBook(Implicit,
 				_CreatorNTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
-
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
 
 	def clone(self):
@@ -115,12 +115,11 @@ class GradeBookPart(Implicit,
 					nti_containers.AcquireObjectsOnReadMixin,
 					nti_containers.CheckingLastModifiedBTreeContainer,
 					SchemaConfigured,
-					zcontained.Contained):
+					zcontained.Contained,
+					_CreatorNTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
-
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
-	_ntiid_default_provider = grades_interfaces.NTIID_TYPE_GRADE_BOOK.lower()
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
 
@@ -137,14 +136,6 @@ class GradeBookPart(Implicit,
 			result[cloned.__name__] = cloned
 		return result
 	copy = clone
-
-	@property
-	def id(self):
-		return self.PartID
-
-	@property
-	def PartID(self):
-		return self.__name__
 
 	@property
 	def TotalEntryWeight(self):
@@ -164,10 +155,12 @@ class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
 					 SchemaConfigured,
 					 zcontained.Contained,
+					 _CreatorNTIIDMixin,
 					 Implicit):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookentry'
-
+	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
+	
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
 	def clone(self):
@@ -180,19 +173,12 @@ class GradeBookEntry(Persistent,
 		return result
 	copy = clone
 
-	@property
-	def id(self):
-		return self.EntryID
-
-	@property
-	def EntryID(self):
-		return self.__name__
-
 	def __str__(self):
 		return self.name
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight, self.questionSetID)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight,
+								 self.questionSetID)
 
 	def __eq__(self, other):
 		try:

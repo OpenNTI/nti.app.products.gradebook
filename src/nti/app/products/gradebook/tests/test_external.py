@@ -119,7 +119,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'weight', 0.95))
 		assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
-		assert_that(ext, has_entry(u'PartID', 'quizzes'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:system-gradebookpart-cs1313gb.quizzes'))
 
 	@WithMockDSTrans
 	def test_gradebookentry(self):
@@ -143,5 +143,5 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'weight', 0.55))
 		assert_that(ext, has_entry(u'questionSetID', 'myquestion'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
-		assert_that(ext, has_entry(u'EntryID', 'quiz1'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:system-gradebookentry-quizzes.quiz1'))
 

@@ -41,8 +41,6 @@ class IGradeBookEntry(IContained, ICloneable):
 						  max=1.0,
 						  default=1.0)
 	order = schema.Int(title="The entry order", min=1)
-
-	EntryID = dmschema.ValidTextLine(title="Entry ID", readonly=True)
 	
 class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 	"""
@@ -60,7 +58,6 @@ class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMappin
 						  required=True)
 	order = schema.Int(title="The part order", min=1)
 
-	PartID = dmschema.ValidTextLine(title="Part ID", readonly=True)
 	TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
 
 class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):

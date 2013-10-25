@@ -35,20 +35,20 @@ from . import utils
 from . import grades
 from . import interfaces as grades_interfaces
 
-_view_defaults = dict(  route_name='objects.generic.traversal',
-						renderer='rest' )
+_view_defaults = dict(route_name='objects.generic.traversal',
+					  renderer='rest')
 _c_view_defaults = _view_defaults.copy()
 _c_view_defaults.update( permission=nauth.ACT_CREATE,
 						 request_method='POST' )
 _u_view_defaults = _view_defaults.copy()
 _u_view_defaults.update(permission=nauth.ACT_UPDATE,
-						 request_method='PUT')
+						request_method='PUT')
 _r_view_defaults = _view_defaults.copy()
-_r_view_defaults.update( permission=nauth.ACT_READ,
-						 request_method='GET' )
+_r_view_defaults.update(permission=nauth.ACT_READ,
+						request_method='GET')
 _d_view_defaults = _view_defaults.copy()
-_d_view_defaults.update( permission=nauth.ACT_DELETE,
-						 request_method='DELETE' )
+_d_view_defaults.update(permission=nauth.ACT_DELETE,
+						request_method='DELETE')
 
 @view_config(context=grades_interfaces.IGradeBook)
 @view_config(context=grades_interfaces.IGradeBookPart)
@@ -153,7 +153,7 @@ class SetGradeView(AbstractAuthenticatedView,
 		grade = grades.Grade()
 		entryId = values.get('entryId')
 		if not entryId:
-			utils.raise_field_error(request, "entryid", _("must specify a valid grade entry"))
+			utils.raise_field_error(request, "entryId", _("must specify a valid grade entry"))
 		grade.entryId = entryId
 	
 		value = values.get('grade')
