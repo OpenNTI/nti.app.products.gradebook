@@ -29,7 +29,9 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
 
-@interface.implementer(grades_interfaces.IGrade, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGrade,
+					   an_interfaces.IAttributeAnnotatable,
+					   zmime_interfaces.IContentTypeAware)
 class Grade(ModDateTrackingObject, SchemaConfigured):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
@@ -38,8 +40,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (grades_interfaces.IGrade.providedBy(Grade)
-									 and self.nttid == other.nttid)
+			return self is other or (self.nttid == other.nttid)
 		except AttributeError:
 			return NotImplemented
 
@@ -52,7 +53,10 @@ class Grade(ModDateTrackingObject, SchemaConfigured):
 		return "%s,%s" % (self.nttid, self.grade)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.nttid, self.grade, self.autograde)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__,
+								 self.nttid,
+								 self.grade,
+								 self.autograde)
 
 @interface.implementer(grades_interfaces.IGrades, 
 					   ext_interfaces.IInternalObjectUpdater,
@@ -63,12 +67,7 @@ class Grades(PersistentMapping):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	def index(self, username, grade, grades=()):
-		if grades_interfaces.IGrade.providedBy(grade):
-			nttid = grade.nttid
-		elif grades_interfaces.IGradeBookEntry.providedBy(grade):
-			nttid = grade.NTIID
-		else:
-			nttid = unicode(grade)
+		nttid = grades_interfaces.IGrade(grade).nttid
 
 		idx = -1
 		grades = grades or self.get(username, ())
@@ -89,11 +88,12 @@ class Grades(PersistentMapping):
 		if grades is None:
 			grades = self[username] = BList()
 
-		idx = self.index(username, grade, grades)
+		adpated = grades_interfaces.IGrade(grade)
+		idx = self.index(username, adpated, grades)
 		if idx == -1:
-			grades.append(grade)
+			grades.append(adpated)
 		else:
-			grades[idx] = grade
+			grades[idx] = adpated
 
 	set_grade = add_grade
 

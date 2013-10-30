@@ -26,6 +26,12 @@
 	
 	<adapter factory=".externalization.GradesExternalizer" />
 		
+	<adapter factory=".adapters._StringGradeAdapter"
+			 provides=".interfaces.IGrade"
+			 for="basestring" />
+			 
+	<adapter factory=".adapters._EntryGradeAdapter" />
+	
 	<!-- mime factories -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
