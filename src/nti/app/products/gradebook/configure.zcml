@@ -9,7 +9,7 @@
 	<include package="zope.component" />
 			
 	<adapter factory=".gradebook._GradeBookFactory"
-			 for="nti.app.products.courses.interfaces.ICourseInstance"
+			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
 			 
 	<adapter factory=".externalization.GradesObjectIO"

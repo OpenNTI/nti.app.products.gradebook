@@ -19,7 +19,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from persistent import Persistent
 
-from nti.app.products.courses import interfaces as course_interfaces
+from nti.contenttypes.courses import interfaces as course_interfaces
 
 from nti.dataserver import containers as nti_containers
 from nti.dataserver import interfaces as nti_interfaces
