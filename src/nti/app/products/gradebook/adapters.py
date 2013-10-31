@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-gradebook externalization
+gradebook adapter
 
 $Id$
 """
