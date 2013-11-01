@@ -11,6 +11,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.event import notify
+from zope.location import locate
+from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
@@ -32,7 +35,7 @@ from . import interfaces as grades_interfaces
 @interface.implementer(grades_interfaces.IGrade,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class Grade(ModDateTrackingObject, SchemaConfigured):
+class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -40,21 +43,21 @@ class Grade(ModDateTrackingObject, SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.nttid == other.nttid)
+			return self is other or (self.ntiid == other.ntiid)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.nttid)
+		xhash ^= hash(self.ntiid)
 		return xhash
 
 	def __str__(self):
-		return "%s,%s" % (self.nttid, self.grade)
+		return "%s,%s" % (self.ntiid, self.grade)
 
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__,
-								 self.nttid,
+								 self.ntiid,
 								 self.grade,
 								 self.autograde)
 
@@ -62,18 +65,18 @@ class Grade(ModDateTrackingObject, SchemaConfigured):
 					   ext_interfaces.IInternalObjectUpdater,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class Grades(PersistentMapping):
+class Grades(PersistentMapping, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	def index(self, username, grade, grades=()):
-		nttid = grades_interfaces.IGrade(grade).nttid
+		ntiid = grades_interfaces.IGrade(grade).ntiid
 
 		idx = -1
 		grades = grades or self.get(username, ())
 		grade = unicode(grade)
 		for i, g in enumerate(grades):
-			if g.nttid == nttid:
+			if g.ntiid == ntiid:
 				idx = i
 				break
 		return idx
@@ -90,10 +93,13 @@ class Grades(PersistentMapping):
 
 		adpated = grades_interfaces.IGrade(grade)
 		idx = self.index(username, adpated, grades)
+		locate(adpated, self, adpated.ntiid)
 		if idx == -1:
 			grades.append(adpated)
+			notify(grades_interfaces.GradeAddedEvent(adpated, username))
 		else:
 			grades[idx] = adpated
+			notify(grades_interfaces.GradeModifiedEvent(adpated, username))
 
 	set_grade = add_grade
 
@@ -105,7 +111,8 @@ class Grades(PersistentMapping):
 		grades = self.get(username, ())
 		idx = self.index(username, grade, grades)
 		if idx != -1:
-			grades.pop(idx)
+			g = grades.pop(idx)
+			notify(grades_interfaces.GradeRemovedEvent(g, username))
 		return idx != -1
 
 	def clear(self, username):

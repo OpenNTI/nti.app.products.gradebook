@@ -19,10 +19,9 @@ class TestAdapters(ConfiguringTestBase):
 	def test_grade(self):
 		g = grade_interfaces.IGrade('quiz1', None)
 		assert_that(g, is_not(none()))
-		assert_that(g, has_property('nttid', 'quiz1'))
+		assert_that(g, has_property('ntiid', 'quiz1'))
 
 	def test_gradebookentry(self):
-
 		gbp = gradebook.GradeBookPart()
 		gbp.__name__ = 'quizzes'
 
@@ -34,6 +33,6 @@ class TestAdapters(ConfiguringTestBase):
 
 		g = grade_interfaces.IGrade(gbe, None)
 		assert_that(g, is_not(none()))
-		assert_that(g, has_property('nttid',
+		assert_that(g, has_property('ntiid',
 					'tag:nextthought.com,2011-10:system-gradebookentry-quizzes.quiz1'))
 

@@ -18,10 +18,10 @@ from . import interfaces as grade_interfaces
 
 @interface.implementer(grade_interfaces.IGrade)
 @component.adapter(basestring)
-def _StringGradeAdapter(nttid):
-	return grades.Grade(nttid=nttid)
+def _StringGradeAdapter(ntiid):
+	return grades.Grade(ntiid=ntiid)
 
 @interface.implementer(grade_interfaces.IGrade)
 @component.adapter(grade_interfaces.IGradeBookEntry)
 def _EntryGradeAdapter(entry):
-	return grades.Grade(nttid=entry.NTIID)
+	return grades.Grade(ntiid=entry.NTIID)

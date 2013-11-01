@@ -29,11 +29,11 @@ class TestExternal(ConfiguringTestBase):
 		return usr
 
 	def test_grade(self):
-		g = grades.Grade(nttid="quiz1", grade=85.0, autograde=80.2)
+		g = grades.Grade(ntiid="quiz1", grade=85.0, autograde=80.2)
 		ext = externalization.to_external_object(g)
 		assert_that(ext, has_entry(u'Class', 'Grade'))
 		assert_that(ext, has_entry(u'grade', is_(85.0)))
-		assert_that(ext, has_entry(u'nttid', 'quiz1'))
+		assert_that(ext, has_entry(u'ntiid', 'quiz1'))
 		assert_that(ext, has_entry(u'autograde', is_(80.2)))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.grade'))
 		assert_that(ext, has_entry(u'Last Modified', is_not(none())))
@@ -41,7 +41,7 @@ class TestExternal(ConfiguringTestBase):
 		factory = internalization.find_factory_for(ext)
 		newgrade = factory()
 		internalization.update_from_external_object(newgrade, ext)
-		assert_that(newgrade, has_property('nttid', 'quiz1'))
+		assert_that(newgrade, has_property('ntiid', 'quiz1'))
 		assert_that(newgrade, has_property('grade', is_(85.0)))
 		assert_that(newgrade, has_property('autograde', is_(80.2)))
 
@@ -52,7 +52,7 @@ class TestExternal(ConfiguringTestBase):
 		for _ in range(r):
 			username = 'u%s' % random.randint(1, 5)
 			entry = 'e%s' % random.randint(1, 5)
-			grade = grades.Grade(nttid=entry,
+			grade = grades.Grade(ntiid=entry,
 								 grade=float(random.randint(1, 100)),
 								 autograde=float(random.randint(1, 100)))
 			if store.index(username, grade) == -1:

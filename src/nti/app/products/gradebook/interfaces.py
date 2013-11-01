@@ -8,9 +8,11 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
+from zope import lifecycleevent
 from zope.interface.common import mapping
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
+from zope.lifecycleevent import interfaces as lce_interfaces
 
 from nti.utils import schema as dmschema
 
@@ -67,15 +69,15 @@ class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 	contains(b'.IGradeBookPart')
 	TotalPartWeight = schema.Float(title="Part weight sum", readonly=True)
 
-class IGrade(interface.Interface):
+class IGrade(IContained):
 	"""
 	Grade entry
 	"""
-	nttid = dmschema.ValidTextLine(title="grade entry nttid", required=True)
+	ntiid = dmschema.ValidTextLine(title="grade entry ntiid", required=True)
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
-class IGrades(mapping.IMapping):
+class IGrades(mapping.IMapping, IContained):
 	"""
 	User grades
 	"""
@@ -88,3 +90,33 @@ class IGrades(mapping.IMapping):
 
 	def remove_grade(username, grade):
 		pass
+
+class IGradeAddedEvent(lce_interfaces.IObjectAddedEvent):
+	username = interface.Attribute("username")
+
+@interface.implementer(IGradeAddedEvent)
+class GradeAddedEvent(lifecycleevent.ObjectAddedEvent):
+
+	def __init__(self, obj, username, *args, **kwargs):
+		super(GradeAddedEvent, self).__init__(obj, *args, **kwargs)
+		self.username = username
+
+class IGradeModifiedEvent(lce_interfaces.IObjectModifiedEvent):
+	username = interface.Attribute("username")
+
+@interface.implementer(IGradeModifiedEvent)
+class GradeModifiedEvent(lifecycleevent.ObjectModifiedEvent):
+
+	def __init__(self, obj, username, *args, **kwargs):
+		super(GradeModifiedEvent, self).__init__(obj, *args, **kwargs)
+		self.username = username
+
+class IGradeRemovedEvent(lce_interfaces.IObjectRemovedEvent):
+	username = interface.Attribute("username")
+
+@interface.implementer(IGradeRemovedEvent)
+class GradeRemovedEvent(lifecycleevent.ObjectModifiedEvent):
+
+	def __init__(self, obj, username, *args, **kwargs):
+		super(GradeRemovedEvent, self).__init__(obj, *args, **kwargs)
+		self.username = username
