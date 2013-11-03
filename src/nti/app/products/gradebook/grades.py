@@ -41,6 +41,15 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
+	def clone(self):
+		result = self.__class__()
+		result.__parent__, result.__name__ = (None, self.__name__)
+		result.ntiid = self.ntiid
+		result.grade = self.grade
+		result.autograde = self.autograde
+		return result
+	copy = clone
+
 	def __eq__(self, other):
 		try:
 			return self is other or (self.ntiid == other.ntiid)
@@ -91,15 +100,16 @@ class Grades(PersistentMapping, zcontained.Contained):
 		if grades is None:
 			grades = self[username] = BList()
 
-		adpated = grades_interfaces.IGrade(grade)
-		idx = self.index(username, adpated, grades)
-		locate(adpated, self, adpated.ntiid)
+		grade = grades_interfaces.IGrade(grade)
+		idx = self.index(username, grade, grades)
+		if grade.__parent__ is None:
+			locate(grade, self, grade.ntiid)
 		if idx == -1:
-			grades.append(adpated)
-			notify(grades_interfaces.GradeAddedEvent(adpated, username))
+			grades.append(grade)
+			notify(grades_interfaces.GradeAddedEvent(grade, username))
 		else:
-			grades[idx] = adpated
-			notify(grades_interfaces.GradeModifiedEvent(adpated, username))
+			grades[idx] = grade
+			notify(grades_interfaces.GradeModifiedEvent(grade, username))
 
 	set_grade = add_grade
 

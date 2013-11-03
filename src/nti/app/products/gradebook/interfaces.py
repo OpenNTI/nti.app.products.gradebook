@@ -69,7 +69,7 @@ class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 	contains(b'.IGradeBookPart')
 	TotalPartWeight = schema.Float(title="Part weight sum", readonly=True)
 
-class IGrade(IContained):
+class IGrade(IContained, ICloneable):
 	"""
 	Grade entry
 	"""
