@@ -34,7 +34,17 @@ def _StringGradeAdapter(ntiid):
 def _EntryGradeAdapter(entry):
 	return grades.Grade(ntiid=entry.NTIID)
 
-def create_discussion_node(user, grade):
+def get_grade_discussion_note(user, grade):
+	result = None
+	grade = grade_interfaces.IGrade(grade)
+	container = user.getContainer(grade.ntiid, {})
+	for obj in container.values():
+		# match the first note in container
+		if nti_interfaces.INote.providedBy(obj):
+			result = obj
+	return result
+
+def create_grade_discussion_note(user, grade):
 	result = Note()
 	result.creator = user
 	result.containerId = grade.ntiid
@@ -50,11 +60,6 @@ def _DiscussionGradeAdapter(user, grade):
 	if isinstance(user, six.string_types):
 		user = users.User.get_entity(user)
 	grade = grade_interfaces.IGrade(grade)
-	container = user.getOrCreateContainer(grade.ntiid)
-	result = None
-	for obj in container.values():
-		# match the first note in container
-		if nti_interfaces.INote.providedBy(obj):
-			result = obj
-	result = result or create_discussion_node(user, grade)
+	result = get_grade_discussion_note(user, grade)
+	result = result if result is not None else create_grade_discussion_note(user, grade)
 	return result

@@ -26,20 +26,18 @@
 	
 	<adapter factory=".externalization.GradesExternalizer" />
 		
-	<adapter factory=".adapters._StringGradeAdapter"
+	<adapter factory="._adapters._StringGradeAdapter"
 			 provides=".interfaces.IGrade"
 			 for="basestring" />
 			 
-	<adapter factory=".adapters._EntryGradeAdapter" />
+	<adapter factory="._adapters._EntryGradeAdapter" />
 	
-	<adapter factory=".adapters._DiscussionGradeAdapter"
+	<adapter factory="._adapters._DiscussionGradeAdapter"
 			 provides="nti.dataserver.interfaces.INote"
 			 for="nti.dataserver.interfaces.IUser .interfaces.IGrade" />
 			 
-	<adapter factory=".adapters._DiscussionGradeAdapter"
-			 provides="nti.dataserver.interfaces.INote"
-			 for="basestring basestring" />
-			 
+	<subscriber handler="._subscribers._grade_removed" />
+	
 	<!-- mime factories -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
