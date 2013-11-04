@@ -15,7 +15,7 @@ from zope.lifecycleevent import interfaces as lce_interfaces
 
 from nti.dataserver import users
 
-from . import _adapters as adapters
+from . import adapters
 from . import interfaces as grade_interfaces
 
 @component.adapter(grade_interfaces.IGradeRemovedEvent)
