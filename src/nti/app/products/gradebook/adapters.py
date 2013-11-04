@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-gradebook adapter
+gradebook adapters
 
 $Id$
 """
@@ -14,6 +14,8 @@ import six
 
 from zope import interface
 from zope import component
+
+from ZODB.interfaces import IConnection
 
 from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
@@ -32,6 +34,16 @@ def _StringGradeAdapter(ntiid):
 def _EntryGradeAdapter(entry):
 	return grades.Grade(ntiid=entry.NTIID)
 
+def create_discussion_node(user, grade):
+	result = Note()
+	result.creator = user
+	result.containerId = grade.ntiid
+	jar = IConnection(user, None)
+	if jar:
+		jar.add(result)
+	user.addContainedObject(result)
+	return result
+
 @interface.implementer(nti_interfaces.INote)
 @component.adapter(nti_interfaces.IUser, grade_interfaces.IGrade)
 def _DiscussionGradeAdapter(user, grade):
@@ -44,9 +56,5 @@ def _DiscussionGradeAdapter(user, grade):
 		# match the first note in container
 		if nti_interfaces.INote.providedBy(obj):
 			result = obj
-	if result is None:
-		result = Note()
-		result.creator = user
-		result.containerId = grade.ntiid
-		user.addContainedObject(result)
+	result = result or create_discussion_node(user, grade)
 	return result
