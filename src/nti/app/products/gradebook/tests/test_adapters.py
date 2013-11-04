@@ -59,3 +59,4 @@ class TestAdapters(ConfiguringTestBase):
 		assert_that(note, has_property('containerId', 'quiz1'))
 		note2 = component.queryMultiAdapter((user, g), nti_interfaces.INote)
 		assert_that(note, is_(note2))
+

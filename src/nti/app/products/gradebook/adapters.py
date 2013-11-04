@@ -40,7 +40,7 @@ def get_grade_discussion_note(user, grade):
 	container = user.getContainer(grade.ntiid, {})
 	for obj in container.values():
 		# match the first note in container
-		if nti_interfaces.INote.providedBy(obj):
+		if grade_interfaces.IGradeDiscussionNote.providedBy(obj):
 			result = obj
 	return result
 
@@ -51,6 +51,7 @@ def create_grade_discussion_note(user, grade):
 	jar = IConnection(user, None)
 	if jar:
 		jar.add(result)
+	interface.alsoProvides(result, grade_interfaces.IGradeDiscussionNote)
 	user.addContainedObject(result)
 	return result
 

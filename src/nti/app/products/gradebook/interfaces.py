@@ -30,6 +30,10 @@ class ICloneable(interface.Interface):
 		"""
 		clone this object
 		"""
+class IGradeDiscussionNote(interface.Interface):
+	"""
+	marker interface for a discussion/feedback grade note
+	"""
 
 class IGradeBookEntry(IContained, ICloneable):
 
