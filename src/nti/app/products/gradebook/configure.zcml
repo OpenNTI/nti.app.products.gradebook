@@ -32,6 +32,14 @@
 			 
 	<adapter factory=".adapters._EntryGradeAdapter" />
 	
+	<adapter factory=".adapters._DiscussionGradeAdapter"
+			 provides="nti.dataserver.interfaces.INote"
+			 for="nti.dataserver.interfaces.IUser .interfaces.IGrade" />
+			 
+	<adapter factory=".adapters._DiscussionGradeAdapter"
+			 provides="nti.dataserver.interfaces.INote"
+			 for="basestring basestring" />
+			 
 	<!-- mime factories -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
