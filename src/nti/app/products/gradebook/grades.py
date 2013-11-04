@@ -78,12 +78,10 @@ class Grades(PersistentMapping, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	def index(self, username, grade, grades=()):
-		ntiid = grades_interfaces.IGrade(grade).ntiid
-
+	def index(self, username, grade, grades=None):
 		idx = -1
-		grades = grades or self.get(username, ())
-		grade = unicode(grade)
+		ntiid = grades_interfaces.IGrade(grade).ntiid
+		grades = grades if grades is not None else self.get(username, ())
 		for i, g in enumerate(grades):
 			if g.ntiid == ntiid:
 				idx = i
@@ -125,12 +123,19 @@ class Grades(PersistentMapping, zcontained.Contained):
 			notify(grades_interfaces.GradeRemovedEvent(g, username))
 		return idx != -1
 
+	def remove_grades(self, grade):
+		for username in self.keys():
+			self.remove_grade(username, grade)
+			
 	def clear(self, username):
 		grades = self.pop(username, None)
-		return grades
+		for grade in grades or ():
+			notify(grades_interfaces.GradeRemovedEvent(grade, username))
+		return True if grades else False
 
 	def clearAll(self):
-		super(Grades, self).clear()
+		for username in list(self.keys()):
+			self.clear(username)
 
 	def updateFromExternalObject(self, ext, *args, **kwargs):
 		modified = False

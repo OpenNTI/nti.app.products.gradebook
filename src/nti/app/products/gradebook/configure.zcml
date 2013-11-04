@@ -37,6 +37,7 @@
 			 for="nti.dataserver.interfaces.IUser .interfaces.IGrade" />
 			 
 	<subscriber handler="._subscribers._grade_removed" />
+	<subscriber handler="._subscribers._gradebook_entry_removed" />
 	
 	<!-- mime factories -->
 	<include package="nti.externalization" file="meta.zcml" />

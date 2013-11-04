@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.lifecycleevent import interfaces as lce_interfaces
 
 from nti.dataserver import users
 
@@ -27,3 +28,8 @@ def _grade_removed(event):
 		if note is not None:
 			user.deleteEqualContainedObject(note)
 
+@component.adapter(grade_interfaces.IGradeBookEntry, lce_interfaces.IObjectRemovedEvent)
+def _gradebook_entry_removed(gbe, event):
+	grades = None # TODO: Get grades
+	if grades:
+		grades.remove_grades(gbe.NTIID)
