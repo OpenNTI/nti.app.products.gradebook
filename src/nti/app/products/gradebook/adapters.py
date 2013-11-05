@@ -22,14 +22,18 @@ from nti.dataserver import interfaces as nti_interfaces
 from . import interfaces as grade_interfaces
 
 def get_grade_discussion_note(grade, username=None):
-	result = None
+	result = note = None
 	username = username or grade.username
 	user = users.User.get_user(username)
 	ntiid = getattr(grade, 'ntiid', unicode(grade))
 	container = user.getContainer(ntiid, {}) if user is not None else {}
 	for obj in container.values():
-		if grade_interfaces.IGradeDiscussionNote.providedBy(obj):
+		if nti_interfaces.INote.providedBy(obj) and note is None:
+			note = obj # check the first note
+		if grade_interfaces.IGradeDiscussion.providedBy(obj):
 			result = obj
+			break
+	result = note if result is None else result
 	return result
 
 def create_grade_discussion_note(grade, username=None):
@@ -45,7 +49,7 @@ def create_grade_discussion_note(grade, username=None):
 	jar = IConnection(user, None)
 	if jar:
 		jar.add(result)
-	interface.alsoProvides(result, grade_interfaces.IGradeDiscussionNote)
+	interface.alsoProvides(result, grade_interfaces.IGradeDiscussion)
 	user.addContainedObject(result)
 	return result
 
