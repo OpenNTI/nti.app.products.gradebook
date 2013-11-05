@@ -30,6 +30,10 @@
 			 provides="nti.dataserver.interfaces.INote"
 			 for=".interfaces.IGrade" />
 			 
+	<subscriber factory=".externalization.GradeDecorator"
+				for=".interfaces.IGrade"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<subscriber handler=".subscribers._grade_removed" />
 	<subscriber handler=".subscribers._gradebook_entry_removed" />
 	

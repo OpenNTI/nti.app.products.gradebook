@@ -30,7 +30,7 @@ class TestAdapters(ConfiguringTestBase):
 		username = "ichigo@bleach.com"
 		self._create_user(username)
 		g = grades.Grade(username=username, ntiid="quiz1", grade=85.0, autograde=80.2)
-		note = adapters.get_grade_discussion_note(g)
+		note = adapters.get_grade_discussion(g)
 		assert_that(note, is_(none()))
 		note = nti_interfaces.INote(g)
 		assert_that(note, is_not(none()))

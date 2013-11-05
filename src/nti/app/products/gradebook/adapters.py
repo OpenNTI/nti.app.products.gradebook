@@ -21,7 +21,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as grade_interfaces
 
-def get_grade_discussion_note(grade, username=None):
+def get_grade_discussion(grade, username=None):
 	result = note = None
 	username = username or grade.username
 	user = users.User.get_user(username)
@@ -36,7 +36,7 @@ def get_grade_discussion_note(grade, username=None):
 	result = note if result is None else result
 	return result
 
-def create_grade_discussion_note(grade, username=None):
+def create_grade_discussion(grade, username=None):
 	username = username or grade.username
 	user = users.User.get_user(username)
 	if user is None:
@@ -56,6 +56,6 @@ def create_grade_discussion_note(grade, username=None):
 @interface.implementer(nti_interfaces.INote)
 @component.adapter(grade_interfaces.IGrade)
 def _DiscussionGradeAdapter(grade):
-	result = get_grade_discussion_note(grade)
-	result = result if result is not None else create_grade_discussion_note(grade)
+	result = get_grade_discussion(grade)
+	result = result if result is not None else create_grade_discussion(grade)
 	return result
