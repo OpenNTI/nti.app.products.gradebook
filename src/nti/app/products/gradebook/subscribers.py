@@ -21,12 +21,10 @@ from . import interfaces as grade_interfaces
 @component.adapter(grade_interfaces.IGradeRemovedEvent)
 def _grade_removed(event):
 	grade = event.object
-	username = grade.username
-	user = users.User.get_user(username)
-	if user is not None:
-		note = adapters.get_grade_discussion_note(grade)
-		if note is not None:
-			user.deleteEqualContainedObject(note)
+	discussion = adapters.get_grade_discussion(grade)
+	if discussion is not None:
+		user = users.User.get_user(grade.username)
+		user.deleteEqualContainedObject(discussion)
 
 @component.adapter(grade_interfaces.IGradeBookEntry, lce_interfaces.IObjectRemovedEvent)
 def _gradebook_entry_removed(gbe, event):
