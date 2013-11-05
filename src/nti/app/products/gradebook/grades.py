@@ -44,31 +44,41 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 	def clone(self):
 		result = self.__class__()
 		result.__parent__, result.__name__ = (None, self.__name__)
-		result.ntiid = self.ntiid
-		result.grade = self.grade
-		result.autograde = self.autograde
+		result.copy(self, False)
 		return result
-	copy = clone
+
+	def copy(self, other, parent=False):
+		self.ntiid = other.ntiid
+		self.grade = other.grade
+		self.username = other.username
+		self.autograde = other.autograde
+		if parent:
+			self.__name__ = other.__name__
+			self.__parent__ = other.__parent__
+		return self
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.ntiid == other.ntiid)
+			return self is other or (self.ntiid == other.ntiid
+									 and self.username == other.username)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
 		xhash ^= hash(self.ntiid)
+		xhash ^= hash(self.username)
 		return xhash
 
 	def __str__(self):
-		return "%s,%s" % (self.ntiid, self.grade)
+		return "%s,%s,%s" % (self.username, self.ntiid, self.grade)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__,
-								 self.ntiid,
-								 self.grade,
-								 self.autograde)
+		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__,
+									self.username,
+									self.ntiid,
+									self.grade,
+									self.autograde)
 
 @interface.implementer(grades_interfaces.IGrades, 
 					   ext_interfaces.IInternalObjectUpdater,
@@ -78,9 +88,10 @@ class Grades(PersistentMapping, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	def index(self, username, grade, grades=None):
+	def index(self, grade, username=None, grades=None):
 		idx = -1
-		ntiid = grades_interfaces.IGrade(grade).ntiid
+		ntiid = getattr(grade, 'ntiid', unicode(grade))
+		username = username or getattr(grade, 'username', None)
 		grades = grades if grades is not None else self.get(username, ())
 		for i, g in enumerate(grades):
 			if g.ntiid == ntiid:
@@ -88,26 +99,30 @@ class Grades(PersistentMapping, zcontained.Contained):
 				break
 		return idx
 
-	def find_grade(self, username, grade):
+	def find_grade(self, grade, username=None):
+		username = username or getattr(grade, 'username', None)
 		grades = self.get(username, ())
-		idx = self.index(username, grade, grades)
+		idx = self.index(grade, username, grades)
 		return grades[idx] if idx != -1 else None
 
-	def add_grade(self, username, grade):
+	def add_grade(self, grade, username=None):
+		username = username or grade.username
 		grades = self.get(username, None)
 		if grades is None:
 			grades = self[username] = BList()
 
-		grade = grades_interfaces.IGrade(grade)
-		idx = self.index(username, grade, grades)
+		grade.username = username # make sure it has the same username
+		idx = self.index(grade, username, grades)
 		if grade.__parent__ is None:
 			locate(grade, self, grade.ntiid)
 		if idx == -1:
 			grades.append(grade)
+			idx = len(grades) - 1
 			notify(grades_interfaces.GradeAddedEvent(grade, username))
 		else:
-			grades[idx] = grade
+			grades[idx].copy(grade)
 			notify(grades_interfaces.GradeModifiedEvent(grade, username))
+		return idx
 
 	set_grade = add_grade
 
@@ -115,17 +130,18 @@ class Grades(PersistentMapping, zcontained.Contained):
 		grades = self.get(username, None)
 		return list(grades) if grades else None
 
-	def remove_grade(self, username, grade):
+	def remove_grade(self, grade, username=None):
+		username = username or getattr(grade, 'username', None)
 		grades = self.get(username, ())
-		idx = self.index(username, grade, grades)
+		idx = self.index(grade, username, grades)
 		if idx != -1:
 			g = grades.pop(idx)
 			notify(grades_interfaces.GradeRemovedEvent(g, username))
 		return idx != -1
 
-	def remove_grades(self, grade):
+	def remove_grades(self, ntiid):
 		for username in self.keys():
-			self.remove_grade(username, grade)
+			self.remove_grade(ntiid, username)
 			
 	def clear(self, username):
 		grades = self.pop(username, None)
@@ -145,6 +161,6 @@ class Grades(PersistentMapping, zcontained.Contained):
 				modified = True
 				grade = internalization.find_factory_for(grade_ext)() 
 				internalization.update_from_external_object(grade, grade_ext)
-				self.set_grade(username, grade)
+				self.add_grade(grade, username)
 		return modified
 

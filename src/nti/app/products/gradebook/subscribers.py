@@ -20,11 +20,11 @@ from . import interfaces as grade_interfaces
 
 @component.adapter(grade_interfaces.IGradeRemovedEvent)
 def _grade_removed(event):
-	username = event.username
+	grade = event.object
+	username = grade.username
 	user = users.User.get_user(username)
-	grade = grade_interfaces.IGrade(event.object)
 	if user is not None:
-		note = adapters.get_grade_discussion_note(user, grade)
+		note = adapters.get_grade_discussion_note(grade)
 		if note is not None:
 			user.deleteEqualContainedObject(note)
 

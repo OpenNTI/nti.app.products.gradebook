@@ -25,16 +25,10 @@
 			 for=".interfaces.IGrade" />
 	
 	<adapter factory=".externalization.GradesExternalizer" />
-		
-	<adapter factory=".adapters._StringGradeAdapter"
-			 provides=".interfaces.IGrade"
-			 for="basestring" />
-			 
-	<adapter factory=".adapters._EntryGradeAdapter" />
 	
 	<adapter factory=".adapters._DiscussionGradeAdapter"
 			 provides="nti.dataserver.interfaces.INote"
-			 for="nti.dataserver.interfaces.IUser .interfaces.IGrade" />
+			 for=".interfaces.IGrade" />
 			 
 	<subscriber handler=".subscribers._grade_removed" />
 	<subscriber handler=".subscribers._gradebook_entry_removed" />

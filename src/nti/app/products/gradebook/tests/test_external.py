@@ -29,12 +29,13 @@ class TestExternal(ConfiguringTestBase):
 		return usr
 
 	def test_grade(self):
-		g = grades.Grade(ntiid="quiz1", grade=85.0, autograde=80.2)
+		g = grades.Grade(username='nt@nti.com', ntiid="quiz1", grade=85.0, autograde=80.2)
 		ext = externalization.to_external_object(g)
 		assert_that(ext, has_entry(u'Class', 'Grade'))
 		assert_that(ext, has_entry(u'grade', is_(85.0)))
 		assert_that(ext, has_entry(u'ntiid', 'quiz1'))
 		assert_that(ext, has_entry(u'autograde', is_(80.2)))
+		assert_that(ext, has_entry(u'username', 'nt@nti.com'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.grade'))
 		assert_that(ext, has_entry(u'Last Modified', is_not(none())))
 
@@ -44,6 +45,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(newgrade, has_property('ntiid', 'quiz1'))
 		assert_that(newgrade, has_property('grade', is_(85.0)))
 		assert_that(newgrade, has_property('autograde', is_(80.2)))
+		assert_that(newgrade, has_property('username', is_('nt@nti.com')))
 
 	def test_grades(self):
 		count = 0
@@ -53,11 +55,12 @@ class TestExternal(ConfiguringTestBase):
 			username = 'u%s' % random.randint(1, 5)
 			entry = 'e%s' % random.randint(1, 5)
 			grade = grades.Grade(ntiid=entry,
+								 username=username,
 								 grade=float(random.randint(1, 100)),
 								 autograde=float(random.randint(1, 100)))
-			if store.index(username, grade) == -1:
+			if store.index(grade) == -1:
 				count += 1
-				store.add_grade(username, grade)
+				store.add_grade(grade)
 
 		ext = externalization.to_external_object(store)
 		assert_that(ext, has_entry(u'Class', 'Grades'))
@@ -74,8 +77,9 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(len(store), is_(len(new_store)))
 		for username in store.keys():
 			for grade in store.get_grades(username):
-				new_grade = new_store.find_grade(username, grade)
+				new_grade = new_store.find_grade(grade, username)
 				assert_that(new_grade, is_not(none()))
+				assert_that(new_grade, has_property('username', grade.username))
 				assert_that(new_grade, has_property('grade', grade.grade))
 				assert_that(new_grade, has_property('autograde'), is_(grade.autograde))
 		

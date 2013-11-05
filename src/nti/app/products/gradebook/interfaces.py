@@ -77,9 +77,15 @@ class IGrade(IContained, ICloneable):
 	"""
 	Grade entry
 	"""
-	ntiid = dmschema.ValidTextLine(title="grade entry ntiid", required=True)
+	username = dmschema.ValidTextLine(title="Username", required=True)
+	ntiid = dmschema.ValidTextLine(title="Grade entry ntiid", required=True)
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
+
+	def copy(source):
+		"""
+		copy the data from the source object
+		"""
 
 class IGrades(mapping.IMapping, IContained):
 	"""
@@ -89,38 +95,38 @@ class IGrades(mapping.IMapping, IContained):
 	def get_grades(username):
 		pass
 
-	def add_grade(username, grade):
+	def add_grade(grade):
 		pass
 
-	def remove_grade(username, grade):
+	def remove_grade(grade, username=None):
 		pass
 
+	def remove_grades(ntiid):
+		pass
+
+	def clear(username):
+		pass
+
+	def clearAll():
+		pass
+			
 class IGradeAddedEvent(lce_interfaces.IObjectAddedEvent):
 	username = interface.Attribute("username")
 
 @interface.implementer(IGradeAddedEvent)
 class GradeAddedEvent(lifecycleevent.ObjectAddedEvent):
-
-	def __init__(self, obj, username, *args, **kwargs):
-		super(GradeAddedEvent, self).__init__(obj, *args, **kwargs)
-		self.username = username
+	pass
 
 class IGradeModifiedEvent(lce_interfaces.IObjectModifiedEvent):
-	username = interface.Attribute("username")
+	pass
 
 @interface.implementer(IGradeModifiedEvent)
 class GradeModifiedEvent(lifecycleevent.ObjectModifiedEvent):
-
-	def __init__(self, obj, username, *args, **kwargs):
-		super(GradeModifiedEvent, self).__init__(obj, *args, **kwargs)
-		self.username = username
+	pass
 
 class IGradeRemovedEvent(lce_interfaces.IObjectRemovedEvent):
-	username = interface.Attribute("username")
+	pass
 
 @interface.implementer(IGradeRemovedEvent)
 class GradeRemovedEvent(lifecycleevent.ObjectModifiedEvent):
-
-	def __init__(self, obj, username, *args, **kwargs):
-		super(GradeRemovedEvent, self).__init__(obj, *args, **kwargs)
-		self.username = username
+	pass

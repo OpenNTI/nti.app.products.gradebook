@@ -163,6 +163,10 @@ class GradeBookEntry(Persistent,
 	
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
+	@property
+	def ntiid(self):
+		return self.NTIID
+
 	def clone(self):
 		result = self.__class__()
 		result.name = self.name
