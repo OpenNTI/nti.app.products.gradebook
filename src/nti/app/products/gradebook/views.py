@@ -12,18 +12,24 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+from zope import component
+from zope import interface
 from zope import lifecycleevent
+from zope.traversing.interfaces import IPathAdapter
 
 from ZODB.interfaces import IConnection
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+from pyramid.interfaces import IRequest
 from pyramid import httpexceptions as hexc
 
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+
+from nti.contenttypes.courses import interfaces as courses_interfaces
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
@@ -49,6 +55,13 @@ _r_view_defaults.update(permission=nauth.ACT_READ,
 _d_view_defaults = _view_defaults.copy()
 _d_view_defaults.update(permission=nauth.ACT_DELETE,
 						request_method='DELETE')
+
+
+@interface.implementer(IPathAdapter)
+@component.adapter(courses_interfaces.ICourseInstance, IRequest)
+def GradeBookPathAdapter(context, request):
+	result = grades_interfaces.IGradeBook(context)
+	return result
 
 @view_config(context=grades_interfaces.IGradeBook)
 @view_config(context=grades_interfaces.IGradeBookPart)

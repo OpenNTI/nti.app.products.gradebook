@@ -18,6 +18,9 @@
 			 provides="nti.dataserver.interfaces.INote"
 			 for=".interfaces.IGrade" />
 			 
+	<adapter name="GradeBook"
+			 factory=".views.GradeBookPathAdapter" />
+			 
 	<!-- Externalization -->
 	
 	<adapter factory=".externalization.GradesObjectIO"

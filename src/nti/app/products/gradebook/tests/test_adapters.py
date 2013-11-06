@@ -13,7 +13,11 @@ from nti.dataserver import interfaces as nti_interfaces
 from .. import grades
 from .. import adapters
 
+from nti.contenttypes.courses import courses
+
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from .. import interfaces as grades_interfaces
 
 from . import ConfiguringTestBase
 
@@ -38,3 +42,8 @@ class TestAdapters(ConfiguringTestBase):
 		note2 = nti_interfaces.INote(g)
 		assert_that(note, is_(note2))
 
+	@WithMockDSTrans
+	def test_courses(self):
+		ci = courses.CourseInstance()
+		gb = grades_interfaces.IGradeBook(ci, None)
+		assert_that(gb, is_not(none()))
