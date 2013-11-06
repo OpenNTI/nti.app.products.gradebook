@@ -30,7 +30,6 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization import internalization
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -85,6 +84,33 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 									self.grade,
 									self.autograde)
 
+def _indexof_grade(grade, grades):
+	idx = -1
+	ntiid = getattr(grade, 'ntiid', unicode(grade))
+	for i, g in enumerate(grades):
+		if g.ntiid == ntiid:
+			idx = i
+			break
+	return idx
+
+class _UserGradesResource(object):
+
+	def __init__(self, blist):
+		self.blist = blist
+
+	def __getitem__(self, key):
+		idx = _indexof_grade(key, self.blist)
+		if idx != -1:
+			return self.blist[idx]
+		raise KeyError()
+
+	def keys(self):
+		result = [g.ntiid for g in self.blist]
+		return result
+
+	def values(self):
+		return self.blist
+
 @component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGrades, 
 					   ext_interfaces.IInternalObjectUpdater,
@@ -97,14 +123,9 @@ class Grades(PersistentMapping, zcontained.Contained):
 	__super_getitem = PersistentMapping.__getitem__
 	
 	def index(self, grade, username=None, grades=None):
-		idx = -1
-		ntiid = getattr(grade, 'ntiid', unicode(grade))
 		username = username or getattr(grade, 'username', None)
 		grades = grades if grades is not None else self.get_grades(username, ())
-		for i, g in enumerate(grades):
-			if g.ntiid == ntiid:
-				idx = i
-				break
+		idx = _indexof_grade(grade, grades)
 		return idx
 
 	def find_grade(self, grade, username=None):
@@ -135,9 +156,8 @@ class Grades(PersistentMapping, zcontained.Contained):
 	set_grade = add_grade
 
 	def __getitem__(self, key):
-		blist = self.__super_getitem(key)
-		result = LocatedExternalDict({g.ntiid:g for g in blist})
-		return result
+		grades = self.__super_getitem(key)
+		return _UserGradesResource(grades)
 
 	def get_grades(self, username, default=None):
 		try:
@@ -181,4 +201,3 @@ class Grades(PersistentMapping, zcontained.Contained):
 		return modified
 
 _GradesFactory = an_factory(Grades)
-
