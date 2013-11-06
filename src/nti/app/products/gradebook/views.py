@@ -175,7 +175,9 @@ class GradePostView(AbstractAuthenticatedView,
 		externalValue = self.readInput()
 		datatype = self.findContentType(externalValue)
 
-		grade = self.createAndCheckContentObject(None, datatype, externalValue, creator)
+		grade = self.createAndCheckContentObject(
+										None, datatype, externalValue, creator,
+										lambda x: grades_interfaces.IGrade.providedBy(x))
 		gradebook = grades_gradebook(self.context)
 		if gradebook is None or not gradebook.has_entry(grade.ntiid):
 			utils.raise_field_error(self.request,
