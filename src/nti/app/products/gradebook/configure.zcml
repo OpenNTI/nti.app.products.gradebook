@@ -14,12 +14,19 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
 			 
+	<adapter factory=".grades._GradesFactory"
+			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
+			 provides=".interfaces.IGrades" />
+			 
 	<adapter factory=".adapters._DiscussionGradeAdapter"
 			 provides="nti.dataserver.interfaces.INote"
 			 for=".interfaces.IGrade" />
 			 
 	<adapter name="GradeBook"
 			 factory=".views.GradeBookPathAdapter" />
+			 
+	<adapter name="Grades"
+			 factory=".views.GradesPathAdapter" />
 			 
 	<!-- Externalization -->
 	

@@ -43,7 +43,9 @@ class TestAdapters(ConfiguringTestBase):
 		assert_that(note, is_(note2))
 
 	@WithMockDSTrans
-	def test_courses(self):
+	def test_course_instance(self):
 		ci = courses.CourseInstance()
 		gb = grades_interfaces.IGradeBook(ci, None)
 		assert_that(gb, is_not(none()))
+		grs = grades_interfaces.IGrades(ci, None)
+		assert_that(grs, is_not(none()))

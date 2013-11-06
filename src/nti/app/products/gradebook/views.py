@@ -56,13 +56,19 @@ _d_view_defaults = _view_defaults.copy()
 _d_view_defaults.update(permission=nauth.ACT_DELETE,
 						request_method='DELETE')
 
-
 @interface.implementer(IPathAdapter)
 @component.adapter(courses_interfaces.ICourseInstance, IRequest)
 def GradeBookPathAdapter(context, request):
 	result = grades_interfaces.IGradeBook(context)
 	return result
 
+@interface.implementer(IPathAdapter)
+@component.adapter(courses_interfaces.ICourseInstance, IRequest)
+def GradesPathAdapter(context, request):
+	result = grades_interfaces.IGrades(context)
+	return result
+
+@view_config(context=grades_interfaces.IGrades)
 @view_config(context=grades_interfaces.IGradeBook)
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_config(context=grades_interfaces.IGradeBookEntry)

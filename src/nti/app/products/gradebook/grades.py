@@ -10,9 +10,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 from zope.event import notify
 from zope.location import locate
+from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
@@ -21,11 +23,14 @@ from zc.blist import BList
 
 from persistent.mapping import PersistentMapping
 
+from nti.contenttypes.courses import interfaces as course_interfaces
+
 from nti.dataserver import mimetype
 from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization import internalization
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -80,6 +85,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 									self.grade,
 									self.autograde)
 
+@component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGrades, 
 					   ext_interfaces.IInternalObjectUpdater,
 					   an_interfaces.IAttributeAnnotatable,
@@ -88,11 +94,13 @@ class Grades(PersistentMapping, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
+	__super_getitem = PersistentMapping.__getitem__
+	
 	def index(self, grade, username=None, grades=None):
 		idx = -1
 		ntiid = getattr(grade, 'ntiid', unicode(grade))
 		username = username or getattr(grade, 'username', None)
-		grades = grades if grades is not None else self.get(username, ())
+		grades = grades if grades is not None else self.get_grades(username, ())
 		for i, g in enumerate(grades):
 			if g.ntiid == ntiid:
 				idx = i
@@ -101,13 +109,13 @@ class Grades(PersistentMapping, zcontained.Contained):
 
 	def find_grade(self, grade, username=None):
 		username = username or getattr(grade, 'username', None)
-		grades = self.get(username, ())
+		grades = self.get_grades(username, ())
 		idx = self.index(grade, username, grades)
 		return grades[idx] if idx != -1 else None
 
 	def add_grade(self, grade, username=None):
 		username = username or grade.username
-		grades = self.get(username, None)
+		grades = self.get_grades(username, None)
 		if grades is None:
 			grades = self[username] = BList()
 
@@ -126,13 +134,21 @@ class Grades(PersistentMapping, zcontained.Contained):
 
 	set_grade = add_grade
 
-	def get_grades(self, username):
-		grades = self.get(username, None)
-		return list(grades) if grades else None
+	def __getitem__(self, key):
+		blist = self.__super_getitem(key)
+		result = LocatedExternalDict({g.ntiid:g for g in blist})
+		return result
+
+	def get_grades(self, username, default=None):
+		try:
+			grades = self.__super_getitem(username)
+			return grades
+		except KeyError:
+			return default
 
 	def remove_grade(self, grade, username=None):
 		username = username or getattr(grade, 'username', None)
-		grades = self.get(username, ())
+		grades = self.get_grades(username, ())
 		idx = self.index(grade, username, grades)
 		if idx != -1:
 			g = grades.pop(idx)
@@ -163,4 +179,6 @@ class Grades(PersistentMapping, zcontained.Contained):
 				internalization.update_from_external_object(grade, grade_ext)
 				self.add_grade(grade, username)
 		return modified
+
+_GradesFactory = an_factory(Grades)
 
