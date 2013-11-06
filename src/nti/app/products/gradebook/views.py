@@ -218,7 +218,7 @@ class GradePutView(AbstractAuthenticatedView,
 		return theObject
 
 @view_config(context=grades_interfaces.IGrade)
-@view_defaults(**_u_view_defaults)
+@view_defaults(**_d_view_defaults)
 class GradeDelView(AbstractAuthenticatedView,
 				   ModeledContentEditRequestUtilsMixin):
 
