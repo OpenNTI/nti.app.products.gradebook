@@ -14,6 +14,7 @@ from zope import component
 from zope import interface
 from zope.event import notify
 from zope.location import locate
+from zope.proxy import ProxyBase
 from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
@@ -93,10 +94,12 @@ def _indexof_grade(grade, grades):
 			break
 	return idx
 
-class _UserGradesResource(object):
+class _UserGradesResource(ProxyBase):
 
-	def __init__(self, blist):
-		self.blist = blist
+	def __init__(self, obj, username):
+		super(_UserGradesResource, self).__init__(obj)
+		self.blist = obj
+		self.username = username
 
 	def __getitem__(self, key):
 		idx = _indexof_grade(key, self.blist)
@@ -104,9 +107,10 @@ class _UserGradesResource(object):
 			return self.blist[idx]
 		raise KeyError()
 
-	def keys(self):
+	def ntiids(self):
 		result = [g.ntiid for g in self.blist]
 		return result
+	keys = ntiids
 
 	def values(self):
 		return self.blist
@@ -155,9 +159,9 @@ class Grades(PersistentMapping, zcontained.Contained):
 
 	set_grade = add_grade
 
-	def __getitem__(self, key):
-		grades = self.__super_getitem(key)
-		return _UserGradesResource(grades)
+	def __getitem__(self, username):
+		grades = self.__super_getitem(username)
+		return _UserGradesResource(grades, username)
 
 	def get_grades(self, username, default=None):
 		try:
