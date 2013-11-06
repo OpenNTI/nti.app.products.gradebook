@@ -120,7 +120,7 @@ class _UserGradesResource(ProxyBase):
 					   ext_interfaces.IInternalObjectUpdater,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class Grades(PersistentMapping, zcontained.Contained):
+class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -155,6 +155,8 @@ class Grades(PersistentMapping, zcontained.Contained):
 		else:
 			grades[idx].copy(grade)
 			notify(grades_interfaces.GradeModifiedEvent(grade, username))
+
+		self.updateLastMod()
 		return idx
 
 	set_grade = add_grade
@@ -177,6 +179,7 @@ class Grades(PersistentMapping, zcontained.Contained):
 		if idx != -1:
 			g = grades.pop(idx)
 			notify(grades_interfaces.GradeRemovedEvent(g, username))
+			self.updateLastMod()
 		return idx != -1
 
 	def remove_grades(self, ntiid):
@@ -187,6 +190,7 @@ class Grades(PersistentMapping, zcontained.Contained):
 		grades = self.pop(username, None)
 		for grade in grades or ():
 			notify(grades_interfaces.GradeRemovedEvent(grade, username))
+		self.updateLastMod()
 		return True if grades else False
 
 	def clearAll(self):

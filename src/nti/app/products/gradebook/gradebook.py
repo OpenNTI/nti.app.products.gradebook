@@ -27,12 +27,11 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.mimetype.mimetype import MIME_BASE
 
-from nti.ntiids.ntiids import make_ntiid
+from nti.ntiids import ntiids
 
 from nti.utils._compat import Implicit
 from nti.utils.property import CachedProperty
 from nti.utils.schema import SchemaConfigured
-from nti.ntiids.ntiids import DATE as NTIID_DATE
 from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
@@ -63,10 +62,10 @@ class _NTIIDMixin(zcontained.Contained):
 	def NTIID(self):
 		provider = self._ntiid_provider
 		if provider:
-			return make_ntiid(date=NTIID_DATE,
-							  provider=provider,
-							  nttype=self._ntiid_type,
-							  specific=self._ntiid_specific_part)
+			return ntiids.make_ntiid(date=ntiids.DATE,
+									 provider=provider,
+									 nttype=self._ntiid_type,
+									 specific=self._ntiid_specific_part)
 
 class _CreatorNTIIDMixin(_NTIIDMixin):
 
@@ -100,6 +99,15 @@ class GradeBook(Implicit,
 			result[cloned.__name__] = cloned
 		return result
 	copy = clone
+
+	def has_entry(self, ntiid):
+		result = False
+		type_ = ntiids.get_type(ntiid)
+		if type_ == grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY:
+			specific = ntiids.get_specific(ntiid)
+			part, entry = specific.split('.')
+			result = entry in self.get(part, {})
+		return result
 
 	@property
 	def TotalPartWeight(self):

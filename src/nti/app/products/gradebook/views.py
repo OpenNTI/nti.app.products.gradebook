@@ -35,10 +35,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils._compat import aq_base
-from nti.utils.maps import CaseInsensitiveDict
 
 from . import utils
-from . import grades
 from . import interfaces as grades_interfaces
 
 _view_defaults = dict(route_name='objects.generic.traversal',
@@ -161,38 +159,77 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
 		return theObject
 
+def grades_gradebook(grades):
+	parent = getattr(grades, '__parent__', None)
+	result = grades_interfaces.IGradeBook(parent, None)
+	return result
+
 @view_config(context=grades_interfaces.IGrades)
 @view_defaults(**_c_view_defaults)
-class SetGradeView(AbstractAuthenticatedView,
-				   ModeledContentUploadRequestUtilsMixin):
+class GradePostView(AbstractAuthenticatedView,
+					ModeledContentUploadRequestUtilsMixin):
+
+	def _do_call(self):
+		creator = self.getRemoteUser()
+		context = self.request.context
+		externalValue = self.readInput()
+		datatype = self.findContentType(externalValue)
+
+		grade = self.createAndCheckContentObject(None, datatype, externalValue, creator)
+		gradebook = grades_gradebook(self.context)
+		if gradebook is None or not gradebook.has_entry(grade.ntiid):
+			utils.raise_field_error(self.request,
+									"ntiid",
+									_("must specify a valid grade entry ntiid"))
+
+		context.add_grade(grade)
+
+		self.request.response.status_int = 201 # created
+		self.request.response.location = self.request.resource_path(grade)
+
+		return grade
+
+@view_config(context=grades_interfaces.IGrade)
+@view_defaults(**_u_view_defaults)
+class GradePutView(AbstractAuthenticatedView,
+				   ModeledContentUploadRequestUtilsMixin,
+				   ModeledContentEditRequestUtilsMixin):
+
+	def _get_object_to_update(self):
+		return self.request.context
+
+	def readInput(self):
+		externalValue = super(GradePutView, self).readInput()
+		for name in ('nttid',):
+			if name in externalValue:
+				del externalValue[name]
+		return externalValue
 
 	def __call__(self):
-		request = self.request
-		values = CaseInsensitiveDict(**self.readInput())
-		grade = grades.Grade()
-		entryId = values.get('entryId')
-		if not entryId:
-			utils.raise_field_error(request, "entryId", _("must specify a valid grade entry"))
-		grade.entryId = entryId
-	
-		value = values.get('grade')
-		if value is None:
-			utils.raise_field_error(request, "grade", _("must specify a valid grade"))
+		theObject = self._get_object_to_update()
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
 
-		try:
-			field = grades_interfaces.IGrade['grade']
-			value = field.fromUnicode(value)
-			grade.grade = value
-		except:
-			utils.raise_field_error(request, "grade", _("must specify a valid grade"))
+		externalValue = self.readInput()
+		self.updateContentObject(theObject, externalValue)
 
-		username = values.get('username', values.get('student'))
-		if not username:
-			utils.raise_field_error(request, "username", _("must specify a valid student name"))
+		return theObject
 
-		store = request.context
-		store.add_grade(username, grade)
-		return hexc.HTTPNoContent()
+@view_config(context=grades_interfaces.IGrade)
+@view_defaults(**_u_view_defaults)
+class GradeDelView(AbstractAuthenticatedView,
+				   ModeledContentEditRequestUtilsMixin):
+
+	def __call__(self):
+		context = self.request.context
+		self._check_object_unmodified_since(context)
+
+		grades = context.__parent__
+		grades.remove_grade(context)
+
+		result = hexc.HTTPNoContent()
+		result.last_modified = grades.lastModified
+		return result
 
 del _view_defaults
 del _u_view_defaults
