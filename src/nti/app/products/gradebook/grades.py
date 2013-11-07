@@ -15,6 +15,7 @@ from zope import interface
 from zope.event import notify
 from zope.location import locate
 from zope.proxy import ProxyBase
+from zope.interface.common import mapping
 from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
@@ -94,6 +95,7 @@ def _indexof_grade(grade, grades):
 			break
 	return idx
 
+@interface.implementer(mapping.IItemMapping)
 class _UserGradesResource(ProxyBase):
 
 	def __init__(self, obj, username):
@@ -108,7 +110,7 @@ class _UserGradesResource(ProxyBase):
 		raise KeyError()
 
 	def ntiids(self):
-		result = [g.ntiid for g in self.blist]
+		result = tuple((g.ntiid for g in self.blist))
 		return result
 	keys = ntiids
 
