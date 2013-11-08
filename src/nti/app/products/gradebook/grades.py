@@ -107,7 +107,7 @@ class _UserGradesResource(ProxyBase):
 		idx = _indexof_grade(key, self.blist)
 		if idx != -1:
 			return self.blist[idx]
-		raise KeyError()
+		raise KeyError(key)
 
 	def ntiids(self):
 		result = tuple((g.ntiid for g in self.blist))
