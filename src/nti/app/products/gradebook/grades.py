@@ -96,7 +96,7 @@ def _indexof_grade(grade, grades):
 	return idx
 
 @interface.implementer(mapping.IItemMapping)
-class _UserGradesResource(ProxyBase):
+class _UserGradesResource(ProxyBase, zcontained.Contained):
 
 	def __init__(self, obj, username):
 		super(_UserGradesResource, self).__init__(obj)
@@ -165,7 +165,9 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 
 	def __getitem__(self, username):
 		grades = self.__super_getitem(username)
-		return _UserGradesResource(grades, username)
+		result = _UserGradesResource(grades, username)
+		result.__parent__ = self
+		return result
 
 	def get_grades(self, username, default=None):
 		try:
