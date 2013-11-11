@@ -95,7 +95,7 @@ def _indexof_grade(grade, grades):
 			break
 	return idx
 
-@interface.implementer(mapping.IItemMapping)
+@interface.implementer(mapping.IReadMapping)
 class _UserGradesResource(ProxyBase, zcontained.Contained):
 
 	def __init__(self, obj, username):
@@ -108,6 +108,17 @@ class _UserGradesResource(ProxyBase, zcontained.Contained):
 		if idx != -1:
 			return self.blist[idx]
 		raise KeyError(key)
+
+	def __contains__(self, key):
+		idx = _indexof_grade(key, self.blist)
+		return idx != -1
+	
+	def get(self, key, default=None):
+		try:
+			result = self.__getitem__(key)
+		except KeyError:
+			result = default
+		return result
 
 	def ntiids(self):
 		result = tuple((g.ntiid for g in self.blist))
