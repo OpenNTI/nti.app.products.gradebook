@@ -28,6 +28,6 @@ def _grade_removed(event):
 
 @component.adapter(grade_interfaces.IGradeBookEntry, lce_interfaces.IObjectRemovedEvent)
 def _gradebook_entry_removed(gbe, event):
-	grades = None # TODO: Get grades
+	grades = getattr(gbe, '__parent__', None)
 	if grades:
 		grades.remove_grades(gbe.NTIID)
