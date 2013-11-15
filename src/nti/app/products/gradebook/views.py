@@ -166,7 +166,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 	def readInput(self):
 		externalValue = super(GradeBookPutView, self).readInput()
 		# remove read only properties
-		for name in ('EntryID', 'PartID', 'id'):
+		for name in ('EntryID', 'PartID', 'id', 'DueDate'):
 			if name in externalValue:
 				del externalValue[name]
 		return externalValue

@@ -19,6 +19,8 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from persistent import Persistent
 
+from nti.assessment import interfaces as asm_interfaces
+
 from nti.contenttypes.courses import interfaces as course_interfaces
 
 from nti.dataserver import containers as nti_containers
@@ -172,6 +174,11 @@ class GradeBookEntry(Persistent,
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
 	@property
+	def DueDate(self):
+		asm = component.queryUtility(asm_interfaces.IQAssignment, name=self.assignmentId)
+		return getattr(asm, 'DueDate', None) # TODO: Check conrrect attribute
+
+	@property
 	def ntiid(self):
 		return self.NTIID
 
@@ -180,7 +187,6 @@ class GradeBookEntry(Persistent,
 		result.name = self.name
 		result.order = self.order
 		result.weight = self.weight
-		result.dueDate = self.dueDate
 		result.maxGrade = self.maxGrade
 		result.assignmentId = self.assignmentId
 		result.__parent__, result.__name__ = (None, self.__name__)
