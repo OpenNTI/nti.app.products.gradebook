@@ -40,8 +40,10 @@ class IGradeBookEntry(IContained, ICloneable):
 	containers(b'.IGradeBookPart')
 	__parent__.required = False
 
-	questionSetID = dmschema.ValidTextLine(title="question id", required=False)
-	name = dmschema.ValidTextLine(title="entry name", required=True)
+	assignmentId = dmschema.ValidTextLine(title="assignment id", required=True)
+	name = dmschema.ValidTextLine(title="entry name", required=False)
+	maxGrade = schema.Int(title="The maximum grade that can be obtained",
+						  min=0, max=100, required=True, default=100)
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 						  min=0.0,
 						  max=1.0,

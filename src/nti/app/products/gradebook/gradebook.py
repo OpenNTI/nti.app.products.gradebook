@@ -180,7 +180,8 @@ class GradeBookEntry(Persistent,
 		result.name = self.name
 		result.order = self.order
 		result.weight = self.weight
-		result.questionSetID = self.questionSetID
+		result.maxGrade = self.maxGrade
+		result.assignmentId = self.assignmentId
 		result.__parent__, result.__name__ = (None, self.__name__)
 		return result
 	copy = clone
@@ -190,7 +191,7 @@ class GradeBookEntry(Persistent,
 
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight,
-								 self.questionSetID)
+								 self.assignmentId)
 
 	def __eq__(self, other):
 		try:

@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import transaction
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -28,6 +30,8 @@ from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+
+from nti.assessment import interfaces as asm_interfaces
 
 from nti.contenttypes.courses import interfaces as courses_interfaces
 
@@ -94,6 +98,9 @@ class GradeBookDeleteView(AbstractAuthenticatedView,
 		result.last_modified = lastModified
 		return result
 
+def get_assignment(aid):
+	return component.queryUtility(asm_interfaces.IQAssignment, name=aid)
+
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_config(context=grades_interfaces.IGradeBookEntry)
 @view_defaults(**_c_view_defaults)
@@ -124,6 +131,21 @@ class GradeBookPostView(AbstractAuthenticatedView,
 		self.request.response.location = self.request.resource_path(containedObject)
 
 		return containedObject
+
+	def createAndCheckContentObject(self, owner, datatype, externalValue, creator,
+									predicate=None):
+		
+		result = super(GradeBookPostView, self).createAndCheckContentObject(
+															owner, datatype,
+															externalValue, creator,
+															predicate)
+
+		if	grades_interfaces.IGradeBookEntry.providedBy(result) and \
+			get_assignment(result.assignmentId) is None:
+			transaction.doom()
+			raise hexc.HTTPNotFound('Invalid assignment identifier')
+
+		return result
 
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_config(context=grades_interfaces.IGradeBookEntry)
@@ -158,6 +180,16 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		self.updateContentObject(theObject, externalValue)
 
 		return theObject
+
+	def updateContentObject(self, theObject, external, *args, **kwargs):
+
+		if	grades_interfaces.IGradeBookEntry.providedBy(theObject) and \
+			get_assignment(theObject.assignmentId) is None:
+			transaction.doom()
+			raise hexc.HTTPNotFound('Invalid assignment identifier')
+
+		result = super(GradeBookPutView, self).updateContentObject(theObject, external)
+		return result
 
 def grades_gradebook(grades):
 	parent = getattr(grades, '__parent__', None)
