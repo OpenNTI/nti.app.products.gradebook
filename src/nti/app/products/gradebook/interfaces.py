@@ -44,6 +44,7 @@ class IGradeBookEntry(IContained, ICloneable):
 	name = dmschema.ValidTextLine(title="entry name", required=False)
 	maxGrade = schema.Int(title="The maximum grade that can be obtained",
 						  min=0, max=100, required=True, default=100)
+	dueDate = schema.Date(title="The date on which the assignment is due", required=False)
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 						  min=0.0,
 						  max=1.0,
@@ -84,6 +85,7 @@ class IGrade(IContained, ICloneable):
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
+	schema.Date
 	def copy(source):
 		"""
 		copy the data from the source object

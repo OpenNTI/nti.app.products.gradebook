@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import datetime
+
 from .. import gradebook
 from .. import interfaces as grades_interfaces
 
@@ -49,6 +51,7 @@ class TestGradeBook(ConfiguringTestBase):
 		entry.weight = 0.9
 		entry.assignmentId = 'xyzq'
 		entry.maxGrade = 25
+		entry.dueDate = datetime.date(2013, 11, 30)
 		entry.__name__ = entry.name = 'entry'
 		part[entry.__name__] = entry
 
@@ -73,5 +76,6 @@ class TestGradeBook(ConfiguringTestBase):
 		assert_that(cl_entry, has_property('order', 2))
 		assert_that(cl_entry, has_property('weight', 0.9))
 		assert_that(cl_entry, has_property('maxGrade', 25))
+		assert_that(cl_entry, has_property('dueDate', datetime.date(2013, 11, 30)))
 		assert_that(cl_entry, has_property('assignmentId', 'xyzq'))
 

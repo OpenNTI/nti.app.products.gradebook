@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 import random
+import datetime
 
 from nti.dataserver.users import User
 
@@ -139,6 +140,7 @@ class TestExternal(ConfiguringTestBase):
 		gbe.weight = 0.55
 		gbe.maxGrade = 30
 		gbe.assignmentId = 'myquestion'
+		gbe.dueDate = datetime.date(2013, 11, 30)
 
 		ext = externalization.to_external_object(gbe)
 		assert_that(ext, has_entry(u'Class', 'GradeBookEntry'))
@@ -147,6 +149,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'order', 2))
 		assert_that(ext, has_entry(u'weight', 0.55))
 		assert_that(ext, has_entry(u'maxGrade', 30))
+		assert_that(ext, has_entry(u'dueDate', '2013-11-30'))
 		assert_that(ext, has_entry(u'assignmentId', 'myquestion'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:system-gradebookentry-quizzes.quiz1'))
