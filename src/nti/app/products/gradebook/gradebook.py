@@ -176,7 +176,7 @@ class GradeBookEntry(Persistent,
 	@property
 	def DueDate(self):
 		asm = component.queryUtility(asm_interfaces.IQAssignment, name=self.assignmentId)
-		return getattr(asm, 'DueDate', None) # TODO: Check conrrect attribute
+		return getattr(asm, 'available_for_submission_ending', None)
 
 	@property
 	def ntiid(self):
