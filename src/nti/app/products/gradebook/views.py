@@ -192,7 +192,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		return result
 
 def grades_gradebook(grades):
-	parent = getattr(grades, '__parent__', None)
+	parent = getattr(grades, '__parent__', None)  # course instance
 	result = grades_interfaces.IGradeBook(parent, None)
 	return result
 
