@@ -13,49 +13,26 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from ZODB.interfaces import IConnection
+from pyramid.traversal import find_interface
 
-from nti.dataserver import users
-from nti.dataserver.contenttypes import Note
-from nti.dataserver import interfaces as nti_interfaces
+from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from . import interfaces as grade_interfaces
 
-def get_grade_discussion(grade, username=None):
-	result = note = None
-	username = username or grade.username
-	user = users.User.get_user(username)
-	ntiid = getattr(grade, 'ntiid', unicode(grade))
-	container = user.getContainer(ntiid, {}) if user is not None else {}
-	for obj in container.values():
-		if nti_interfaces.INote.providedBy(obj) and note is None:
-			note = obj # check the first note
-		if grade_interfaces.IGradeDiscussion.providedBy(obj):
-			result = obj
-			break
-	result = note if result is None else result
-	return result
+@interface.implementer(grade_interfaces.IGrades)
+@component.adapter(grade_interfaces.IGradeBook)
+def gradebook_to_grades(gradebook):
+	course = find_interface(gradebook, ICourseInstance)
+	if course is None:
+		__traceback_info__ = gradebook
+		raise TypeError("Unable to find course")
+	return grade_interfaces.IGrades(course)
 
-def create_grade_discussion(grade, username=None):
-	username = username or grade.username
-	user = users.User.get_user(username)
-	if user is None:
-		return None
-	ntiid = getattr(grade, 'ntiid', unicode(grade))
-	# create note
-	result = Note()
-	result.creator = user
-	result.containerId = ntiid
-	jar = IConnection(user, None)
-	if jar:
-		jar.add(result)
-	interface.alsoProvides(result, grade_interfaces.IGradeDiscussion)
-	user.addContainedObject(result)
-	return result
-
-@interface.implementer(nti_interfaces.INote)
-@component.adapter(grade_interfaces.IGrade)
-def _DiscussionGradeAdapter(grade):
-	result = get_grade_discussion(grade)
-	result = result if result is not None else create_grade_discussion(grade)
-	return result
+@interface.implementer(grade_interfaces.IGradeBook)
+@component.adapter(grade_interfaces.IGrades)
+def grades_to_gradebook(grades):
+	course = find_interface(grades, ICourseInstance)
+	if course is None:
+		__traceback_info__ = grades
+		raise TypeError("Unable to find course")
+	return grade_interfaces.IGradeBook(course)
