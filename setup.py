@@ -31,6 +31,7 @@ setup(
 	namespace_packages=['nti', 'nti.app', 'nti.app.products'],
 	install_requires=[
 		'setuptools',
+		'nti.app.assessment',
 		'nti.contenttypes.courses',
 		'nti.dataserver',
 		'nti.app.testing',
