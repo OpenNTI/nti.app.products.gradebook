@@ -48,9 +48,9 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
 	<!-- Events -->
-	
-	<subscriber handler=".subscribers._grade_removed" />
+
 	<subscriber handler=".subscribers._gradebook_entry_removed" />
+	<subscriber handler=".subscribers._assignment_history_item_added" />
 	
 	<!-- ACLs -->
 	
