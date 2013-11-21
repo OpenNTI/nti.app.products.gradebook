@@ -62,6 +62,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 		if parent:
 			self.__name__ = other.__name__
 			self.__parent__ = other.__parent__
+		self.updateLastMod()
 		return self
 
 	def updateFromExternalObject(self, ext, *args, **kwargs):
@@ -179,10 +180,10 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		if idx == -1:
 			grades.append(grade)
 			idx = len(grades) - 1
-			notify(grades_interfaces.GradeAddedEvent(grade, username))
+			notify(grades_interfaces.GradeAddedEvent(grade))
 		else:
-			grades[idx].copy(grade)
-			notify(grades_interfaces.GradeModifiedEvent(grade, username))
+			grades[idx].copy(grade, False)
+			notify(grades_interfaces.GradeModifiedEvent(grade))
 
 		self.updateLastMod()
 		return idx
