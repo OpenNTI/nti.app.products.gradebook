@@ -40,6 +40,7 @@ from . import interfaces as grades_interfaces
 
 @interface.implementer(grades_interfaces.IGrade,
 					   an_interfaces.IAttributeAnnotatable,
+					   ext_interfaces.IInternalObjectUpdater,
 					   zmime_interfaces.IContentTypeAware)
 class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
@@ -62,6 +63,20 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 			self.__name__ = other.__name__
 			self.__parent__ = other.__parent__
 		return self
+
+	def updateFromExternalObject(self, ext, *args, **kwargs):
+		modified = False
+		for name in ('autograde', 'ntiid', 'username'):
+			value = ext.get(name, None)
+			if getattr(self, name, None) is None and value is not None:
+				setattr(self, name, value)
+				modified = True
+
+		grade = ext.get('grade', None)
+		if self.grade != grade:
+			self.grade = grade
+			modified = True
+		return modified
 
 	def __eq__(self, other):
 		try:

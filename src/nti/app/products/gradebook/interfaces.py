@@ -86,7 +86,7 @@ class IGrade(IContained, ICloneable):
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
-	schema.Date
+
 	def copy(source):
 		"""
 		copy the data from the source object

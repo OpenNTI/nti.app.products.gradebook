@@ -210,6 +210,9 @@ class GradePostView(AbstractAuthenticatedView,
 		grade = self.createAndCheckContentObject(
 										None, datatype, externalValue, creator,
 										lambda x: grades_interfaces.IGrade.providedBy(x))
+
+		self.updateContentObject(grade, externalValue, set_id=False, notify=False)
+
 		gradebook = grades_gradebook(self.context)
 		if gradebook is None or not gradebook.has_entry(grade.ntiid):
 			utils.raise_field_error(self.request,
@@ -231,13 +234,6 @@ class GradePutView(AbstractAuthenticatedView,
 
 	def _get_object_to_update(self):
 		return self.request.context
-
-	def readInput(self):
-		externalValue = super(GradePutView, self).readInput()
-		for name in ('nttid',):
-			if name in externalValue:
-				del externalValue[name]
-		return externalValue
 
 	def __call__(self):
 		theObject = self._get_object_to_update()
