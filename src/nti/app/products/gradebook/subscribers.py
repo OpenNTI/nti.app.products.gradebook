@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import lifecycleevent
 from zope.lifecycleevent import interfaces as lce_interfaces
 
 from pyramid.traversal import find_interface
@@ -21,6 +22,7 @@ from nti.assessment import interfaces as asm_interfaces
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import grades
@@ -47,8 +49,18 @@ def _gradebook_entry_removed(entry, event):
 	grades.remove_grades(entry.NTIID)
 
 @component.adapter(grade_interfaces.IGrade, lce_interfaces.IObjectModifiedEvent)
-def _grade_modified(entry, event):
-	pass
+def _grade_modified(grade, event):
+	course = ICourseInstance(grade)
+	user = users.User.get_user(grade.username)
+	gradebook = grade_interfaces.IGradeBook(course)
+	entry = gradebook.get_entry_by_ntiid(grade.ntiid)
+	if entry is not None and entry.assignmentId:
+		assignment_history = component.getMultiAdapter(
+										(course, user),
+										appa_interfaces.IUsersCourseAssignmentHistory)
+		if entry.assignmentId in assignment_history:
+			item = assignment_history[entry.assignmentId]
+			lifecycleevent.modified(item)
 
 @component.adapter(appa_interfaces.IUsersCourseAssignmentHistoryItem,
 				   lce_interfaces.IObjectAddedEvent)

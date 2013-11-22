@@ -36,3 +36,15 @@ def grades_to_gradebook(grades):
 		__traceback_info__ = grades
 		raise TypeError("Unable to find course")
 	return grade_interfaces.IGradeBook(course)
+
+@interface.implementer(ICourseInstance)
+@component.adapter(grade_interfaces.IGrades)
+def grade_to_course(grade):
+	__traceback_info__ = grade
+	grades = find_interface(grade, grade_interfaces.IGrades)
+	if grades is None:
+		raise TypeError("Unable to find grades")
+	course = find_interface(grades, ICourseInstance)
+	if grades is None:
+		raise TypeError("Unable to find course")
+	return course

@@ -20,6 +20,8 @@
 			 
 	<adapter factory=".adapters.gradebook_to_grades" />
 	<adapter factory=".adapters.grades_to_gradebook" />
+	<adapter factory=".adapters.grade_to_course" />
+	
 	
 	<adapter name="GradeBook"
 			 factory=".views.GradeBookPathAdapter" />

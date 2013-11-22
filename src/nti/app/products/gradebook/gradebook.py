@@ -86,6 +86,8 @@ class _CreatorNTIIDMixin(_NTIIDMixin):
 class GradeBook(Implicit,
 				nti_containers.AcquireObjectsOnReadMixin,
 				nti_containers.CheckingLastModifiedBTreeContainer,
+				nti_containers._IdGenerationMixin,
+				zcontained.Contained,
 				_CreatorNTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
@@ -130,8 +132,9 @@ _GradeBookFactory = an_factory(GradeBook)
 class GradeBookPart(Implicit,
 					nti_containers.AcquireObjectsOnReadMixin,
 					nti_containers.CheckingLastModifiedBTreeContainer,
-					SchemaConfigured,
+					nti_containers._IdGenerationMixin,
 					zcontained.Contained,
+					SchemaConfigured,
 					_CreatorNTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookpart'

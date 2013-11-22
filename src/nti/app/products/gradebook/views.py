@@ -104,18 +104,23 @@ def _validate_grade_entry(request, obj):
 								"assignmentId",
 								_("must specify a valid grade assignment id"))
 	
+@view_config(context=grades_interfaces.IGradeBook)
 @view_config(context=grades_interfaces.IGradeBookPart)
-@view_config(context=grades_interfaces.IGradeBookEntry)
 @view_defaults(**_c_view_defaults)
 class GradeBookPostView(AbstractAuthenticatedView,
 					  	ModeledContentUploadRequestUtilsMixin):
 
 	def _do_call(self):
+		context = self.request.context
 		creator = self.getRemoteUser()
 		containedObject = self.readCreateUpdateContentObject(creator)
 		_validate_grade_entry(self.request, containedObject)
 
 		lifecycleevent.created(containedObject)
+
+		prefix = 'part' if grades_interfaces.IGradeBook.provided(context) else 'entry'
+		name = context.generateId(prefix)
+		context[name] = containedObject
 
 		self.request.response.status_int = 201  # created
 		self.request.response.location = self.request.resource_path(containedObject)
