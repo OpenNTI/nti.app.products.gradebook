@@ -42,10 +42,6 @@
 			 for=".interfaces.IGrade" />
 	
 	<adapter factory=".externalization.GradesExternalizer" />
-	
-	<subscriber factory=".externalization.GradeDecorator"
-				for=".interfaces.IGrade"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
 	<!-- Events -->
 

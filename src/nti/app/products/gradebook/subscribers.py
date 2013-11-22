@@ -17,6 +17,8 @@ from pyramid.traversal import find_interface
 
 from nti.app.assessment import interfaces as appa_interfaces
 
+from nti.assessment import interfaces as asm_interfaces
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -57,8 +59,18 @@ def _assignment_history_item_added(item, event):
 	# get gradebook entry definition
 	gradebook = grade_interfaces.IGradeBook(course)
 	entry = gradebook.entry_assignment(assignmentId)
+	
+	autograde = 0
+	for part in getattr(item.pendingAssessment, 'parts', ()):
+		if not asm_interfaces.IQAssessedQuestionSet.providedBy(part):
+			continue
+		
+		for question in part.questions:  # assessed question
+			for qpart in question.parts:
+				autograde += qpart.assessedValue
+
 	# register/add grade
 	course_grades = grade_interfaces.IGradeBook(course)
-	grade = grades.Grade(ntiid=entry.NTIID, username=user.username)
+	grade = grades.Grade(ntiid=entry.NTIID, username=user.username, autograde=autograde)
 	course_grades.add_grade(grade)
 	# TODO: Do autograde
