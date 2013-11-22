@@ -94,7 +94,6 @@ class GradeBook(Implicit,
 	def clone(self):
 		result = self.__class__()
 		result.__parent__, result.__name__ = (None, self.__name__)
-		# clone entries
 		for part in self.values():
 			cloned = part.clone()
 			cloned.__parent__ = self
@@ -102,13 +101,20 @@ class GradeBook(Implicit,
 		return result
 	copy = clone
 
-	def has_entry(self, ntiid):
-		result = False
+	def get_entry_by_assignment(self, assignmentId):
+		for part in self.values():
+			entry = part.get_entry_by_assignment(assignmentId)
+			if entry is not None:
+				return entry
+		return None
+		
+	def get_entry_by_ntiid(self, ntiid):
+		result = None
 		type_ = ntiids.get_type(ntiid)
 		if type_ == grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY:
 			specific = ntiids.get_specific(ntiid)
 			part, entry = specific.split('.')
-			result = entry in self.get(part, {})
+			result = self.get(part, {}).get(entry)
 		return result
 
 	@property
@@ -139,7 +145,6 @@ class GradeBookPart(Implicit,
 		result.order = self.order
 		result.weight = self.weight
 		result.__parent__, result.__name__ = (None, self.__name__)
-		# clone entries
 		for entry in self.values():
 			cloned = entry.clone()
 			cloned.__parent__ = self
@@ -147,6 +152,12 @@ class GradeBookPart(Implicit,
 		return result
 	copy = clone
 
+	def get_entry_by_assignment(self, assignmentId):
+		for entry in self.values():
+			if entry.assignmentId == assignmentId:
+				return entry
+		return None
+	
 	@property
 	def TotalEntryWeight(self):
 		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)

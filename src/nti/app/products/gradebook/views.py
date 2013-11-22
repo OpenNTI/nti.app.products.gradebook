@@ -12,14 +12,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
-import transaction
-
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.traversing.interfaces import IPathAdapter
-
-from ZODB.interfaces import IConnection
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
@@ -101,6 +97,13 @@ class GradeBookDeleteView(AbstractAuthenticatedView,
 def get_assignment(aid):
 	return component.queryUtility(asm_interfaces.IQAssignment, name=aid)
 
+def _validate_grade_entry(request, obj):
+	if	grades_interfaces.IGradeBookEntry.providedBy(obj) and \
+		get_assignment(obj.assignmentId) is None:
+		utils.raise_field_error(request,
+								"assignmentId",
+								_("must specify a valid grade assignment id"))
+	
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_config(context=grades_interfaces.IGradeBookEntry)
 @view_defaults(**_c_view_defaults)
@@ -109,43 +112,15 @@ class GradeBookPostView(AbstractAuthenticatedView,
 
 	def _do_call(self):
 		creator = self.getRemoteUser()
-		context = self.request.context
-		externalValue = self.readInput()
-		datatype = self.findContentType(externalValue)
-
-		containedObject = self.createAndCheckContentObject(None, datatype, externalValue, creator)
-		containedObject.creator = creator
-
-		owner_jar = IConnection(context)
-		if owner_jar and getattr(containedObject, '_p_jar', self) is None:
-			owner_jar.add( containedObject )
-
-		self.updateContentObject(containedObject, externalValue, set_id=False, notify=False)
+		containedObject = self.readCreateUpdateContentObject(creator)
+		_validate_grade_entry(self.request, containedObject)
 
 		lifecycleevent.created(containedObject)
-
-		__traceback_info__ = containedObject
-		assert containedObject.id
 
 		self.request.response.status_int = 201  # created
 		self.request.response.location = self.request.resource_path(containedObject)
 
 		return containedObject
-
-	def createAndCheckContentObject(self, owner, datatype, externalValue, creator,
-									predicate=None):
-		
-		result = super(GradeBookPostView, self).createAndCheckContentObject(
-															owner, datatype,
-															externalValue, creator,
-															predicate)
-
-		if	grades_interfaces.IGradeBookEntry.providedBy(result) and \
-			get_assignment(result.assignmentId) is None:
-			transaction.doom()
-			raise hexc.HTTPNotFound('Invalid assignment identifier')
-
-		return result
 
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_config(context=grades_interfaces.IGradeBookEntry)
@@ -165,8 +140,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
 	def readInput(self):
 		externalValue = super(GradeBookPutView, self).readInput()
-		# remove read only properties
-		for name in ('EntryID', 'PartID', 'id', 'DueDate'):
+		for name in ('NTIID', 'id', 'DueDate'):
 			if name in externalValue:
 				del externalValue[name]
 		return externalValue
@@ -182,19 +156,9 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		return theObject
 
 	def updateContentObject(self, theObject, external, *args, **kwargs):
-
-		if	grades_interfaces.IGradeBookEntry.providedBy(theObject) and \
-			get_assignment(theObject.assignmentId) is None:
-			transaction.doom()
-			raise hexc.HTTPNotFound('Invalid assignment identifier')
-
 		result = super(GradeBookPutView, self).updateContentObject(theObject, external)
+		_validate_grade_entry(self.request, result)
 		return result
-
-def grades_gradebook(grades):
-	parent = getattr(grades, '__parent__', None)  # course instance
-	result = grades_interfaces.IGradeBook(parent, None)
-	return result
 
 @view_config(context=grades_interfaces.IGrades)
 @view_defaults(**_c_view_defaults)
@@ -208,13 +172,12 @@ class GradePostView(AbstractAuthenticatedView,
 		datatype = self.findContentType(externalValue)
 
 		grade = self.createAndCheckContentObject(
-										None, datatype, externalValue, creator,
-										lambda x: grades_interfaces.IGrade.providedBy(x))
-
+									None, datatype, externalValue, creator,
+									lambda x: grades_interfaces.IGrade.providedBy(x))
 		self.updateContentObject(grade, externalValue, set_id=False, notify=False)
 
-		gradebook = grades_gradebook(self.context)
-		if gradebook is None or not gradebook.has_entry(grade.ntiid):
+		gradebook = grades_interfaces.IGradeBook(self.context)
+		if not grade.ntiid or gradebook.get_entry_by_ntiid(grade.ntiid) is None:
 			utils.raise_field_error(self.request,
 									"ntiid",
 									_("must specify a valid grade entry ntiid"))
@@ -241,7 +204,8 @@ class GradePutView(AbstractAuthenticatedView,
 		self._check_object_unmodified_since(theObject)
 
 		externalValue = self.readInput()
-		self.updateContentObject(theObject, externalValue)
+		self.updateContentObject(theObject, externalValue, set_id=False, notify=True)
+		theObject.updateLastMod()
 
 		return theObject
 

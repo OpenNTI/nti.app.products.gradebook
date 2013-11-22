@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
-from zope.event import notify
+from zope import lifecycleevent
 from zope.location import locate
 from zope.proxy import ProxyBase
 from zope.interface.common import mapping
@@ -48,6 +48,10 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
+	@property
+	def NTIID(self):
+		return self.ntiid
+		
 	def clone(self):
 		result = self.__class__()
 		result.__parent__, result.__name__ = (None, self.__name__)
@@ -174,34 +178,24 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 			grades = self[username] = BList()
 
 		grade.username = username # make sure it has the same username
-		idx = self.index(grade, username, grades)
 		if grade.__parent__ is None:
 			locate(grade, self, grade.ntiid)
+
+		idx = self.index(grade, username, grades)
 		if idx == -1:
 			grades.append(grade)
 			idx = len(grades) - 1
-			notify(grades_interfaces.GradeAddedEvent(grade))
+			lifecycleevent.added(grade)
 		else:
-			grades[idx].copy(grade, False)
-			notify(grades_interfaces.GradeModifiedEvent(grade))
+			modified = grades[idx]
+			modified.copy(grade, False)
+			modified.updateLastMod()
+			lifecycleevent.modified(modified)
 
 		self.updateLastMod()
 		return idx
 
 	set_grade = add_grade
-
-	def __getitem__(self, username):
-		grades = self.__super_getitem(username)
-		result = _UserGradesResource(grades, username)
-		result.__parent__ = self
-		return result
-
-	def get_grades(self, username, default=None):
-		try:
-			grades = self.__super_getitem(username)
-			return grades
-		except KeyError:
-			return default
 
 	def remove_grade(self, grade, username=None):
 		username = username or getattr(grade, 'username', None)
@@ -209,7 +203,7 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		idx = self.index(grade, username, grades)
 		if idx != -1:
 			g = grades.pop(idx)
-			notify(grades_interfaces.GradeRemovedEvent(g, username))
+			lifecycleevent.removed(g)
 			self.updateLastMod()
 		return idx != -1
 
@@ -220,7 +214,7 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 	def clear(self, username):
 		grades = self.pop(username, None)
 		for grade in grades or ():
-			notify(grades_interfaces.GradeRemovedEvent(grade, username))
+			lifecycleevent.removed(grade)
 		self.updateLastMod()
 		return True if grades else False
 
@@ -234,9 +228,22 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		for username, grades in items.items():
 			for grade_ext in grades:
 				modified = True
-				grade = internalization.find_factory_for(grade_ext)() 
+				grade = internalization.find_factory_for(grade_ext)()
 				internalization.update_from_external_object(grade, grade_ext)
 				self.add_grade(grade, username)
 		return modified
+
+	def __getitem__(self, username):
+		grades = self.__super_getitem(username)
+		result = _UserGradesResource(grades, username)
+		result.__parent__ = self
+		return result
+
+	def get_grades(self, username, default=None):
+		try:
+			grades = self.__super_getitem(username)
+			return grades
+		except KeyError:
+			return default
 
 _GradesFactory = an_factory(Grades)

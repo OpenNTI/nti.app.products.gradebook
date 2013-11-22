@@ -8,11 +8,9 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
-from zope import lifecycleevent
 from zope.interface.common import mapping
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
-from zope.lifecycleevent import interfaces as lce_interfaces
 
 from nti.utils import schema as dmschema
 
@@ -30,20 +28,16 @@ class ICloneable(interface.Interface):
 		"""
 		clone this object
 		"""
-class IGradeDiscussion(interface.Interface):
-	"""
-	marker interface for a grade discussion/feedback
-	"""
 
 class IGradeBookEntry(IContained, ICloneable):
 
 	containers(b'.IGradeBookPart')
 	__parent__.required = False
 
-	assignmentId = dmschema.ValidTextLine(title="assignment id", required=True)
+	assignmentId = dmschema.ValidTextLine(title="assignment id", required=False)
 	name = dmschema.ValidTextLine(title="entry name", required=False)
 	maxGrade = schema.Int(title="The maximum grade that can be obtained",
-						  min=0, max=100, required=True, default=100)
+						  min=0, max=100, required=False, default=100)
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 						  min=0.0,
 						  max=1.0,
@@ -70,12 +64,27 @@ class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMappin
 
 	TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
 
+	def get_entry_by_assignment(assignmentId):
+		"""
+		return the :IGradeBookEntry associated with the specified assignmentId
+		"""
+
 class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 	"""
 	Grade book definition
 	"""
 	contains(b'.IGradeBookPart')
 	TotalPartWeight = schema.Float(title="Part weight sum", readonly=True)
+
+	def get_entry_by_ntiid(ntiid):
+		"""
+		return the :IGradeBookEntry associated with the specified ntiid
+		"""
+		
+	def get_entry_by_assignment(assignmentId):
+		"""
+		return the :IGradeBookEntry associated with the specified assignmentId
+		"""
 
 class IGrade(IContained, ICloneable):
 	"""
@@ -114,24 +123,3 @@ class IGrades(mapping.IMapping, IContained):
 
 	def clearAll():
 		pass
-			
-class IGradeAddedEvent(lce_interfaces.IObjectAddedEvent):
-	username = interface.Attribute("username")
-
-@interface.implementer(IGradeAddedEvent)
-class GradeAddedEvent(lifecycleevent.ObjectAddedEvent):
-	pass
-
-class IGradeModifiedEvent(lce_interfaces.IObjectModifiedEvent):
-	pass
-
-@interface.implementer(IGradeModifiedEvent)
-class GradeModifiedEvent(lifecycleevent.ObjectModifiedEvent):
-	pass
-
-class IGradeRemovedEvent(lce_interfaces.IObjectRemovedEvent):
-	pass
-
-@interface.implementer(IGradeRemovedEvent)
-class GradeRemovedEvent(lifecycleevent.ObjectModifiedEvent):
-	pass
