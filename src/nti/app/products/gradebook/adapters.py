@@ -48,3 +48,14 @@ def grade_to_course(grade):
 	if grades is None:
 		raise TypeError("Unable to find course")
 	return course
+
+@interface.implementer(grade_interfaces.IGradeBookEntry)
+@component.adapter(grade_interfaces.IGrades)
+def assignment_history_item_to_gradebookentry(item):
+	assignmentId = item.__name__  # by definition
+	course = ICourseInstance(item, None)
+	# get gradebook entry definition
+	gradebook = grade_interfaces.IGradeBook(course, None)
+	entry = gradebook.get_entry_by_assignment(assignmentId) \
+			if gradebook is not None else None
+	return entry

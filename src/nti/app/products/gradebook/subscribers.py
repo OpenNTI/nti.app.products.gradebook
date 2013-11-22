@@ -65,12 +65,11 @@ def _grade_modified(grade, event):
 @component.adapter(appa_interfaces.IUsersCourseAssignmentHistoryItem,
 				   lce_interfaces.IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
-	assignmentId = item.__name__  # by definition
 	course = ICourseInstance(item)
 	user = nti_interfaces.IUser(item)
-	# get gradebook entry definition
-	gradebook = grade_interfaces.IGradeBook(course)
-	entry = gradebook.entry_assignment(assignmentId)
+	entry = grade_interfaces.IGradeBookEntry(item)
+	if entry is None:  # pragma no cover
+		return
 	
 	autograde = 0
 	for part in getattr(item.pendingAssessment, 'parts', ()):
@@ -82,7 +81,6 @@ def _assignment_history_item_added(item, event):
 				autograde += qpart.assessedValue
 
 	# register/add grade
-	course_grades = grade_interfaces.IGradeBook(course)
+	course_grades = grade_interfaces.IGrades(course)
 	grade = grades.Grade(ntiid=entry.NTIID, username=user.username, autograde=autograde)
 	course_grades.add_grade(grade)
-	# TODO: Do autograde
