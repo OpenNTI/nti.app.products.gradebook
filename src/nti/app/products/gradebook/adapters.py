@@ -39,14 +39,11 @@ def grades_to_gradebook(grades):
 	return grade_interfaces.IGradeBook(course)
 
 @interface.implementer(ICourseInstance)
-@component.adapter(grade_interfaces.IGrades)
+@component.adapter(grade_interfaces.IGrade)
 def grade_to_course(grade):
-	__traceback_info__ = grade
-	grades = find_interface(grade, grade_interfaces.IGrades)
-	if grades is None:
-		raise TypeError("Unable to find grades")
-	course = find_interface(grades, ICourseInstance)
-	if grades is None:
+	course = find_interface(grade, ICourseInstance)
+	if course is None:
+		__traceback_info__ = grade
 		raise TypeError("Unable to find course")
 	return course
 
@@ -59,5 +56,5 @@ def assignment_history_item_to_gradebookentry(item):
 	gradebook = grade_interfaces.IGradeBook(course, None)
 	entry = gradebook.get_entry_by_assignment(assignmentId) \
 			if gradebook is not None else None
-	# null adaptation is allow in case there is no gradebook defined
+	# None adaptation is allowed in case there is no gradebook defined
 	return entry

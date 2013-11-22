@@ -27,7 +27,7 @@
 			 provides=".interfaces.IGradeBook" />	
 	
 	<adapter factory=".adapters.grade_to_course"
-			 for=".interfaces.IGrades"
+			 for=".interfaces.IGrade"
 			 provides="nti.contenttypes.courses.interfaces.ICourseInstance" />
 	
 	<adapter factory=".adapters.assignment_history_item_to_gradebookentry" 
