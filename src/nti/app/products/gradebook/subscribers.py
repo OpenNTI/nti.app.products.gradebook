@@ -15,9 +15,11 @@ from zope.lifecycleevent import interfaces as lce_interfaces
 
 from pyramid.traversal import find_interface
 
+from nti.app.assessment import interfaces as appa_interfaces
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.app.assessment import interfaces as appa_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
 from . import grades
 from . import interfaces as grade_interfaces
@@ -49,9 +51,9 @@ def _grade_modified(entry, event):
 @component.adapter(appa_interfaces.IUsersCourseAssignmentHistoryItem,
 				   lce_interfaces.IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
-	user = item.owner  # get user
 	assignmentId = item.__name__  # by definition
 	course = ICourseInstance(item)
+	user = nti_interfaces.IUser(item)
 	# get gradebook entry definition
 	gradebook = grade_interfaces.IGradeBook(course)
 	entry = gradebook.entry_assignment(assignmentId)
@@ -59,4 +61,4 @@ def _assignment_history_item_added(item, event):
 	course_grades = grade_interfaces.IGradeBook(course)
 	grade = grades.Grade(ntiid=entry.NTIID, username=user.username)
 	course_grades.add_grade(grade)
-	
+	# TODO: Do autograde
