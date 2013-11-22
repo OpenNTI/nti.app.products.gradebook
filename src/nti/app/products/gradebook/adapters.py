@@ -16,6 +16,7 @@ from zope import component
 from pyramid.traversal import find_interface
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from . import interfaces as grade_interfaces
 
@@ -50,7 +51,7 @@ def grade_to_course(grade):
 	return course
 
 @interface.implementer(grade_interfaces.IGradeBookEntry)
-@component.adapter(grade_interfaces.IGrades)
+@component.adapter(IUsersCourseAssignmentHistoryItem)
 def assignment_history_item_to_gradebookentry(item):
 	assignmentId = item.__name__  # by definition
 	course = ICourseInstance(item, None)
