@@ -59,4 +59,5 @@ def assignment_history_item_to_gradebookentry(item):
 	gradebook = grade_interfaces.IGradeBook(course, None)
 	entry = gradebook.get_entry_by_assignment(assignmentId) \
 			if gradebook is not None else None
+	# null adaptation is allow in case there is no gradebook defined
 	return entry
