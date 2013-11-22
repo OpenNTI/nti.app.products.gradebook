@@ -67,7 +67,7 @@ def _grade_modified(grade, event):
 def _assignment_history_item_added(item, event):
 	course = ICourseInstance(item)
 	user = nti_interfaces.IUser(item)
-	entry = grade_interfaces.IGradeBookEntry(item)
+	entry = grade_interfaces.IGradeBookEntry(item, None)
 	if entry is None:  # pragma no cover
 		return
 	
