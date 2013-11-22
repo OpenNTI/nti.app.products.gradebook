@@ -54,7 +54,7 @@ def _grade_modified(grade, event):
 	user = users.User.get_user(grade.username)
 	gradebook = grade_interfaces.IGradeBook(course)
 	entry = gradebook.get_entry_by_ntiid(grade.ntiid)
-	if entry is not None and entry.assignmentId:
+	if user and entry is not None and entry.assignmentId:
 		assignment_history = component.getMultiAdapter(
 										(course, user),
 										appa_interfaces.IUsersCourseAssignmentHistory)
@@ -75,12 +75,10 @@ def _assignment_history_item_added(item, event):
 	
 	autograde = 0
 	for part in getattr(item.pendingAssessment, 'parts', ()):
-		if not asm_interfaces.IQAssessedQuestionSet.providedBy(part):
-			continue
-		
-		for question in part.questions:  # assessed question
-			for qpart in question.parts:
-				autograde += qpart.assessedValue
+		if asm_interfaces.IQAssessedQuestionSet.providedBy(part):
+			for question in part.questions:  # assessed question
+				for qpart in question.parts:
+					autograde += qpart.assessedValue
 
 	# register/add grade
 	course_grades = grade_interfaces.IGrades(course)
