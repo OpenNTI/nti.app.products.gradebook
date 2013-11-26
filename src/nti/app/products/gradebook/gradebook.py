@@ -34,6 +34,7 @@ from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids import ntiids
 
+from nti.utils.property import alias
 from nti.utils._compat import Implicit
 from nti.utils.property import CachedProperty
 from nti.utils.schema import SchemaConfigured
@@ -56,9 +57,9 @@ class _NTIIDMixin(zcontained.Contained):
 		try:
 			parts = []
 			for location in lineage(self):
-				if location is self and not self._ntiid_include_self_name:
+				if grades_interfaces.IGradeBook.providedBy(location):
 					continue
-				parts.append(location.__name__)
+				parts.append(ntiids.escape_provider(location.__name__))
 				if ICourseInstance.providedBy(location):
 					break
 			parts.reverse()
@@ -130,7 +131,6 @@ class GradeBookPart(Implicit,
 					nti_containers.AcquireObjectsOnReadMixin,
 					nti_containers.CheckingLastModifiedBTreeContainer,
 					nti_containers._IdGenerationMixin,
-					zcontained.Contained,
 					SchemaConfigured,
 					_NTIIDMixin):
 
@@ -140,6 +140,9 @@ class GradeBookPart(Implicit,
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
+
+	__parent__ = None
+	__name__ = alias('name')
 
 	def clone(self):
 		result = self.__class__()
@@ -177,7 +180,6 @@ class GradeBookPart(Implicit,
 class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
 					 SchemaConfigured,
-					 zcontained.Contained,
 					 _NTIIDMixin,
 					 Implicit):
 
@@ -187,6 +189,9 @@ class GradeBookEntry(Persistent,
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
 	
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
+
+	__parent__ = None
+	__name__ = alias('name')
 
 	@property
 	def DueDate(self):

@@ -98,7 +98,7 @@ def get_assignment(aid):
 	return component.queryUtility(asm_interfaces.IQAssignment, name=aid)
 
 def _validate_grade_entry(request, obj):
-	if	grades_interfaces.IGradeBookEntry.providedBy(obj) and \
+	if	grades_interfaces.IGradeBookEntry.providedBy(obj) and obj.assignmentId and \
 		get_assignment(obj.assignmentId) is None:
 		utils.raise_field_error(request,
 								"assignmentId",
@@ -118,9 +118,7 @@ class GradeBookPostView(AbstractAuthenticatedView,
 
 		lifecycleevent.created(containedObject)
 
-		prefix = 'part' if grades_interfaces.IGradeBook.providedBy(context) else 'entry'
-		name = context.generateId(prefix)
-		context[name] = containedObject
+		context[containedObject.name] = containedObject
 
 		self.request.response.status_int = 201  # created
 		self.request.response.location = self.request.resource_path(containedObject)

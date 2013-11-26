@@ -110,7 +110,6 @@ class TestExternal(ConfiguringTestBase):
 	def test_gradebookpart(self):
 
 		gb = gradebook.GradeBook()
-		gb.__name__ = 'cs1313gb'
 
 		gbp = gradebook.GradeBookPart()
 		gbp.__parent__ = gb
@@ -127,7 +126,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'weight', 0.95))
 		assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookpart-cs1313gb.quizzes'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookpart-quizzes'))
 
 	@WithMockDSTrans
 	def test_gradebookentry(self):
@@ -137,7 +136,6 @@ class TestExternal(ConfiguringTestBase):
 
 		gbe = gradebook.GradeBookEntry()
 		gbe.__parent__ = gbp
-		gbe.__name__ = 'quiz1'
 		gbe.order = 2
 		gbe.name = 'quiz-1'
 		gbe.weight = 0.55
@@ -154,5 +152,5 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'DueDate', is_(none())))
 		assert_that(ext, has_entry(u'assignmentId', 'myquestion'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookentry-quizzes.quiz1'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookentry-quizzes.quiz_1'))
 
