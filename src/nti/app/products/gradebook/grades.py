@@ -246,4 +246,4 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		except KeyError:
 			return default
 
-_GradesFactory = an_factory(Grades)
+_GradesFactory = an_factory(Grades, 'Grades')

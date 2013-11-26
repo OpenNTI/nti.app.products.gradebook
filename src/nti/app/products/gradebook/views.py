@@ -118,7 +118,7 @@ class GradeBookPostView(AbstractAuthenticatedView,
 
 		lifecycleevent.created(containedObject)
 
-		prefix = 'part' if grades_interfaces.IGradeBook.provided(context) else 'entry'
+		prefix = 'part' if grades_interfaces.IGradeBook.providedBy(context) else 'entry'
 		name = context.generateId(prefix)
 		context[name] = containedObject
 

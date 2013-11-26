@@ -10,19 +10,20 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import has_property
 
 import os
 
-from nti.dataserver.users import User
+from nti.contentlibrary.filesystem import CachedNotifyingStaticFilesystemLibrary as Library
 
 from nti.app.testing.application_webtest import SharedApplicationTestBase
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-class TestViews(ApplicationTestBase):
+class TestViews(SharedApplicationTestBase):
 
 	@classmethod
 	def _setup_library(cls, *args, **kwargs):
@@ -34,19 +35,23 @@ class TestViews(ApplicationTestBase):
 				   ))
 		return lib
 
+	def courseInstanceLink(self, links):
+		for link in links:
+			if link.get('rel', None) == u'CourseInstance':
+				return link['href']
+		return None
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def test_fetch_all_courses(self):
+	def test_gradebook(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
+		links = res.json_body['Items'][0]['Links']
+		href = self.courseInstanceLink(links)
 
-		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		gbook = href + '/GradeBook'
+		res = self.testapp.get(gbook)
+		assert_that(res.json_body, has_entry('TotalPartWeight', 0.0))
+		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:course-gradebook-CLC3403'))
 
-		assert_that(res.json_body['Items'],
-					 has_items(
-						 all_of(has_entries('Duration', 'P112D',
-											  'Title', 'Introduction to Water',
-											  'StartDate', '2014-01-13')),
-						 all_of(has_entries('Duration', None,
-											  'Title', 'Law and Justice'))))
 if __name__ == '__main__':
 	import unittest
 	unittest.main()

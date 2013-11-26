@@ -17,14 +17,17 @@ from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
+from pyramid.traversal import lineage
+
 from persistent import Persistent
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.assessment import interfaces as asm_interfaces
 
 from nti.contenttypes.courses import interfaces as course_interfaces
 
 from nti.dataserver import containers as nti_containers
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.mimetype.mimetype import MIME_BASE
@@ -41,8 +44,8 @@ from . import interfaces as grades_interfaces
 class _NTIIDMixin(zcontained.Contained):
 
 	_ntiid_type = None
-	_ntiid_default_provider = None
-	_ntiid_include_parent_name = True
+	_ntiid_include_self_name = False
+	_ntiid_default_provider = 'course'
 
 	@property
 	def _ntiid_provider(self):
@@ -50,13 +53,17 @@ class _NTIIDMixin(zcontained.Contained):
 
 	@property
 	def _ntiid_specific_part(self):
-		if not self._ntiid_include_parent_name:
-			return self.__name__
 		try:
-			if self.__parent__.__name__:
-				return self.__parent__.__name__ + '.' + self.__name__
-			else:
-				return None
+			parts = []
+			for location in lineage(self):
+				if location is self and not self._ntiid_include_self_name:
+					continue
+				parts.append(location.__name__)
+				if ICourseInstance.providedBy(location):
+					break
+			parts.reverse()
+			result = '.'.join(parts)
+			return result
 		except (AttributeError):  # Not ready yet
 			return None
 
@@ -69,16 +76,6 @@ class _NTIIDMixin(zcontained.Contained):
 									 nttype=self._ntiid_type,
 									 specific=self._ntiid_specific_part)
 
-class _CreatorNTIIDMixin(_NTIIDMixin):
-
-	creator = None
-	_ntiid_default_provider = nti_interfaces.SYSTEM_USER_NAME
-
-	@property
-	def _ntiid_provider(self):
-		return self.creator.username if getattr(self, 'creator', None) is not None \
-									 else self._ntiid_default_provider
-
 @component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGradeBook,
 					   an_interfaces.IAttributeAnnotatable,
@@ -88,7 +85,7 @@ class GradeBook(Implicit,
 				nti_containers.CheckingLastModifiedBTreeContainer,
 				nti_containers._IdGenerationMixin,
 				zcontained.Contained,
-				_CreatorNTIIDMixin):
+				_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
@@ -124,7 +121,7 @@ class GradeBook(Implicit,
 		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
 		return result
 
-_GradeBookFactory = an_factory(GradeBook)
+_GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
 @interface.implementer(grades_interfaces.IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
@@ -135,9 +132,11 @@ class GradeBookPart(Implicit,
 					nti_containers._IdGenerationMixin,
 					zcontained.Contained,
 					SchemaConfigured,
-					_CreatorNTIIDMixin):
+					_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
+
+	_ntiid_include_self_name = True
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
@@ -179,10 +178,12 @@ class GradeBookEntry(Persistent,
 					 CreatedModDateTrackingObject,
 					 SchemaConfigured,
 					 zcontained.Contained,
-					 _CreatorNTIIDMixin,
+					 _NTIIDMixin,
 					 Implicit):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookentry'
+
+	_ntiid_include_self_name = True
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
 	
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
