@@ -7,6 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_property
+
 import random
 
 from nti.dataserver.users import User
@@ -19,8 +26,6 @@ from .. import gradebook
 
 from .  import ConfiguringTestBase
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
-from hamcrest import (assert_that, none, is_, is_not, has_entry, has_property)
 
 class TestExternal(ConfiguringTestBase):
 

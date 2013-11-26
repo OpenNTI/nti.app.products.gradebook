@@ -7,14 +7,20 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+
 from .. import gradebook
 from .. import interfaces as grades_interfaces
 
 from .  import ConfiguringTestBase
 
 from nti.testing.matchers import verifiably_provides, validly_provides
-
-from hamcrest import (assert_that, has_length, has_key, has_property, is_not, is_, none)
 
 class TestGradeBook(ConfiguringTestBase):
 

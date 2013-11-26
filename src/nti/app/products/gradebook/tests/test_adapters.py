@@ -11,8 +11,6 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import assert_that
 
-from nti.dataserver.users import User
-
 from nti.contenttypes.courses import courses
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -22,10 +20,6 @@ from .. import interfaces as grades_interfaces
 from . import ConfiguringTestBase
 
 class TestAdapters(ConfiguringTestBase):
-
-	def _create_user(self, username='nt@nti.com', password='temp001'):
-		usr = User.create_user(self.ds, username=username, password=password)
-		return usr
 
 	@WithMockDSTrans
 	def test_course_instance(self):
