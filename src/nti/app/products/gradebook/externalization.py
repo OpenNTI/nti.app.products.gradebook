@@ -22,7 +22,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import externalization
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
@@ -31,10 +30,17 @@ from . import interfaces as grade_interfaces
 CLASS = ext_interfaces.StandardExternalFields.CLASS
 MIMETYPE = ext_interfaces.StandardExternalFields.MIMETYPE
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(grade_interfaces.IGrade)
-class GradeExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = grade_interfaces.IGrade
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(grade_interfaces.IBooleanGradeScheme)
+class BooleanGradeSchemeExternalizer(object):
+
+	__slots__ = ('value',)
+
+	def __init__(self, value):
+		self.value = value
+
+	def toExternalObject(self):
+		return True if self.value else False
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(grade_interfaces.IGrades)

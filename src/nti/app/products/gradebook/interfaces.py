@@ -12,6 +12,8 @@ from zope.interface.common import mapping
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
 
+from dolmen.builtins import INumeric, IString, IBoolean
+
 from nti.utils import schema as dmschema
 
 # ## NTIID values
@@ -88,13 +90,25 @@ class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 		return the :IGradeBookEntry associated with the specified assignmentId
 		"""
 
+class IGradeScheme(interface.Interface):
+	pass
+
+class INumericGradeScheme(IGradeScheme, INumeric):
+	pass
+
+class IStringGradeScheme(IGradeScheme, IString):
+	pass
+
+class IBooleanGradeScheme(IGradeScheme, IBoolean):
+	pass
+
 class IGrade(IContained, ICloneable):
 	"""
 	Grade entry
 	"""
 	username = dmschema.ValidTextLine(title="Username", required=True)
 	ntiid = dmschema.ValidTextLine(title="Grade entry ntiid", required=True)
-	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
+	grade = schema.Object(IGradeScheme, title="The grade", required=False)
 
 	AutoGrade = schema.Float(title="Auto grade", min=0.0, required=False, readonly=True)
 

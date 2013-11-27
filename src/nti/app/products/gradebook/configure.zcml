@@ -10,6 +10,12 @@
 		
 	<!-- Adapters -->
 	
+	<adapter name="GradeBook"
+			 factory=".views.GradeBookPathAdapter" />
+			 
+	<adapter name="Grades"
+			 factory=".views.GradesPathAdapter" />
+			 
 	<adapter factory=".gradebook._GradeBookFactory"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
@@ -18,28 +24,34 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGrades" />
 
-	<adapter factory=".adapters.gradebook_to_grades" 	
+	<adapter factory=".adapters._GradeBook2Grades" 	
 			 for=".interfaces.IGradeBook"
 			 provides=".interfaces.IGrades" />	
 			 
-	<adapter factory=".adapters.grades_to_gradebook" 
+	<adapter factory=".adapters._GradesToGradeBook" 
 			 for=".interfaces.IGrades"
 			 provides=".interfaces.IGradeBook" />	
 	
-	<adapter factory=".adapters.grade_to_course"
+	<adapter factory=".adapters._GradeToCourseInstance"
 			 for=".interfaces.IGrade"
 			 provides="nti.contenttypes.courses.interfaces.ICourseInstance" />
 	
-	<adapter factory=".adapters.assignment_history_item_to_gradebookentry" 
+	<adapter factory=".adapters._AssignmentHistoryItem2GradeBookEntry" 
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGradeBookEntry" />
-	
-	<adapter name="GradeBook"
-			 factory=".views.GradeBookPathAdapter" />
+
+	<adapter factory=".adapters._NumericGrade"
+			 for="dolmen.builtins.INumeric"
+			 provides=".interfaces.IGradeScheme" />
 			 
-	<adapter name="Grades"
-			 factory=".views.GradesPathAdapter" />
-			 
+	<adapter factory=".adapters._StringGrade"
+			 for="dolmen.builtins.IString"
+			 provides=".interfaces.IGradeScheme" />
+			
+	<adapter factory=".adapters._BooleanGrade"
+			 for="dolmen.builtins.IBoolean"
+			 provides=".interfaces.IGradeScheme" />
+			  
 	<!-- Externalization -->
 	
 	<adapter factory=".externalization.GradesObjectIO"
@@ -55,7 +67,8 @@
 			 for=".interfaces.IGrade" />
 	
 	<adapter factory=".externalization.GradesExternalizer" />
-				
+	<adapter factory=".externalization.BooleanGradeSchemeExternalizer" />
+			
 	<subscriber factory=".externalization.UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>

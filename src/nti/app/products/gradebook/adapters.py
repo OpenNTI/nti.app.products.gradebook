@@ -15,14 +15,32 @@ from zope import component
 
 from pyramid.traversal import find_interface
 
+from dolmen.builtins import INumeric, IString, IBoolean
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from . import grades
 from . import interfaces as grade_interfaces
+
+@interface.implementer(grade_interfaces.IGradeScheme)
+@component.adapter(INumeric)
+def _NumericGrade(grade):
+	return grades.NumericGrade(grade)
+
+@interface.implementer(grade_interfaces.IGradeScheme)
+@component.adapter(IString)
+def _StringGrade(grade):
+	return grades.StringGrade(grade)
+
+@interface.implementer(grade_interfaces.IGradeScheme)
+@component.adapter(IBoolean)
+def _BooleanGrade(grade):
+	return grades.BooleanGrade(1 if grade else 0)
 
 @interface.implementer(grade_interfaces.IGrades)
 @component.adapter(grade_interfaces.IGradeBook)
-def gradebook_to_grades(gradebook):
+def _GradeBook2Grades(gradebook):
 	course = find_interface(gradebook, ICourseInstance)
 	if course is None:
 		__traceback_info__ = gradebook
@@ -31,7 +49,7 @@ def gradebook_to_grades(gradebook):
 
 @interface.implementer(grade_interfaces.IGradeBook)
 @component.adapter(grade_interfaces.IGrades)
-def grades_to_gradebook(grades):
+def _GradesToGradeBook(grades):
 	course = find_interface(grades, ICourseInstance)
 	if course is None:
 		__traceback_info__ = grades
@@ -40,7 +58,7 @@ def grades_to_gradebook(grades):
 
 @interface.implementer(ICourseInstance)
 @component.adapter(grade_interfaces.IGrade)
-def grade_to_course(grade):
+def _GradeToCourseInstance(grade):
 	course = find_interface(grade, ICourseInstance)
 	if course is None:
 		__traceback_info__ = grade
@@ -49,7 +67,7 @@ def grade_to_course(grade):
 
 @interface.implementer(grade_interfaces.IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)
-def assignment_history_item_to_gradebookentry(item):
+def _AssignmentHistoryItem2GradeBookEntry(item):
 	assignmentId = item.__name__  # by definition
 	course = ICourseInstance(item, None)
 	# get gradebook entry definition

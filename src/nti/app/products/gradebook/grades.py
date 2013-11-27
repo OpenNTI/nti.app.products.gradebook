@@ -20,6 +20,7 @@ from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from zc.blist import BList
 
@@ -33,10 +34,22 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization import internalization
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
+
+@interface.implementer(grades_interfaces.INumericGradeScheme)
+class NumericGrade(float):
+	pass
+
+@interface.implementer(grades_interfaces.IStringGradeScheme)
+class StringGrade(str):
+	pass
+
+@interface.implementer(grades_interfaces.IBooleanGradeScheme)
+class BooleanGrade(int):
+	pass
 
 @interface.implementer(grades_interfaces.IGrade,
 					   an_interfaces.IAttributeAnnotatable,
@@ -46,14 +59,32 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	createDirectFieldProperties(grades_interfaces.IGrade)
+	ntiid = FP(grades_interfaces.IGrade['ntiid'])
+	username = FP(grades_interfaces.IGrade['username'])
 
-	AutoGrade = None
+	_grade = ntiid = username = AutoGrade = None
 
-	@property
-	def NTIID(self):
-		return self.ntiid
-		
+	NTIID = alias('ntiid')
+
+	def __init__(self, username=None, ntiid=None, grade=None):
+		if ntiid:
+			self.ntiid = ntiid
+		if username:
+			self.username = username
+		if grade is not None:
+			self.grade = grade
+
+	def _set_grade(self, value):
+		if value is not None:
+			self._grade = grades_interfaces.IGradeScheme(value)
+		else:
+			self._grade = None
+
+	def _get_grade(self):
+		return self._grade
+
+	grade = property(_get_grade, _set_grade)
+
 	def clone(self):
 		result = self.__class__()
 		result.__parent__, result.__name__ = (None, self.__name__)
