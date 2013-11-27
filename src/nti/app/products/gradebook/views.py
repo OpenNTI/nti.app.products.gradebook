@@ -104,6 +104,11 @@ def _validate_grade_entry(request, obj):
 								"assignmentId",
 								_("must specify a valid grade assignment id"))
 	
+	if not obj.Name and not obj.displayName:
+		utils.raise_field_error(request,
+								"Name",
+								_("must specify a valid name or display name"))
+
 @view_config(context=grades_interfaces.IGradeBook)
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_defaults(**_c_view_defaults)
@@ -116,9 +121,15 @@ class GradeBookPostView(AbstractAuthenticatedView,
 		containedObject = self.readCreateUpdateContentObject(creator)
 		_validate_grade_entry(self.request, containedObject)
 
+		if not containedObject.displayName:
+			containedObject.displayName = containedObject.Name
+
+		if not containedObject.Name:
+			containedObject.Name = containedObject.displayName
+
 		lifecycleevent.created(containedObject)
 
-		context[containedObject.name] = containedObject
+		context[containedObject.Name] = containedObject
 
 		self.request.response.status_int = 201  # created
 		self.request.response.location = self.request.resource_path(containedObject)
@@ -143,7 +154,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
 	def readInput(self):
 		externalValue = super(GradeBookPutView, self).readInput()
-		for name in ('NTIID', 'id', 'DueDate'):
+		for name in ('NTIID', 'id', 'DueDate', 'Name'):
 			if name in externalValue:
 				del externalValue[name]
 		return externalValue

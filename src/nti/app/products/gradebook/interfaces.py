@@ -34,8 +34,9 @@ class IGradeBookEntry(IContained, ICloneable):
 	containers(b'.IGradeBookPart')
 	__parent__.required = False
 
+	Name = dmschema.ValidTextLine(title="entry name", required=False)
+	displayName = dmschema.ValidTextLine(title="Part name", required=False)
 	assignmentId = dmschema.ValidTextLine(title="assignment id", required=False)
-	name = dmschema.ValidTextLine(title="entry name", required=False)
 	maxGrade = schema.Int(title="The maximum grade that can be obtained",
 						  min=0, max=100, required=False, default=100)
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
@@ -54,7 +55,8 @@ class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMappin
 	contains(b'.IGradeBookEntry')
 	__parent__.required = False
 
-	name = dmschema.ValidTextLine(title="Part name", required=True)
+	Name = dmschema.ValidTextLine(title="Part name", required=True)
+	displayName = dmschema.ValidTextLine(title="Part name", required=False)
 	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
 						  min=0.0,
 						  max=1.0,

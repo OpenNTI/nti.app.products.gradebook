@@ -31,7 +31,7 @@ class TestGradeBook(ConfiguringTestBase):
 
 		gbp = gradebook.GradeBookPart()
 		gbp.order = 1
-		gbp.__name__ = gbp.name = 'part'
+		gbp.__name__ = gbp.displayName = 'part'
 		assert_that(gbp, validly_provides(grades_interfaces.IGradeBookPart))
 		assert_that(gbp, verifiably_provides(grades_interfaces.IGradeBookPart))
 
@@ -39,7 +39,7 @@ class TestGradeBook(ConfiguringTestBase):
 		gbe.order = 1
 		gbe.assignmentId = 'xzy'
 		gbe.maxGrade = 100
-		gbe.__name__ = gbe.name = 'entry'
+		gbe.__name__ = gbe.displayName = 'entry'
 		assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
 		assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
 
@@ -48,14 +48,14 @@ class TestGradeBook(ConfiguringTestBase):
 		part = gradebook.GradeBookPart()
 		part.order = 1
 		part.weight = 0.5
-		part.__name__ = part.name = 'part'
+		part.__name__ = part.displayName = 'part'
 		book[part.__name__] = part
 		entry = gradebook.GradeBookEntry()
 		entry.order = 2
 		entry.weight = 0.9
 		entry.assignmentId = 'xyzq'
 		entry.maxGrade = 25
-		entry.__name__ = entry.name = 'entry'
+		entry.__name__ = entry.displayName = 'entry'
 		part[entry.__name__] = entry
 
 		cl_book = book.clone()
@@ -67,18 +67,20 @@ class TestGradeBook(ConfiguringTestBase):
 		assert_that(id(part), is_not(id(cl_part)))
 		assert_that(cl_part, has_length(1))
 		assert_that(cl_part, has_property('__name__', 'part'))
-		assert_that(cl_part, has_property('name', 'part'))
+		assert_that(cl_part, has_property('Name', 'part'))
 		assert_that(cl_part, has_property('order', 1))
 		assert_that(cl_part, has_property('weight', 0.5))
+		assert_that(cl_part, has_property('displayName', 'part'))
 		assert_that(cl_part, has_key('entry'))
 
 		cl_entry = cl_part['entry']
 		assert_that(id(entry), is_not(id(cl_entry)))
 		assert_that(cl_entry, has_property('__name__', 'entry'))
-		assert_that(cl_entry, has_property('name', 'entry'))
+		assert_that(cl_entry, has_property('Name', 'entry'))
 		assert_that(cl_entry, has_property('order', 2))
 		assert_that(cl_entry, has_property('weight', 0.9))
 		assert_that(cl_entry, has_property('maxGrade', 25))
 		assert_that(cl_entry, has_property('DueDate', is_(none())))
+		assert_that(cl_entry, has_property('displayName', 'entry'))
 		assert_that(cl_entry, has_property('assignmentId', 'xyzq'))
 

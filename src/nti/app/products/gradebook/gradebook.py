@@ -142,13 +142,13 @@ class GradeBookPart(Implicit,
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
 
 	__parent__ = None
-	__name__ = alias('name')
+	__name__ = alias('Name')
 
 	def clone(self):
 		result = self.__class__()
-		result.name = self.name
 		result.order = self.order
 		result.weight = self.weight
+		result.displayName = self.displayName
 		result.__parent__, result.__name__ = (None, self.__name__)
 		for entry in self.values():
 			cloned = entry.clone()
@@ -169,10 +169,10 @@ class GradeBookPart(Implicit,
 		return result
 
 	def __str__(self):
-		return self.name
+		return self.displayName
 
 	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.name, self.weight)
+		return "%s(%s,%s)" % (self.__class__.__name__, self.displayName, self.weight)
 
 @interface.implementer(grades_interfaces.IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
@@ -191,7 +191,7 @@ class GradeBookEntry(Persistent,
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
 	__parent__ = None
-	__name__ = alias('name')
+	__name__ = alias('Name')
 
 	@property
 	def DueDate(self):
@@ -204,20 +204,20 @@ class GradeBookEntry(Persistent,
 
 	def clone(self):
 		result = self.__class__()
-		result.name = self.name
 		result.order = self.order
 		result.weight = self.weight
 		result.maxGrade = self.maxGrade
+		result.displayName = self.displayName
 		result.assignmentId = self.assignmentId
 		result.__parent__, result.__name__ = (None, self.__name__)
 		return result
 	copy = clone
 
 	def __str__(self):
-		return self.name
+		return self.displayName
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight,
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.displayName, self.weight,
 								 self.assignmentId)
 
 	def __eq__(self, other):

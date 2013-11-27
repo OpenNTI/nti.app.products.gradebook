@@ -22,6 +22,12 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestViews(SharedApplicationTestBase):
 
+	gradebook_part = {'Name': 'Quizzes', 'order': 1, 'weight': 0.95,
+					  'MimeType':'application/vnd.nextthought.gradebookpart'}
+
+	gradebook_entry = { 'Name': 'Quiz1', 'order': 2, 'weight': 0.55,
+						'MimeType':'application/vnd.nextthought.gradebookentry'}
+
 	@classmethod
 	def _setup_library(cls, *args, **kwargs):
 		lib = Library(
@@ -52,37 +58,39 @@ class TestViews(SharedApplicationTestBase):
 		environ = self._make_extra_environ()
 		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
 
-		data = {'name': 'Quizzes', 'order': 1, 'weight': 0.95,
-				'MimeType':'application/vnd.nextthought.gradebookpart'}
+		data = self.gradebook_part
 		res = self.testapp.post_json(path, data, extra_environ=environ)
 		
 		assert_that(res.json_body, has_entry('Class', 'GradeBookPart'))
 		assert_that(res.json_body, has_entry('Creator', 'sjohnson@nextthought.com'))
-		assert_that(res.json_body, has_entry('name', 'Quizzes'))
+		assert_that(res.json_body, has_entry('Name', 'Quizzes'))
 		assert_that(res.json_body, has_entry('order', 1))
 		assert_that(res.json_body, has_entry('weight', 0.95))
+		assert_that(res.json_body, has_entry('displayName', 'Quizzes'))
 		assert_that(res.json_body, has_entry('MimeType', 'application/vnd.nextthought.gradebookpart'))
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:course-gradebookpart-CLC3403.Quizzes'))
 		
 		part_path = path + '/Quizzes'
 		res = self.testapp.get(part_path)
 		assert_that(res.json_body, has_entry(u'OID', is_not(none())))
-		
-		data = {'name': 'Quiz1', 'order': 2, 'weight': 0.55,
-				'MimeType':'application/vnd.nextthought.gradebookentry'}
+
+		data = self.gradebook_entry
 		res = self.testapp.post_json(part_path, data, extra_environ=environ)
 
 		assert_that(res.json_body, has_entry('Class', 'GradeBookEntry'))
 		assert_that(res.json_body, has_entry('Creator', 'sjohnson@nextthought.com'))
-		assert_that(res.json_body, has_entry('name', 'Quiz1'))
+		assert_that(res.json_body, has_entry('Name', 'Quiz1'))
 		assert_that(res.json_body, has_entry('order', 2))
 		assert_that(res.json_body, has_entry('weight', 0.55))
+		assert_that(res.json_body, has_entry('displayName', 'Quiz1'))
 		assert_that(res.json_body, has_entry('MimeType', 'application/vnd.nextthought.gradebookentry'))
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:course-gradebookentry-CLC3403.Quizzes.Quiz1'))
 
 		quiz1_path = part_path + '/Quiz1'
 		res = self.testapp.get(quiz1_path)
 		assert_that(res.json_body, has_entry(u'OID', is_not(none())))
+
+		dummy = self.gradebook_entry.copy()
 
 if __name__ == '__main__':
 	import unittest
