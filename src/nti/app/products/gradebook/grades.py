@@ -48,7 +48,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
-	autograde = None
+	AutoGrade = None
 
 	@property
 	def NTIID(self):
