@@ -48,6 +48,8 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
+	autograde = None
+
 	@property
 	def NTIID(self):
 		return self.ntiid
@@ -62,7 +64,6 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 		self.ntiid = other.ntiid
 		self.grade = other.grade
 		self.username = other.username
-		self.autograde = other.autograde
 		if parent:
 			self.__name__ = other.__name__
 			self.__parent__ = other.__parent__
@@ -71,7 +72,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	def updateFromExternalObject(self, ext, *args, **kwargs):
 		modified = False
-		for name in ('autograde', 'ntiid', 'username'):
+		for name in ('ntiid', 'username'):
 			value = ext.get(name, None)
 			if getattr(self, name, None) is None and value is not None:
 				setattr(self, name, value)
@@ -100,11 +101,10 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 		return "%s,%s,%s" % (self.username, self.ntiid, self.grade)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__,
-									self.username,
-									self.ntiid,
-									self.grade,
-									self.autograde)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__,
+								 self.username,
+								 self.ntiid,
+								 self.grade)
 
 def _indexof_grade(grade, grades):
 	idx = -1

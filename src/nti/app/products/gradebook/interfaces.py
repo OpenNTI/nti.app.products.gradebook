@@ -95,8 +95,6 @@ class IGrade(IContained, ICloneable):
 	username = dmschema.ValidTextLine(title="Username", required=True)
 	ntiid = dmschema.ValidTextLine(title="Grade entry ntiid", required=True)
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
-	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
-
 
 	def copy(source):
 		"""
