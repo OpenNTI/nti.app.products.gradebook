@@ -55,7 +55,7 @@ class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMappin
 	contains(b'.IGradeBookEntry')
 	__parent__.required = False
 
-	Name = dmschema.ValidTextLine(title="Part name", required=True)
+	Name = dmschema.ValidTextLine(title="Part name", required=False)
 	displayName = dmschema.ValidTextLine(title="Part name", required=False)
 	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
 						  min=0.0,
