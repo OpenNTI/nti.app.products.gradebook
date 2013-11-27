@@ -26,12 +26,12 @@ from . import interfaces as grade_interfaces
 @interface.implementer(grade_interfaces.IGradeScheme)
 @component.adapter(INumeric)
 def _NumericGrade(grade):
-	return grades.NumericGrade(grade)
+	return grades.NumericGrade(float(grade))
 
 @interface.implementer(grade_interfaces.IGradeScheme)
 @component.adapter(IString)
 def _StringGrade(grade):
-	return grades.StringGrade(grade)
+	return grades.StringGrade(str(grade))
 
 @interface.implementer(grade_interfaces.IGradeScheme)
 @component.adapter(IBoolean)
@@ -64,6 +64,15 @@ def _GradeToCourseInstance(grade):
 		__traceback_info__ = grade
 		raise TypeError("Unable to find course")
 	return course
+
+@interface.implementer(grade_interfaces.IGradeBookEntry)
+@component.adapter(grade_interfaces.IGrade)
+def _GradeToGradeEntry(grade):
+	course = find_interface(grade, ICourseInstance)
+	gradebook = grade_interfaces.IGradeBook(course, None)
+	if gradebook is not None:
+		return gradebook.get_entry_by_ntiid(grade.ntiid)
+	return None
 
 @interface.implementer(grade_interfaces.IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)

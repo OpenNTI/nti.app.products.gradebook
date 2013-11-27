@@ -24,6 +24,12 @@ NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
+LETTER_GRADE_SCHEME = 'letter'
+NUMERIC_GRADE_SCHEME = 'numeric'
+GRADE_SCHEMES = (NUMERIC_GRADE_SCHEME, LETTER_GRADE_SCHEME,)
+GRADE_SCHEMES_VOCABULARY = schema.vocabulary.SimpleVocabulary(
+								[schema.vocabulary.SimpleTerm(x) for x in GRADE_SCHEMES])
+
 class ICloneable(interface.Interface):
 
 	def clone():
@@ -37,10 +43,12 @@ class IGradeBookEntry(IContained, ICloneable):
 	__parent__.required = False
 
 	Name = dmschema.ValidTextLine(title="entry name", required=False)
+	GradeScheme = schema.Choice(vocabulary=GRADE_SCHEMES_VOCABULARY, title='grade scheme',
+								required=True, default=NUMERIC_GRADE_SCHEME)
+
 	displayName = dmschema.ValidTextLine(title="Part name", required=False)
 	assignmentId = dmschema.ValidTextLine(title="assignment id", required=False)
-	maxGrade = schema.Int(title="The maximum grade that can be obtained",
-						  min=0, max=100, required=False, default=100)
+
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 						  min=0.0,
 						  max=1.0,

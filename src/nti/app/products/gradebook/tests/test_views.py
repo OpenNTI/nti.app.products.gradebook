@@ -23,10 +23,10 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestViews(SharedApplicationTestBase):
 
-	gradebook_part = {'Name': 'Quizzes', 'order': 1, 'weight': 0.95,
+	gradebook_part = {'Name':'Quizzes', 'order':1, 'weight':0.95,
 					  'MimeType':'application/vnd.nextthought.gradebookpart'}
 
-	gradebook_entry = { 'Name': 'Quiz1', 'order': 2, 'weight': 0.55,
+	gradebook_entry = { 'Name':'Quiz1', 'GradeScheme':'numeric', 'order':2, 'weight':0.55,
 						'MimeType':'application/vnd.nextthought.gradebookentry'}
 
 	@classmethod

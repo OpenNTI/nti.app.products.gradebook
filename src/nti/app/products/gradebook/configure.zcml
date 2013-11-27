@@ -36,6 +36,10 @@
 			 for=".interfaces.IGrade"
 			 provides="nti.contenttypes.courses.interfaces.ICourseInstance" />
 	
+	<adapter factory=".adapters._GradeToGradeEntry"
+			 for=".interfaces.IGrade"
+			 provides=".interfaces.IGradeBookEntry" />
+			 
 	<adapter factory=".adapters._AssignmentHistoryItem2GradeBookEntry" 
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGradeBookEntry" />
@@ -73,6 +77,16 @@
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
+	<!-- Internalization -->
+	
+	<adapter factory=".internalization._GradeObjectUpdater"
+			 for=".interfaces.IGrade"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+			  
+	<adapter factory=".internalization._GradesObjectUpdater"
+			 for=".interfaces.IGrades"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+			 
 	<!-- Events -->
 
 	<subscriber handler=".subscribers._gradebook_part_removed" />

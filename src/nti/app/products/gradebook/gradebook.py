@@ -193,6 +193,8 @@ class GradeBookEntry(Persistent,
 	__parent__ = None
 	__name__ = alias('Name')
 
+	gradeScheme = alias('GradeScheme')
+
 	@property
 	def DueDate(self):
 		asm = component.queryUtility(asm_interfaces.IQAssignment, name=self.assignmentId)
@@ -206,7 +208,7 @@ class GradeBookEntry(Persistent,
 		result = self.__class__()
 		result.order = self.order
 		result.weight = self.weight
-		result.maxGrade = self.maxGrade
+		result.gradeScheme = self.gradeScheme
 		result.displayName = self.displayName
 		result.assignmentId = self.assignmentId
 		result.__parent__, result.__name__ = (None, self.__name__)

@@ -136,20 +136,20 @@ class TestExternal(ConfiguringTestBase):
 		gbe.order = 2
 		gbe.Name = 'quiz1'
 		gbe.weight = 0.55
-		gbe.maxGrade = 30
+		gbe.GradeScheme = 'letter'
 		gbe.displayName = 'Quiz 1'
 		gbe.assignmentId = 'myquestion'
 
 		ext = externalization.to_external_object(gbe)
 		assert_that(ext, has_entry(u'Class', 'GradeBookEntry'))
-		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'Name', 'quiz1'))
+		assert_that(ext, has_entry(u'GradeScheme', 'letter'))
 		assert_that(ext, has_entry(u'order', 2))
 		assert_that(ext, has_entry(u'weight', 0.55))
-		assert_that(ext, has_entry(u'maxGrade', 30))
 		assert_that(ext, has_entry(u'displayName', 'Quiz 1'))
 		assert_that(ext, has_entry(u'DueDate', is_(none())))
 		assert_that(ext, has_entry(u'assignmentId', 'myquestion'))
+		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookentry-quizzes.quiz1'))
 

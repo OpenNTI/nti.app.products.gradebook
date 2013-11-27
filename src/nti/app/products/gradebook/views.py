@@ -154,7 +154,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
 	def readInput(self):
 		externalValue = super(GradeBookPutView, self).readInput()
-		for name in ('NTIID', 'id', 'DueDate', 'Name'):
+		for name in ('id', 'NTIID', 'GradeScheme', 'DueDate', 'Name'):
 			if name in externalValue:
 				del externalValue[name]
 		return externalValue

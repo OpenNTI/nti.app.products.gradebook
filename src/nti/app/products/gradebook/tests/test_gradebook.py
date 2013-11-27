@@ -38,7 +38,7 @@ class TestGradeBook(ConfiguringTestBase):
 		gbe = gradebook.GradeBookEntry()
 		gbe.order = 1
 		gbe.assignmentId = 'xzy'
-		gbe.maxGrade = 100
+		gbe.GradeScheme = 'letter'
 		gbe.__name__ = gbe.displayName = 'entry'
 		assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
 		assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
@@ -54,7 +54,6 @@ class TestGradeBook(ConfiguringTestBase):
 		entry.order = 2
 		entry.weight = 0.9
 		entry.assignmentId = 'xyzq'
-		entry.maxGrade = 25
 		entry.__name__ = entry.displayName = 'entry'
 		part[entry.__name__] = entry
 
@@ -79,8 +78,8 @@ class TestGradeBook(ConfiguringTestBase):
 		assert_that(cl_entry, has_property('Name', 'entry'))
 		assert_that(cl_entry, has_property('order', 2))
 		assert_that(cl_entry, has_property('weight', 0.9))
-		assert_that(cl_entry, has_property('maxGrade', 25))
 		assert_that(cl_entry, has_property('DueDate', is_(none())))
 		assert_that(cl_entry, has_property('displayName', 'entry'))
 		assert_that(cl_entry, has_property('assignmentId', 'xyzq'))
+		assert_that(cl_entry, has_property('GradeScheme', 'numeric'))
 

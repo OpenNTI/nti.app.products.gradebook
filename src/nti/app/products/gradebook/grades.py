@@ -31,9 +31,6 @@ from nti.contenttypes.courses import interfaces as course_interfaces
 from nti.dataserver import mimetype
 from nti.dataserver.datastructures import ModDateTrackingObject
 
-from nti.externalization import internalization
-from nti.externalization import interfaces as ext_interfaces
-
 from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
 
@@ -53,7 +50,6 @@ class BooleanGrade(int):
 
 @interface.implementer(grades_interfaces.IGrade,
 					   an_interfaces.IAttributeAnnotatable,
-					   ext_interfaces.IInternalObjectUpdater,
 					   zmime_interfaces.IContentTypeAware)
 class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
@@ -100,20 +96,6 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 			self.__parent__ = other.__parent__
 		self.updateLastMod()
 		return self
-
-	def updateFromExternalObject(self, ext, *args, **kwargs):
-		modified = False
-		for name in ('ntiid', 'username'):
-			value = ext.get(name, None)
-			if getattr(self, name, None) is None and value is not None:
-				setattr(self, name, value)
-				modified = True
-
-		grade = ext.get('grade', None)
-		if self.grade != grade:
-			self.grade = grade
-			modified = True
-		return modified
 
 	def __eq__(self, other):
 		try:
@@ -181,7 +163,6 @@ class _UserGradesResource(ProxyBase, zcontained.Contained):
 
 @component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGrades, 
-					   ext_interfaces.IInternalObjectUpdater,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
@@ -252,17 +233,6 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 	def clearAll(self):
 		for username in list(self.keys()):
 			self.clear(username)
-
-	def updateFromExternalObject(self, ext, *args, **kwargs):
-		modified = False
-		items = ext.get('Items', {})
-		for username, grades in items.items():
-			for grade_ext in grades:
-				modified = True
-				grade = internalization.find_factory_for(grade_ext)()
-				internalization.update_from_external_object(grade, grade_ext)
-				self.add_grade(grade, username)
-		return modified
 
 	def __getitem__(self, username):
 		grades = self.__super_getitem(username)
