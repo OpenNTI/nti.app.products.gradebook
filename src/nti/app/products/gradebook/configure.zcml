@@ -98,6 +98,9 @@
 	<adapter factory=".acl._GradeBookACLProvider"
 			 for=".interfaces.IGradeBook"/>
 			 
+	<adapter factory=".acl._GradesACLProvider"
+			 for=".interfaces.IGrades"/>
+			 
 	<!-- MIME Factories -->
 	
 	<include package="nti.externalization" file="meta.zcml" />

@@ -161,6 +161,11 @@ class _UserGradesResource(ProxyBase, zcontained.Contained):
 	def values(self):
 		return self.blist
 
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.username)
+		return xhash
+
 @component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGrades, 
 					   an_interfaces.IAttributeAnnotatable,
@@ -246,5 +251,10 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 			return grades
 		except KeyError:
 			return default
+
+	def __hash__(self):
+		xhash = 15487019
+		return xhash
+
 
 _GradesFactory = an_factory(Grades, 'Grades')

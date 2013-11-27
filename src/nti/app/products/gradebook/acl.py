@@ -16,14 +16,20 @@ from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 ALL_PERMISSIONS = nti_interfaces.ALL_PERMISSIONS
 
 class _GradeBookACLProvider(AbstractCreatedAndSharedACLProvider):
-	"""
-	Grant full control to their creator and inherit moderation
-	rights through their parent.
-	"""
 
 	_DENY_ALL = False
 
 	def _get_sharing_target_names( self ):
+		return ()
+
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		self._extend_with_admin_privs(acl)
+
+class _GradesACLProvider(AbstractCreatedAndSharedACLProvider):
+
+	_DENY_ALL = False
+
+	def _get_sharing_target_names(self):
 		return ()
 
 	def _extend_acl_after_creator_and_sharing(self, acl):

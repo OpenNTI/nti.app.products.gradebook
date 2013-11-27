@@ -11,6 +11,7 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import close_to
 from hamcrest import has_entry
+from hamcrest import has_length
 from hamcrest import assert_that
 
 import os
@@ -46,7 +47,7 @@ class TestViews(SharedApplicationTestBase):
 		return None
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-	def test_gradebook(self):
+	def xtest_gradebook(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
 		links = res.json_body['Items'][0]['Links']
 		href = self.courseInstanceLink(links)
@@ -107,22 +108,17 @@ class TestViews(SharedApplicationTestBase):
 		res = self.testapp.get(part_path)
 		assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.95, 0.1)))
 
-		quiz_path_del = part_path + '/quizx'
-		res = self.testapp.delete(quiz_path_del)
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_gradebooks(self):
+		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
+		links = res.json_body['Items'][0]['Links']
+		href = self.courseInstanceLink(links)
 
-		res = self.testapp.get(part_path)
-		assert_that(res.json_body, has_entry('TotalEntryWeight', 0.55))
-
-		data = self.gradebook_entry.copy()
-		data['Name'] = 'changed'
-		data['displayName'] = 'Quiz 1.x'
-		res = self.testapp.put_json(quiz_path, data, extra_environ=environ)
-		assert_that(res.json_body, has_entry('Name', 'Quiz1'))
-		assert_that(res.json_body, has_entry('displayName', 'Quiz 1.x'))
-
-		self.testapp.delete(part_path)
+		path = href + '/Grades'
 		res = self.testapp.get(path)
-		assert_that(res.json_body, has_entry('TotalPartWeight', 0.0))
+		assert_that(res.json_body, has_entry('Items', has_length(0)))
+		assert_that(res.json_body, has_entry(u'MimeType', u'application/vnd.nextthought.grades'))
+
 
 if __name__ == '__main__':
 	import unittest
