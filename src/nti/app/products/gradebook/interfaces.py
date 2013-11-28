@@ -37,12 +37,30 @@ class ICloneable(interface.Interface):
 		clone this object
 		"""
 
+class IGradeScheme(interface.Interface):
+	pass
+
+class INumericGradeScheme(IGradeScheme, INumeric):
+	pass
+
+class IStringGradeScheme(IGradeScheme, IString):
+	pass
+
+class IBooleanGradeScheme(IGradeScheme, IBoolean):
+	pass
+
 class IGradeBookEntry(IContained, ICloneable):
 
 	containers(b'.IGradeBookPart')
 	__parent__.required = False
 
 	Name = dmschema.ValidTextLine(title="entry name", required=False)
+
+	GradeScheme = dmschema.Variant(
+				(dmschema.Object(IGradeScheme, description="A :class:`.IGradeScheme`"),
+				 dmschema.ValidTextLine(title='String grade scheme')),
+				title="The grade scheme", required=False)
+
 	GradeScheme = schema.Choice(vocabulary=GRADE_SCHEMES_VOCABULARY, title='grade scheme',
 								required=True, default=NUMERIC_GRADE_SCHEME)
 
@@ -97,18 +115,6 @@ class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
 		"""
 		return the :IGradeBookEntry associated with the specified assignmentId
 		"""
-
-class IGradeScheme(interface.Interface):
-	pass
-
-class INumericGradeScheme(IGradeScheme, INumeric):
-	pass
-
-class IStringGradeScheme(IGradeScheme, IString):
-	pass
-
-class IBooleanGradeScheme(IGradeScheme, IBoolean):
-	pass
 
 class IGrade(IContained, ICloneable):
 	"""
