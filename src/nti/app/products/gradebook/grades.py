@@ -14,7 +14,6 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.location import locate
-from zope.proxy import ProxyBase
 from zope.interface.common import mapping
 from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
@@ -30,6 +29,10 @@ from nti.contenttypes.courses import interfaces as course_interfaces
 
 from nti.dataserver import mimetype
 from nti.dataserver.datastructures import ModDateTrackingObject
+
+from nti.externalization import externalization
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
@@ -128,11 +131,12 @@ def _indexof_grade(grade, grades):
 			break
 	return idx
 
-@interface.implementer(mapping.IReadMapping)
-class _UserGradesResource(ProxyBase, zcontained.Contained):
+@interface.implementer(mapping.IReadMapping, ext_interfaces.IExternalizedObject)
+class _UserGradesResource(zcontained.Contained):
+
+	__slots__ = ('blist', 'username')
 
 	def __init__(self, obj, username):
-		super(_UserGradesResource, self).__init__(obj)
 		self.blist = obj
 		self.username = username
 
@@ -165,6 +169,14 @@ class _UserGradesResource(ProxyBase, zcontained.Contained):
 		xhash = 47
 		xhash ^= hash(self.username)
 		return xhash
+
+	def toExternalObject(self):
+		result = LocatedExternalDict({'username':self.username})
+		items = result['Items'] = {}
+		for grade in self.values():
+			ext = externalization.to_external_object(grade)
+			items.append(ext)
+		return result
 
 @component.adapter(course_interfaces.ICourseInstance)
 @interface.implementer(grades_interfaces.IGrades, 

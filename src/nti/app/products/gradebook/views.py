@@ -203,6 +203,11 @@ class GradePostView(AbstractAuthenticatedView,
 
 		return grade
 
+@view_config(context=grades_interfaces.IGrades)
+@view_defaults(**_u_view_defaults)
+class GradesPutView(GradePostView):
+	pass
+
 @view_config(context=grades_interfaces.IGrade)
 @view_defaults(**_u_view_defaults)
 class GradePutView(AbstractAuthenticatedView,
