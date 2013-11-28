@@ -15,10 +15,10 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 
-from .. import gradebook
-from .. import interfaces as grades_interfaces
+from nti.app.products.gradebook import gradebook
+from nti.app.products.gradebook import interfaces as grades_interfaces
 
-from .  import ConfiguringTestBase
+from nti.app.products.gradebook.tests import ConfiguringTestBase
 
 from nti.testing.matchers import verifiably_provides, validly_provides
 
@@ -31,12 +31,14 @@ class TestGradeBook(ConfiguringTestBase):
 
 		gbp = gradebook.GradeBookPart()
 		gbp.order = 1
+		gbp.__parent__ = gb
 		gbp.__name__ = gbp.displayName = 'part'
 		assert_that(gbp, validly_provides(grades_interfaces.IGradeBookPart))
 		assert_that(gbp, verifiably_provides(grades_interfaces.IGradeBookPart))
 
 		gbe = gradebook.GradeBookEntry()
 		gbe.order = 1
+		gbe.__parent__ = gbp
 		gbe.assignmentId = 'xzy'
 		gbe.GradeScheme = 'letter'
 		gbe.__name__ = gbe.displayName = 'entry'

@@ -190,7 +190,7 @@ class GradePostView(AbstractAuthenticatedView,
 									lambda x: grades_interfaces.IGrade.providedBy(x))
 		self.updateContentObject(grade, externalValue, set_id=False, notify=False)
 
-		gradebook = grades_interfaces.IGradeBook(self.context)
+		gradebook = grades_interfaces.IGradeBook(context)
 		if not grade.ntiid or gradebook.get_entry_by_ntiid(grade.ntiid) is None:
 			utils.raise_field_error(self.request,
 									"ntiid",

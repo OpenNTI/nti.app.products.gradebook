@@ -113,7 +113,7 @@ class GradeBook(Implicit,
 		type_ = ntiids.get_type(ntiid)
 		if type_ == grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY:
 			specific = ntiids.get_specific(ntiid)
-			part, entry = specific.split('.')
+			part, entry = specific.split('.')[-2:]
 			result = self.get(part, {}).get(entry)
 		return result
 

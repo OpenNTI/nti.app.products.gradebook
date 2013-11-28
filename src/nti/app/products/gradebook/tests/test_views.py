@@ -30,6 +30,9 @@ class TestViews(SharedApplicationTestBase):
 	gradebook_entry = { 'Name':'Quiz1', 'GradeScheme':'numeric', 'order':2, 'weight':0.55,
 						'MimeType':'application/vnd.nextthought.gradebookentry'}
 
+	grade = {'username':'sjohnson@nextthought.com', 'grade':85, 'ntiid':None,
+			 'MimeType':'application/vnd.nextthought.grade'}
+
 	@classmethod
 	def _setup_library(cls, *args, **kwargs):
 		lib = Library(
@@ -47,7 +50,7 @@ class TestViews(SharedApplicationTestBase):
 		return None
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-	def xtest_gradebook(self):
+	def test_gradebook(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
 		links = res.json_body['Items'][0]['Links']
 		href = self.courseInstanceLink(links)
@@ -108,17 +111,39 @@ class TestViews(SharedApplicationTestBase):
 		res = self.testapp.get(part_path)
 		assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.95, 0.1)))
 
+		data = self.gradebook_entry.copy()
+		data['displayName'] = '++Quiz-1++'
+		res = self.testapp.put_json(quiz_path, data, extra_environ=environ)
+		assert_that(res.json_body, has_entry(u'displayName', '++Quiz-1++'))
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-	def test_gradebooks(self):
+	def test_grades(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
 		links = res.json_body['Items'][0]['Links']
 		href = self.courseInstanceLink(links)
+
+		path = href + '/GradeBook'
+		part_path = path + '/Quizzes'
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
+
+		data = self.gradebook_part
+		self.testapp.post_json(path, data, extra_environ=environ)
+		data = self.gradebook_entry
+		res = self.testapp.post_json(part_path, data, extra_environ=environ)
+		ntiid = res.json_body['NTIID']
 
 		path = href + '/Grades'
 		res = self.testapp.get(path)
 		assert_that(res.json_body, has_entry('Items', has_length(0)))
 		assert_that(res.json_body, has_entry(u'MimeType', u'application/vnd.nextthought.grades'))
 
+		data = self.grade.copy()
+		data['ntiid'] = ntiid
+		res = self.testapp.post_json(path, data, extra_environ=environ)
+		assert_that(res.json_body, has_entry(u'grade', 85.0))
+		assert_that(res.json_body, has_entry(u'ntiid', ntiid))
+		assert_that(res.json_body, has_entry(u'username', u'sjohnson@nextthought.com'))
 
 if __name__ == '__main__':
 	import unittest

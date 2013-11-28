@@ -253,7 +253,8 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 			return default
 
 	def __hash__(self):
-		xhash = 15487019
+		xhash = 47
+		xhash ^= hash(self.__name__)
 		return xhash
 
 
