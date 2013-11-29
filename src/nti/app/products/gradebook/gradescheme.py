@@ -19,10 +19,13 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
 
-@interface.implementer(grades_interfaces.LetterGradeScheme)
+@interface.implementer(grades_interfaces.ILetterGradeScheme)
 class LetterGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(grades_interfaces.LetterGradeScheme)
+	createDirectFieldProperties(grades_interfaces.ILetterGradeScheme)
+
+	def __eq__(self, other):
+		return self is other or grades_interfaces.ILetterGradeScheme.providedBy(other)
 
 	def __hash__(self):
 		xhash = 47
@@ -44,6 +47,12 @@ class NumericGradeScheme(SchemaConfigured):
 		value = self._type(value)
 		if value < self.min or value > self.max:
 			raise ValueError("Invalid grade value")
+
+	def __eq__(self, other):
+		try:
+			return self is other or (self.min == other.min and self.max == other.max)
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
@@ -71,6 +80,9 @@ class BooleanGradeScheme(SchemaConfigured):
 	def validate(cls, value):
 		if not value in (True, False):
 			raise ValueError("Invalid grade value")
+
+	def __eq__(self, other):
+		return self is other or grades_interfaces.IBooleanGradeScheme.providedBy(other)
 
 	def __hash__(self):
 		xhash = 47

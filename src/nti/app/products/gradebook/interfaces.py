@@ -45,7 +45,7 @@ class IIntegerGradeScheme(INumericGradeScheme):
 	min = schema.Int(title="min value", default=0)
 	max = schema.Int(title="max value", default=100)
 
-class LetterGradeScheme(IGradeScheme):
+class ILetterGradeScheme(IGradeScheme):
 	pass
 
 class IBooleanGradeScheme(IGradeScheme):

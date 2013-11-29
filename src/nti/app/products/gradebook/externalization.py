@@ -56,7 +56,11 @@ class GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	def _ap_enumerate_externalizable_root_interfaces(cls, grade_interfaces):
 		return (grade_interfaces.IGradeBookEntry, grade_interfaces.IGradeBookPart,
 				grade_interfaces.IGradeBook, grade_interfaces.IGrade,
-				grade_interfaces.IGrades, grade_interfaces.IGradeScheme)
+				grade_interfaces.IGrades, grade_interfaces.IGradeScheme,
+				grade_interfaces.IBooleanGradeScheme,
+				grade_interfaces.ILetterGradeScheme,
+				grade_interfaces.INumericGradeScheme,
+				grade_interfaces.IIntegerGradeScheme)
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):

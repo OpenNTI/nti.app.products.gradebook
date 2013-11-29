@@ -23,6 +23,7 @@ from nti.externalization import internalization
 
 from .. import grades
 from .. import gradebook
+from .. import gradescheme
 
 from .  import ConfiguringTestBase
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -136,20 +137,46 @@ class TestExternal(ConfiguringTestBase):
 		gbe.order = 2
 		gbe.Name = 'quiz1'
 		gbe.weight = 0.55
-		gbe.GradeScheme = 'letter'
 		gbe.displayName = 'Quiz 1'
 		gbe.assignmentId = 'myquestion'
+
 
 		ext = externalization.to_external_object(gbe)
 		assert_that(ext, has_entry(u'Class', 'GradeBookEntry'))
 		assert_that(ext, has_entry(u'Name', 'quiz1'))
-		assert_that(ext, has_entry(u'GradeScheme', 'letter'))
 		assert_that(ext, has_entry(u'order', 2))
 		assert_that(ext, has_entry(u'weight', 0.55))
 		assert_that(ext, has_entry(u'displayName', 'Quiz 1'))
 		assert_that(ext, has_entry(u'DueDate', is_(none())))
+		assert_that(ext, has_entry(u'GradeScheme', is_(none())))
 		assert_that(ext, has_entry(u'assignmentId', 'myquestion'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookentry-quizzes.quiz1'))
+
+
+	@WithMockDSTrans
+	def test_gradescheme(self):
+		s = gradescheme.BooleanGradeScheme()
+		ext = externalization.to_external_object(s)
+		assert_that(ext, has_entry(u'Class', 'BooleanGradeScheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.booleangradescheme'))
+
+		s = gradescheme.IntegerGradeScheme()
+		ext = externalization.to_external_object(s)
+		assert_that(ext, has_entry(u'Class', 'IntegerGradeScheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.integergradescheme'))
+		assert_that(ext, has_entry(u'min', 0))
+		assert_that(ext, has_entry(u'max', 100))
+
+		s = gradescheme.NumericGradeScheme(min=10.0, max=15.0)
+		ext = externalization.to_external_object(s)
+		assert_that(ext, has_entry(u'Class', 'NumericGradeScheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.numericgradescheme'))
+		assert_that(ext, has_entry(u'min', 10.0))
+		assert_that(ext, has_entry(u'max', 15.0))
+
+		scheme = internalization.find_factory_for(ext)()
+		internalization.update_from_external_object(scheme, ext)
+		assert_that(s, is_(scheme))
 

@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import interface
 from zope import component
 
@@ -41,9 +43,9 @@ class _GradeObjectUpdater(object):
         # adapt external grade value to a grade scheme
         entry = grade_interfaces.IGradeBookEntry(self.obj, None)
         if entry is not None and grade is not None:
-            grade = component.queryAdapter(grade, grade_interfaces.IGradeScheme,
-                                           name=entry.GradeScheme,
-                                           default=grade)
+            if isinstance(grade, six.string_types):
+                grade = entry.GradeScheme.fromUnicode(grade)
+            entry.GradeScheme.validate(grade)
 
         if self.obj.grade != grade:
             self.obj.grade = grade

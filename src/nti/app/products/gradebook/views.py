@@ -37,6 +37,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.utils._compat import aq_base
 
 from . import utils
+from . import gradescheme
 from . import interfaces as grades_interfaces
 
 _view_defaults = dict(route_name='objects.generic.traversal',
@@ -98,12 +99,14 @@ def get_assignment(aid):
 	return component.queryUtility(asm_interfaces.IQAssignment, name=aid)
 
 def _validate_grade_entry(request, obj):
-	if	grades_interfaces.IGradeBookEntry.providedBy(obj) and obj.assignmentId and \
-		get_assignment(obj.assignmentId) is None:
-		utils.raise_field_error(request,
-								"assignmentId",
-								_("must specify a valid grade assignment id"))
-	
+	if	grades_interfaces.IGradeBookEntry.providedBy(obj):
+		if obj.assignmentId and get_assignment(obj.assignmentId) is None:
+			utils.raise_field_error(request,
+									"assignmentId",
+									_("must specify a valid grade assignment id"))
+		if obj.GradeScheme is None:
+			obj.GradeScheme = gradescheme.IntegerGradeScheme()
+			
 	if not obj.Name and not obj.displayName:
 		utils.raise_field_error(request,
 								"Name",
