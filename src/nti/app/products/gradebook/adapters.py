@@ -15,28 +15,10 @@ from zope import component
 
 from pyramid.traversal import find_interface
 
-from dolmen.builtins import INumeric, IString, IBoolean
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
-from . import grades
 from . import interfaces as grade_interfaces
-
-@interface.implementer(grade_interfaces.IGradeScheme)
-@component.adapter(INumeric)
-def _NumericGrade(grade):
-	return grades.NumericGrade(float(grade))
-
-@interface.implementer(grade_interfaces.IGradeScheme)
-@component.adapter(IString)
-def _StringGrade(grade):
-	return grades.StringGrade(str(grade))
-
-@interface.implementer(grade_interfaces.IGradeScheme)
-@component.adapter(IBoolean)
-def _BooleanGrade(grade):
-	return grades.BooleanGrade(1 if grade else 0)
 
 @interface.implementer(grade_interfaces.IGrades)
 @component.adapter(grade_interfaces.IGradeBook)

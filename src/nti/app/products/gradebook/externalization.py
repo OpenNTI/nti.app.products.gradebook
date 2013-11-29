@@ -31,18 +31,6 @@ CLASS = ext_interfaces.StandardExternalFields.CLASS
 MIMETYPE = ext_interfaces.StandardExternalFields.MIMETYPE
 
 @interface.implementer(ext_interfaces.IExternalObject)
-@component.adapter(grade_interfaces.IBooleanGradeScheme)
-class BooleanGradeSchemeExternalizer(object):
-
-	__slots__ = ('value',)
-
-	def __init__(self, value):
-		self.value = value
-
-	def toExternalObject(self):
-		return True if self.value else False
-
-@interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(grade_interfaces.IGrades)
 class GradesExternalizer(object):
 
@@ -68,11 +56,11 @@ class GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	def _ap_enumerate_externalizable_root_interfaces(cls, grade_interfaces):
 		return (grade_interfaces.IGradeBookEntry, grade_interfaces.IGradeBookPart,
 				grade_interfaces.IGradeBook, grade_interfaces.IGrade,
-				grade_interfaces.IGrades)
+				grade_interfaces.IGrades, grade_interfaces.IGradeScheme)
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):
-		return ('gradebook', 'grades')
+		return ('gradebook', 'grades', 'gradescheme')
 
 GradesObjectIO.__class_init__()
 

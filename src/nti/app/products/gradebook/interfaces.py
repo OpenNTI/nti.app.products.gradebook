@@ -12,8 +12,6 @@ from zope.interface.common import mapping
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
 
-from dolmen.builtins import INumeric, IString, IBoolean
-
 from nti.utils import schema as dmschema
 
 # ## NTIID values
@@ -24,12 +22,6 @@ NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
-LETTER_GRADE_SCHEME = 'letter'
-NUMERIC_GRADE_SCHEME = 'numeric'
-GRADE_SCHEMES = (NUMERIC_GRADE_SCHEME, LETTER_GRADE_SCHEME,)
-GRADE_SCHEMES_VOCABULARY = schema.vocabulary.SimpleVocabulary(
-								[schema.vocabulary.SimpleTerm(x) for x in GRADE_SCHEMES])
-
 class ICloneable(interface.Interface):
 
 	def clone():
@@ -38,15 +30,25 @@ class ICloneable(interface.Interface):
 		"""
 
 class IGradeScheme(interface.Interface):
+
+	def fromUnicode(value):
+		pass
+	
+	def validate(value):
+		pass
+
+class INumericGradeScheme(IGradeScheme):
+	min = schema.Float(title="min value", default=0.0)
+	max = schema.Float(title="max value", default=100.0)
+
+class IIntegerGradeScheme(INumericGradeScheme):
+	min = schema.Int(title="min value", default=0)
+	max = schema.Int(title="max value", default=100)
+
+class LetterGradeScheme(IGradeScheme):
 	pass
 
-class INumericGradeScheme(IGradeScheme, INumeric):
-	pass
-
-class IStringGradeScheme(IGradeScheme, IString):
-	pass
-
-class IBooleanGradeScheme(IGradeScheme, IBoolean):
+class IBooleanGradeScheme(IGradeScheme):
 	pass
 
 class IGradeBookEntry(IContained, ICloneable):
@@ -60,9 +62,6 @@ class IGradeBookEntry(IContained, ICloneable):
 				(dmschema.Object(IGradeScheme, description="A :class:`.IGradeScheme`"),
 				 dmschema.ValidTextLine(title='String grade scheme')),
 				title="The grade scheme", required=False)
-
-	GradeScheme = schema.Choice(vocabulary=GRADE_SCHEMES_VOCABULARY, title='grade scheme',
-								required=True, default=NUMERIC_GRADE_SCHEME)
 
 	displayName = dmschema.ValidTextLine(title="Part name", required=False)
 	assignmentId = dmschema.ValidTextLine(title="assignment id", required=False)
@@ -122,7 +121,11 @@ class IGrade(IContained, ICloneable):
 	"""
 	username = dmschema.ValidTextLine(title="Username", required=True)
 	ntiid = dmschema.ValidTextLine(title="Grade entry ntiid", required=True)
-	grade = schema.Object(IGradeScheme, title="The grade", required=False)
+	grade = dmschema.Variant(
+				(dmschema.Number(title="Number grade"),
+				 dmschema.Bool(title='Boolean grade'),
+				 dmschema.ValidTextLine(title='String grade')),
+				title="The grade", required=False)
 
 	AutoGrade = schema.Float(title="Auto grade", min=0.0, required=False, readonly=True)
 

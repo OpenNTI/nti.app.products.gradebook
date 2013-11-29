@@ -44,18 +44,6 @@
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGradeBookEntry" />
 
-	<adapter factory=".adapters._NumericGrade"
-			 for="dolmen.builtins.INumeric"
-			 provides=".interfaces.IGradeScheme" />
-			 
-	<adapter factory=".adapters._StringGrade"
-			 for="dolmen.builtins.IString"
-			 provides=".interfaces.IGradeScheme" />
-			
-	<adapter factory=".adapters._BooleanGrade"
-			 for="dolmen.builtins.IBoolean"
-			 provides=".interfaces.IGradeScheme" />
-			  
 	<!-- Externalization -->
 	
 	<adapter factory=".externalization.GradesObjectIO"
@@ -70,8 +58,10 @@
 	<adapter factory=".externalization.GradesObjectIO"
 			 for=".interfaces.IGrade" />
 	
+	<adapter factory=".externalization.GradesObjectIO"
+			 for=".interfaces.IGradeScheme" />
+			 
 	<adapter factory=".externalization.GradesExternalizer" />
-	<adapter factory=".externalization.BooleanGradeSchemeExternalizer" />
 			
 	<subscriber factory=".externalization.UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
@@ -107,5 +97,6 @@
 	<include package="nti.externalization" />
 	<ext:registerMimeFactories module=".grades" />
 	<ext:registerMimeFactories module=".gradebook" />
-
+	<ext:registerMimeFactories module=".gradescheme" />
+	
 </configure>

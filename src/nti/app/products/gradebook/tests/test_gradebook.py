@@ -83,5 +83,4 @@ class TestGradeBook(ConfiguringTestBase):
 		assert_that(cl_entry, has_property('DueDate', is_(none())))
 		assert_that(cl_entry, has_property('displayName', 'entry'))
 		assert_that(cl_entry, has_property('assignmentId', 'xyzq'))
-		assert_that(cl_entry, has_property('GradeScheme', 'numeric'))
 
