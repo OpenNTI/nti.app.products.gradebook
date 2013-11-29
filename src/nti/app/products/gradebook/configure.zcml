@@ -45,22 +45,22 @@
 			 provides=".interfaces.IGradeBookEntry" />
 
 	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
 	
-	<adapter factory=".externalization.GradesObjectIO"
-			 for=".interfaces.IGradeBookEntry" />
-
-	<adapter factory=".externalization.GradesObjectIO"
-			 for=".interfaces.IGradeBookPart" />
-
-	<adapter factory=".externalization.GradesObjectIO"
-			 for=".interfaces.IGradeBook" />
-
-	<adapter factory=".externalization.GradesObjectIO"
-			 for=".interfaces.IGrade" />
-	
-	<adapter factory=".externalization.GradesObjectIO"
-			 for=".interfaces.IGradeScheme" />
-			 
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.IGradeBook
+						 .interfaces.IGradeBookPart
+						 .interfaces.IGradeBookEntry
+						 .interfaces.IGrade
+						 .interfaces.IGrades
+						 .interfaces.IGradeScheme
+						 .interfaces.ILetterGradeScheme
+						 .interfaces.IBooleanGradeScheme
+						 .interfaces.INumericGradeScheme
+						 .interfaces.IIntegerGradeScheme"
+		modules=".gradebook .grades .gradescheme" />
+		
 	<adapter factory=".externalization.GradesExternalizer" />
 			
 	<subscriber factory=".externalization.UsersCourseAssignmentHistoryItemDecorator"
@@ -90,13 +90,5 @@
 			 
 	<adapter factory=".acl._GradesACLProvider"
 			 for=".interfaces.IGrades"/>
-			 
-	<!-- MIME Factories -->
-	
-	<include package="nti.externalization" file="meta.zcml" />
-	<include package="nti.externalization" />
-	<ext:registerMimeFactories module=".grades" />
-	<ext:registerMimeFactories module=".gradebook" />
-	<ext:registerMimeFactories module=".gradescheme" />
 	
 </configure>

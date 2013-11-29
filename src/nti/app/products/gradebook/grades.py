@@ -39,10 +39,6 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
 
-@interface.implementer(grades_interfaces.IBooleanGradeScheme)
-class BooleanGrade(int):
-	pass
-
 @interface.implementer(grades_interfaces.IGrade,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
