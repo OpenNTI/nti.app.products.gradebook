@@ -16,20 +16,39 @@ from nti.dataserver import mimetype
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from . import interfaces as grades_interfaces
 
 @interface.implementer(grades_interfaces.ILetterGradeScheme)
 class LetterGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(grades_interfaces.ILetterGradeScheme)
+
+	grades = FP(grades_interfaces.ILetterGradeScheme['grades'])
+
+	default_grades = ('A', 'B', 'C', 'D', 'F')
+
+	def __init__(self, grades=None,):
+		super(LetterGradeScheme, self).__init__()
+		self.grades = self.default_grades if grades is None else grades
+
+	def fromUnicode(self, value):
+		self.validate(value)
+		return value
+
+	def validate(self, value):
+		if value.upper() in self.grades:
+			raise ValueError("Invalid grade value")
 
 	def __eq__(self, other):
-		return self is other or grades_interfaces.ILetterGradeScheme.providedBy(other)
+		try:
+			return self is other or (self.grades == other.grades)
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.mimeType)
+		xhash ^= hash(self.grades)
 		return xhash
 
 @interface.implementer(grades_interfaces.INumericGradeScheme)
@@ -39,9 +58,10 @@ class NumericGradeScheme(SchemaConfigured):
 
 	_type = float
 
-	@classmethod
-	def fromUnicode(cls, value):
-		return cls._type(value)
+	def fromUnicode(self, value):
+		value = self._type(value)
+		self.validate(value)
+		return value
 
 	def validate(self, value):
 		value = self._type(value)
@@ -72,13 +92,21 @@ class BooleanGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.IBooleanGradeScheme)
 
+	true_values = ('1', 'y', 't', 'yes', 'true')
+	false_values = ('0', 'n', 'f', 'no', 'false')
+
 	@classmethod
 	def fromUnicode(cls, value):
-		return value.lower() in ('1', 'y', 't', 'yes', 'true')
+		if value.lower() in cls.true_values:
+			value = True
+		elif value.lower() in cls.false_values:
+			value = False
+		cls.validate(value)
+		return value
 
 	@classmethod
 	def validate(cls, value):
-		if not value in (True, False):
+		if value not in (True, False):
 			raise ValueError("Invalid grade value")
 
 	def __eq__(self, other):

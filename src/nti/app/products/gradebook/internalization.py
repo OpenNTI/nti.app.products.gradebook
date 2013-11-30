@@ -45,7 +45,8 @@ class _GradeObjectUpdater(object):
         if entry is not None and grade is not None:
             if isinstance(grade, six.string_types):
                 grade = entry.GradeScheme.fromUnicode(grade)
-            entry.GradeScheme.validate(grade)
+            else:
+                entry.GradeScheme.validate(grade)
 
         if self.obj.grade != grade:
             self.obj.grade = grade

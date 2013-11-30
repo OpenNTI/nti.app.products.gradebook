@@ -46,7 +46,11 @@ class IIntegerGradeScheme(INumericGradeScheme):
 	max = schema.Int(title="max value", default=100)
 
 class ILetterGradeScheme(IGradeScheme):
-	pass
+	grades = schema.Tuple(schema.TextLine(title="the letter",
+										  min_length=1,
+										  max_length=1),
+						  unique=True,
+						  min_length=1)
 
 class IBooleanGradeScheme(IGradeScheme):
 	pass
