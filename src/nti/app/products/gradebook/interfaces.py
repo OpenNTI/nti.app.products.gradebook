@@ -62,10 +62,8 @@ class IGradeBookEntry(IContained, ICloneable):
 
 	Name = dmschema.ValidTextLine(title="entry name", required=False)
 
-	GradeScheme = dmschema.Variant(
-				(dmschema.Object(IGradeScheme, description="A :class:`.IGradeScheme`"),
-				 dmschema.ValidTextLine(title='String grade scheme')),
-				title="The grade scheme", required=False)
+	GradeScheme = dmschema.Object(IGradeScheme, description="A :class:`.IGradeScheme`",
+								  title="The grade scheme", required=False)
 
 	displayName = dmschema.ValidTextLine(title="Part name", required=False)
 	assignmentId = dmschema.ValidTextLine(title="assignment id", required=False)

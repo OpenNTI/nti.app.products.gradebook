@@ -138,7 +138,7 @@ class _UserGradesResource(zcontained.Contained):
 
 	def toExternalObject(self):
 		result = LocatedExternalDict({'username':self.username})
-		items = result['Items'] = {}
+		items = result['Items'] = []
 		for grade in self.values():
 			ext = externalization.to_external_object(grade)
 			items.append(ext)

@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import simplejson
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -35,6 +37,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils._compat import aq_base
+from nti.utils.maps import CaseInsensitiveDict
 
 from . import utils
 from . import gradescheme
@@ -105,7 +108,7 @@ def _validate_grade_entry(request, obj):
 									"assignmentId",
 									_("must specify a valid grade assignment id"))
 		if obj.GradeScheme is None:
-			obj.GradeScheme = gradescheme.IntegerGradeScheme()
+			obj.GradeScheme = gradescheme.NumericGradeScheme()
 			
 	if not obj.Name and not obj.displayName:
 		utils.raise_field_error(request,
@@ -202,7 +205,7 @@ class GradePostView(AbstractAuthenticatedView,
 		context.add_grade(grade)
 
 		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_path(grade)
+		self.request.response.location = self.request.current_route_url(grade.username, grade.ntiid)
 
 		return grade
 
@@ -210,6 +213,28 @@ class GradePostView(AbstractAuthenticatedView,
 @view_defaults(**_u_view_defaults)
 class GradesPutView(GradePostView):
 	pass
+
+@view_config(context=grades_interfaces.IGrades)
+@view_defaults(**_d_view_defaults)
+class GradesDeleteView(AbstractAuthenticatedView):
+	
+	def readInput(self):
+		request = self.request
+		value = request.body
+		value = simplejson.loads(unicode(value, request.charset))
+		return CaseInsensitiveDict(value)
+	
+	def __call__(self):
+		context = self.request.context
+		externalValue = self.readInput()
+		ntiid = externalValue.get('ntiid')
+		username = externalValue.get('username')
+		if context.remove_grade(ntiid, username):
+			result = hexc.HTTPNoContent()
+			result.last_modified = context.lastModified
+		else:
+			result = hexc.HTTPNotFound()
+		return result
 
 @view_config(context=grades_interfaces.IGrade)
 @view_defaults(**_u_view_defaults)

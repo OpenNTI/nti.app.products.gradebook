@@ -27,7 +27,7 @@ class TestViews(SharedApplicationTestBase):
 	gradebook_part = {'Name':'Quizzes', 'order':1, 'weight':0.95,
 					  'MimeType':'application/vnd.nextthought.gradebookpart'}
 
-	gradebook_entry = { 'Name':'Quiz1', 'GradeScheme':'numeric', 'order':2, 'weight':0.55,
+	gradebook_entry = { 'Name':'Quiz1', 'order':2, 'weight':0.55,
 						'MimeType':'application/vnd.nextthought.gradebookentry'}
 
 	grade = {'username':'sjohnson@nextthought.com', 'grade':85, 'ntiid':None,
@@ -116,6 +116,10 @@ class TestViews(SharedApplicationTestBase):
 		res = self.testapp.put_json(quiz_path, data, extra_environ=environ)
 		assert_that(res.json_body, has_entry(u'displayName', '++Quiz-1++'))
 
+		self.testapp.delete(quiz_path, extra_environ=environ)
+		res = self.testapp.get(part_path)
+		assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.4, 0.1)))
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_grades(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
@@ -144,6 +148,20 @@ class TestViews(SharedApplicationTestBase):
 		assert_that(res.json_body, has_entry(u'grade', 85.0))
 		assert_that(res.json_body, has_entry(u'ntiid', ntiid))
 		assert_that(res.json_body, has_entry(u'username', u'sjohnson@nextthought.com'))
+
+		user_grades_path = path + '/sjohnson@nextthought.com'
+		res = self.testapp.get(user_grades_path, extra_environ=environ)
+		assert_that(res.json_body, has_entry(u'Items', has_length(1)))
+		assert_that(res.json_body, has_entry(u'username', u'sjohnson@nextthought.com'))
+
+		grade_path = user_grades_path + '/' + ntiid
+		data['grade'] = 84
+		res = self.testapp.put_json(grade_path, data, extra_environ=environ)
+		assert_that(res.json_body, has_entry(u'grade', 84.0))
+
+		self.testapp.delete(grade_path, extra_environ=environ)
+		res = self.testapp.get(user_grades_path, extra_environ=environ)
+		assert_that(res.json_body, has_entry(u'Items', has_length(0)))
 
 if __name__ == '__main__':
 	import unittest
