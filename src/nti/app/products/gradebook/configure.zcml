@@ -77,10 +77,10 @@
 			 	
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 			
 	<subscriber factory=".decorators._CourseInstanceEnrollmentLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" 
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 			 
 	<!-- Events -->
 
