@@ -53,9 +53,9 @@ class ILetterGradeScheme(IGradeScheme):
 						  unique=True,
 						  min_length=1)
 
-	ranges = schema.Tuple(schema.Tuple(dmschema.Number(title="the range value",
-										  			   min_length=2,
-										  			   max_length=2)),
+	ranges = schema.Tuple(schema.Tuple(dmschema.Number(title="the range value", min=0),
+									   min_length=2,
+									   max_length=2),
 						  unique=True,
 						  min_length=1)
 
