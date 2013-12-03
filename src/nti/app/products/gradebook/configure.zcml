@@ -75,7 +75,7 @@
 			 
 	<!-- Decorators -->
 			 	
-	<subscriber factory=".externalization.UsersCourseAssignmentHistoryItemDecorator"
+	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 			

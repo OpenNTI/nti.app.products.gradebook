@@ -56,7 +56,7 @@ class _CourseInstanceEnrollmentLinkDecorator(object):
 
 @component.adapter(appa_interfaces.IUsersCourseAssignmentHistoryItem)
 @interface.implementer(external_interfaces.IExternalObjectDecorator)
-class UsersCourseAssignmentHistoryItemDecorator(object):
+class _UsersCourseAssignmentHistoryItemDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
