@@ -25,13 +25,24 @@ class LetterGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	grades = FP(grades_interfaces.ILetterGradeScheme['grades'])
+	ranges = FP(grades_interfaces.ILetterGradeScheme['ranges'])
 
 	default_grades = ('A', 'B', 'C', 'D', 'F')
-
-	def __init__(self, grades=None,):
+	default_ranges = ((90, 100), (80, 89), (70, 79), (60, 69), (0, 59))
+	
+	def __init__(self, grades=None, ranges=None):
 		super(LetterGradeScheme, self).__init__()
 		self.grades = self.default_grades if grades is None else grades
+		self.ranges = self.default_ranges if ranges is None else ranges
+		assert len(self.grades) == len(self.ranges)
 
+	def toLetter(self, value):
+		for i, r in enumerate(self.ranges):
+			_min, _max = r
+			if value >= _min and value <= _max:
+				return self.grades[i]
+		return None
+		
 	def fromUnicode(self, value):
 		self.validate(value)
 		return value
@@ -42,13 +53,15 @@ class LetterGradeScheme(SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.grades == other.grades)
+			return self is other or (self.grades == other.grades
+									 and self.ranges == other.ranges)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
 		xhash ^= hash(self.grades)
+		xhash ^= hash(self.ranges)
 		return xhash
 
 @interface.implementer(grades_interfaces.INumericGradeScheme)
