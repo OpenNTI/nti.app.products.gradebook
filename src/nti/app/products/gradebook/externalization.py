@@ -13,15 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.app.assessment import interfaces as appa_interfaces
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.externalization import externalization
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
@@ -68,19 +61,3 @@ class GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 GradesObjectIO.__class_init__()
 
-
-@component.adapter(appa_interfaces.IUsersCourseAssignmentHistoryItem)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class UsersCourseAssignmentHistoryItemDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject(self, original, external):
-		entry = grade_interfaces.IGradeBookEntry(original, None)
-		if entry is not None:
-			course = ICourseInstance(original)
-			user = nti_interfaces.IUser(original)
-			course_grades = grade_interfaces.IGrades(course)
-			grade = course_grades.find_grade(entry.NTIID, user.username)
-			if grade is None:
-				external['Grade'] = externalization.to_external_object(grade)

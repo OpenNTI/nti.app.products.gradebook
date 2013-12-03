@@ -62,20 +62,25 @@
 		modules=".gradebook .grades .gradescheme" />
 		
 	<adapter factory=".externalization.GradesExternalizer" />
-			
-	<subscriber factory=".externalization.UsersCourseAssignmentHistoryItemDecorator"
-				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+		
 	<!-- Internalization -->
 	
 	<adapter factory=".internalization._GradeObjectUpdater"
 			 for=".interfaces.IGrade"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-			  
+			
 	<adapter factory=".internalization._GradesObjectUpdater"
 			 for=".interfaces.IGrades"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+			 
+	<!-- Decorators -->
+			 	
+	<subscriber factory=".externalization.UsersCourseAssignmentHistoryItemDecorator"
+				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+			
+	<subscriber factory=".decorators._CourseInstanceEnrollmentLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" 
 			 
 	<!-- Events -->
 
