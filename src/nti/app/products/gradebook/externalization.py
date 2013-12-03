@@ -16,7 +16,6 @@ from zope import component
 from nti.externalization import externalization
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
-from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
 from . import interfaces as grade_interfaces
 
@@ -42,22 +41,4 @@ class GradesExternalizer(object):
 				lst.append(ext)
 		return result
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-class GradesObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
-
-	@classmethod
-	def _ap_enumerate_externalizable_root_interfaces(cls, grade_interfaces):
-		return (grade_interfaces.IGradeBookEntry, grade_interfaces.IGradeBookPart,
-				grade_interfaces.IGradeBook, grade_interfaces.IGrade,
-				grade_interfaces.IGrades, grade_interfaces.IGradeScheme,
-				grade_interfaces.IBooleanGradeScheme,
-				grade_interfaces.ILetterGradeScheme,
-				grade_interfaces.INumericGradeScheme,
-				grade_interfaces.IIntegerGradeScheme)
-
-	@classmethod
-	def _ap_enumerate_module_names(cls):
-		return ('gradebook', 'grades', 'gradescheme')
-
-GradesObjectIO.__class_init__()
 
