@@ -48,7 +48,7 @@ class _CourseInstanceEnrollmentLinkDecorator(object):
 		if username:
 			course = context.CourseInstance
 			_links = result.setdefault(LINKS, [])
-			link = Link(course, rel="grades", elements=('Grades', username))
+			link = Link(course, rel="Grades", elements=('Grades', username))
 			interface.alsoProvides(link, ILocation)
 			link.__name__ = ''
 			link.__parent__ = context
