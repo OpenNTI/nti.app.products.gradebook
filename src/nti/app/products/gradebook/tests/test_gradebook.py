@@ -40,7 +40,6 @@ class TestGradeBook(ConfiguringTestBase):
 		gbe.order = 1
 		gbe.__parent__ = gbp
 		gbe.assignmentId = 'xzy'
-		gbe.GradeScheme = 'letter'
 		gbe.__name__ = gbe.displayName = 'entry'
 		assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
 		assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
