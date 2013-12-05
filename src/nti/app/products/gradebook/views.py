@@ -36,6 +36,7 @@ from nti.contenttypes.courses import interfaces as courses_interfaces
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.ntiids import ntiids
 from nti.utils._compat import aq_base
 from nti.utils.maps import CaseInsensitiveDict
 
@@ -135,6 +136,7 @@ class GradeBookPostView(AbstractAuthenticatedView,
 
 		lifecycleevent.created(containedObject)
 
+		containedObject.Name = ntiids.escape_provider(containedObject.Name)
 		context[containedObject.Name] = containedObject
 
 		self.request.response.status_int = 201  # created

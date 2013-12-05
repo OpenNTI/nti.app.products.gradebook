@@ -58,7 +58,7 @@ class TestViews(SharedApplicationTestBase):
 		path = href + '/GradeBook'
 		res = self.testapp.get(path)
 		assert_that(res.json_body, has_entry('TotalPartWeight', 0.0))
-		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:course-gradebook-CLC3403'))
+		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
 
 		environ = self._make_extra_environ()
 		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
@@ -73,7 +73,7 @@ class TestViews(SharedApplicationTestBase):
 		assert_that(res.json_body, has_entry('weight', 0.95))
 		assert_that(res.json_body, has_entry('displayName', 'Quizzes'))
 		assert_that(res.json_body, has_entry('MimeType', 'application/vnd.nextthought.gradebookpart'))
-		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:course-gradebookpart-CLC3403.Quizzes'))
+		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebookpart-CLC3403.Quizzes'))
 		
 		res = self.testapp.get(path)
 		assert_that(res.json_body, has_entry('TotalPartWeight', 0.95))
@@ -93,7 +93,7 @@ class TestViews(SharedApplicationTestBase):
 		assert_that(res.json_body, has_entry('weight', 0.55))
 		assert_that(res.json_body, has_entry('displayName', 'Quiz1'))
 		assert_that(res.json_body, has_entry('MimeType', 'application/vnd.nextthought.gradebookentry'))
-		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:course-gradebookentry-CLC3403.Quizzes.Quiz1'))
+		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebookentry-CLC3403.Quizzes.Quiz1'))
 
 		res = self.testapp.get(part_path)
 		assert_that(res.json_body, has_entry('TotalEntryWeight', 0.55))
@@ -163,6 +163,3 @@ class TestViews(SharedApplicationTestBase):
 		res = self.testapp.get(user_grades_path, extra_environ=environ)
 		assert_that(res.json_body, has_entry(u'Items', has_length(0)))
 
-if __name__ == '__main__':
-	import unittest
-	unittest.main()

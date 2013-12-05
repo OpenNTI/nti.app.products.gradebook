@@ -46,7 +46,7 @@ class _NTIIDMixin(zcontained.Contained):
 
 	_ntiid_type = None
 	_ntiid_include_self_name = False
-	_ntiid_default_provider = 'course'
+	_ntiid_default_provider = 'NextThought'
 
 	@property
 	def _ntiid_provider(self):
@@ -130,7 +130,6 @@ _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 class GradeBookPart(Implicit,
 					nti_containers.AcquireObjectsOnReadMixin,
 					nti_containers.CheckingLastModifiedBTreeContainer,
-					nti_containers._IdGenerationMixin,
 					SchemaConfigured,
 					_NTIIDMixin):
 

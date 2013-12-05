@@ -101,7 +101,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'Creator', 'nt@nti.com'))
 		assert_that(ext, has_entry(u'TotalPartWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebook-CS1330'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CS1330'))
 
 	@WithMockDSTrans
 	def test_gradebookpart(self):
@@ -124,7 +124,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'displayName', 'Quizzes'))
 		assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookpart-quizzes'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebookpart-quizzes'))
 
 	@WithMockDSTrans
 	def test_gradebookentry(self):
@@ -152,7 +152,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'assignmentId', 'myquestion'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
-		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:course-gradebookentry-quizzes.quiz1'))
+		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebookentry-quizzes.quiz1'))
 
 
 	@WithMockDSTrans
