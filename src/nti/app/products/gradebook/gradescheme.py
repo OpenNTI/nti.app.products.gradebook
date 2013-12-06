@@ -10,6 +10,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+import numbers
+
 from zope import interface
 
 from nti.dataserver import mimetype
@@ -24,6 +27,8 @@ from . import interfaces as grades_interfaces
 class LetterGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
+	_type = six.string_types
+	
 	grades = FP(grades_interfaces.ILetterGradeScheme['grades'])
 	ranges = FP(grades_interfaces.ILetterGradeScheme['ranges'])
 
@@ -48,7 +53,9 @@ class LetterGradeScheme(SchemaConfigured):
 		return value
 
 	def validate(self, value):
-		if value.upper() in self.grades:
+		if not isinstance(value, self._type):
+			raise TypeError('wrong type')
+		elif value.upper() in self.grades:
 			raise ValueError("Invalid grade value")
 
 	def __eq__(self, other):
@@ -69,16 +76,17 @@ class NumericGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.INumericGradeScheme)
 
-	_type = float
+	_type = numbers.Number
 
 	def fromUnicode(self, value):
-		value = self._type(value)
+		value = float(value)
 		self.validate(value)
 		return value
 
 	def validate(self, value):
-		value = self._type(value)
-		if value < self.min or value > self.max:
+		if not isinstance(value, self._type):
+			raise TypeError('wrong type')
+		elif value < self.min or value > self.max:
 			raise ValueError("Invalid grade value")
 
 	def __eq__(self, other):
@@ -98,13 +106,20 @@ class IntegerGradeScheme(NumericGradeScheme):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.IIntegerGradeScheme)
 
-	_type = int
+	_type = (int, long)
+	
+	def fromUnicode(self, value):
+		value = int(value)
+		self.validate(value)
+		return value
 
 @interface.implementer(grades_interfaces.IBooleanGradeScheme)
 class BooleanGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.IBooleanGradeScheme)
 
+	_type  = bool
+	
 	true_values = ('1', 'y', 't', 'yes', 'true')
 	false_values = ('0', 'n', 'f', 'no', 'false')
 
@@ -119,8 +134,8 @@ class BooleanGradeScheme(SchemaConfigured):
 
 	@classmethod
 	def validate(cls, value):
-		if value not in (True, False):
-			raise ValueError("Invalid grade value")
+		if not isinstance(value, cls._type):
+			raise TypeError('wrong type')
 
 	def __eq__(self, other):
 		return self is other or grades_interfaces.IBooleanGradeScheme.providedBy(other)
