@@ -38,4 +38,22 @@ class _GradeBookResolver(object):
 			return grades_interfaces.IGradeBook(course, None)
 		return None
 
+@interface.implementer(nid_interfaces.INTIIDResolver)
+class _GradeBookPartResolver(_GradeBookResolver):
+
+	def resolve(self, key):
+		catalog = component.queryUtility(courseware_interfaces.ICourseCatalog)
+		if catalog:
+			specific = get_specific(key)
+			try:
+				course, part = specific.split('.')[-2]
+				course = self.get_course(catalog, course)
+				gradebook = grades_interfaces.IGradeBook(course, None)
+				if gradebook:
+					return gradebook[part]
+			except ValueError:
+				logger.error("'%s' invalid gradebook part NTIID", key)
+			except KeyError:
+				logger.error("Cannot find gradebook part using '%s'", key)
+		return None
 

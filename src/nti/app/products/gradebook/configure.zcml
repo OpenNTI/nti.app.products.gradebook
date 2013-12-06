@@ -91,6 +91,7 @@
 	<!-- NTIID Resolvers -->
 	
 	<utility factory=".ntiids._GradeBookResolver" name="gradebook" />
+	<utility factory=".ntiids._GradeBookPartResolver" name="gradebookpart" />
 	
 	<!-- ACLs -->
 	
