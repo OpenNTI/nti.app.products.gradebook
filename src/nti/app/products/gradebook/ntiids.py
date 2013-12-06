@@ -46,7 +46,7 @@ class _GradeBookPartResolver(object):
 			specific = get_specific(key)
 			try:
 				course, part = specific.split('.')[-2]
-				course = self.get_course(catalog, course)
+				course = get_course(catalog, course)
 				gradebook = grades_interfaces.IGradeBook(course, None)
 				if gradebook:
 					return gradebook[part]
@@ -65,7 +65,7 @@ class _GradeBookEntryResolver(object):
 			specific = get_specific(key)
 			try:
 				course, part, entry = specific.split('.')[-3]
-				course = self.get_course(catalog, course)
+				course = get_course(catalog, course)
 				gradebook = grades_interfaces.IGradeBook(course, None)
 				if gradebook and part in gradebook:
 					parts = gradebook[part]

@@ -207,7 +207,8 @@ class GradePostView(AbstractAuthenticatedView,
 		context.add_grade(grade)
 
 		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.current_route_url(grade.username, grade.ntiid)
+		self.request.response.location = \
+				self.request.current_route_url(grade.username, grade.ntiid)
 
 		return grade
 
