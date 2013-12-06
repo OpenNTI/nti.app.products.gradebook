@@ -91,16 +91,6 @@ class GradeBook(Implicit,
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
 
-	def clone(self):
-		result = self.__class__()
-		result.__parent__, result.__name__ = (None, self.__name__)
-		for part in self.values():
-			cloned = part.clone()
-			cloned.__parent__ = self
-			result[cloned.__name__] = cloned
-		return result
-	copy = clone
-
 	def get_entry_by_assignment(self, assignmentId):
 		for part in self.values():
 			entry = part.get_entry_by_assignment(assignmentId)
@@ -143,19 +133,6 @@ class GradeBookPart(Implicit,
 	__parent__ = None
 	__name__ = alias('Name')
 
-	def clone(self):
-		result = self.__class__()
-		result.order = self.order
-		result.weight = self.weight
-		result.displayName = self.displayName
-		result.__parent__, result.__name__ = (None, self.__name__)
-		for entry in self.values():
-			cloned = entry.clone()
-			cloned.__parent__ = self
-			result[cloned.__name__] = cloned
-		return result
-	copy = clone
-
 	def get_entry_by_assignment(self, assignmentId):
 		for entry in self.values():
 			if entry.assignmentId == assignmentId:
@@ -192,27 +169,13 @@ class GradeBookEntry(Persistent,
 	__parent__ = None
 	__name__ = alias('Name')
 
+	ntiid = alias('NTIID')
 	gradeScheme = alias('GradeScheme')
 
 	@property
 	def DueDate(self):
 		asm = component.queryUtility(asm_interfaces.IQAssignment, name=self.assignmentId)
 		return getattr(asm, 'available_for_submission_ending', None)
-
-	@property
-	def ntiid(self):
-		return self.NTIID
-
-	def clone(self):
-		result = self.__class__()
-		result.order = self.order
-		result.weight = self.weight
-		result.gradeScheme = self.gradeScheme
-		result.displayName = self.displayName
-		result.assignmentId = self.assignmentId
-		result.__parent__, result.__name__ = (None, self.__name__)
-		return result
-	copy = clone
 
 	def __str__(self):
 		return self.displayName

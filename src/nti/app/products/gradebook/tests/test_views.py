@@ -30,7 +30,7 @@ class TestViews(SharedApplicationTestBase):
 	gradebook_entry = { 'Name':'Quiz1', 'order':2, 'weight':0.55,
 						'MimeType':'application/vnd.nextthought.gradebookentry'}
 
-	grade = {'username':'sjohnson@nextthought.com', 'grade':85, 'ntiid':None,
+	grade = {'username':'sjohnson@nextthought.com', 'grade':85, 'NTIID':None,
 			 'MimeType':'application/vnd.nextthought.grade'}
 
 	@classmethod
@@ -143,10 +143,10 @@ class TestViews(SharedApplicationTestBase):
 		assert_that(res.json_body, has_entry(u'MimeType', u'application/vnd.nextthought.grades'))
 
 		data = self.grade.copy()
-		data['ntiid'] = ntiid
+		data['NTIID'] = ntiid
 		res = self.testapp.post_json(path, data, extra_environ=environ)
 		assert_that(res.json_body, has_entry(u'grade', 85.0))
-		assert_that(res.json_body, has_entry(u'ntiid', ntiid))
+		assert_that(res.json_body, has_entry(u'NTIID', ntiid))
 		assert_that(res.json_body, has_entry(u'username', u'sjohnson@nextthought.com'))
 
 		user_grades_path = path + '/sjohnson@nextthought.com'

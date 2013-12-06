@@ -62,9 +62,9 @@ class ILetterGradeScheme(IGradeScheme):
 class IBooleanGradeScheme(IGradeScheme):
 	pass
 
-class IGradeBookEntry(IContained, ICloneable):
+class IGradeBookEntry(IContained):
 
-	containers(b'.IGradeBookPart')
+	containers(str('.IGradeBookPart'))
 	__parent__.required = False
 
 	Name = dmschema.ValidTextLine(title="entry name", required=False)
@@ -83,12 +83,12 @@ class IGradeBookEntry(IContained, ICloneable):
 	DueDate = schema.Date(title="The date on which the assignment is due", required=False,
 						  readonly=True)
 	
-class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMapping):
+class IGradeBookPart(IContainer, IContained):
 	"""
 	A Section of a grade book e.g. Quizzes, Exams, etc..
 	"""
-	containers(b'.IGradeBook')
-	contains(b'.IGradeBookEntry')
+	containers(str('.IGradeBook'))
+	contains(str('.IGradeBookEntry'))
 	__parent__.required = False
 
 	Name = dmschema.ValidTextLine(title="Part name", required=False)
@@ -107,11 +107,12 @@ class IGradeBookPart(IContainer, IContained, ICloneable, mapping.IClonableMappin
 		return the :IGradeBookEntry associated with the specified assignmentId
 		"""
 
-class IGradeBook(IContainer, IContained, ICloneable, mapping.IClonableMapping):
+class IGradeBook(IContainer, IContained):
 	"""
 	Grade book definition
 	"""
-	contains(b'.IGradeBookPart')
+	contains(str('.IGradeBookPart'))
+
 	TotalPartWeight = schema.Float(title="Part weight sum", readonly=True)
 
 	def get_entry_by_ntiid(ntiid):
@@ -129,7 +130,7 @@ class IGrade(IContained, ICloneable):
 	Grade entry
 	"""
 	username = dmschema.ValidTextLine(title="Username", required=True)
-	ntiid = dmschema.ValidTextLine(title="Grade entry ntiid", required=True)
+	NTIID = dmschema.ValidTextLine(title="Grade entry ntiid", required=True)
 	grade = dmschema.Variant(
 				(dmschema.Number(title="Number grade"),
 				 dmschema.Bool(title='Boolean grade'),

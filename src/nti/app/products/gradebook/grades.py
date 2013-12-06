@@ -48,7 +48,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
-	NTIID = alias('ntiid')
+	ntiid = alias('NTIID')
 
 	def clone(self):
 		result = self.__class__()
@@ -57,7 +57,7 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 		return result
 
 	def copy(self, other, parent=False):
-		self.ntiid = other.ntiid
+		self.NTIID = other.NTIID
 		self.grade = other.grade
 		self.username = other.username
 		if parent:
@@ -68,14 +68,14 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.ntiid == other.ntiid
+			return self is other or (self.NTIID == other.NTIID
 									 and self.username == other.username)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.ntiid)
+		xhash ^= hash(self.NTIID)
 		xhash ^= hash(self.username)
 		return xhash
 
@@ -85,14 +85,14 @@ class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__,
 								 self.username,
-								 self.ntiid,
+								 self.NTIID,
 								 self.grade)
 
 def _indexof_grade(grade, grades):
 	idx = -1
-	ntiid = getattr(grade, 'ntiid', unicode(grade))
+	ntiid = getattr(grade, 'NTIID', unicode(grade))
 	for i, g in enumerate(grades):
-		if g.ntiid == ntiid:
+		if g.NTIID == ntiid:
 			idx = i
 			break
 	return idx
@@ -124,7 +124,7 @@ class _UserGradesResource(zcontained.Contained):
 		return result
 
 	def ntiids(self):
-		result = tuple((g.ntiid for g in self.blist))
+		result = tuple((g.NTIID for g in self.blist))
 		return result
 	keys = ntiids
 

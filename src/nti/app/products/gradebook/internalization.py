@@ -31,7 +31,7 @@ class _GradeObjectUpdater(object):
 
     def updateFromExternalObject(self, externalObject, *args, **kwargs ):
         modified = False
-        for name in ('ntiid', 'username'):
+        for name in ('NTIID', 'username'):
             value = externalObject.get(name, None)
             if getattr(self, name, None) is None and value is not None:
                 setattr(self.obj, name, value)
