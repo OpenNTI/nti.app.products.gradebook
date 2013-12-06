@@ -88,6 +88,10 @@
 	<subscriber handler=".subscribers._gradebook_entry_removed" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />
 	
+	<!-- NTIID Resolvers -->
+	
+	<utility factory=".ntiids._GradeBookResolver" name="gradebook" />
+	
 	<!-- ACLs -->
 	
 	<adapter factory=".acl._GradeBookACLProvider"
