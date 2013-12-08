@@ -102,6 +102,8 @@ class _UserGradesResource(zcontained.Contained):
 
 	__slots__ = ('blist', 'username', '__name__', '__parent__')
 
+	username = alias('__name__')
+	
 	def __init__(self, obj, username):
 		self.blist = obj
 		self.username = username
