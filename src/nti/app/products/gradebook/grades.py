@@ -221,7 +221,6 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		grades = self.__super_getitem(username)
 		result = _UserGradesResource(grades, username)
 		result.__parent__ = self
-		result.__name__ = username
 		return result
 
 	def get_grades(self, username, default=None):
@@ -235,6 +234,5 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		xhash = 47
 		xhash ^= hash(self.__name__)
 		return xhash
-
 
 _GradesFactory = an_factory(Grades, 'Grades')
