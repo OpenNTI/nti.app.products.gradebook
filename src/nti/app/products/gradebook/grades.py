@@ -100,7 +100,7 @@ def _indexof_grade(grade, grades):
 @interface.implementer(mapping.IReadMapping, ext_interfaces.IExternalizedObject)
 class _UserGradesResource(zcontained.Contained):
 
-	__slots__ = ('blist', 'username')
+	__slots__ = ('blist', 'username', '__name__', '__parent__')
 
 	def __init__(self, obj, username):
 		self.blist = obj
@@ -221,6 +221,7 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 		grades = self.__super_getitem(username)
 		result = _UserGradesResource(grades, username)
 		result.__parent__ = self
+		result.__name__ = username
 		return result
 
 	def get_grades(self, username, default=None):
