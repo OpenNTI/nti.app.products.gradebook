@@ -34,8 +34,6 @@ setup(
 		'nti.app.assessment',
 		'nti.contenttypes.courses',
 		'nti.dataserver',
-		'nti.app.testing',
-		'nti.testing',
 	],
 	entry_points=entry_points
 )
