@@ -71,7 +71,7 @@ def _assignment_history_item_added(item, event):
 
 	book = grade_interfaces.IGradeBook(course)
 	if not book:
-		create_assignments_entries(course, book)
+		create_assignments_entries(course)
 	# allow a None adaptation which in case there is no book defined
 	# we'd see this in testing
 	entry = grade_interfaces.IGradeBookEntry(item, None)
@@ -83,7 +83,8 @@ def _assignment_history_item_added(item, event):
 	grade = grades.Grade(ntiid=entry.NTIID, username=user.username)
 	course_grades.add_grade(grade)
 
-def create_assignments_entries(course, book):
+def create_assignments_entries(course):
+	# get assignments
 	assignments = []
 	content_package = getattr(course, 'legacy_content_package', None)
 	def _recur(unit):
@@ -100,6 +101,8 @@ def create_assignments_entries(course, book):
 		return
 	weight = 1.0 / float(len(assignments))  # same weight
 	
+	book = grade_interfaces.IGradeBook(course)
+
 	part_name = 'Assignments'
 	part = gradebook.GradeBookEntry(Name=part_name, displayName=part_name, 
 									order=1, weight=1.0)
