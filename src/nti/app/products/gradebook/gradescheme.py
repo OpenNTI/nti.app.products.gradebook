@@ -14,12 +14,12 @@ import six
 import numbers
 
 from zope import interface
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.dataserver import mimetype
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from . import interfaces as grades_interfaces
 
@@ -70,6 +70,20 @@ class LetterGradeScheme(SchemaConfigured):
 		xhash ^= hash(self.grades)
 		xhash ^= hash(self.ranges)
 		return xhash
+
+@interface.implementer(grades_interfaces.ILetterGradeScheme)
+class ExtendedLetterGradeScheme(LetterGradeScheme):
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+
+	default_grades = ('A+', 'A', 'A-',
+					  'B+', 'B', 'B-',
+					  'C+', 'C', 'C-',
+					  'D', 'D', 'F')
+
+	default_ranges = ((90, 100), (86, 89), (80, 85),
+					  (77, 79),  (73, 76), (70, 72),
+					  (67, 69),  (63, 66), (60, 62),
+					  (57, 59),  (50, 56), (0, 49))
 
 @interface.implementer(grades_interfaces.INumericGradeScheme)
 class NumericGradeScheme(SchemaConfigured):
