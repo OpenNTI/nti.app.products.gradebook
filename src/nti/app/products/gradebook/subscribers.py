@@ -108,12 +108,12 @@ def create_assignments_entries(course):
 									order=1, weight=1.0)
 	book[part_name] = part
 	
-	for idx, assignment in enumerate(assignments):
+	for idx, a in enumerate(assignments):
 		n = idx+1
 		name = 'assignment%s' % n
 		display = 'Assignment %s' % n
 		entry = gradebook.GradeBookEntry(
 							Name=name, displayName=display, weight=weight, order=n,
-							assignmentId=getattr(assignment, 'NTIID', None))
+							assignmentId=getattr(a, 'NTIID', getattr(a, 'ntiid', None)))
 	
 		part[name] = entry
