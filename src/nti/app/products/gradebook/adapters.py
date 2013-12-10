@@ -53,7 +53,11 @@ def _GradeToGradeEntry(grade):
 	course = find_interface(grade, ICourseInstance)
 	gradebook = grade_interfaces.IGradeBook(course, None)
 	if gradebook is not None:
-		return gradebook.get_entry_by_ntiid(grade.ntiid)
+		result = gradebook.get_entry_by_ntiid(grade.NTIID)
+		if result is None:
+			__traceback_info__ = grade
+			raise TypeError("Unable to find grade entry")
+		return result
 	return None
 
 @interface.implementer(grade_interfaces.IGradeBookEntry)
