@@ -18,40 +18,43 @@ from pyramid.traversal import find_interface
 
 from nti.app.assessment import interfaces as appa_interfaces
 
+from nti.assessment import interfaces as asm_interfaces
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import grades
+from . import gradebook
 from . import interfaces as grade_interfaces
 
 def find_gradebook_in_lineage(obj):
-	gradebook = find_interface(obj, grade_interfaces.IGradeBook)
-	if gradebook is None:
+	book = find_interface(obj, grade_interfaces.IGradeBook)
+	if book is None:
 		__traceback_info__ = obj
 		raise TypeError("Unable to find gradebook")
-	return gradebook
+	return book
 
 @component.adapter(grade_interfaces.IGradeBookPart, lce_interfaces.IObjectRemovedEvent)
 def _gradebook_part_removed(part, event):
-	gradebook = find_gradebook_in_lineage(part)
-	grades = grade_interfaces.IGrades(gradebook)
+	book = find_gradebook_in_lineage(part)
+	grades = grade_interfaces.IGrades(book)
 	for entry in part.values():
 		grades.remove_grades(entry.NTIID)
 
 @component.adapter(grade_interfaces.IGradeBookEntry, lce_interfaces.IObjectRemovedEvent)
 def _gradebook_entry_removed(entry, event):
-	gradebook = find_gradebook_in_lineage(entry)
-	grades = grade_interfaces.IGrades(gradebook)
+	book = find_gradebook_in_lineage(entry)
+	grades = grade_interfaces.IGrades(book)
 	grades.remove_grades(entry.NTIID)
 
 @component.adapter(grade_interfaces.IGrade, lce_interfaces.IObjectModifiedEvent)
 def _grade_modified(grade, event):
 	course = ICourseInstance(grade)
 	user = users.User.get_user(grade.username)
-	gradebook = grade_interfaces.IGradeBook(course)
-	entry = gradebook.get_entry_by_ntiid(grade.ntiid)
+	book = grade_interfaces.IGradeBook(course)
+	entry = book.get_entry_by_ntiid(grade.ntiid)
 	if user and entry is not None and entry.assignmentId:
 		assignment_history = component.getMultiAdapter(
 										(course, user),
@@ -65,7 +68,11 @@ def _grade_modified(grade, event):
 def _assignment_history_item_added(item, event):
 	course = ICourseInstance(item)
 	user = nti_interfaces.IUser(item)
-	# allow a None adaptation which in case there is no gradebook defined
+
+	book = grade_interfaces.IGradeBook(course)
+	if not book:
+		create_assignments_entries(course, book)
+	# allow a None adaptation which in case there is no book defined
 	# we'd see this in testing
 	entry = grade_interfaces.IGradeBookEntry(item, None)
 	if entry is None:  # pragma no cover
@@ -75,3 +82,35 @@ def _assignment_history_item_added(item, event):
 	course_grades = grade_interfaces.IGrades(course)
 	grade = grades.Grade(ntiid=entry.NTIID, username=user.username)
 	course_grades.add_grade(grade)
+
+def create_assignments_entries(course, book):
+	assignments = []
+	content_package = getattr(course, 'legacy_content_package', None)
+	def _recur(unit):
+		items = asm_interfaces.IQAssessmentItemContainer(unit, ())
+		for item in items:
+			if asm_interfaces.IQAssignment.providedBy(item):
+				assignments.append(item)
+		for child in unit.children:
+			_recur(child)
+	if content_package is not None:
+		_recur(content_package)
+
+	if not assignments:  # should not happen
+		return
+	weight = 1.0 / float(len(assignments))  # same weight
+	
+	part_name = 'Assignments'
+	part = gradebook.GradeBookEntry(Name=part_name, displayName=part_name, 
+									order=1, weight=1.0)
+	book[part_name] = part
+	
+	for idx, assignment in enumerate(assignments):
+		n = idx+1
+		name = 'assignment%s' % n
+		display = 'Assignment %s' % n
+		entry = gradebook.GradeBookEntry(
+							Name=name, displayName=display, weight=weight, order=n,
+							assignmentId=getattr(assignment, 'NTIID', None))
+	
+		part[name] = entry
