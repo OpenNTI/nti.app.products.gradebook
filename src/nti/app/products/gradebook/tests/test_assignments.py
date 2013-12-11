@@ -27,7 +27,6 @@ from nti.app.products.gradebook import interfaces as grades_interfaces
 
 from nti.app.testing.application_webtest import SharedApplicationTestBase
 
-from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.dataserver.tests import mock_dataserver
 
 class TestAssignments(SharedApplicationTestBase):
@@ -42,7 +41,7 @@ class TestAssignments(SharedApplicationTestBase):
 				   ))
 		return lib
 
-	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	@mock_dataserver.WithMockDSTrans
 	def test_create_assignments_entries(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -57,7 +56,7 @@ class TestAssignments(SharedApplicationTestBase):
 				part = book['Assignments']
 				assert_that(part, has_length(2))
 
-	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	@mock_dataserver.WithMockDSTrans
 	def test_get_course_assignments(self):
 
 		base = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.asg.assignment%s"
