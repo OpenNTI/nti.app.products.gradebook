@@ -41,7 +41,8 @@ def create_assignments_entries(course):
         _recur(content_package)
 
     if not assignments:  # should not happen
-        return
+        return 0
+
     weight = 1.0 / float(len(assignments))  # same weight
 
     # sort
@@ -67,3 +68,6 @@ def create_assignments_entries(course):
                             assignmentId=getattr(a, 'NTIID', getattr(a, 'ntiid', None)))
 
         part[name] = entry
+
+    return len(assignments)
+
