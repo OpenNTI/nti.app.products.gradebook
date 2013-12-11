@@ -47,11 +47,15 @@ def create_assignments_entries(course):
     # sort
     assignments = sorted(assignments, cmp=_assignment_comparator)
 
+    # get gradebook from course
     book = grade_interfaces.IGradeBook(course)
 
+    # create part
     part_name = 'Assignments'
-    part = gradebook.GradeBookEntry(Name=part_name, displayName=part_name,
-                                    order=1, weight=1.0)
+    part = gradebook.GradeBookPart()
+    part.displayName = part.Name = part_name
+    part.order = 1
+    part.weight = 1.0
     book[part_name] = part
 
     for idx, a in enumerate(assignments):

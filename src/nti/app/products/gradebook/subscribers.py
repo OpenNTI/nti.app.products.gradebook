@@ -78,7 +78,7 @@ def _assignment_history_item_added(item, event):
 	
 	# register/add grade
 	course_grades = grade_interfaces.IGrades(course)
-	grade = grades.Grade(ntiid=entry.NTIID, username=user.username)
+	grade = grades.Grade(NTIID=entry.NTIID, username=user.username)
 	course_grades.add_grade(grade)
 
 
