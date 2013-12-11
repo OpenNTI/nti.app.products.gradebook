@@ -11,6 +11,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 
 import os
 
@@ -29,7 +30,7 @@ from nti.app.testing.application_webtest import SharedApplicationTestBase
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.dataserver.tests import mock_dataserver
 
-class TestViews(SharedApplicationTestBase):
+class TestAssignments(SharedApplicationTestBase):
 
 	@classmethod
 	def _setup_library(cls, *args, **kwargs):
@@ -56,3 +57,16 @@ class TestViews(SharedApplicationTestBase):
 				part = book['Assignments']
 				assert_that(part, has_length(2))
 
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_get_course_assignments(self):
+
+		base = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.asg.assignment%s"
+		with mock_dataserver.mock_db_trans(self.ds):
+			lib = component.getUtility(IContentPackageLibrary)
+			for package in lib.contentPackages:
+				course = ICourseInstance(package)
+				result = assignments.get_course_assignments(course, sort=True, reverse=True)
+				assert_that(result, has_length(2))
+				for idx, a in enumerate(result):
+					ntiid = base % (len(result) - idx)
+					assert_that(a, has_property('ntiid', is_(ntiid)))
