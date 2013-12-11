@@ -18,15 +18,13 @@ from pyramid.traversal import find_interface
 
 from nti.app.assessment import interfaces as appa_interfaces
 
-from nti.assessment import interfaces as asm_interfaces
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import grades
-from . import gradebook
+from . import assignments
 from . import interfaces as grade_interfaces
 
 def find_gradebook_in_lineage(obj):
@@ -70,8 +68,8 @@ def _assignment_history_item_added(item, event):
 	user = nti_interfaces.IUser(item)
 
 	book = grade_interfaces.IGradeBook(course)
-	if not book:
-		create_assignments_entries(course)
+	if not book:  # not gradebook entries/parts defined
+		assignments.create_assignments_entries(course)
 	# allow a None adaptation which in case there is no book defined
 	# we'd see this in testing
 	entry = grade_interfaces.IGradeBookEntry(item, None)
@@ -83,37 +81,4 @@ def _assignment_history_item_added(item, event):
 	grade = grades.Grade(ntiid=entry.NTIID, username=user.username)
 	course_grades.add_grade(grade)
 
-def create_assignments_entries(course):
-	# get assignments
-	assignments = []
-	content_package = getattr(course, 'legacy_content_package', None)
-	def _recur(unit):
-		items = asm_interfaces.IQAssessmentItemContainer(unit, ())
-		for item in items:
-			if asm_interfaces.IQAssignment.providedBy(item):
-				assignments.append(item)
-		for child in unit.children:
-			_recur(child)
-	if content_package is not None:
-		_recur(content_package)
 
-	if not assignments:  # should not happen
-		return
-	weight = 1.0 / float(len(assignments))  # same weight
-	
-	book = grade_interfaces.IGradeBook(course)
-
-	part_name = 'Assignments'
-	part = gradebook.GradeBookEntry(Name=part_name, displayName=part_name, 
-									order=1, weight=1.0)
-	book[part_name] = part
-	
-	for idx, a in enumerate(assignments):
-		n = idx+1
-		name = 'assignment%s' % n
-		display = 'Assignment %s' % n
-		entry = gradebook.GradeBookEntry(
-							Name=name, displayName=display, weight=weight, order=n,
-							assignmentId=getattr(a, 'NTIID', getattr(a, 'ntiid', None)))
-	
-		part[name] = entry
