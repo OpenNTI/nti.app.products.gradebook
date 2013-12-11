@@ -15,7 +15,6 @@ from zope import component
 
 from zope.location.interfaces import ILocation
 
-from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
 from nti.app.assessment import interfaces as appa_interfaces
@@ -44,7 +43,7 @@ class _CourseInstanceEnrollmentLinkDecorator(object):
 
 	def decorateExternalMapping(self, context, result):
 		request = get_current_request()
-		username = authenticated_userid(request) if request else None
+		username = request.authenticated_userid if request else None
 		if username:
 			course = context.CourseInstance
 			_links = result.setdefault(LINKS, [])
