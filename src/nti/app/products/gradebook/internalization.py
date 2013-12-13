@@ -90,7 +90,7 @@ class _LetterGradeSchemeObjectUpdater(object):
     def updateFromExternalObject(self, ext, *args, **kwargs):
         grades = ext.get('grades', ())
         ranges = ext.get('ranges', ())
-        if not ranges and not grades:
+        if not ranges and not grades:  # defaults
             return False
 
         request = get_current_request()
@@ -106,10 +106,19 @@ class _LetterGradeSchemeObjectUpdater(object):
             if not r or len(r) != 2:
                 utils.raise_field_error(request, "range",
                                         "'%r' is not a valid range" % r)
-
+            elif r[0] >= r[1]:
+                utils.raise_field_error(request, "range",
+                                        "'%r' is not a valid range" % r)
+                
         sorted_ranges = list(ranges)
-        sorted_ranges.sort(key=operator.itemgetter(0))
-
-        self.ranges = ranges
-        self.grades = grades
+        sorted_ranges.sort(key=operator.itemgetter(0), reverse=True)
+        for idx in range(len(sorted_ranges)-1):
+            a = sorted_ranges[idx]
+            b = sorted_ranges[idx + 1]
+            if a[0] <= b[0]:
+                utils.raise_field_error(request, "range",
+                                        "'%r' overlaps '%r'" % (a, b))
+        
+        self.obj.ranges = ranges
+        self.obj.grades = grades
         return True
