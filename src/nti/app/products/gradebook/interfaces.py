@@ -113,6 +113,8 @@ class IGradeBookPart(IContainer, IContained):
 
 	Name = dmschema.ValidTextLine(title="Part name", required=False)
 	displayName = dmschema.ValidTextLine(title="Part name", required=False)
+	gradeScheme = dmschema.Object(IGradeScheme, description="A :class:`.IGradeScheme`",
+								  title="The grade scheme for this part", required=False)
 	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
 						  min=0.0,
 						  max=1.0,

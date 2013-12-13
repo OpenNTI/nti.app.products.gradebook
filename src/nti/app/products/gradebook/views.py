@@ -103,11 +103,15 @@ def get_assignment(aid):
 	return component.queryUtility(asm_interfaces.IQAssignment, name=aid)
 
 def _validate_grade_entry(request, obj):
-	if	grades_interfaces.IGradeBookEntry.providedBy(obj):
+	if grades_interfaces.IGradeBookEntry.providedBy(obj):
 		if obj.assignmentId and get_assignment(obj.assignmentId) is None:
 			utils.raise_field_error(request,
 									"assignmentId",
 									_("must specify a valid grade assignment id"))
+
+	if 	grades_interfaces.IGradeBookPart.providedBy(obj) or \
+		grades_interfaces.IGradeBookEntry.providedBy(obj):
+		
 		if obj.GradeScheme is None:
 			obj.GradeScheme = gradescheme.NumericGradeScheme()
 			
