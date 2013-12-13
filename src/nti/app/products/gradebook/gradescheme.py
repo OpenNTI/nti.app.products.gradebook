@@ -48,6 +48,40 @@ class LetterGradeScheme(SchemaConfigured):
 				return self.grades[i]
 		return None
 		
+	def toNumber(self, letter):
+		try:
+			index = self.grades.index(letter.upper())
+			_, _max = self.ranges[index]
+			return _max
+		except ValueError:
+			pass
+		return None
+
+	def _max_in_ranges(self):
+		result = max(self.ranges[0])
+		for r in self.ranges[1:]:
+			result = max(result, *r)
+		return result
+
+	def _min_in_ranges(self):
+		result = min(self.ranges[0])
+		for r in self.ranges[1:]:
+			result = min(result, *r)
+		return result
+
+	def toCorrectness(self, letter):
+		dem = self._max_in_ranges()
+		num = self.toNumber(letter)
+		return num / float(dem)
+	
+	def fromCorrectness(self, value):
+		dem = float(self._max_in_ranges())
+		for i, r in enumerate(self.ranges):
+			_min, _max = r
+			if value >= (_min / dem) and value <= (_max / dem):
+				return self.grades[i]
+		return None
+
 	def fromUnicode(self, value):
 		self.validate(value)
 		return value
@@ -71,7 +105,6 @@ class LetterGradeScheme(SchemaConfigured):
 		xhash ^= hash(self.ranges)
 		return xhash
 
-@interface.implementer(grades_interfaces.ILetterGradeScheme)
 class ExtendedLetterGradeScheme(LetterGradeScheme):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -102,6 +135,14 @@ class NumericGradeScheme(SchemaConfigured):
 			raise TypeError('wrong type')
 		elif value < self.min or value > self.max:
 			raise ValueError("Invalid grade value")
+
+	def toCorrectness(self, value):
+		result = (value - self.min) / float(self.max - self.min)
+		return result if result > 0 else 0.0
+
+	def fromCorrectness(self, value):
+		result = value * (self.max - self.min) + self.min
+		return result
 
 	def __eq__(self, other):
 		try:
@@ -150,6 +191,14 @@ class BooleanGradeScheme(SchemaConfigured):
 	def validate(cls, value):
 		if not isinstance(value, cls._type):
 			raise TypeError('wrong type')
+
+	def toCorrectness(self, value):
+		result = 1.0 if value else 0.0
+		return result
+
+	def fromCorrectness(self, value):
+		result = value >= 0.999
+		return result
 
 	def __eq__(self, other):
 		return self is other or grades_interfaces.IBooleanGradeScheme.providedBy(other)

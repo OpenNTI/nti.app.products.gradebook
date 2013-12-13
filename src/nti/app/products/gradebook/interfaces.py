@@ -37,12 +37,22 @@ class IGradeScheme(interface.Interface):
 	def validate(value):
 		pass
 
+	def toCorrectness(grade):
+		"""
+		return the relative correctness of the grade
+		"""
+
+	def fromCorrectness(value):
+		"""
+		return a grade from the specified correctness value
+		"""
+
 class INumericGradeScheme(IGradeScheme):
-	min = schema.Float(title="min value", default=0.0)
-	max = schema.Float(title="max value", default=100.0)
+	min = dmschema.Number(title="min value", default=0.0, min=0.0)
+	max = dmschema.Number(title="max value", default=100.0)
 
 class IIntegerGradeScheme(INumericGradeScheme):
-	min = schema.Int(title="min value", default=0)
+	min = schema.Int(title="min value", default=0, min=0)
 	max = schema.Int(title="max value", default=100)
 
 class ILetterGradeScheme(IGradeScheme):
@@ -58,6 +68,16 @@ class ILetterGradeScheme(IGradeScheme):
 									   max_length=2),
 						  unique=True,
 						  min_length=1)
+
+	def toLetter(value):
+		"""
+		return the letter grade for the specified value
+		"""
+
+	def toNumber(letter):
+		"""
+		return the number grade for the specified letter
+		"""
 
 class IBooleanGradeScheme(IGradeScheme):
 	pass
