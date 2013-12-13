@@ -102,23 +102,29 @@ class _LetterGradeSchemeObjectUpdater(object):
             utils.raise_field_error(request, "ranges",
                                     "must specify equal number of ranges to grades")
         
-        for r in ranges:
+        for idx, r in enumerate(ranges):
             if not r or len(r) != 2:
                 utils.raise_field_error(request, "range",
                                         "'%r' is not a valid range" % r)
             elif r[0] >= r[1]:
                 utils.raise_field_error(request, "range",
                                         "'%r' is not a valid range" % r)
+            elif r[0] < 0 or r[1] < 0:
+                utils.raise_field_error(request, "range",
+                                        "'%r' has invalid values" % r)
+            else:
+                ranges[idx] = tuple(r)
                 
         sorted_ranges = list(ranges)
+        last_idx = len(sorted_ranges) - 1
         sorted_ranges.sort(key=operator.itemgetter(0), reverse=True)
-        for idx in range(len(sorted_ranges)-1):
+        for idx in range(last_idx):
             a = sorted_ranges[idx]
             b = sorted_ranges[idx + 1]
             if a[0] <= b[0]:
                 utils.raise_field_error(request, "range",
                                         "'%r' overlaps '%r'" % (a, b))
         
-        self.obj.ranges = ranges
-        self.obj.grades = grades
+        self.obj.ranges = tuple(ranges)
+        self.obj.grades = tuple(grades)
         return True
