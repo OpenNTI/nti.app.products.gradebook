@@ -35,6 +35,20 @@ from . import interfaces as grade_interfaces
 
 LINKS = StandardExternalFields.LINKS
 
+@component.adapter(ICourseInstance)
+@interface.implementer(external_interfaces.IExternalMappingDecorator)
+class _CourseInstanceLinkDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel="GradeBook", elements=('GradeBook'))
+		interface.alsoProvides(link, ILocation)
+		link.__name__ = ''
+		link.__parent__ = context
+		_links.append(link)
+
 @component.adapter(ICourseInstanceEnrollment)
 @interface.implementer(external_interfaces.IExternalMappingDecorator)
 class _CourseInstanceEnrollmentLinkDecorator(object):

@@ -72,6 +72,10 @@
 	<adapter factory=".internalization._GradesObjectUpdater"
 			 for=".interfaces.IGrades"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._LetterGradeSchemeObjectUpdater"
+			 for=".interfaces.ILetterGradeScheme"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 			 
 	<!-- Decorators -->
 			 	
@@ -79,6 +83,9 @@
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 			
+	<subscriber factory=".decorators._CourseInstanceLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory=".decorators._CourseInstanceEnrollmentLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 			 
