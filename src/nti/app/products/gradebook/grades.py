@@ -28,6 +28,7 @@ from nti.contenttypes.courses import interfaces as course_interfaces
 
 from nti.dataserver import mimetype
 from nti.dataserver.datastructures import ModDateTrackingObject
+from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization import externalization
 from nti.externalization import interfaces as ext_interfaces
@@ -42,7 +43,9 @@ from . import interfaces as grades_interfaces
 @interface.implementer(grades_interfaces.IGrade,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class Grade(ModDateTrackingObject, SchemaConfigured, zcontained.Contained):
+class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
+			SchemaConfigured,
+			zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -99,14 +102,18 @@ def _indexof_grade(grade, grades):
 
 @interface.implementer(mapping.IReadMapping, ext_interfaces.IExternalizedObject)
 class _UserGradesResource(zcontained.Contained):
+	# A temporary object, not meant to be persisted
 
 	__slots__ = ('blist', 'username', '__name__', '__parent__')
 
 	username = alias('__name__')
-	
+
 	def __init__(self, obj, username):
 		self.blist = obj
 		self.username = username
+
+	def __reduce__(self):
+		raise TypeError()
 
 	def __getitem__(self, key):
 		idx = _indexof_grade(key, self.blist)
@@ -117,7 +124,7 @@ class _UserGradesResource(zcontained.Contained):
 	def __contains__(self, key):
 		idx = _indexof_grade(key, self.blist)
 		return idx != -1
-	
+
 	def get(self, key, default=None):
 		try:
 			result = self.__getitem__(key)
@@ -147,15 +154,17 @@ class _UserGradesResource(zcontained.Contained):
 		return result
 
 @component.adapter(course_interfaces.ICourseInstance)
-@interface.implementer(grades_interfaces.IGrades, 
+@interface.implementer(grades_interfaces.IGrades,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
+class Grades(PersistentCreatedModDateTrackingObject,
+			 PersistentMapping,
+			 zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	__super_getitem = PersistentMapping.__getitem__
-	
+
 	def index(self, grade, username=None, grades=None):
 		username = username or getattr(grade, 'username', None)
 		grades = grades if grades is not None else self.get_grades(username, ())
@@ -184,6 +193,10 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 			idx = len(grades) - 1
 			lifecycleevent.added(grade)
 		else:
+			# XXX: NOTE: This may or may not work, as Grade
+			# is not persistent. It must be replaced, it cannot
+			# be updated in place. Whether this works depends on
+			# the blist's behaviour
 			modified = grades[idx]
 			modified.copy(grade, False)
 			modified.updateLastMod()
@@ -207,7 +220,7 @@ class Grades(PersistentMapping, ModDateTrackingObject, zcontained.Contained):
 	def remove_grades(self, ntiid):
 		for username in self.keys():
 			self.remove_grade(ntiid, username)
-			
+
 	def clear(self, username):
 		grades = self.pop(username, None)
 		for grade in grades or ():

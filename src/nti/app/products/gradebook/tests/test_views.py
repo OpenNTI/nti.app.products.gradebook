@@ -24,10 +24,10 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestViews(SharedApplicationTestBase):
 
-	gradebook_part = {'Name':'Quizzes', 'order':1, 'weight':0.95,
+	gradebook_part = {'Name':'Quizzes', 'order':1,
 					  'MimeType':'application/vnd.nextthought.gradebookpart'}
 
-	gradebook_entry = { 'Name':'Quiz1', 'order':2, 'weight':0.55,
+	gradebook_entry = { 'Name':'Quiz1', 'order':2,
 						'MimeType':'application/vnd.nextthought.gradebookentry'}
 
 	grade = {'username':'sjohnson@nextthought.com', 'grade':85, 'NTIID':None,
@@ -57,7 +57,7 @@ class TestViews(SharedApplicationTestBase):
 
 		path = href + '/GradeBook'
 		res = self.testapp.get(path)
-		assert_that(res.json_body, has_entry('TotalPartWeight', 0.0))
+		#assert_that(res.json_body, has_entry('TotalPartWeight', 0.0))
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
 
 		environ = self._make_extra_environ()
@@ -65,23 +65,23 @@ class TestViews(SharedApplicationTestBase):
 
 		data = self.gradebook_part
 		res = self.testapp.post_json(path, data, extra_environ=environ)
-		
+
 		assert_that(res.json_body, has_entry('Class', 'GradeBookPart'))
 		assert_that(res.json_body, has_entry('Creator', 'sjohnson@nextthought.com'))
 		assert_that(res.json_body, has_entry('Name', 'Quizzes'))
 		assert_that(res.json_body, has_entry('order', 1))
-		assert_that(res.json_body, has_entry('weight', 0.95))
+		#assert_that(res.json_body, has_entry('weight', 0.95))
 		assert_that(res.json_body, has_entry('displayName', 'Quizzes'))
 		assert_that(res.json_body, has_entry('MimeType', 'application/vnd.nextthought.gradebookpart'))
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebookpart-CLC3403.Quizzes'))
-		
+
 		res = self.testapp.get(path)
-		assert_that(res.json_body, has_entry('TotalPartWeight', 0.95))
+		#assert_that(res.json_body, has_entry('TotalPartWeight', 0.95))
 
 		part_path = path + '/Quizzes'
 		res = self.testapp.get(part_path)
 		assert_that(res.json_body, has_entry(u'OID', is_not(none())))
-		assert_that(res.json_body, has_entry('TotalEntryWeight', 0.0))
+		#assert_that(res.json_body, has_entry('TotalEntryWeight', 0.0))
 
 		data = self.gradebook_entry
 		res = self.testapp.post_json(part_path, data, extra_environ=environ)
@@ -90,13 +90,13 @@ class TestViews(SharedApplicationTestBase):
 		assert_that(res.json_body, has_entry('Creator', 'sjohnson@nextthought.com'))
 		assert_that(res.json_body, has_entry('Name', 'Quiz1'))
 		assert_that(res.json_body, has_entry('order', 2))
-		assert_that(res.json_body, has_entry('weight', 0.55))
+		#assert_that(res.json_body, has_entry('weight', 0.55))
 		assert_that(res.json_body, has_entry('displayName', 'Quiz1'))
 		assert_that(res.json_body, has_entry('MimeType', 'application/vnd.nextthought.gradebookentry'))
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebookentry-CLC3403.Quizzes.Quiz1'))
 
 		res = self.testapp.get(part_path)
-		assert_that(res.json_body, has_entry('TotalEntryWeight', 0.55))
+		#assert_that(res.json_body, has_entry('TotalEntryWeight', 0.55))
 
 		quiz_path = part_path + '/Quiz1'
 		res = self.testapp.get(quiz_path)
@@ -105,11 +105,11 @@ class TestViews(SharedApplicationTestBase):
 		data = self.gradebook_entry.copy()
 		data['Name'] = 'quizx'
 		data['order'] = 3
-		data['weight'] = 0.4
+		#data['weight'] = 0.4
 		self.testapp.post_json(part_path, data, extra_environ=environ)
 
 		res = self.testapp.get(part_path)
-		assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.95, 0.1)))
+		#assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.95, 0.1)))
 
 		data = self.gradebook_entry.copy()
 		data['displayName'] = '++Quiz-1++'
@@ -118,7 +118,7 @@ class TestViews(SharedApplicationTestBase):
 
 		self.testapp.delete(quiz_path, extra_environ=environ)
 		res = self.testapp.get(part_path)
-		assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.4, 0.1)))
+		#assert_that(res.json_body, has_entry('TotalEntryWeight', close_to(0.4, 0.1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_grades(self):
@@ -162,4 +162,3 @@ class TestViews(SharedApplicationTestBase):
 		self.testapp.delete(grade_path, extra_environ=environ)
 		res = self.testapp.get(user_grades_path, extra_environ=environ)
 		assert_that(res.json_body, has_entry(u'Items', has_length(0)))
-

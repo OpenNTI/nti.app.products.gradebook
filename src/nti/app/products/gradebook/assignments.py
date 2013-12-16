@@ -45,11 +45,13 @@ def get_course_assignments(course, sort=True, reverse=False):
 	return assignments
 
 def create_assignments_entries(course):
+	# XXX: Note: assignments will be added and even removed
+	# from the course dynamically.
 	assignments = get_course_assignments(course)
 	if not assignments:  # should not happen
 		return 0
 
-	weight = 1.0 / float(len(assignments))  # same weight
+	#weight = 1.0 / float(len(assignments))  # same weight
 
 	# get gradebook from course
 	book = grade_interfaces.IGradeBook(course)
@@ -59,16 +61,17 @@ def create_assignments_entries(course):
 	part = gradebook.GradeBookPart()
 	part.displayName = part.Name = part_name
 	part.order = 1
-	part.weight = 1.0
+	#part.weight = 1.0
 	book[part_name] = part
 
 	for idx, a in enumerate(assignments):
 		n = idx + 1
 		name = 'assignment%s' % n
 		display = 'Assignment %s' % n
-		entry = gradebook.GradeBookEntry(
-							Name=name, displayName=display, weight=weight, order=n,
-							assignmentId=getattr(a, 'NTIID', getattr(a, 'ntiid', None)))
+		entry = gradebook.GradeBookEntry(Name=name,
+										 displayName=display,
+										 order=n,
+										 assignmentId=a.__name__)
 
 		part[name] = entry
 

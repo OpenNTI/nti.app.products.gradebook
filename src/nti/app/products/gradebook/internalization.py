@@ -35,7 +35,7 @@ class _GradeObjectUpdater(object):
 
     def updateFromExternalObject(self, externalObject, *args, **kwargs ):
         modified = False
-        for name in ('NTIID', 'username'):
+        for name in (str('NTIID'), str('username')):
             value = externalObject.get(name, None)
             if getattr(self, name, None) is None and value is not None:
                 setattr(self.obj, name, value)
@@ -101,7 +101,7 @@ class _LetterGradeSchemeObjectUpdater(object):
         if len(grades) != len(ranges):
             utils.raise_field_error(request, "ranges",
                                     "must specify equal number of ranges to grades")
-        
+
         for idx, r in enumerate(ranges):
             if not r or len(r) != 2:
                 utils.raise_field_error(request, "range",
@@ -114,7 +114,7 @@ class _LetterGradeSchemeObjectUpdater(object):
                                         "'%r' has invalid values" % r)
             else:
                 ranges[idx] = tuple(r)
-                
+
         sorted_ranges = list(ranges)
         last_idx = len(sorted_ranges) - 1
         sorted_ranges.sort(key=operator.itemgetter(0), reverse=True)
@@ -124,7 +124,7 @@ class _LetterGradeSchemeObjectUpdater(object):
             if a[0] <= b[0]:
                 utils.raise_field_error(request, "range",
                                         "'%r' overlaps '%r'" % (a, b))
-        
+
         self.obj.ranges = tuple(ranges)
         self.obj.grades = tuple(grades)
         return True

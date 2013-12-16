@@ -35,11 +35,12 @@ class TestExternal(ConfiguringTestBase):
 		return usr
 
 	def test_grade(self):
-		g = grades.Grade(username='nt@nti.com', NTIID="quiz1", grade=85.0)
+		ntiid = 'tag:nextthought.com,2011-10:NextThought-quiz-thing'
+		g = grades.Grade(username='nt@nti.com', NTIID=ntiid, grade=85.0)
 		ext = externalization.to_external_object(g)
 		assert_that(ext, has_entry(u'Class', 'Grade'))
 		assert_that(ext, has_entry(u'grade', is_(85.0)))
-		assert_that(ext, has_entry(u'NTIID', 'quiz1'))
+		assert_that(ext, has_entry(u'NTIID', ntiid))
 		assert_that(ext, has_entry(u'username', 'nt@nti.com'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.grade'))
 		assert_that(ext, has_entry(u'Last Modified', is_not(none())))
@@ -47,7 +48,7 @@ class TestExternal(ConfiguringTestBase):
 		factory = internalization.find_factory_for(ext)
 		newgrade = factory()
 		internalization.update_from_external_object(newgrade, ext)
-		assert_that(newgrade, has_property('NTIID', 'quiz1'))
+		assert_that(newgrade, has_property('NTIID', ntiid))
 		assert_that(newgrade, has_property('grade', is_(85.0)))
 		assert_that(newgrade, has_property('username', is_('nt@nti.com')))
 
@@ -57,7 +58,7 @@ class TestExternal(ConfiguringTestBase):
 		r = random.randint(5, 15)
 		for _ in range(r):
 			username = 'u%s' % random.randint(1, 5)
-			entry = 'e%s' % random.randint(1, 5)
+			entry = 'tag:nextthought.com,2011-10:NextThought-quiz-e%s' % random.randint(1, 5)
 			grade = grades.Grade(NTIID=entry,
 								 username=username,
 								 grade=float(random.randint(1, 100)))
@@ -84,7 +85,7 @@ class TestExternal(ConfiguringTestBase):
 				assert_that(new_grade, is_not(none()))
 				assert_that(new_grade, has_property('username', grade.username))
 				assert_that(new_grade, has_property('grade', grade.grade))
-		
+
 	@WithMockDSTrans
 	def test_gradebook(self):
 		class Parent(object):
@@ -99,7 +100,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'Class', 'GradeBook'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'Creator', 'nt@nti.com'))
-		assert_that(ext, has_entry(u'TotalPartWeight', 0.0))
+		#assert_that(ext, has_entry(u'TotalPartWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CS1330'))
 
@@ -113,16 +114,16 @@ class TestExternal(ConfiguringTestBase):
 		gbp.Name = 'quizzes'
 		gbp.order = 1
 		gbp.displayName = 'Quizzes'
-		gbp.weight = 0.95
+		#gbp.weight = 0.95
 
 		ext = externalization.to_external_object(gbp)
 		assert_that(ext, has_entry(u'Class', 'GradeBookPart'))
 		assert_that(ext, has_entry(u'CreatedTime', is_not(none())))
 		assert_that(ext, has_entry(u'Name', 'quizzes'))
 		assert_that(ext, has_entry(u'order', 1))
-		assert_that(ext, has_entry(u'weight', 0.95))
+		#assert_that(ext, has_entry(u'weight', 0.95))
 		assert_that(ext, has_entry(u'displayName', 'Quizzes'))
-		assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
+		#assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookpart'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebookpart-quizzes'))
 
@@ -136,7 +137,7 @@ class TestExternal(ConfiguringTestBase):
 		gbe.__parent__ = gbp
 		gbe.order = 2
 		gbe.Name = 'quiz1'
-		gbe.weight = 0.55
+		#gbe.weight = 0.55
 		gbe.displayName = 'Quiz 1'
 		gbe.assignmentId = 'myquestion'
 
@@ -144,7 +145,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry(u'Class', 'GradeBookEntry'))
 		assert_that(ext, has_entry(u'Name', 'quiz1'))
 		assert_that(ext, has_entry(u'order', 2))
-		assert_that(ext, has_entry(u'weight', 0.55))
+		#assert_that(ext, has_entry(u'weight', 0.55))
 		assert_that(ext, has_entry(u'displayName', 'Quiz 1'))
 		assert_that(ext, has_entry(u'DueDate', is_(none())))
 		assert_that(ext, has_entry(u'GradeScheme', is_(none())))
@@ -191,5 +192,3 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(s, is_(scheme))
 		assert_that(s, has_property(u'grades', is_((u'A', u'B', u'C', u'D', u'F'))))
 		assert_that(s, has_property(u'ranges', is_(((90, 100), (80, 89), (70, 79), (60, 69), (0, 59)))))
-
-

@@ -28,21 +28,20 @@ from nti.assessment import interfaces as asm_interfaces
 from nti.contenttypes.courses import interfaces as course_interfaces
 
 from nti.dataserver import containers as nti_containers
-from nti.dataserver.datastructures import CreatedModDateTrackingObject
+from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids import ntiids
 
 from nti.utils.property import alias
-from nti.utils._compat import Implicit
 from nti.utils.property import CachedProperty
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as grades_interfaces
 
-class _NTIIDMixin(zcontained.Contained):
+class _NTIIDMixin(object):
 
 	_ntiid_type = None
 	_ntiid_include_self_name = False
@@ -81,10 +80,7 @@ class _NTIIDMixin(zcontained.Contained):
 @interface.implementer(grades_interfaces.IGradeBook,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBook(Implicit,
-				nti_containers.AcquireObjectsOnReadMixin,
-				nti_containers.CheckingLastModifiedBTreeContainer,
-				nti_containers._IdGenerationMixin,
+class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 				zcontained.Contained,
 				_NTIIDMixin):
 
@@ -97,7 +93,7 @@ class GradeBook(Implicit,
 			if entry is not None:
 				return entry
 		return None
-		
+
 	def get_entry_by_ntiid(self, ntiid):
 		result = None
 		type_ = ntiids.get_type(ntiid)
@@ -107,20 +103,19 @@ class GradeBook(Implicit,
 			result = self.get(part, {}).get(entry)
 		return result
 
-	@property
-	def TotalPartWeight(self):
-		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
-		return result
+#	@property
+#	def TotalPartWeight(self):
+#		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
+#		return result
 
 _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
 @interface.implementer(grades_interfaces.IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookPart(Implicit,
-					nti_containers.AcquireObjectsOnReadMixin,
-					nti_containers.CheckingLastModifiedBTreeContainer,
+class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 					SchemaConfigured,
+					zcontained.Contained,
 					_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
@@ -130,7 +125,6 @@ class GradeBookPart(Implicit,
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
 
-	__parent__ = None
 	__name__ = alias('Name')
 
 	def get_entry_by_assignment(self, assignmentId):
@@ -138,11 +132,11 @@ class GradeBookPart(Implicit,
 			if entry.assignmentId == assignmentId:
 				return entry
 		return None
-	
-	@property
-	def TotalEntryWeight(self):
-		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
-		return result
+
+#	@property
+#	def TotalEntryWeight(self):
+#		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
+#		return result
 
 	def __str__(self):
 		return self.displayName
@@ -153,20 +147,18 @@ class GradeBookPart(Implicit,
 @interface.implementer(grades_interfaces.IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookEntry(Persistent,
-					 CreatedModDateTrackingObject,
+class GradeBookEntry(PersistentCreatedModDateTrackingObject,
 					 SchemaConfigured,
-					 _NTIIDMixin,
-					 Implicit):
+					 zcontained.Contained,
+					 _NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookentry'
 
 	_ntiid_include_self_name = True
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
-	
+
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
-	__parent__ = None
 	__name__ = alias('Name')
 
 	ntiid = alias('NTIID')
@@ -174,8 +166,10 @@ class GradeBookEntry(Persistent,
 
 	@property
 	def DueDate(self):
-		asm = component.queryUtility(asm_interfaces.IQAssignment, name=self.assignmentId)
-		return getattr(asm, 'available_for_submission_ending', None)
+		try:
+			return component.getUtility(asm_interfaces.IQAssignment, name=self.assignmentId).available_for_submission_ending
+		except LookupError:
+			return None
 
 	def __str__(self):
 		return self.displayName

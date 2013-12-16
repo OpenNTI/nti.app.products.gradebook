@@ -27,8 +27,10 @@ class TestGrades(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
+	ntiid = 'tag:nextthought.com,2011-10:NextThought-quiz-quiz'
+
 	def test_grade_clone(self):
-		g = grades.Grade(username='nt@nti.com', NTIID="quiz1", grade=85.0)
+		g = grades.Grade(username='nt@nti.com', NTIID=self.ntiid, grade=85.0)
 		c = g.clone()
 		assert_that(c, is_not(none()))
 		assert_that(c, has_property('username', g.username))
@@ -36,7 +38,7 @@ class TestGrades(ConfiguringTestBase):
 		assert_that(c, has_property('grade', g.grade))
 
 	def test_grade_copy(self):
-		g = grades.Grade(username='nt@nti.com', NTIID="quiz1", grade=85.0)
+		g = grades.Grade(username='nt@nti.com', NTIID=self.ntiid, grade=85.0)
 		c = grades.Grade()
 		c.copy(g)
 		assert_that(c, is_not(none()))
@@ -48,11 +50,11 @@ class TestGrades(ConfiguringTestBase):
 	def test_grades(self):
 		self._create_user()
 		store = grades.Grades()
-		g1 = grades.Grade(username='nt@nti.com', NTIID="quiz1", grade=85.0)
+		g1 = grades.Grade(username='nt@nti.com', NTIID=self.ntiid, grade=85.0)
 		idx = store.add_grade(g1)
 		assert_that(idx, is_(0))
 
-		g2 = grades.Grade(username='nt@nti.com', NTIID="quiz2", grade=84.0)
+		g2 = grades.Grade(username='nt@nti.com', NTIID=self.ntiid + '2', grade=84.0)
 		idx = store.add_grade(g2)
 		assert_that(idx, is_(1))
 
@@ -63,21 +65,21 @@ class TestGrades(ConfiguringTestBase):
 		lst = store.get_grades('nt@nti.com')
 		assert_that(lst, has_length(2))
 
-		g = store.find_grade("quiz2", 'nt@nti.com')
+		g = store.find_grade(self.ntiid + '2', 'nt@nti.com')
 		assert_that(g2, is_(g))
 		assert_that(g, has_property('grade', 82.0))
 
-		idx = store.remove_grade("quiz2", 'nt@nti.com')
+		idx = store.remove_grade(g.NTIID, 'nt@nti.com')
 		assert_that(idx, is_(1))
 		lst = store.get_grades('nt@nti.com')
 		assert_that(lst, has_length(1))
 
-		g3 = grades.Grade(username='nt@nti.com', NTIID="quiz3", grade=100.0)
+		g3 = grades.Grade(username='nt@nti.com', NTIID=self.ntiid + '3', grade=100.0)
 		idx = store.add_grade(g3)
 		assert_that(idx, is_(1))
 
-		store.remove_grades("quiz1")
-		g = store.find_grade("quiz1", 'nt@nti.com')
+		store.remove_grades(self.ntiid)
+		g = store.find_grade(self.ntiid, 'nt@nti.com')
 		assert_that(g, is_(none()))
 
 		assert_that(store.clear('nt@nti.com'), is_(True))
