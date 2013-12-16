@@ -109,12 +109,11 @@ def _validate_grade_entry(request, obj):
 									"assignmentId",
 									_("must specify a valid grade assignment id"))
 
-	if 	grades_interfaces.IGradeBookPart.providedBy(obj) or \
-		grades_interfaces.IGradeBookEntry.providedBy(obj):
-		
+	if grades_interfaces.IGradeBookEntry.providedBy(obj):
+
 		if obj.GradeScheme is None:
 			obj.GradeScheme = gradescheme.NumericGradeScheme()
-			
+
 	if not obj.Name and not obj.displayName:
 		utils.raise_field_error(request,
 								"Name",
@@ -224,13 +223,13 @@ class GradesPutView(GradePostView):
 @view_config(context=grades_interfaces.IGrades)
 @view_defaults(**_d_view_defaults)
 class GradesDeleteView(AbstractAuthenticatedView):
-	
+
 	def readInput(self):
 		request = self.request
 		value = request.body
 		value = simplejson.loads(unicode(value, request.charset))
 		return CaseInsensitiveDict(value)
-	
+
 	def __call__(self):
 		context = self.request.context
 		externalValue = self.readInput()
