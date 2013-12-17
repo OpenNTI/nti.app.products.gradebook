@@ -19,8 +19,6 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from pyramid.traversal import lineage
 
-from persistent import Persistent
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.assessment import interfaces as asm_interfaces
