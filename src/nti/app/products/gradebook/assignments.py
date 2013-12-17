@@ -10,6 +10,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.assessment import interfaces as asm_interfaces
 
+from nti.ntiids import ntiids
+
 from . import gradebook
 from . import interfaces as grade_interfaces
 
@@ -44,6 +46,36 @@ def get_course_assignments(course, sort=True, reverse=False):
 		assignments = sorted(assignments, cmp=_assignment_comparator, reverse=reverse)
 	return assignments
 
+def create_assignment_part(course, weight=1.0):
+	part_name = 'Assignments'
+	book = grade_interfaces.IGradeBook(course)
+	if not part_name in book:
+		part = gradebook.GradeBookPart()
+		part.displayName = part.Name = part_name
+		part.order = 1
+		# part.weight = weight
+		book[part_name] = part
+		return part
+	else:
+		return book[part_name]
+get_create_assignment_part = create_assignment_part
+
+def create_assignment_entry(course, assignmentId, displayName=None, order=1):
+	book = grade_interfaces.IGradeBook(course)
+	specific = ntiids.get_specific(assignmentId)
+	specific = specific.replace(' ', '')
+	entry = book.get_entry_by_assignment(assignmentId)
+	if entry is None:
+		displayName = displayName or specific
+		part = get_create_assignment_part(course)
+		entry = gradebook.GradeBookEntry(Name=specific,
+										 displayName=displayName,
+										 order=order,
+										 assignmentId=assignmentId)
+		part[specific] = entry
+	return entry
+get_create_assignment_entry = create_assignment_entry
+
 def create_assignments_entries(course):
 	# XXX: Note: assignments will be added and even removed
 	# from the course dynamically.
@@ -51,28 +83,11 @@ def create_assignments_entries(course):
 	if not assignments:  # should not happen
 		return 0
 
-	#weight = 1.0 / float(len(assignments))  # same weight
-
-	# get gradebook from course
-	book = grade_interfaces.IGradeBook(course)
-
-	# create part
-	part_name = 'Assignments'
-	part = gradebook.GradeBookPart()
-	part.displayName = part.Name = part_name
-	part.order = 1
-	#part.weight = 1.0
-	book[part_name] = part
-
+	# weight = 1.0 / float(len(assignments))  # same weight
+	create_assignment_part(course)
 	for idx, a in enumerate(assignments):
 		n = idx + 1
-		name = 'assignment%s' % n
-		display = 'Assignment %s' % n
-		entry = gradebook.GradeBookEntry(Name=name,
-										 displayName=display,
-										 order=n,
-										 assignmentId=a.__name__)
-
-		part[name] = entry
+		displayName = 'Assignment %s' % n
+		create_assignment_entry(course, a.__name__, displayName, n)
 
 	return len(assignments)

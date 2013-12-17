@@ -67,14 +67,8 @@ def _assignment_history_item_added(item, event):
 	course = ICourseInstance(item)
 	user = nti_interfaces.IUser(item)
 
-	book = grade_interfaces.IGradeBook(course)
-	if not book:  # not gradebook entries/parts defined
-		assignments.create_assignments_entries(course)
-	# allow a None adaptation which in case there is no book defined
-	# we'd see this in testing
-	entry = grade_interfaces.IGradeBookEntry(item, None)
-	if entry is None:  # pragma no cover
-		return
+	assignmentId = item.Submission.assignmentId
+	entry = assignments.get_create_assignment_entry(course, assignmentId)
 	
 	# register/add grade
 	course_grades = grade_interfaces.IGrades(course)
