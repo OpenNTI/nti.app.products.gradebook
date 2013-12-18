@@ -8,8 +8,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.assessment import interfaces as asm_interfaces
-
+from nti.app.assessment.interfaces import ICourseAssignmentCatalog
 from nti.ntiids import ntiids
 
 from . import gradebook
@@ -29,18 +28,7 @@ def _assignment_comparator(a, b):
 	return 0
 
 def get_course_assignments(course, sort=True, reverse=False):
-	assignments = []
-	content_package = getattr(course, 'legacy_content_package', None)
-	def _recur(unit):
-		items = asm_interfaces.IQAssessmentItemContainer(unit, ())
-		for item in items:
-			if asm_interfaces.IQAssignment.providedBy(item):
-				assignments.append(item)
-		for child in unit.children:
-			_recur(child)
-
-	if content_package is not None:
-		_recur(content_package)
+	assignments = list(ICourseAssignmentCatalog(course).iter_assignments())
 
 	if sort:
 		assignments = sorted(assignments, cmp=_assignment_comparator, reverse=reverse)
