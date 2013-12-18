@@ -42,19 +42,25 @@ class TestAssignments(SharedApplicationTestBase):
 		return lib
 
 	@mock_dataserver.WithMockDSTrans
-	def test_create_assignments_entries(self):
+	def test_synchronize_gradebook(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			lib = component.getUtility(IContentPackageLibrary)
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
-				entries = assignments.create_assignments_entries(course)
+				entries = assignments.synchronize_gradebook(course)
 				assert_that(entries, is_(2))
 
 				book = grades_interfaces.IGradeBook(course)
-				assert_that(book, has_key('Assignments'))
-				part = book['Assignments']
-				assert_that(part, has_length(2))
+				assert_that(book, has_key('default'))
+				part = book['default']
+				assert_that(part, has_length(1))
+
+				assert_that(book, has_key('quizzes'))
+				part = book['quizzes']
+				assert_that(part, has_length(1))
+
+				assert_that( part, has_key('Main Title'))
 
 	@mock_dataserver.WithMockDSTrans
 	def test_get_course_assignments(self):

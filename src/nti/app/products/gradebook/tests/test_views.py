@@ -43,17 +43,10 @@ class TestViews(SharedApplicationTestBase):
 				   ))
 		return lib
 
-	def courseInstanceLink(self, links):
-		for link in links:
-			if link.get('rel', None) == u'CourseInstance':
-				return link['href']
-		return None
-
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_gradebook(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
-		links = res.json_body['Items'][0]['Links']
-		href = self.courseInstanceLink(links)
+		href = self.require_link_href_with_rel(res.json_body['Items'][0], 'CourseInstance')
 
 		path = href + '/GradeBook'
 		res = self.testapp.get(path)
@@ -123,8 +116,7 @@ class TestViews(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_grades(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
-		links = res.json_body['Items'][0]['Links']
-		href = self.courseInstanceLink(links)
+		href = self.require_link_href_with_rel(res.json_body['Items'][0], 'CourseInstance')
 
 		path = href + '/GradeBook'
 		part_path = path + '/Quizzes'

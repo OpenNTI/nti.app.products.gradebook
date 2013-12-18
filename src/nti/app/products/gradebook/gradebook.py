@@ -37,6 +37,8 @@ from nti.utils.property import CachedProperty
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
+from nti.externalization.externalization import make_repr
+
 from . import interfaces as grades_interfaces
 
 class _NTIIDMixin(object):
@@ -125,6 +127,11 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 
 	__name__ = alias('Name')
 
+	def __init__(self, **kwargs):
+		# SchemaConfigured is not cooperative
+		SchemaConfigured.__init__(self, **kwargs)
+		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+
 	def get_entry_by_assignment(self, assignmentId):
 		for entry in self.values():
 			if entry.assignmentId == assignmentId:
@@ -139,8 +146,7 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 	def __str__(self):
 		return self.displayName
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.displayName, self.weight)
+	__repr__ = make_repr()
 
 @interface.implementer(grades_interfaces.IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
@@ -172,9 +178,7 @@ class GradeBookEntry(PersistentCreatedModDateTrackingObject,
 	def __str__(self):
 		return self.displayName
 
-	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.displayName, self.weight,
-								 self.assignmentId)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

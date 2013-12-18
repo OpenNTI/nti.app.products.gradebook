@@ -12,57 +12,66 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import lifecycleevent
-from zope.lifecycleevent import interfaces as lce_interfaces
+
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from pyramid.traversal import find_interface
 
-from nti.app.assessment import interfaces as appa_interfaces
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.app.products.courseware.interfaces import ICourseInstanceAvailableEvent
+
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import grades
+from .grades import Grade
 from . import assignments
-from . import interfaces as grade_interfaces
+
+from .interfaces import IGrade
+from .interfaces import IGrades
+from .interfaces import IGradeBook
+from .interfaces import IGradeBookPart
+from .interfaces import IGradeBookEntry
 
 def find_gradebook_in_lineage(obj):
-	book = find_interface(obj, grade_interfaces.IGradeBook)
+	book = find_interface(obj, IGradeBook)
 	if book is None:
 		__traceback_info__ = obj
 		raise TypeError("Unable to find gradebook")
 	return book
 
-@component.adapter(grade_interfaces.IGradeBookPart, lce_interfaces.IObjectRemovedEvent)
+@component.adapter(IGradeBookPart, IObjectRemovedEvent)
 def _gradebook_part_removed(part, event):
 	book = find_gradebook_in_lineage(part)
-	grades = grade_interfaces.IGrades(book)
+	grades = IGrades(book)
 	for entry in part.values():
 		grades.remove_grades(entry.NTIID)
 
-@component.adapter(grade_interfaces.IGradeBookEntry, lce_interfaces.IObjectRemovedEvent)
+@component.adapter(IGradeBookEntry, IObjectRemovedEvent)
 def _gradebook_entry_removed(entry, event):
 	book = find_gradebook_in_lineage(entry)
-	grades = grade_interfaces.IGrades(book)
+	grades = IGrades(book)
 	grades.remove_grades(entry.NTIID)
 
-@component.adapter(grade_interfaces.IGrade, lce_interfaces.IObjectModifiedEvent)
+@component.adapter(IGrade, IObjectModifiedEvent)
 def _grade_modified(grade, event):
 	course = ICourseInstance(grade)
 	user = users.User.get_user(grade.username)
-	book = grade_interfaces.IGradeBook(course)
+	book = IGradeBook(course)
 	entry = book.get_entry_by_ntiid(grade.ntiid)
 	if user and entry is not None and entry.assignmentId:
-		assignment_history = component.getMultiAdapter(
-										(course, user),
-										appa_interfaces.IUsersCourseAssignmentHistory)
+		assignment_history = component.getMultiAdapter( (course, user),
+													    IUsersCourseAssignmentHistory)
 		if entry.assignmentId in assignment_history:
 			item = assignment_history[entry.assignmentId]
 			lifecycleevent.modified(item)
 
-@component.adapter(appa_interfaces.IUsersCourseAssignmentHistoryItem,
-				   lce_interfaces.IObjectAddedEvent)
+@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
 	course = ICourseInstance(item)
 	user = nti_interfaces.IUser(item)
@@ -71,6 +80,10 @@ def _assignment_history_item_added(item, event):
 	entry = assignments.get_create_assignment_entry(course, assignmentId)
 
 	# register/add grade
-	course_grades = grade_interfaces.IGrades(course)
-	grade = grades.Grade(NTIID=entry.NTIID, username=user.username)
+	course_grades = IGrades(course)
+	grade = Grade(NTIID=entry.NTIID, username=user.username)
 	course_grades.add_grade(grade)
+
+@component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
+def _synchronize_gradebook_with_course_instance(course, event):
+	assignments.synchronize_gradebook(course)

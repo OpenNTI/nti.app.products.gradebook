@@ -9,10 +9,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
-from nti.ntiids import ntiids
 
-from . import gradebook
-from . import interfaces as grade_interfaces
+from zope.container.interfaces import INameChooser
+from .interfaces import IGradeBook
+
+from .gradebook import GradeBookPart
+from .gradebook import GradeBookEntry
 
 def _assignment_comparator(a, b):
 	a_end = a.available_for_submission_ending
@@ -34,48 +36,67 @@ def get_course_assignments(course, sort=True, reverse=False):
 		assignments = sorted(assignments, cmp=_assignment_comparator, reverse=reverse)
 	return assignments
 
-def create_assignment_part(course, weight=1.0):
-	part_name = 'Assignments'
-	book = grade_interfaces.IGradeBook(course)
-	if not part_name in book:
-		part = gradebook.GradeBookPart()
-		part.displayName = part.Name = part_name
-		part.order = 1
+def create_assignment_part(course, part_name, _book=None):
+	book = _book if _book is not None else IGradeBook(course)
+	if part_name not in book:
+		part = GradeBookPart(displayName=part_name,
+							 order=1) # Order makes very little sense here...
 		# part.weight = weight
-		book[part_name] = part
-		return part
-	else:
-		return book[part_name]
+		book[INameChooser(book).chooseName(part_name, part)] = part
+	return book[part_name]
+
 get_create_assignment_part = create_assignment_part
 
-def create_assignment_entry(course, assignmentId, displayName=None, order=1):
-	book = grade_interfaces.IGradeBook(course)
-	specific = ntiids.get_specific(assignmentId)
-	specific = specific.replace(' ', '')
+def create_assignment_entry(course, assignment, displayName, order=1, _book=None):
+	book = _book if _book is not None else IGradeBook(course)
+
+	assignmentId = assignment.__name__
+
 	entry = book.get_entry_by_assignment(assignmentId)
+
 	if entry is None:
-		displayName = displayName or specific
-		part = get_create_assignment_part(course)
-		entry = gradebook.GradeBookEntry(Name=specific,
-										 displayName=displayName,
-										 order=order,
-										 assignmentId=assignmentId)
-		part[specific] = entry
+		part = get_create_assignment_part(course, assignment.category_name)
+		entry = GradeBookEntry(
+							   displayName=displayName,
+							   order=order,
+							   assignmentId=assignmentId)
+		part[INameChooser(part).chooseName(displayName, entry)] = entry
+
 	return entry
 get_create_assignment_entry = create_assignment_entry
 
-def create_assignments_entries(course):
-	# XXX: Note: assignments will be added and even removed
-	# from the course dynamically.
+def synchronize_gradebook(course):
+	"""
+	Makes the gradebook for the course match the assignments for the course.
+
+	New assignments are added to a part matching their category. If an assignment
+	exists in the book but not the course assignments, and there are
+	no recorded grades, it is removed.
+	"""
+
 	assignments = get_course_assignments(course)
-	if not assignments:  # should not happen
-		return 0
+	book = IGradeBook(course)
 
-	# weight = 1.0 / float(len(assignments))  # same weight
-	create_assignment_part(course)
-	for idx, a in enumerate(assignments):
-		n = idx + 1
-		displayName = 'Assignment %s' % n
-		create_assignment_entry(course, a.__name__, displayName, n)
+	assignment_ids = set()
 
+	for idx, assignment in enumerate(assignments):
+		ordinal = idx + 1
+		if assignment.title:
+			displayName = assignment.title
+		else:
+			displayName = 'Assignment %s' % ordinal
+		create_assignment_entry(course, assignment, displayName, ordinal, book)
+		assignment_ids.add( assignment.__name__ )
+
+	# Now drop entries that don't correspond to existing assignments
+	# and that don't have grades
+	for part in book.values():
+		for entry in part.values():
+			if entry.assignmentId not in assignment_ids:
+				# XXX: FIXME: We cannot actually determine if there are
+				# grades for the assignment yet.
+				del part[entry.__name__]
+
+		if not part:
+			del book[part.__name__]
 	return len(assignments)
