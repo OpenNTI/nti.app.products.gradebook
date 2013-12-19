@@ -175,6 +175,10 @@ class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 		SchemaConfigured.__init__(self, **kwargs)
 		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
 
+	def __setstate__(self, state):
+		super(GradeBookEntry, self).__setstate__(state)
+		if '_SampleContainer__data' not in self.__dict__:
+			self._SampleContainer__data = self._newContainerData()
 
 	@property
 	def DueDate(self):
