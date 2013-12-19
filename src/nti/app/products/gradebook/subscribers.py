@@ -80,6 +80,16 @@ def _assignment_history_item_added(item, event):
 	assignmentId = item.Submission.assignmentId
 
 	entry = book.getColumnForAssignmentId(assignmentId)
+	if entry is None:
+		# Typically during tests something is added
+		_synchronize_gradebook_with_course_instance(course,None)
+		entry = book.getColumnForAssignmentId(assignmentId)
+	if entry is None:
+		# Also typically during tests.
+		# TODO: Fix those tests to properly register assignments
+		# so this branch goes away
+		logger.warning("Assignment %s not found in course %s", assignmentId, course)
+		return
 
 	grade = Grade()
 	entry[user.username] = grade
