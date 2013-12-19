@@ -73,6 +73,7 @@ class _UsersCourseAssignmentHistoryItemDecorator(object):
 				external['Grade'] = None
 
 from .interfaces import ISubmittedAssignmentHistory
+from nti.contenttypes.courses.interfaces import is_instructed_by_name
 @component.adapter(IQAssignment)
 @interface.implementer(IExternalMappingDecorator)
 class _InstructorDataForAssignment(object):
@@ -101,10 +102,7 @@ class _InstructorDataForAssignment(object):
 		if not username:
 			return
 		course = ICourseInstance(assignment)
-		# XXX: FIXME: What's a good ACL way of representing this?
-		# In the meantime, this is probably cheaper than
-		# using the IPrincipalAdministrativeRoleCatalog.
-		if not any((username == instructor.id for instructor in course.instructors)):
+		if not is_instructed_by_name(course, username):
 			# We're not an instructor
 			return
 

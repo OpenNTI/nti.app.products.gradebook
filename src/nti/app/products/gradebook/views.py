@@ -275,6 +275,7 @@ del _r_view_defaults
 del _d_view_defaults
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.contenttypes.courses.interfaces import is_instructed_by_name
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -289,10 +290,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		username = request.authenticated_userid
 		course = ICourseInstance(context)
 
-		# XXX: FIXME: What's a good ACL way of representing this?
-		# In the meantime, this is probably cheaper than
-		# using the IPrincipalAdministrativeRoleCatalog.
-		if not any((username == instructor.id for instructor in course.instructors)):
+		if not is_instructed_by_name(course, username):
 			raise hexc.HTTPForbidden()
 
 		result = LocatedExternalDict()
