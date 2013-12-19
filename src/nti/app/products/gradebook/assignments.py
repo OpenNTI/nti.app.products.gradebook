@@ -108,7 +108,10 @@ def synchronize_gradebook(course):
 	for part in book.values():
 		for entry in part.values():
 			if entry.AssignmentId in entry_aids:
-				raise ValueError("An assignment changed categories. Not currently allowed.")
+				try:
+					raise ValueError("An assignment changed categories. Not currently allowed.")
+				except ValueError: # Temporary BWC
+					logger.warning("Ignoring assignment category change.", exc_info=True)
 				# use svn history to figure out what it used to be and change it back
 			entry_aids.add(entry.AssignmentId)
 
