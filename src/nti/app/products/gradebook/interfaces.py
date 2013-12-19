@@ -7,9 +7,13 @@ from __future__ import unicode_literals, print_function, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.interface.common import mapping
-from zope.container.constraints import contains, containers
-from zope.container.interfaces import IContainer, IContained
+
+from zope.container.constraints import contains
+from zope.container.constraints import containers
+from zope.container.interfaces import IContainer
+from zope.container.interfaces import IContained
+
+from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
 from nti.utils import schema
 from nti.ntiids.schema import ValidNTIID
@@ -75,7 +79,9 @@ class ILetterGradeScheme(IGradeScheme):
 class IBooleanGradeScheme(IGradeScheme):
 	pass
 
-class IGradeBookEntry(IContainer, IContained):
+class IGradeBookEntry(IContainer,
+					  IContained,
+					  IShouldHaveTraversablePath):
 	"""
 	A 'column' in the gradebook. This contains a grade entry
 	for each student in the course once they've completed
@@ -104,7 +110,18 @@ class IGradeBookEntry(IContainer, IContained):
 	DueDate = schema.Date(title="The date on which the assignment is due", required=False,
 						  readonly=True)
 
-class IGradeBookPart(IContainer, IContained):
+class ISubmittedAssignmentHistory(IShouldHaveTraversablePath):
+	"""
+	Something that can get all the assignment histories
+	that have been submitted. Typically this will be
+	registered as an adapter for :class:`.IGradeBookEntry`,
+	in which case the scope of what it returns is limited to that
+	entry's assignment.
+	"""
+
+class IGradeBookPart(IContainer,
+					 IContained,
+					 IShouldHaveTraversablePath):
 	"""
 	A Section of a grade book e.g. Quizzes, Exams, etc..
 	"""
@@ -131,7 +148,9 @@ class IGradeBookPart(IContainer, IContained):
 		return the :IGradeBookEntry associated with the specified assignmentId
 		"""
 
-class IGradeBook(IContainer, IContained):
+class IGradeBook(IContainer,
+				 IContained,
+				 IShouldHaveTraversablePath):
 	"""
 	Grade book definition
 	"""
@@ -150,7 +169,8 @@ class IGradeBook(IContainer, IContained):
 		return the :IGradeBookEntry associated with the specified ntiid
 		"""
 
-class IGrade(IContained):
+class IGrade(IContained,
+			 IShouldHaveTraversablePath):
 	"""
 	A single grade for a single user.
 
@@ -181,27 +201,3 @@ class IGrade(IContained):
 	# of auto-assessable and non-auto-assessable parts, the instructor
 	# needs to review each individual part.
 	#AutoGrade = schema.Float(title="Auto grade", min=0.0, required=False, readonly=True)
-
-
-#class IGrades(interface.Interface):
-	# """
-	# User grades
-	# """
-
-	# def get_grades(username):
-	# 	pass
-
-	# def add_grade(grade):
-	# 	pass
-
-	# def remove_grade(grade, username=None):
-	# 	pass
-
-	# def remove_grades(ntiid):
-	# 	pass
-
-	# def clear(username):
-	# 	pass
-
-	# def clearAll():
-	# 	pass

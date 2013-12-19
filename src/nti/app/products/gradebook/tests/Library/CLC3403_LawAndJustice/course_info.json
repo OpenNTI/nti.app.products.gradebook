@@ -8,7 +8,9 @@
 	"instructors": [
 		{
 			"name":"Dr. Kyle Harper",
-			"title": "Associate Professor of Classics"
+			"title": "Associate Professor of Classics",
+			"username": "harp4162"
+
 		}
 	]
 }

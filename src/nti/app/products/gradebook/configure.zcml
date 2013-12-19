@@ -10,9 +10,6 @@
 
 	<!-- Adapters -->
 
-	<adapter name="GradeBook"
-			 factory=".views.GradeBookPathAdapter" />
-
 	<adapter factory=".gradebook._GradeBookFactory"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
@@ -28,6 +25,25 @@
 	<adapter factory=".adapters._AssignmentHistoryItem2GradeBookEntry"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGradeBookEntry" />
+
+	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
+			 provides=".interfaces.ISubmittedAssignmentHistory"/>
+
+	<!-- Traversal -->
+
+	<adapter name="GradeBook"
+			 factory=".views.GradeBookPathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter"/>
+
+	<adapter name="SubmittedAssignmentHistory"
+			 factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+
+	<adapter name="SubmittedAssignmentHistory"
+			 factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
+			 provides="zope.traversing.interfaces.IPathAdapter"
+			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"/>
 
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
@@ -65,7 +81,7 @@
 	<subscriber factory=".decorators._CourseInstanceLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-	<subscriber factory=".decorators._CourseInstanceEnrollmentLinkDecorator"
+	<subscriber factory=".decorators._InstructorDataForAssignment"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<!-- Events -->

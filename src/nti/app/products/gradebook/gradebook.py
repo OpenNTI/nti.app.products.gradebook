@@ -21,12 +21,9 @@ from pyramid.traversal import lineage
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.assessment import interfaces as asm_interfaces
-
-from nti.contenttypes.courses import interfaces as course_interfaces
+from nti.assessment.interfaces import IQAssignment
 
 from nti.dataserver import containers as nti_containers
-from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.mimetype.mimetype import MIME_BASE
 
@@ -39,7 +36,13 @@ from nti.utils.schema import createDirectFieldProperties
 
 from nti.externalization.externalization import make_repr
 
-from . import interfaces as grades_interfaces
+from .interfaces import IGradeBook
+from .interfaces import IGradeBookPart
+from .interfaces import IGradeBookEntry
+from .interfaces import ISubmittedAssignmentHistory
+from .interfaces import NTIID_TYPE_GRADE_BOOK
+from .interfaces import NTIID_TYPE_GRADE_BOOK_PART
+from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
 
 class _NTIIDMixin(object):
 
@@ -56,7 +59,7 @@ class _NTIIDMixin(object):
 		try:
 			parts = []
 			for location in lineage(self):
-				if grades_interfaces.IGradeBook.providedBy(location):
+				if IGradeBook.providedBy(location):
 					continue
 				parts.append(ntiids.escape_provider(location.__name__))
 				if ICourseInstance.providedBy(location):
@@ -78,8 +81,8 @@ class _NTIIDMixin(object):
 									 nttype=self._ntiid_type,
 									 specific=self._ntiid_specific_part)
 
-@component.adapter(course_interfaces.ICourseInstance)
-@interface.implementer(grades_interfaces.IGradeBook,
+@component.adapter(ICourseInstance)
+@interface.implementer(IGradeBook,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
@@ -87,7 +90,7 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 				_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
-	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
+	_ntiid_type = NTIID_TYPE_GRADE_BOOK
 
 	def getColumnForAssignmentId(self, assignmentId):
 		# TODO: This could be indexed
@@ -102,7 +105,7 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 	def get_entry_by_ntiid(self, ntiid):
 		result = None
 		type_ = ntiids.get_type(ntiid)
-		if type_ == grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY:
+		if type_ == NTIID_TYPE_GRADE_BOOK_ENTRY:
 			specific = ntiids.get_specific(ntiid)
 			part, entry = specific.split('.')[-2:]
 			result = self.get(part, {}).get(entry)
@@ -110,7 +113,7 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 
 _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
-@interface.implementer(grades_interfaces.IGradeBookPart,
+@interface.implementer(IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
@@ -121,9 +124,9 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
 
 	_ntiid_include_self_name = True
-	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_PART
+	_ntiid_type = NTIID_TYPE_GRADE_BOOK_PART
 
-	createDirectFieldProperties(grades_interfaces.IGradeBookPart)
+	createDirectFieldProperties(IGradeBookPart)
 
 	__name__ = alias('Name')
 
@@ -145,7 +148,7 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 
 	__repr__ = make_repr()
 
-@interface.implementer(grades_interfaces.IGradeBookEntry,
+@interface.implementer(IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
@@ -156,9 +159,9 @@ class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 	mimeType = mime_type = MIME_BASE + u'.gradebookentry'
 
 	_ntiid_include_self_name = True
-	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK_ENTRY
+	_ntiid_type = NTIID_TYPE_GRADE_BOOK_ENTRY
 
-	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
+	createDirectFieldProperties(IGradeBookEntry)
 
 	Name = alias('__name__')
 
@@ -176,7 +179,7 @@ class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 	@property
 	def DueDate(self):
 		try:
-			return component.getUtility(asm_interfaces.IQAssignment, name=self.assignmentId).available_for_submission_ending
+			return component.getUtility(IQAssignment, name=self.assignmentId).available_for_submission_ending
 		except LookupError:
 			return None
 
@@ -195,3 +198,12 @@ class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
+
+@interface.implementer(ISubmittedAssignmentHistory)
+@component.adapter(IGradeBookEntry)
+class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
+
+	__name__ = 'SubmittedAssignmentHistory'
+
+	def __init__(self, entry, request=None):
+		self.context = self.__parent__ = entry
