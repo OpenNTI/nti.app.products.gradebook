@@ -19,6 +19,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from pyramid.traversal import find_interface
 
+from nti.assessment.interfaces import IQAssignment
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
@@ -33,7 +34,6 @@ from .grades import Grade
 from . import assignments
 
 from .interfaces import IGrade
-from .interfaces import IGrades
 from .interfaces import IGradeBook
 from .interfaces import IGradeBookPart
 from .interfaces import IGradeBookEntry
@@ -75,14 +75,15 @@ def _grade_modified(grade, event):
 def _assignment_history_item_added(item, event):
 	course = ICourseInstance(item)
 	user = nti_interfaces.IUser(item)
+	book = IGradeBook(course)
 
 	assignmentId = item.Submission.assignmentId
-	entry = assignments.get_create_assignment_entry(course, assignmentId)
 
-	# register/add grade
-	course_grades = IGrades(course)
-	grade = Grade(NTIID=entry.NTIID, username=user.username)
-	course_grades.add_grade(grade)
+	entry = book.getColumnForAssignmentId(assignmentId)
+
+	grade = Grade()
+	entry[user.username] = grade
+
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):

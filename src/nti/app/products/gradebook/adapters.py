@@ -20,24 +20,6 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from . import interfaces as grade_interfaces
 
-@interface.implementer(grade_interfaces.IGrades)
-@component.adapter(grade_interfaces.IGradeBook)
-def _GradeBook2Grades(gradebook):
-	course = find_interface(gradebook, ICourseInstance)
-	if course is None:
-		__traceback_info__ = gradebook
-		raise TypeError("Unable to find course")
-	return grade_interfaces.IGrades(course)
-
-@interface.implementer(grade_interfaces.IGradeBook)
-@component.adapter(grade_interfaces.IGrades)
-def _GradesToGradeBook(grades):
-	course = find_interface(grades, ICourseInstance)
-	if course is None:
-		__traceback_info__ = grades
-		raise TypeError("Unable to find course")
-	return grade_interfaces.IGradeBook(course)
-
 @interface.implementer(ICourseInstance)
 @component.adapter(grade_interfaces.IGrade)
 def _GradeToCourseInstance(grade):
@@ -50,15 +32,8 @@ def _GradeToCourseInstance(grade):
 @interface.implementer(grade_interfaces.IGradeBookEntry)
 @component.adapter(grade_interfaces.IGrade)
 def _GradeToGradeEntry(grade):
-	course = find_interface(grade, ICourseInstance)
-	gradebook = grade_interfaces.IGradeBook(course, None)
-	if gradebook is not None:
-		result = gradebook.get_entry_by_ntiid(grade.NTIID)
-		if result is None:
-			__traceback_info__ = grade
-			raise TypeError("Unable to find grade entry")
-		return result
-	return None
+	return grade.__parent__
+
 
 @interface.implementer(grade_interfaces.IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)
@@ -66,8 +41,7 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 	assignmentId = item.__name__  # by definition
 	course = ICourseInstance(item, None)
 	# get gradebook entry definition
-	gradebook = grade_interfaces.IGradeBook(course, None)
-	entry = gradebook.get_entry_by_assignment(assignmentId) \
-			if gradebook is not None else None
-	# None adaptation is allowed in case there is no gradebook defined
+	gradebook = grade_interfaces.IGradeBook(course)
+	entry = gradebook.getColumnForAssignmentId(assignmentId)
+
 	return entry

@@ -62,7 +62,9 @@ class _NTIIDMixin(object):
 				if ICourseInstance.providedBy(location):
 					break
 			parts.reverse()
-			result = '.'.join(parts)
+			result = None
+			if None not in parts:
+				result = '.'.join(parts)
 			return result
 		except (AttributeError):  # Not ready yet
 			return None
@@ -70,7 +72,7 @@ class _NTIIDMixin(object):
 	@CachedProperty('_ntiid_provider', '_ntiid_specific_part')
 	def NTIID(self):
 		provider = self._ntiid_provider
-		if provider:
+		if provider and self._ntiid_specific_part:
 			return ntiids.make_ntiid(date=ntiids.DATE,
 									 provider=provider,
 									 nttype=self._ntiid_type,
@@ -87,12 +89,15 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
 	_ntiid_type = grades_interfaces.NTIID_TYPE_GRADE_BOOK
 
-	def get_entry_by_assignment(self, assignmentId):
+	def getColumnForAssignmentId(self, assignmentId):
+		# TODO: This could be indexed
 		for part in self.values():
 			entry = part.get_entry_by_assignment(assignmentId)
 			if entry is not None:
 				return entry
 		return None
+
+	get_entry_by_assignment = alias('getColumnForAssignmentId')
 
 	def get_entry_by_ntiid(self, ntiid):
 		result = None
@@ -102,11 +107,6 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 			part, entry = specific.split('.')[-2:]
 			result = self.get(part, {}).get(entry)
 		return result
-
-#	@property
-#	def TotalPartWeight(self):
-#		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
-#		return result
 
 _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
@@ -133,15 +133,12 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
 
 	def get_entry_by_assignment(self, assignmentId):
+		# TODO: This could be indexed
 		for entry in self.values():
 			if entry.assignmentId == assignmentId:
 				return entry
 		return None
 
-#	@property
-#	def TotalEntryWeight(self):
-#		result = reduce(lambda x, y: x + y.weight, self.values(), 0.0)
-#		return result
 
 	def __str__(self):
 		return self.displayName
@@ -151,7 +148,7 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 @interface.implementer(grades_interfaces.IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookEntry(PersistentCreatedModDateTrackingObject,
+class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 					 SchemaConfigured,
 					 zcontained.Contained,
 					 _NTIIDMixin):
@@ -163,10 +160,18 @@ class GradeBookEntry(PersistentCreatedModDateTrackingObject,
 
 	createDirectFieldProperties(grades_interfaces.IGradeBookEntry)
 
-	__name__ = alias('Name')
+	Name = alias('__name__')
 
 	ntiid = alias('NTIID')
 	gradeScheme = alias('GradeScheme')
+
+	assignmentId = alias('AssignmentId')
+
+	def __init__(self, **kwargs):
+		# SchemaConfigured is not cooperative
+		SchemaConfigured.__init__(self, **kwargs)
+		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+
 
 	@property
 	def DueDate(self):

@@ -15,7 +15,7 @@ from zope import interface
 from zope import lifecycleevent
 from zope.location import locate
 from zope.interface.common import mapping
-from zope.annotation import factory as an_factory
+
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
@@ -31,6 +31,7 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization import externalization
+from nti.externalization.externalization import make_repr
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
 
@@ -41,7 +42,6 @@ from nti.utils.schema import createDirectFieldProperties
 from . import interfaces as grades_interfaces
 
 @interface.implementer(grades_interfaces.IGrade,
-					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 			SchemaConfigured,
@@ -51,45 +51,44 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
-	ntiid = alias('NTIID')
+#	ntiid = alias('NTIID')
 
-	def clone(self):
-		result = self.__class__()
-		result.__parent__, result.__name__ = (None, self.__name__)
-		result.copy(self, False)
-		return result
+	grade = alias('value')
+	username = alias('Username')
+	assignmentId = alias('AssignmentId')
+	Username = alias('__name__')
 
-	def copy(self, other, parent=False):
-		self.NTIID = other.NTIID
-		self.grade = other.grade
-		self.username = other.username
-		if parent:
-			self.__name__ = other.__name__
-			self.__parent__ = other.__parent__
-		self.updateLastMod()
-		return self
+	def __init__(self, **kwargs):
+		if 'grade' in kwargs and 'value' not in kwargs:
+			kwargs['value'] = kwargs['grade']
+			del kwargs['grade']
+		if 'username' in kwargs and 'Username' not in kwargs:
+			kwargs['Username'] = kwargs['username']
+			del kwargs['username']
+		super(Grade,self).__init__(**kwargs)
+
+	@property
+	def AssignmentId(self):
+		if self.__parent__ is not None:
+			return self.__parent__.AssignmentId
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.NTIID == other.NTIID
-									 and self.username == other.username)
+			return self is other or (self.username == other.username
+									 and self.assignmentId == other.assignmentId
+									 and self.value == other.value )
+
 		except AttributeError:
 			return NotImplemented
 
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.NTIID)
-		xhash ^= hash(self.username)
-		return xhash
+#	def __hash__(self):
+#		xhash = 47
+#		xhash ^= hash(self.NTIID)
+#		xhash ^= hash(self.username)
+#		return xhash
 
-	def __str__(self):
-		return "%s,%s,%s" % (self.username, self.ntiid, self.grade)
 
-	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__,
-								 self.username,
-								 self.NTIID,
-								 self.grade)
+	__repr__ = make_repr()
 
 def _indexof_grade(grade, grades):
 	idx = -1
@@ -154,7 +153,7 @@ class _UserGradesResource(zcontained.Contained):
 		return result
 
 @component.adapter(course_interfaces.ICourseInstance)
-@interface.implementer(grades_interfaces.IGrades,
+@interface.implementer(
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class Grades(PersistentCreatedModDateTrackingObject,
@@ -249,5 +248,3 @@ class Grades(PersistentCreatedModDateTrackingObject,
 		xhash = 47
 		xhash ^= hash(self.__name__)
 		return xhash
-
-_GradesFactory = an_factory(Grades, 'Grades')

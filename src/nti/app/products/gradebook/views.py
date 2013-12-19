@@ -65,13 +65,6 @@ def GradeBookPathAdapter(context, request):
 	result = grades_interfaces.IGradeBook(context)
 	return result
 
-@interface.implementer(IPathAdapter)
-@component.adapter(courses_interfaces.ICourseInstance, IRequest)
-def GradesPathAdapter(context, request):
-	result = grades_interfaces.IGrades(context)
-	return result
-
-@view_config(context=grades_interfaces.IGrades)
 @view_config(context=grades_interfaces.IGradeBook)
 @view_config(context=grades_interfaces.IGradeBookPart)
 @view_config(context=grades_interfaces.IGradeBookEntry)
@@ -185,8 +178,8 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		_validate_grade_entry(self.request, result)
 		return result
 
-@view_config(context=grades_interfaces.IGrades)
-@view_defaults(**_c_view_defaults)
+
+
 class GradePostView(AbstractAuthenticatedView,
 					ModeledContentUploadRequestUtilsMixin):
 
@@ -215,13 +208,10 @@ class GradePostView(AbstractAuthenticatedView,
 
 		return grade
 
-@view_config(context=grades_interfaces.IGrades)
-@view_defaults(**_u_view_defaults)
 class GradesPutView(GradePostView):
 	pass
 
-@view_config(context=grades_interfaces.IGrades)
-@view_defaults(**_d_view_defaults)
+
 class GradesDeleteView(AbstractAuthenticatedView):
 
 	def readInput(self):

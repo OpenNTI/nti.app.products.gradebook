@@ -13,23 +13,8 @@
 	<adapter name="GradeBook"
 			 factory=".views.GradeBookPathAdapter" />
 
-	<adapter name="Grades"
-			 factory=".views.GradesPathAdapter" />
-
 	<adapter factory=".gradebook._GradeBookFactory"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
-			 provides=".interfaces.IGradeBook" />
-
-	<adapter factory=".grades._GradesFactory"
-			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
-			 provides=".interfaces.IGrades" />
-
-	<adapter factory=".adapters._GradeBook2Grades"
-			 for=".interfaces.IGradeBook"
-			 provides=".interfaces.IGrades" />
-
-	<adapter factory=".adapters._GradesToGradeBook"
-			 for=".interfaces.IGrades"
 			 provides=".interfaces.IGradeBook" />
 
 	<adapter factory=".adapters._GradeToCourseInstance"
@@ -53,7 +38,6 @@
 						 .interfaces.IGradeBookPart
 						 .interfaces.IGradeBookEntry
 						 .interfaces.IGrade
-						 .interfaces.IGrades
 						 .interfaces.IGradeScheme
 						 .interfaces.ILetterGradeScheme
 						 .interfaces.IBooleanGradeScheme
@@ -61,16 +45,11 @@
 						 .interfaces.IIntegerGradeScheme"
 		modules=".gradebook .grades .gradescheme" />
 
-	<adapter factory=".externalization.GradesExternalizer" />
 
 	<!-- Internalization -->
 
 	<adapter factory=".internalization._GradeObjectUpdater"
 			 for=".interfaces.IGrade"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-
-	<adapter factory=".internalization._GradesObjectUpdater"
-			 for=".interfaces.IGrades"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<adapter factory=".internalization._LetterGradeSchemeObjectUpdater"
@@ -106,8 +85,5 @@
 
 	<adapter factory=".acl._GradeBookACLProvider"
 			 for=".interfaces.IGradeBook"/>
-
-	<adapter factory=".acl._GradesACLProvider"
-			 for=".interfaces.IGrades"/>
 
 </configure>

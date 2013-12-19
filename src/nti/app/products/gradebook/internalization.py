@@ -18,7 +18,7 @@ from zope import component
 
 from pyramid.threadlocal import get_current_request
 
-from nti.externalization import internalization
+from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization import interfaces as ext_interfaces
 
 from . import utils
@@ -26,57 +26,23 @@ from . import interfaces as grade_interfaces
 
 @interface.implementer(ext_interfaces.IInternalObjectUpdater)
 @component.adapter(grade_interfaces.IGrade)
-class _GradeObjectUpdater(object):
+class _GradeObjectUpdater(InterfaceObjectIO):
 
-    __slots__ = ('obj',)
+	# INterface object io doesn't seem to have a way to pull this
+	# info from the iface so we do it manually.
+	_excluded_in_ivars_ = InterfaceObjectIO._excluded_in_ivars_.union( {'AssignmentId', 'Username'})
 
-    def __init__(self, obj):
-        self.obj = obj
+	_ext_iface_upper_bound = grade_interfaces.IGrade
 
-    def updateFromExternalObject(self, externalObject, *args, **kwargs ):
-        modified = False
-        for name in (str('NTIID'), str('username')):
-            value = externalObject.get(name, None)
-            if getattr(self, name, None) is None and value is not None:
-                setattr(self.obj, name, value)
-                modified = True
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		result = False
+		if 'Username' in parsed and self._ext_replacement().Username is None:
+			self._ext_setattr( self._ext_replacement(), 'Username', parsed['Username'] )
+			result = True
 
-        # get external grade
-        grade = externalObject.get('grade', None)
+		result |= super(_GradeObjectUpdater,self).updateFromExternalObject(parsed, *args, **kwargs) or False
 
-        # adapt external grade value to a grade scheme
-        entry = grade_interfaces.IGradeBookEntry(self.obj, None)
-        if entry is not None and grade is not None:
-            if isinstance(grade, six.string_types):
-                grade = entry.GradeScheme.fromUnicode(grade)
-            else:
-                entry.GradeScheme.validate(grade)
-
-        if self.obj.grade != grade:
-            self.obj.grade = grade
-            modified = True
-        return modified
-
-@interface.implementer(ext_interfaces.IInternalObjectUpdater)
-@component.adapter(grade_interfaces.IGrades)
-class _GradesObjectUpdater(object):
-
-    __slots__ = ('obj',)
-
-    def __init__(self, obj):
-        self.obj = obj
-
-    def updateFromExternalObject(self, ext, *args, **kwargs):
-        modified = False
-        items = ext.get('Items', {})
-        for username, grades in items.items():
-            for grade_ext in grades:
-                modified = True
-                grade = internalization.find_factory_for(grade_ext)()
-                internalization.update_from_external_object(grade, grade_ext)
-                self.obj.add_grade(grade, username)
-        return modified
-
+		return result
 
 @interface.implementer(ext_interfaces.IInternalObjectUpdater)
 @component.adapter(grade_interfaces.ILetterGradeScheme)

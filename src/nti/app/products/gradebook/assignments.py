@@ -59,7 +59,7 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 		entry = GradeBookEntry(
 							   displayName=displayName,
 							   order=order,
-							   assignmentId=assignmentId)
+							   AssignmentId=assignmentId)
 		part[INameChooser(part).chooseName(displayName, entry)] = entry
 
 	return entry
@@ -79,6 +79,9 @@ def synchronize_gradebook(course):
 
 	assignment_ids = set()
 
+	# FIXME: What if an assignment changes parts (category_name)?
+	# We'll need to move them
+
 	for idx, assignment in enumerate(assignments):
 		ordinal = idx + 1
 		if assignment.title:
@@ -92,11 +95,20 @@ def synchronize_gradebook(course):
 	# and that don't have grades
 	for part in book.values():
 		for entry in part.values():
-			if entry.assignmentId not in assignment_ids:
-				# XXX: FIXME: We cannot actually determine if there are
-				# grades for the assignment yet.
+			if entry.assignmentId not in assignment_ids and len(entry) == 0:
 				del part[entry.__name__]
 
 		if not part:
 			del book[part.__name__]
+
+	# Now check consistency due to the above fixme. Until we get it fixed,
+	# don't let it happen
+	entry_aids = set()
+	for part in book.values():
+		for entry in part.values():
+			if entry.AssignmentId in entry_aids:
+				raise ValueError("An assignment changed categories. Not currently allowed.")
+				# use svn history to figure out what it used to be and change it back
+			entry_aids.add(entry.AssignmentId)
+
 	return len(assignments)
