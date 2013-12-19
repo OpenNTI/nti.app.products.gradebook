@@ -18,6 +18,7 @@ from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
 from pyramid.traversal import lineage
+from nti.dataserver.traversal import find_interface
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -203,6 +204,9 @@ class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 		xhash ^= hash(self.NTIID)
 		return xhash
 
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.dataserver.users import User
+
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
 class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
@@ -211,3 +215,20 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 
 	def __init__(self, entry, request=None):
 		self.context = self.__parent__ = entry
+
+	def __conform__(self, iface):
+		if ICourseInstance.isOrExtends(iface):
+			return find_interface(self, ICourseInstance)
+
+	def __iter__(self):
+		column = self.__parent__
+		course = ICourseInstance(self)
+		for username_that_submitted in column:
+			user = User.get_user(username_that_submitted)
+			if not user:
+				continue
+			history = component.getMultiAdapter( (course, user),
+												 IUsersCourseAssignmentHistory)
+			item = history[column.AssignmentId]
+
+			yield (username_that_submitted, item)

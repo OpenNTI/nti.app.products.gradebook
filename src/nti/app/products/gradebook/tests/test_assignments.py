@@ -105,19 +105,22 @@ class TestAssignments(SharedApplicationTestBase):
 					return ['harp4162']
 
 			old = component.getUtility(pyramid.interfaces.IAuthenticationPolicy)
-			request.registry.registerUtility( Policy() )
-
-			for package in lib.contentPackages:
-				course = ICourseInstance(package)
-				asgs = assignments.get_course_assignments(course)
-				assert_that( asgs, has_length(2))
-				for asg in asgs:
-					assert_that( asg, externalizes( has_entry( 'GradeSubmittedCount', 0 )))
-					ext = to_external_object(asg)
-					href = self.require_link_href_with_rel(ext, 'GradeSubmittedAssignmentHistory')
-					assert_that( href, is_( '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/Main%%20Title/SubmittedAssignmentHistory'
-											% asg.category_name))
-			request.registry.registerUtility( old )
+			component.provideUtility( Policy() )
+			try:
+				for package in lib.contentPackages:
+					course = ICourseInstance(package)
+					asgs = assignments.get_course_assignments(course)
+					assert_that( asgs, has_length(2))
+					for asg in asgs:
+						assert_that( asg, externalizes( has_entry( 'GradeSubmittedCount', 0 )))
+						ext = to_external_object(asg)
+						href = self.require_link_href_with_rel(ext, 'GradeSubmittedAssignmentHistory')
+						assert_that( href, is_( '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/Main%%20Title/SubmittedAssignmentHistory'
+												% asg.category_name))
+			finally:
+				component.provideUtility( old, provides=pyramid.interfaces.IAuthenticationPolicy )
+				assert_that( component.getUtility(pyramid.interfaces.IAuthenticationPolicy),
+							 is_(old) )
 
 	assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1"
 	question_set_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo"
@@ -157,5 +160,11 @@ class TestAssignments(SharedApplicationTestBase):
 		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
 
-		bulk_link = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/Main%%20Title/SubmittedAssignmentHistory'
-		res = self.testapp.get(bulk_link, extra_environ=instructor_environ, status=404)
+		bulk_link = self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistory')
+		res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
+
+		assert_that( res.json_body, has_entry( 'Items', has_length(1)))
+		assert_that( res.json_body, has_entry( 'Items', has_key(self.extra_environ_default_user.lower())))
+		assert_that( res.json_body['Items'][self.extra_environ_default_user.lower()],
+					 has_key('Grade'))
+		assert_that( res.json_body, has_entry( 'href', is_(bulk_link)))

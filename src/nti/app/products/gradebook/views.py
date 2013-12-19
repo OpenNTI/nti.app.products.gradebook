@@ -31,7 +31,7 @@ from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGet
 
 from nti.assessment import interfaces as asm_interfaces
 
-from nti.contenttypes.courses import interfaces as courses_interfaces
+from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
@@ -60,7 +60,7 @@ _d_view_defaults.update(permission=nauth.ACT_DELETE,
 						request_method='DELETE')
 
 @interface.implementer(IPathAdapter)
-@component.adapter(courses_interfaces.ICourseInstance, IRequest)
+@component.adapter(ICourseInstance, IRequest)
 def GradeBookPathAdapter(context, request):
 	result = grades_interfaces.IGradeBook(context)
 	return result
@@ -273,3 +273,34 @@ del _u_view_defaults
 del _c_view_defaults
 del _r_view_defaults
 del _d_view_defaults
+
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.dataserver.users import User
+from nti.externalization.interfaces import LocatedExternalDict
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='GET',
+			 context=grades_interfaces.ISubmittedAssignmentHistory,
+			 permission=nauth.ACT_READ)
+class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		request = self.request
+		context = request.context
+		username = request.authenticated_userid
+		course = ICourseInstance(context)
+
+		# XXX: FIXME: What's a good ACL way of representing this?
+		# In the meantime, this is probably cheaper than
+		# using the IPrincipalAdministrativeRoleCatalog.
+		if not any((username == instructor.id for instructor in course.instructors)):
+			raise hexc.HTTPForbidden()
+
+		result = LocatedExternalDict()
+		result['Items'] = dict(context)
+		column = context.__parent__
+		result.__parent__ = column
+		result.__name__ = context.__name__
+
+		return result
