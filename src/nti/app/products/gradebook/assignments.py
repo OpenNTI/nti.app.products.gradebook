@@ -94,7 +94,10 @@ def synchronize_gradebook(course):
 	for part in book.values():
 		for entry in part.values():
 			if entry.assignmentId not in assignment_ids and len(entry) == 0:
-				del part[entry.__name__]
+				try:
+					del part[entry.__name__]
+				except TypeError:
+					logger.warning("Failed to remove part %s", part, exc_info=True)
 
 		if not part:
 			del book[part.__name__]
