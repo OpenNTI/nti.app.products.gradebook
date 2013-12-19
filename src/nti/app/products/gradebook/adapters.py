@@ -34,7 +34,6 @@ def _GradeToCourseInstance(grade):
 def _GradeToGradeEntry(grade):
 	return grade.__parent__
 
-
 @interface.implementer(grade_interfaces.IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)
 def _AssignmentHistoryItem2GradeBookEntry(item):

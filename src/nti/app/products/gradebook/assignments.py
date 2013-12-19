@@ -8,11 +8,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.container.interfaces import INameChooser
+
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
 
-from zope.container.interfaces import INameChooser
 from .interfaces import IGradeBook
-
 from .gradebook import GradeBookPart
 from .gradebook import GradeBookEntry
 
@@ -52,8 +52,7 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 
 	assignmentId = assignment.__name__
 
-	entry = book.get_entry_by_assignment(assignmentId)
-
+	entry = book.getColumnForAssignmentId(assignmentId)
 	if entry is None:
 		part = get_create_assignment_part(course, assignment.category_name)
 		entry = GradeBookEntry(
@@ -81,7 +80,6 @@ def synchronize_gradebook(course):
 
 	# FIXME: What if an assignment changes parts (category_name)?
 	# We'll need to move them
-
 	for idx, assignment in enumerate(assignments):
 		ordinal = idx + 1
 		if assignment.title:
