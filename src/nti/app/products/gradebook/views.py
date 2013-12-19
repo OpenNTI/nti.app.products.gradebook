@@ -274,8 +274,6 @@ del _c_view_defaults
 del _r_view_defaults
 del _d_view_defaults
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-from nti.dataserver.users import User
 from nti.externalization.interfaces import LocatedExternalDict
 
 @view_config(route_name='objects.generic.traversal',
