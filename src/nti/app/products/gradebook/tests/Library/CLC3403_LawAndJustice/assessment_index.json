@@ -5,11 +5,11 @@
             "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.lec:01_LESSON": {
                 "Items": {},
                 "AssessmentItems": {
-                    "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.asg.assignment1": {
+                    "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1": {
                         "Class": "Assignment",
 						"category_name": "quizzes",
                         "MimeType": "application/vnd.nextthought.assessment.assignment",
-                        "NTIID": "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.asg.assignment1",
+                        "NTIID": "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1",
                         "available_for_submission_beginning": "2013-01-13T00:00:00",
                         "available_for_submission_ending": null,
                         "content": "Assignment content.",
@@ -21,7 +21,7 @@
                             "question_set": {
                                 "Class": "QuestionSet",
                                 "MimeType": "application/vnd.nextthought.naquestionset",
-                                "NTIID": "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo",
+                                "NTIID": "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo",
                                 "questions": [
                                     {
                                         "Class": "Question",
@@ -125,10 +125,10 @@
                         }],
                         "title": "Main Title"
                     },
-                    "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.asg.assignment2": {
+                    "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment2": {
                         "Class": "Assignment",
                         "MimeType": "application/vnd.nextthought.assessment.assignment",
-                        "NTIID": "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.asg.assignment2",
+                        "NTIID": "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment2",
                         "available_for_submission_beginning": "2013-05-13T00:00:00",
                         "available_for_submission_ending": null,
                         "content": "Assignment content.",
