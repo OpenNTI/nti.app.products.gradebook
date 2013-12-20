@@ -43,6 +43,7 @@ from nti.utils.maps import CaseInsensitiveDict
 from . import utils
 from . import gradescheme
 from . import interfaces as grades_interfaces
+from .interfaces import IGrade
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest')
@@ -179,39 +180,6 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		return result
 
 
-
-class GradePostView(AbstractAuthenticatedView,
-					ModeledContentUploadRequestUtilsMixin):
-
-	def _do_call(self):
-		creator = self.getRemoteUser()
-		context = self.request.context
-		externalValue = self.readInput()
-		datatype = self.findContentType(externalValue)
-
-		grade = self.createAndCheckContentObject(
-									None, datatype, externalValue, creator,
-									lambda x: grades_interfaces.IGrade.providedBy(x))
-		self.updateContentObject(grade, externalValue, set_id=False, notify=False)
-
-		gradebook = grades_interfaces.IGradeBook(context)
-		if not grade.ntiid or gradebook.get_entry_by_ntiid(grade.ntiid) is None:
-			utils.raise_field_error(self.request,
-									"ntiid",
-									_("must specify a valid grade entry ntiid"))
-
-		context.add_grade(grade)
-
-		self.request.response.status_int = 201 # created
-		self.request.response.location = \
-				self.request.current_route_url(grade.username, grade.ntiid)
-
-		return grade
-
-class GradesPutView(GradePostView):
-	pass
-
-
 class GradesDeleteView(AbstractAuthenticatedView):
 
 	def readInput(self):
@@ -232,23 +200,47 @@ class GradesDeleteView(AbstractAuthenticatedView):
 			result = hexc.HTTPNotFound()
 		return result
 
-@view_config(context=grades_interfaces.IGrade)
-@view_defaults(**_u_view_defaults)
+@view_config(route_name='objects.generic.traversal',
+			 permission=nauth.ACT_UPDATE,
+			 renderer='rest',
+			 context=IGrade,
+			 request_method='PUT')
 class GradePutView(AbstractAuthenticatedView,
 				   ModeledContentUploadRequestUtilsMixin,
 				   ModeledContentEditRequestUtilsMixin):
 
-	def _get_object_to_update(self):
-		return self.request.context
+	content_predicate = IGrade.providedBy
 
-	def __call__(self):
-		theObject = self._get_object_to_update()
+	def _do_call(self):
+		theObject = self.request.context
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
 
 		externalValue = self.readInput()
-		self.updateContentObject(theObject, externalValue, set_id=False, notify=True)
+		self.updateContentObject(theObject, externalValue)
 		theObject.updateLastMod()
+
+		# Now, because grades are not persistent objects,
+		# the btree bucket containing this grade has to be
+		# manually told that its contents have changed.
+		# XXX: Note that this is very expensive,
+		# waking up each bucket of the tree.
+
+		column = theObject.__parent__
+		btree = column._SampleContainer__data
+		bucket = btree._firstbucket
+		found = False
+		while bucket is not None:
+			if bucket.has_key(theObject.__name__):
+				bucket._p_changed = True
+				if bucket._p_jar is None: # The first bucket is stored special
+					btree._p_changed = True
+				found = True
+				break
+			bucket = bucket._next
+		if not found:
+			# before there are buckets, it might be inline data?
+			btree._p_changed = True
 
 		return theObject
 

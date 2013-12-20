@@ -127,7 +127,7 @@ class TestAssignments(SharedApplicationTestBase):
 	question_set_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo"
 
 	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
-	def test_instructor_access_to_history_items(self):
+	def test_instructor_access_to_history_items_edit_grade(self):
 		# Re-enum to pick up instructor
 		with mock_dataserver.mock_db_trans(self.ds):
 			lib = component.getUtility(IContentPackageLibrary)
@@ -173,7 +173,14 @@ class TestAssignments(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_key(self.extra_environ_default_user.lower())))
 		assert_that( res.json_body['Items'][self.extra_environ_default_user.lower()],
 					 has_key('Grade'))
-		grade = res.json_body['Items'][self.extra_environ_default_user.lower()]['Grade']
-
-		self.require_link_href_with_rel(grade, 'edit')
 		assert_that( res.json_body, has_entry( 'href', is_(bulk_link)))
+
+		grade = res.json_body['Items'][self.extra_environ_default_user.lower()]['Grade']
+		grade_edit = self.require_link_href_with_rel(grade, 'edit')
+		assert_that( grade, has_entry( 'value', None ))
+		grade['value'] = 90
+		self.testapp.put_json(grade_edit, grade, extra_environ=instructor_environ)
+
+		res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
+		grade = res.json_body['Items'][self.extra_environ_default_user.lower()]['Grade']
+		assert_that( grade, has_entry( 'value', 90 ))
