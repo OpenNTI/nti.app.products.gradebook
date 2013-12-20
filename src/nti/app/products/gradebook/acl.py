@@ -14,16 +14,16 @@ from zope import interface
 from zope import component
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from .interfaces import IGradeBook
-from nti.dataserver.interfaces import IACLProvider
 
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import ace_denying_all
 
-
 from nti.utils.property import Lazy
+
+from .interfaces import IGradeBook
 
 @interface.implementer(IACLProvider)
 @component.adapter(IGradeBook)
@@ -37,7 +37,7 @@ class _GradeBookACLProvider(object):
 	def __init__(self, context):
 		self.context = context
 
- 	@Lazy
+	@Lazy
 	def __acl__(self):
 		acl = acl_from_aces()
 

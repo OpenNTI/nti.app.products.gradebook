@@ -16,25 +16,24 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from zope.location.interfaces import ILocation
-
 from pyramid.threadlocal import get_current_request
 
 from nti.assessment.interfaces import IQAssignment
+
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
-from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
 from nti.dataserver.interfaces import IUser
 
-from nti.externalization.externalization import to_external_object
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization.interfaces import IExternalMappingDecorator
-from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
+from nti.externalization.interfaces import IExternalMappingDecorator
+from nti.externalization.externalization import to_external_object
 
+from .grades import Grade
 from .interfaces import IGradeBook
 
 LINKS = StandardExternalFields.LINKS
