@@ -13,21 +13,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from pyramid.traversal import find_interface
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from . import interfaces as grade_interfaces
-
-@interface.implementer(ICourseInstance)
-@component.adapter(grade_interfaces.IGrade)
-def _GradeToCourseInstance(grade):
-	course = find_interface(grade, ICourseInstance)
-	if course is None:
-		__traceback_info__ = grade
-		raise TypeError("Unable to find course")
-	return course
 
 @interface.implementer(grade_interfaces.IGradeBookEntry)
 @component.adapter(grade_interfaces.IGrade)

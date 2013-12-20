@@ -14,10 +14,6 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
 
-	<adapter factory=".adapters._GradeToCourseInstance"
-			 for=".interfaces.IGrade"
-			 provides="nti.contenttypes.courses.interfaces.ICourseInstance" />
-
 	<adapter factory=".adapters._GradeToGradeEntry"
 			 for=".interfaces.IGrade"
 			 provides=".interfaces.IGradeBookEntry" />

@@ -69,7 +69,11 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 
 	def __conform__(self, iface):
 		if ICourseInstance.isOrExtends(iface):
-			return find_interface(self, ICourseInstance)
+			try:
+				return find_interface(self, ICourseInstance)
+			except TypeError:
+				logger.warn( "incorrect lineage for grade, should be tests only", exc_info=True)
+				return None
 
 	@property
 	def __acl__(self):
