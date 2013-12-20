@@ -190,6 +190,7 @@ class IGrade(IContained,
 	"""
 
 	containers(IGradeBookEntry)
+	__parent__.required = False
 
 	Username = schema.ValidTextLine(title="Username",
 									description="""Because grades are stored by username, this is

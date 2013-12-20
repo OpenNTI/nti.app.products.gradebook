@@ -71,10 +71,8 @@ def _grade_modified(grade, event):
 			item = assignment_history[entry.assignmentId]
 			lifecycleevent.modified(item)
 
-@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
-def _assignment_history_item_added(item, event):
+def _find_entry_for_item(item):
 	course = ICourseInstance(item)
-	user = nti_interfaces.IUser(item)
 	book = IGradeBook(course)
 
 	assignmentId = item.Submission.assignmentId
@@ -91,8 +89,26 @@ def _assignment_history_item_added(item, event):
 		logger.warning("Assignment %s not found in course %s", assignmentId, course)
 		return
 
-	grade = Grade()
-	entry[user.username] = grade
+	return entry
+
+@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
+def _assignment_history_item_added(item, event):
+	entry = _find_entry_for_item(item)
+	if entry is not None:
+		user = nti_interfaces.IUser(item)
+		grade = Grade()
+		entry[user.username] = grade
+
+@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
+def _assignment_history_item_removed(item, event):
+	entry = _find_entry_for_item(item)
+	if entry is not None:
+		user = nti_interfaces.IUser(item)
+		try:
+			del entry[user.username]
+		except KeyError:
+			# Hmm...
+			pass
 
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
