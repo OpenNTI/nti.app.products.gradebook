@@ -89,6 +89,10 @@
 	<subscriber factory=".decorators._InstructorDataForAssignment"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for=".interfaces.IGrade" />
+
 	<!-- Events -->
 
 	<subscriber handler=".subscribers._gradebook_part_removed" />

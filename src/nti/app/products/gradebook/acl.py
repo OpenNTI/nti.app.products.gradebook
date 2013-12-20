@@ -24,13 +24,3 @@ class _GradeBookACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		self._extend_with_admin_privs(acl)
-
-class _GradesACLProvider(AbstractCreatedAndSharedACLProvider):
-
-	_DENY_ALL = False
-
-	def _get_sharing_target_names(self):
-		return ()
-
-	def _extend_acl_after_creator_and_sharing(self, acl):
-		self._extend_with_admin_privs(acl)

@@ -67,10 +67,15 @@ class _UsersCourseAssignmentHistoryItemDecorator(object):
 		entry = book.getColumnForAssignmentId(assignmentId)
 		if entry is not None:
 			grade = entry.get(user.username)
-			if grade is not None:
-				external['Grade'] = to_external_object(grade)
-			else:
-				external['Grade'] = None
+			if grade is None:
+				# Always dummy up a grade (at the right location in
+				# the hierarchy) so that we have an 'edit' link if
+				# necessary
+				grade = Grade()
+				grade.__parent__ = entry
+				grade.__name__ = user.username
+
+			external['Grade'] = to_external_object(grade)
 
 from .interfaces import ISubmittedAssignmentHistory
 from nti.contenttypes.courses.interfaces import is_instructed_by_name

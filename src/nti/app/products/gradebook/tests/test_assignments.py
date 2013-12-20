@@ -15,6 +15,7 @@ from hamcrest import has_property
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_entry
+from hamcrest import contains
 
 import os
 
@@ -148,6 +149,11 @@ class TestAssignments(SharedApplicationTestBase):
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
 								ext_obj,
 								status=201)
+		# The student has no edit link for the grade
+		history_res = self.testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistory' )
+		assert_that( history_res.json_body['Items'].values(),
+					 contains( has_entry( 'Grade', has_entry( 'Links', [] ))) )
+
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
 
@@ -167,4 +173,7 @@ class TestAssignments(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_key(self.extra_environ_default_user.lower())))
 		assert_that( res.json_body['Items'][self.extra_environ_default_user.lower()],
 					 has_key('Grade'))
+		grade = res.json_body['Items'][self.extra_environ_default_user.lower()]['Grade']
+
+		self.require_link_href_with_rel(grade, 'edit')
 		assert_that( res.json_body, has_entry( 'href', is_(bulk_link)))
