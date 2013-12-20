@@ -25,6 +25,12 @@
 	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides=".interfaces.ISubmittedAssignmentHistory"/>
 
+	<!-- ... to containing course -->
+	<adapter factory=".adapters._as_course"
+			 for=".interfaces.IGrade" />
+	<adapter factory=".adapters._as_course"
+			 for=".interfaces.IGradeBook" />
+
 	<!-- Traversal -->
 
 	<adapter name="GradeBook"

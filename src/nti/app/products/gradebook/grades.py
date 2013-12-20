@@ -21,8 +21,6 @@ from nti.dataserver import mimetype
 from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization.externalization import make_repr
 
-from nti.dataserver.traversal import find_interface
-
 from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -66,14 +64,6 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 	def AssignmentId(self):
 		if self.__parent__ is not None:
 			return self.__parent__.AssignmentId
-
-	def __conform__(self, iface):
-		if ICourseInstance.isOrExtends(iface):
-			try:
-				return find_interface(self, ICourseInstance)
-			except TypeError:
-				logger.warn( "incorrect lineage for grade, should be tests only", exc_info=True)
-				return None
 
 	@property
 	def __acl__(self):

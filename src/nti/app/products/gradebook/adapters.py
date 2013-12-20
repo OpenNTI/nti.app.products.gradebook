@@ -33,3 +33,16 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 	entry = gradebook.getColumnForAssignmentId(assignmentId)
 
 	return entry
+
+from nti.dataserver.traversal import find_interface
+
+@interface.implementer(ICourseInstance)
+def _as_course(context):
+	"Registered as an adapter for things we expect to be a descendant of a course"
+	try:
+		return find_interface(context, ICourseInstance)
+	except TypeError:
+		logger.warn( "incorrect lineage for grade object %s, should be tests only",
+					 context,
+					 exc_info=True)
+		return None

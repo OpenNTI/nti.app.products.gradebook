@@ -117,8 +117,8 @@ _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 @interface.implementer(IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
-					SchemaConfigured,
+class GradeBookPart(SchemaConfigured,
+					nti_containers.CheckingLastModifiedBTreeContainer,
 					zcontained.Contained,
 					_NTIIDMixin):
 
@@ -133,8 +133,8 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 
 	def __init__(self, **kwargs):
 		# SchemaConfigured is not cooperative
-		SchemaConfigured.__init__(self, **kwargs)
 		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+		SchemaConfigured.__init__(self, **kwargs)
 
 	def get_entry_by_assignment(self, assignmentId):
 		# TODO: This could be indexed
@@ -143,6 +143,9 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 				return entry
 		return None
 
+	@property
+	def Items(self):
+		return dict(self)
 
 	def __str__(self):
 		return self.displayName
@@ -152,8 +155,8 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer,
 @interface.implementer(IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
-					 SchemaConfigured,
+class GradeBookEntry(SchemaConfigured,
+					 nti_containers.CheckingLastModifiedBTreeContainer,
 					 zcontained.Contained,
 					 _NTIIDMixin):
 
@@ -173,13 +176,18 @@ class GradeBookEntry(nti_containers.CheckingLastModifiedBTreeContainer,
 
 	def __init__(self, **kwargs):
 		# SchemaConfigured is not cooperative
-		SchemaConfigured.__init__(self, **kwargs)
 		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+		SchemaConfigured.__init__(self, **kwargs)
+
 
 	def __setstate__(self, state):
 		super(GradeBookEntry, self).__setstate__(state)
 		if '_SampleContainer__data' not in self.__dict__:
 			self._SampleContainer__data = self._newContainerData()
+
+	@property
+	def Items(self):
+		return dict(self)
 
 	@property
 	def DueDate(self):

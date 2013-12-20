@@ -110,6 +110,11 @@ class IGradeBookEntry(IContainer,
 	DueDate = schema.Date(title="The date on which the assignment is due", required=False,
 						  readonly=True)
 
+	Items = schema.Dict(title='For externalization only, a copy of the {username: grade} contents}',
+						description="For expedience and while while we expect these to be relatively small, we inline them",
+						readonly=True)
+
+
 class ISubmittedAssignmentHistory(IShouldHaveTraversablePath):
 	"""
 	Something that can get all the assignment histories
@@ -142,6 +147,11 @@ class IGradeBookPart(IContainer,
 	order = schema.Int(title="The part order", min=1)
 
 	#TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
+
+	Items = schema.Dict(title='For externalization only, a copy of the {assignmentId: GradeBookEntry} contents}',
+						description="For expedience and while while we expect these to be relatively small, we inline them",
+						readonly=True)
+
 
 	def get_entry_by_assignment(assignmentId):
 		"""

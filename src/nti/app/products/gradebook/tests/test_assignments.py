@@ -15,6 +15,7 @@ from hamcrest import has_property
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import contains
 
 import os
@@ -150,7 +151,8 @@ class TestAssignments(SharedApplicationTestBase):
 								ext_obj,
 								status=201)
 		# The student has no edit link for the grade
-		history_res = self.testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistory' )
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistory'
+		history_res = self.testapp.get( history_path )
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entry( 'Links', [] ))) )
 
@@ -184,3 +186,19 @@ class TestAssignments(SharedApplicationTestBase):
 		res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
 		grade = res.json_body['Items'][self.extra_environ_default_user.lower()]['Grade']
 		assert_that( grade, has_entry( 'value', 90 ))
+
+		# The instructor can find that same grade in the part
+		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes'
+		res = self.testapp.get(path,  extra_environ=instructor_environ)
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								has_entry( 'Main Title',
+										   has_entries( 'AssignmentId', self.assignment_id,
+														'Items', has_entry( self.extra_environ_default_user.lower(),
+																			has_entry( 'value', 90 ))))))
+
+		# And in the student's history
+		res = self.testapp.get(history_path,  extra_environ=instructor_environ)
+		assert_that( res.json_body, has_entry('Items', has_entry(self.assignment_id,
+																 has_entry( 'Grade',
+																			has_entry( 'value', 90 )))))
