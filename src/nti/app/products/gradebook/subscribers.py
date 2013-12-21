@@ -19,7 +19,6 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from pyramid.traversal import find_interface
 
-from nti.assessment.interfaces import IQAssignment
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
@@ -44,19 +43,6 @@ def find_gradebook_in_lineage(obj):
 		__traceback_info__ = obj
 		raise TypeError("Unable to find gradebook")
 	return book
-
-@component.adapter(IGradeBookPart, IObjectRemovedEvent)
-def _gradebook_part_removed(part, event):
-	book = find_gradebook_in_lineage(part)
-	grades = IGrades(book)
-	for entry in part.values():
-		grades.remove_grades(entry.NTIID)
-
-@component.adapter(IGradeBookEntry, IObjectRemovedEvent)
-def _gradebook_entry_removed(entry, event):
-	book = find_gradebook_in_lineage(entry)
-	grades = IGrades(book)
-	grades.remove_grades(entry.NTIID)
 
 @component.adapter(IGrade, IObjectModifiedEvent)
 def _grade_modified(grade, event):

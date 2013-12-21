@@ -5,6 +5,16 @@
             "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.lec:01_LESSON": {
                 "Items": {},
                 "AssessmentItems": {
+                    "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.finalgrade": {
+                        "Class": "Assignment",
+						"category_name": "no_submit",
+                        "MimeType": "application/vnd.nextthought.assessment.assignment",
+                        "NTIID": "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.finalgrade",
+                        "available_for_submission_beginning": null,
+                        "available_for_submission_ending": null,
+                        "title": "Final Grade",
+						"parts": []
+					},
                     "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1": {
                         "Class": "Assignment",
 						"category_name": "quizzes",

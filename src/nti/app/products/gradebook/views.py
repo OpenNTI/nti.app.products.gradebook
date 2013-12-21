@@ -81,6 +81,32 @@ class GradePutView(AbstractAuthenticatedView,
 
 		return theObject
 
+
+@view_config(route_name='objects.generic.traversal',
+			 permission=nauth.ACT_UPDATE,
+			 renderer='rest',
+			 context='.gradebook.NoSubmitGradeBookEntryGrade',
+			 request_method='PUT')
+class NoSubmitGradePutView(GradePutView):
+	"Called to put to a grade that doesn't yet exist."
+
+	def _do_call(self):
+		# So we make one exist, if they path is exactly
+		# one username long
+		entry = self.request.context.__parent__
+		username = self.request.context.__name__
+		# Insert the real grade, then continue as normal
+		# Have to go low-level to bypass container checks which also use get
+		from .grades import Grade
+		entry._SampleContainer__data[username] = Grade()
+		self.request.context = entry[username]
+		self.request.context.__parent__ = entry
+		self.request.context.__name__ = username
+
+		return super(NoSubmitGradePutView,self)._do_call()
+
+
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
 

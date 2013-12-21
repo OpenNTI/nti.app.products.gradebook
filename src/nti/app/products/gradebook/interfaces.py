@@ -135,6 +135,11 @@ class IGradeBookPart(IContainer,
 	contains(IGradeBookEntry)
 	__parent__.required = False
 
+	entryFactory = interface.Attribute("A callable used to create the entries that go in this part.")
+	entryFactory.setTaggedValue('_ext_excluded_out', True)
+	def validateAssignment(assignment):
+		"Check that the given assignment is valid to go in this part."
+
 	Name = schema.ValidTextLine(title="Part name", required=False)
 	displayName = schema.ValidTextLine(title="Part name", required=False)
 	gradeScheme = schema.Object(IGradeScheme, description="A :class:`.IGradeScheme`",
@@ -157,6 +162,12 @@ class IGradeBookPart(IContainer,
 		"""
 		return the :IGradeBookEntry associated with the specified assignmentId
 		"""
+
+#: This is a special category name for assignments that are
+#: only ever given grades by the professor; no submission
+#: of them is possible. Examples include midterm and final
+#: grades
+NO_SUBMIT_PART_NAME = 'no_submit'
 
 class IGradeBook(IContainer,
 				 IContained,

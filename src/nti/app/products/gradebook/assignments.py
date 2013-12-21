@@ -13,8 +13,10 @@ from zope.container.interfaces import INameChooser
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
 
 from .interfaces import IGradeBook
+from .interfaces import NO_SUBMIT_PART_NAME
+
 from .gradebook import GradeBookPart
-from .gradebook import GradeBookEntry
+from .gradebook import NoSubmitGradeBookPart
 
 def _assignment_comparator(a, b):
 	a_end = a.available_for_submission_ending
@@ -39,9 +41,14 @@ def get_course_assignments(course, sort=True, reverse=False):
 def create_assignment_part(course, part_name, _book=None):
 	book = _book if _book is not None else IGradeBook(course)
 	if part_name not in book:
-		part = GradeBookPart(displayName=part_name,
-							 order=1) # Order makes very little sense here...
-		# part.weight = weight
+		if part_name == NO_SUBMIT_PART_NAME:
+			factory = NoSubmitGradeBookPart
+		else:
+			factory = GradeBookPart
+
+		part = factory(displayName=part_name,
+					   order=1) # Order makes very little sense here...
+
 		book[INameChooser(book).chooseName(part_name, part)] = part
 	return book[part_name]
 
@@ -55,7 +62,8 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 	entry = book.getColumnForAssignmentId(assignmentId)
 	if entry is None:
 		part = get_create_assignment_part(course, assignment.category_name)
-		entry = GradeBookEntry(
+		part.validateAssignment(assignment) # Hmm, maybe we should just ask it to create the entry
+		entry = part.entryFactory(
 							   displayName=displayName,
 							   order=order,
 							   AssignmentId=assignmentId)

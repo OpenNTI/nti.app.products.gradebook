@@ -97,8 +97,6 @@
 
 	<!-- Events -->
 
-	<subscriber handler=".subscribers._gradebook_part_removed" />
-	<subscriber handler=".subscribers._gradebook_entry_removed" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />
 	<subscriber handler=".subscribers._assignment_history_item_removed" />
 	<subscriber handler=".subscribers._synchronize_gradebook_with_course_instance" />

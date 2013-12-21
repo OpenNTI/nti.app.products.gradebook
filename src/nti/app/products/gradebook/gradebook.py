@@ -44,6 +44,7 @@ from .interfaces import ISubmittedAssignmentHistory
 from .interfaces import NTIID_TYPE_GRADE_BOOK
 from .interfaces import NTIID_TYPE_GRADE_BOOK_PART
 from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
+from .interfaces import NO_SUBMIT_PART_NAME
 
 class _NTIIDMixin(object):
 
@@ -114,44 +115,6 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 
 _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
-@interface.implementer(IGradeBookPart,
-					   an_interfaces.IAttributeAnnotatable,
-					   zmime_interfaces.IContentTypeAware)
-class GradeBookPart(SchemaConfigured,
-					nti_containers.CheckingLastModifiedBTreeContainer,
-					zcontained.Contained,
-					_NTIIDMixin):
-
-	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
-
-	_ntiid_include_self_name = True
-	_ntiid_type = NTIID_TYPE_GRADE_BOOK_PART
-
-	createDirectFieldProperties(IGradeBookPart)
-
-	__name__ = alias('Name')
-
-	def __init__(self, **kwargs):
-		# SchemaConfigured is not cooperative
-		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
-		SchemaConfigured.__init__(self, **kwargs)
-
-	def get_entry_by_assignment(self, assignmentId):
-		# TODO: This could be indexed
-		for entry in self.values():
-			if entry.assignmentId == assignmentId:
-				return entry
-		return None
-
-	@property
-	def Items(self):
-		return dict(self)
-
-	def __str__(self):
-		return self.displayName
-
-	__repr__ = make_repr()
-
 @interface.implementer(IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
@@ -211,6 +174,94 @@ class GradeBookEntry(SchemaConfigured,
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
+
+
+@interface.implementer(IGradeBookPart,
+					   an_interfaces.IAttributeAnnotatable,
+					   zmime_interfaces.IContentTypeAware)
+class GradeBookPart(SchemaConfigured,
+					nti_containers.CheckingLastModifiedBTreeContainer,
+					zcontained.Contained,
+					_NTIIDMixin):
+
+	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
+
+	_ntiid_include_self_name = True
+	_ntiid_type = NTIID_TYPE_GRADE_BOOK_PART
+
+	createDirectFieldProperties(IGradeBookPart)
+
+	__name__ = alias('Name')
+
+	entryFactory = GradeBookEntry
+
+	def __init__(self, **kwargs):
+		# SchemaConfigured is not cooperative
+		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+		SchemaConfigured.__init__(self, **kwargs)
+
+	def validateAssignment(self, assignment):
+		return True
+
+	def get_entry_by_assignment(self, assignmentId):
+		# TODO: This could be indexed
+		for entry in self.values():
+			if entry.assignmentId == assignmentId:
+				return entry
+		return None
+
+	@property
+	def Items(self):
+		return dict(self)
+
+	def __str__(self):
+		return self.displayName
+
+	__repr__ = make_repr()
+
+from .grades import Grade
+
+class NoSubmitGradeBookEntryGrade(Grade):
+	pass
+
+class NoSubmitGradeBookEntry(GradeBookEntry):
+	"""
+	Entries that cannot be submitted by students
+	auto-generate NoSubmitGradeBookGrade objects (that they own
+	bot do not contain)
+	when directly traversed to.
+	"""
+
+	__external_class_name__ = 'GradeBookEntry'
+
+	def get(self, username, default=None):
+		if username not in self:
+			result = NoSubmitGradeBookEntryGrade()
+			result.__parent__ = self
+			result.__name__ = username
+			return result
+		return self[username]
+
+class NoSubmitGradeBookPart(GradeBookPart):
+	"""
+	A special part of the gradebook for those things that
+	cannot be submitted by students, only entered by the
+	instructor.
+
+	We use a special entry; see :class:`.NoSubmitGradeBookEntry`
+	for details.
+	"""
+
+	__external_class_name__ = 'GradeBookPart'
+
+	entryFactory = NoSubmitGradeBookEntry
+
+	def validateAssignment(self, assignment):
+		if assignment.category_name != NO_SUBMIT_PART_NAME:
+			raise ValueError(assignment.category_name)
+		if len(assignment.parts) != 0:
+			raise ValueError("Too many parts")
+		return True
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.dataserver.users import User

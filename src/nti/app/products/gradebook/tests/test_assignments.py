@@ -19,7 +19,7 @@ from hamcrest import has_entries
 from hamcrest import contains
 
 import os
-
+import urllib
 from zope import component
 from zope import interface
 
@@ -60,7 +60,7 @@ class TestAssignments(SharedApplicationTestBase):
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				entries = assignments.synchronize_gradebook(course)
-				assert_that(entries, is_(2))
+				assert_that(entries, is_(3))
 
 				book = grades_interfaces.IGradeBook(course)
 				assert_that(book, has_key('default'))
@@ -76,17 +76,13 @@ class TestAssignments(SharedApplicationTestBase):
 	@mock_dataserver.WithMockDSTrans
 	def test_get_course_assignments(self):
 
-		base = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment%s"
 		with mock_dataserver.mock_db_trans(self.ds):
 			lib = component.getUtility(IContentPackageLibrary)
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				result = assignments.get_course_assignments(course, sort=True, reverse=True)
-				assert_that(result, has_length(2))
-				for idx, a in enumerate(result):
-					ntiid = base % (len(result) - idx)
-					assert_that(a, has_property('ntiid', is_(ntiid)))
-
+				assert_that(result, has_length(3))
+				for a in result:
 					# No request means no links
 					assert_that( a, externalizes( does_not( has_key( 'GradeSubmittedCount' ))))
 
@@ -112,13 +108,15 @@ class TestAssignments(SharedApplicationTestBase):
 				for package in lib.contentPackages:
 					course = ICourseInstance(package)
 					asgs = assignments.get_course_assignments(course)
-					assert_that( asgs, has_length(2))
+					assert_that( asgs, has_length(3))
 					for asg in asgs:
 						assert_that( asg, externalizes( has_entry( 'GradeSubmittedCount', 0 )))
 						ext = to_external_object(asg)
 						href = self.require_link_href_with_rel(ext, 'GradeSubmittedAssignmentHistory')
-						assert_that( href, is_( '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/Main%%20Title/SubmittedAssignmentHistory'
-												% asg.category_name))
+						title = asg.title
+						title = urllib.quote(title)
+						assert_that( href, is_( '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/%s/SubmittedAssignmentHistory'
+												% (asg.category_name, title)))
 			finally:
 				component.provideUtility( old, provides=pyramid.interfaces.IAuthenticationPolicy )
 				assert_that( component.getUtility(pyramid.interfaces.IAuthenticationPolicy),
@@ -202,3 +200,18 @@ class TestAssignments(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry('Items', has_entry(self.assignment_id,
 																 has_entry( 'Grade',
 																			has_entry( 'value', 90 )))))
+
+		# A non-submittable part can be directly graded by the professor
+		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/sjohnson@nextthought.com'
+		self.testapp.put_json( path, grade, extra_environ=instructor_environ )
+
+		# And it is now in the part
+		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/'
+		res = self.testapp.get(path,  extra_environ=instructor_environ)
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								has_entry( 'Final Grade',
+										   has_entries( 'Class', 'GradeBookEntry',
+														'MimeType', 'application/vnd.nextthought.gradebook.gradebookentry',
+														'Items', has_entry( self.extra_environ_default_user.lower(),
+																			has_entry( 'value', 90 ))))))
