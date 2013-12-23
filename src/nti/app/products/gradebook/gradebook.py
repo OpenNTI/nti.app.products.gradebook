@@ -114,7 +114,11 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 			result = self.get(part, {}).get(entry)
 		return result
 
-_GradeBookFactory = an_factory(GradeBook, 'GradeBook')
+	@property
+	def Items(self):
+		return dict(self)
+
+_GradeBookFactory= an_factory(GradeBook, 'GradeBook')
 
 @interface.implementer(IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,

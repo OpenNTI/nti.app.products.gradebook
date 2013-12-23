@@ -38,6 +38,20 @@ from .interfaces import IGradeBook
 
 LINKS = StandardExternalFields.LINKS
 
+def _course_when_instructed_by_current_user(callback):
+	request = get_current_request()
+	if not request:
+		return
+	username = request.authenticated_userid
+	if not username:
+		return
+	course = callback()
+	if not is_instructed_by_name(course, username):
+		# We're not an instructor
+		return
+
+	return course
+
 @component.adapter(ICourseInstance)
 @interface.implementer(IExternalMappingDecorator)
 class _CourseInstanceLinkDecorator(object):
@@ -45,6 +59,10 @@ class _CourseInstanceLinkDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, course, result):
+		course = _course_when_instructed_by_current_user(lambda: ICourseInstance(course))
+		if course is None:
+			return
+
 		_links = result.setdefault(LINKS, [])
 		book = IGradeBook(course)
 		link = Link(book, rel="GradeBook")
@@ -99,15 +117,8 @@ class _InstructorDataForAssignment(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, assignment, external):
-		request = get_current_request()
-		if not request:
-			return
-		username = request.authenticated_userid
-		if not username:
-			return
-		course = ICourseInstance(assignment)
-		if not is_instructed_by_name(course, username):
-			# We're not an instructor
+		course = _course_when_instructed_by_current_user(lambda: ICourseInstance(assignment))
+		if course is None:
 			return
 
 		book = IGradeBook(course)

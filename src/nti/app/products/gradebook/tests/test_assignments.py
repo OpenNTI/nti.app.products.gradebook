@@ -185,15 +185,27 @@ class TestAssignments(SharedApplicationTestBase):
 		grade = res.json_body['Items'][self.extra_environ_default_user.lower()]['Grade']
 		assert_that( grade, has_entry( 'value', 90 ))
 
-		# The instructor can find that same grade in the part
-		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes'
-		res = self.testapp.get(path,  extra_environ=instructor_environ)
+		# The instructor can find that same grade in the part when fetched directly...
+		part_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes'
+		res = self.testapp.get(part_path,  extra_environ=instructor_environ)
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								has_entry( 'Main Title',
 										   has_entries( 'AssignmentId', self.assignment_id,
 														'Items', has_entry( self.extra_environ_default_user.lower(),
 																			has_entry( 'value', 90 ))))))
+
+		# ...or through the book
+		book_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook'
+		res = self.testapp.get(book_path,  extra_environ=instructor_environ)
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								has_entry('quizzes',
+										  has_entry( 'Items',
+													 has_entry( 'Main Title',
+																has_entries( 'AssignmentId', self.assignment_id,
+																			 'Items', has_entry( self.extra_environ_default_user.lower(),
+																								 has_entry( 'value', 90 ))))))))
 
 		# And in the student's history, visible to both
 		for env in instructor_environ, {}:

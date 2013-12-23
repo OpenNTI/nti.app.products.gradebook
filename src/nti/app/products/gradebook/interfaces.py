@@ -190,6 +190,11 @@ class IGradeBook(IContainer,
 		return the :IGradeBookEntry associated with the specified ntiid
 		"""
 
+	Items = schema.Dict(title='For externalization only, a copy of the {category name: GradeBookPart} contents}',
+						description="For expedience and while while we expect these to be relatively small, we inline them",
+						readonly=True)
+
+
 class IGrade(IContained,
 			 IShouldHaveTraversablePath):
 	"""
