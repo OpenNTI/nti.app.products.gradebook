@@ -25,6 +25,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.assessment.interfaces import IQAssignment
 
 from nti.dataserver import containers as nti_containers
+from nti.dataserver.users import User
 
 from nti.mimetype.mimetype import MIME_BASE
 
@@ -222,25 +223,39 @@ class GradeBookPart(SchemaConfigured,
 from .grades import Grade
 
 class NoSubmitGradeBookEntryGrade(Grade):
-	pass
+	__external_class_name__ = 'Grade'
 
 class NoSubmitGradeBookEntry(GradeBookEntry):
-	"""
-	Entries that cannot be submitted by students
-	auto-generate NoSubmitGradeBookGrade objects (that they own
-	bot do not contain)
-	when directly traversed to.
-	"""
-
 	__external_class_name__ = 'GradeBookEntry'
 
-	def get(self, username, default=None):
-		if username not in self:
+
+from nti.dataserver.traversal import ContainerAdapterTraversable
+
+class NoSubmitGradeBookEntryTraversable(ContainerAdapterTraversable):
+	"""
+	Entries that cannot be submitted by students auto-generate
+	NoSubmitGradeBookGrade objects (that they own but do not contain)
+	when directly traversed to during request processing.
+
+	We do this at request traversal time, rather than as part of the
+	the get/__getitem__ method of the class, to not break any of the container
+	assumptions.
+	"""
+
+	def traverse(self, name, furtherPath):
+		try:
+			return super(NoSubmitGradeBookEntryTraversable,self).traverse(name, furtherPath)
+		except KeyError:
+			# Check first for items in the container and named adapters.
+			# Only if that fails do we dummy up a grade,
+			# and only then if there is a real user by that name.
+			if not User.get_user(name):
+				raise
+
 			result = NoSubmitGradeBookEntryGrade()
-			result.__parent__ = self
-			result.__name__ = username
+			result.__parent__ = self.context
+			result.__name__ = name
 			return result
-		return self[username]
 
 class NoSubmitGradeBookPart(GradeBookPart):
 	"""
@@ -264,7 +279,6 @@ class NoSubmitGradeBookPart(GradeBookPart):
 		return True
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-from nti.dataserver.users import User
 
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)

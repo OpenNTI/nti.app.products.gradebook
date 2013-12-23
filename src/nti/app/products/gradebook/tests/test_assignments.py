@@ -195,15 +195,19 @@ class TestAssignments(SharedApplicationTestBase):
 														'Items', has_entry( self.extra_environ_default_user.lower(),
 																			has_entry( 'value', 90 ))))))
 
-		# And in the student's history
-		res = self.testapp.get(history_path,  extra_environ=instructor_environ)
-		assert_that( res.json_body, has_entry('Items', has_entry(self.assignment_id,
-																 has_entry( 'Grade',
-																			has_entry( 'value', 90 )))))
+		# And in the student's history, visible to both
+		for env in instructor_environ, {}:
+			res = self.testapp.get(history_path,  extra_environ=env)
+			assert_that( res.json_body, has_entry('Items', has_entry(self.assignment_id,
+																	 has_entry( 'Grade',
+																				has_entry( 'value', 90 )))))
 
 		# A non-submittable part can be directly graded by the professor
 		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/sjohnson@nextthought.com'
-		self.testapp.put_json( path, grade, extra_environ=instructor_environ )
+		grade['value'] = 75
+		res = self.testapp.put_json( path, grade, extra_environ=instructor_environ )
+		__traceback_info__ = res.json_body
+		final_assignment_id = res.json_body['AssignmentId']
 
 		# And it is now in the part
 		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/'
@@ -214,4 +218,11 @@ class TestAssignments(SharedApplicationTestBase):
 										   has_entries( 'Class', 'GradeBookEntry',
 														'MimeType', 'application/vnd.nextthought.gradebook.gradebookentry',
 														'Items', has_entry( self.extra_environ_default_user.lower(),
-																			has_entry( 'value', 90 ))))))
+																			has_entry( 'value', 75 ))))))
+
+		# as well as the student's history
+		for env in instructor_environ, {}:
+			res = self.testapp.get(history_path,  extra_environ=env)
+			assert_that( res.json_body, has_entry('Items', has_entry(final_assignment_id,
+																	 has_entry( 'Grade',
+																				has_entry( 'value', 75 )))))

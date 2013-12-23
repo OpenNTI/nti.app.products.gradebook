@@ -82,6 +82,13 @@ class GradePutView(AbstractAuthenticatedView,
 		return theObject
 
 
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
+from nti.assessment.submission import AssignmentSubmission
+from nti.assessment.interfaces import IQAssignment
+from nti.dataserver.users import User
+
+
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
 			 renderer='rest',
@@ -91,17 +98,37 @@ class NoSubmitGradePutView(GradePutView):
 	"Called to put to a grade that doesn't yet exist."
 
 	def _do_call(self):
-		# So we make one exist, if they path is exactly
-		# one username long
+		# So we make one exist
 		entry = self.request.context.__parent__
 		username = self.request.context.__name__
-		# Insert the real grade, then continue as normal
-		# Have to go low-level to bypass container checks which also use get
-		from .grades import Grade
-		entry._SampleContainer__data[username] = Grade()
-		self.request.context = entry[username]
-		self.request.context.__parent__ = entry
-		self.request.context.__name__ = username
+
+		user = User.get_user(username)
+		assignmentId = entry.AssignmentId
+
+		# We insert the history item, which the user himself
+		# normally does but cannot in this case. This implicitly
+		# creates the grade3
+		# TODO: This is very similar to what nti.app.assessment.adapters
+		# does for the student, just with fewer constraints...
+		submission = AssignmentSubmission()
+		submission.assignmentId = assignmentId
+		submission.creator = user
+
+		assignment = component.getUtility(IQAssignment,
+										  name=submission.assignmentId)
+		course = ICourseInstance(assignment)
+
+		assignment_history = component.getMultiAdapter( (course, submission.creator),
+														IUsersCourseAssignmentHistory )
+
+		pending_assessment = QAssignmentSubmissionPendingAssessment( assignmentId=submission.assignmentId,
+																	 parts=[] )
+
+		assignment_history.recordSubmission( submission, pending_assessment )
+
+		# This inserted the real grade
+		grade = entry[username]
+		self.request.context = grade
 
 		return super(NoSubmitGradePutView,self)._do_call()
 

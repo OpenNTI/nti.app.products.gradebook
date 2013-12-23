@@ -51,6 +51,10 @@
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
+	<adapter factory=".gradebook.NoSubmitGradeBookEntryTraversable"
+			 for=".gradebook.NoSubmitGradeBookEntry pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
 
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
