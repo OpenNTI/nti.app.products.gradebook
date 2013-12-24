@@ -72,7 +72,7 @@ class _NTIIDMixin(object):
 			if None not in parts:
 				result = '.'.join(parts)
 			return result
-		except (AttributeError):  # Not ready yet
+		except AttributeError:  # Not ready yet
 			return None
 
 	@CachedProperty('_ntiid_provider', '_ntiid_specific_part')
