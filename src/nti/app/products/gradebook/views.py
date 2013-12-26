@@ -26,16 +26,15 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
-from . import interfaces as grades_interfaces
 from .interfaces import IGrade
-
+from .interfaces import IGradeBook
+from .interfaces import ISubmittedAssignmentHistory
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
 def GradeBookPathAdapter(context, request):
-	result = grades_interfaces.IGradeBook(context)
+	result = IGradeBook(context)
 	return result
-
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
@@ -133,14 +132,13 @@ class NoSubmitGradePutView(GradePutView):
 		return super(NoSubmitGradePutView,self)._do_call()
 
 
-
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 request_method='GET',
-			 context=grades_interfaces.ISubmittedAssignmentHistory,
+			 context=ISubmittedAssignmentHistory,
 			 permission=nauth.ACT_READ)
 class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
