@@ -22,9 +22,9 @@ from pyramid.traversal import find_interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.app.products.courseware.interfaces import ICourseInstanceAvailableEvent
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
@@ -34,8 +34,6 @@ from . import assignments
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
-from .interfaces import IGradeBookPart
-from .interfaces import IGradeBookEntry
 
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
@@ -50,10 +48,10 @@ def _grade_modified(grade, event):
 	user = users.User.get_user(grade.username)
 	book = IGradeBook(course)
 	entry = book.get_entry_by_ntiid(grade.ntiid)
-	if user and entry is not None and entry.assignmentId:
+	if user and entry is not None and entry.AssignmentId:
 		assignment_history = component.getMultiAdapter( (course, user),
 													    IUsersCourseAssignmentHistory)
-		if entry.assignmentId in assignment_history:
+		if entry.AssignmentId in assignment_history:
 			item = assignment_history[entry.assignmentId]
 			lifecycleevent.modified(item)
 
@@ -95,7 +93,6 @@ def _assignment_history_item_removed(item, event):
 		except KeyError:
 			# Hmm...
 			pass
-
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):

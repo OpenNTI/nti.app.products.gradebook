@@ -100,7 +100,7 @@ class IGradeBookEntry(IContainer,
 	displayName = schema.ValidTextLine(title="Part name",
 									   required=False)
 	AssignmentId = schema.ValidTextLine(title="assignment id",
-										required=True)
+										required=False)
 
 #	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 #						  min=0.0,
