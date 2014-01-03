@@ -18,8 +18,6 @@ from zope import component
 
 from pyramid.threadlocal import get_current_request
 
-from nti.assessment.interfaces import IQAssignment
-
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -33,35 +31,36 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_external_object
 
+from nti.appserver.pyramid_renderers import AbstractAuthenticatedRequestAwareDecorator
+
 from .grades import Grade
 from .interfaces import IGradeBook
 
 LINKS = StandardExternalFields.LINKS
 
-def _course_when_instructed_by_current_user(callback):
+from nti.contenttypes.courses.interfaces import is_instructed_by_name
+def _course_when_instructed_by_current_user(data):
 	request = get_current_request()
 	if not request:
 		return
 	username = request.authenticated_userid
 	if not username:
 		return
-	course = callback()
+	course = ICourseInstance(data)
 	if not is_instructed_by_name(course, username):
 		# We're not an instructor
 		return
 
 	return course
 
-@component.adapter(ICourseInstance)
 @interface.implementer(IExternalMappingDecorator)
-class _CourseInstanceLinkDecorator(object):
+class _CourseInstanceLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-	__metaclass__ = SingletonDecorator
+	def _predicate(self, context, result):
+		return _course_when_instructed_by_current_user(context) is not None
 
-	def decorateExternalMapping(self, course, result):
-		course = _course_when_instructed_by_current_user(lambda: ICourseInstance(course))
-		if course is None:
-			return
+	def _do_decorate_external(self, course, result):
+		course = ICourseInstance(course)
 
 		_links = result.setdefault(LINKS, [])
 		book = IGradeBook(course)
@@ -95,10 +94,10 @@ class _UsersCourseAssignmentHistoryItemDecorator(object):
 			external['Grade'] = to_external_object(grade)
 
 from .interfaces import ISubmittedAssignmentHistory
-from nti.contenttypes.courses.interfaces import is_instructed_by_name
-@component.adapter(IQAssignment)
+
+
 @interface.implementer(IExternalMappingDecorator)
-class _InstructorDataForAssignment(object):
+class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 	When an instructor gets access to an assignment,
 	they get some extra pieces of information required
@@ -114,12 +113,11 @@ class _InstructorDataForAssignment(object):
 		items) in bulk.
 	"""
 
-	__metaclass__ = SingletonDecorator
+	def _predicate(self, context, result):
+		return _course_when_instructed_by_current_user(context) is not None
 
-	def decorateExternalMapping(self, assignment, external):
-		course = _course_when_instructed_by_current_user(lambda: ICourseInstance(assignment))
-		if course is None:
-			return
+	def _do_decorate_external(self, assignment, external):
+		course = ICourseInstance(assignment)
 
 		book = IGradeBook(course)
 		column = book.getColumnForAssignmentId(assignment.__name__)
