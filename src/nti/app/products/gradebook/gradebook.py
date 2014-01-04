@@ -306,6 +306,11 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 				continue
 			history = component.getMultiAdapter( (course, user),
 												 IUsersCourseAssignmentHistory)
-			item = history[column.AssignmentId]
-
-			yield (username_that_submitted, item)
+			try:
+				item = history[column.AssignmentId]
+			except KeyError: # pragma: no cover
+				# Hopefully only seen during migration;
+				# in production this is an issue
+				logger.exception("Mismatch between recorded submission and history submission for %s", username_that_submitted)
+			else:
+				yield (username_that_submitted, item)
