@@ -149,7 +149,7 @@ class TestAssignments(SharedApplicationTestBase):
 								ext_obj,
 								status=201)
 		# The student has no edit link for the grade
-		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistory'
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
 		history_res = self.testapp.get( history_path )
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entry( 'Links', [] ))) )
