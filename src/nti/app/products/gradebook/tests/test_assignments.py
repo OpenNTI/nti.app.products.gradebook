@@ -127,6 +127,11 @@ class TestAssignments(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
 	def test_instructor_access_to_history_items_edit_grade(self):
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
 		# Re-enum to pick up instructor
 		with mock_dataserver.mock_db_trans(self.ds):
 			lib = component.getUtility(IContentPackageLibrary)
@@ -156,6 +161,7 @@ class TestAssignments(SharedApplicationTestBase):
 
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
+		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
 
 		# The instructor must also be enrolled, as that's how permissioning is setup right now
 		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
