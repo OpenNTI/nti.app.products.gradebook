@@ -89,7 +89,7 @@ class LetterGradeScheme(SchemaConfigured):
 	def validate(self, value):
 		if not isinstance(value, self._type):
 			raise TypeError('wrong type')
-		elif value.upper() in self.grades:
+		elif not value.upper() in self.grades:
 			raise ValueError("Invalid grade value")
 
 	def __eq__(self, other):

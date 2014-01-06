@@ -14,8 +14,6 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
 
-import random
-
 from nti.dataserver.users import User
 
 from nti.externalization import externalization
@@ -35,7 +33,6 @@ class TestExternal(ConfiguringTestBase):
 		return usr
 
 	def test_grade(self):
-		ntiid = 'tag:nextthought.com,2011-10:NextThought-quiz-thing'
 		g = grades.Grade(username='nt@nti.com',  grade=85.0)
 		ext = externalization.to_external_object(g)
 		assert_that(ext, has_entry('Class', 'Grade'))
@@ -51,40 +48,6 @@ class TestExternal(ConfiguringTestBase):
 		internalization.update_from_external_object(newgrade, ext)
 		assert_that(newgrade, has_property('value', is_(85.0)))
 		assert_that(newgrade, has_property('Username', is_('nt@nti.com')))
-
-	# def test_grades(self):
-	# 	count = 0
-	# 	store = grades.Grades()
-	# 	r = random.randint(5, 15)
-	# 	for _ in range(r):
-	# 		username = 'u%s' % random.randint(1, 5)
-	# 		entry = 'tag:nextthought.com,2011-10:NextThought-quiz-e%s' % random.randint(1, 5)
-	# 		grade = grades.Grade(
-	# 							 username=username,
-	# 							 grade=float(random.randint(1, 100)))
-	# 		if store.index(grade) == -1:
-	# 			count += 1
-	# 			store.add_grade(grade)
-
-	# 	ext = externalization.to_external_object(store)
-	# 	assert_that(ext, has_entry(u'Class', 'Grades'))
-	# 	assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.grades'))
-	# 	new_count = 0
-	# 	for lst in ext.get('Items', {}).values():
-	# 		new_count += len(lst)
-	# 	assert_that(new_count, is_(count))
-
-	# 	factory = internalization.find_factory_for(ext)
-	# 	new_store = factory()
-	# 	internalization.update_from_external_object(new_store, ext)
-
-	# 	assert_that(len(store), is_(len(new_store)))
-	# 	for username in store.keys():
-	# 		for grade in store.get_grades(username):
-	# 			new_grade = new_store.find_grade(grade, username)
-	# 			assert_that(new_grade, is_not(none()))
-	# 			assert_that(new_grade, has_property('Username', grade.username))
-	# 			assert_that(new_grade, has_property('value', grade.grade))
 
 	@WithMockDSTrans
 	def test_gradebook(self):

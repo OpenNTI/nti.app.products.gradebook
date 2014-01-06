@@ -7,16 +7,14 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import unittest
-
 from hamcrest import none
 from hamcrest import is_not
-from hamcrest import close_to
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 
 import os
+import unittest
 
 from nti.contentlibrary.filesystem import CachedNotifyingStaticFilesystemLibrary as Library
 
