@@ -44,13 +44,32 @@ class TestViews(SharedApplicationTestBase):
 				   ))
 		return lib
 
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_gradebook_delete(self):
+		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
+		href = self.require_link_href_with_rel(res.json_body['Items'][0], 'CourseInstance')
+
+		gradebook_href = path = href + '/GradeBook'
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
+
+		res = self.testapp.get(path, extra_environ=environ)
+		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
+		assert_that( res.json_body, has_entry('Items', has_length(3)))
+
+		# As an admin, we can delete it...it will be reset on startup
+		self.testapp.delete(gradebook_href, extra_environ=environ)
+		res = self.testapp.get(path, extra_environ=environ)
+		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
+		assert_that( res.json_body, has_entry('Items', has_length(0)))
+
 	@unittest.skip("WIP")
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_gradebook(self):
 		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
 		href = self.require_link_href_with_rel(res.json_body['Items'][0], 'CourseInstance')
 
-		path = href + '/GradeBook'
+		gradebook_href = path = href + '/GradeBook'
 		res = self.testapp.get(path)
 		#assert_that(res.json_body, has_entry('TotalPartWeight', 0.0))
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))

@@ -16,6 +16,9 @@ from zope import component
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ROLE_ADMIN
+from nti.dataserver.interfaces import ALL_PERMISSIONS
+
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing
@@ -31,7 +34,10 @@ class _GradeBookACLProvider(object):
 	"""
 	Only instructors can see the gradebook and its parts,
 	but the parts cannot be changed (though individual grades
-	within can be changed)
+	within can be changed).
+
+	Administrators have all access, but this is primarily for deletion/reset
+	purposes, so this might get knocked down later.
 	"""
 
 	def __init__(self, context):
@@ -43,7 +49,9 @@ class _GradeBookACLProvider(object):
 
 		course = ICourseInstance(self.context, None)
 		if course is not None:
-			acl.extend( (ace_allowing(i, ACT_READ) for i in course.instructors) )
+			acl.extend( (ace_allowing(i, ACT_READ, type(self)) for i in course.instructors) )
+
+		acl.append( ace_allowing( ROLE_ADMIN, ALL_PERMISSIONS, type(self) ) )
 
 		acl.append( ace_denying_all() )
 

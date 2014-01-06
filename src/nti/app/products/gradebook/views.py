@@ -158,3 +158,28 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		result.__name__ = context.__name__
 
 		return result
+
+from nti.appserver.ugd_edit_views import UGDDeleteView
+from zope.annotation import IAnnotations
+from zope import lifecycleevent
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='DELETE',
+			 context=IGradeBook,
+			 permission=nauth.ACT_DELETE)
+class GradebookDeleteView(UGDDeleteView):
+	"""
+	Admins can delete an entire gradebook. This is mostly
+	for migration purposes from old databases.
+	"""
+
+	def _do_delete_object(self, context):
+		# We happen to know that it is stored as
+		# an annotation.
+
+		annots = IAnnotations(context.__parent__)
+		del annots[context.__name__]
+		lifecycleevent.removed(context)
+
+		return True
