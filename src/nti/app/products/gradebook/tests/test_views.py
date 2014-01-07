@@ -46,12 +46,13 @@ class TestViews(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_gradebook_delete(self):
-		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses')
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
+
+		res = self.testapp.get('/dataserver2/users/sjohnson@nextthought.com/Courses/AllCourses', extra_environ=environ)
 		href = self.require_link_href_with_rel(res.json_body['Items'][0], 'CourseInstance')
 
 		gradebook_href = path = href + '/GradeBook'
-		environ = self._make_extra_environ()
-		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
 
 		res = self.testapp.get(path, extra_environ=environ)
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))

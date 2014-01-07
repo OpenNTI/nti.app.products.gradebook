@@ -57,6 +57,15 @@ class TestAssignments(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			lib = component.getUtility(IContentPackageLibrary)
+			from zope.component.interfaces import IComponents
+			from nti.app.products.courseware.interfaces import ICourseCatalog
+			components = component.getUtility(IComponents, name='platform.ou.edu')
+			catalog = components.getUtility( ICourseCatalog )
+			# XXX
+			# This test is unclean, we re-register globally
+			global_catalog = component.getUtility(ICourseCatalog)
+			global_catalog._entries[:] = catalog._entries
+
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				entries = assignments.synchronize_gradebook(course)
@@ -78,6 +87,16 @@ class TestAssignments(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			lib = component.getUtility(IContentPackageLibrary)
+			getattr(lib, 'contentPackages')
+			from zope.component.interfaces import IComponents
+			from nti.app.products.courseware.interfaces import ICourseCatalog
+			components = component.getUtility(IComponents, name='platform.ou.edu')
+			catalog = components.getUtility( ICourseCatalog )
+			# XXX
+			# This test is unclean, we re-register globally
+			global_catalog = component.getUtility(ICourseCatalog)
+			global_catalog._entries[:] = catalog._entries
+
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				result = assignments.get_course_assignments(course, sort=True, reverse=True)
@@ -91,6 +110,12 @@ class TestAssignments(SharedApplicationTestBase):
 			self._create_user('harp4162')
 			# re-enumerate to pick up the user
 			del lib.contentPackages
+			del global_catalog._entries[:]
+			getattr(lib, 'contentPackages')
+			# XXX
+			# This test is unclean, we re-register globally
+			global_catalog = component.getUtility(ICourseCatalog)
+			global_catalog._entries[:] = catalog._entries
 
 			request = self.beginRequest()
 			request.environ['REMOTE_USER'] = 'harp4162'
