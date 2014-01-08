@@ -89,7 +89,7 @@
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
-	<subscriber factory=".decorators._CourseInstanceLinkDecorator"
+	<subscriber factory=".decorators._CourseInstanceGradebookLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.contenttypes.courses.interfaces.ICourseInstance
 					 pyramid.interfaces.IRequest"/>
@@ -103,6 +103,11 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._GradebookLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for=".interfaces.IGradeBook
+					 pyramid.interfaces.IRequest"/>
 
 	<!-- Events -->
 

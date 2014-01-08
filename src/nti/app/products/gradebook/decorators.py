@@ -54,7 +54,7 @@ def _course_when_instructed_by_current_user(data):
 	return course
 
 @interface.implementer(IExternalMappingDecorator)
-class _CourseInstanceLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
 		return _course_when_instructed_by_current_user(context) is not None
@@ -67,6 +67,17 @@ class _CourseInstanceLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		link = Link(book, rel="GradeBook")
 		_links.append(link)
 
+
+@interface.implementer(IExternalMappingDecorator)
+class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _predicate(self, context, result):
+		return _course_when_instructed_by_current_user(context) is not None
+
+	def _do_decorate_external(self, book, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(book, rel='ExportContents', elements=('contents.csv',))
+		_links.append(link)
 
 @component.adapter(IUsersCourseAssignmentHistoryItem)
 @interface.implementer(IExternalObjectDecorator)

@@ -228,7 +228,7 @@ class TestAssignments(SharedApplicationTestBase):
 
 		# ...or through the book
 		book_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook'
-		res = self.testapp.get(book_path,  extra_environ=instructor_environ)
+		book_res = res = self.testapp.get(book_path,  extra_environ=instructor_environ)
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								has_entry('quizzes',
@@ -269,3 +269,11 @@ class TestAssignments(SharedApplicationTestBase):
 			assert_that( res.json_body, has_entry('Items', has_entry(final_assignment_id,
 																	 has_entry( 'Grade',
 																				has_entry( 'value', 75 )))))
+
+		# The instructor can download the gradebook as csv and it has
+		# the grade in it
+		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
+		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
+		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
+		csv_text = 'User,Final Grade,Main Title\r\nsjohnson@nextthought.com,75,90\r\nharp4162\r\n'
+		assert_that( res.text, is_(csv_text))

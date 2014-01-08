@@ -183,3 +183,80 @@ class GradebookDeleteView(UGDDeleteView):
 		lifecycleevent.removed(context)
 
 		return True
+
+import csv
+import collections
+from nti.externalization.interfaces import LocatedExternalList
+from cStringIO import StringIO
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='GET',
+			 context=IGradeBook,
+			 permission=nauth.ACT_READ,
+			 name='contents.csv')
+class GradebookDownloadView(AbstractAuthenticatedView):
+	"""
+	Provides a downloadable table of all the assignments
+	present in the gradebook. There is a column
+	for each assignment and a row for each user.
+	"""
+
+
+	def __call__(self):
+		gradebook = self.request.context
+
+		# We build a dictionary of {username: {Assignment: Grade} }
+		# We keep track of known assignment names so we can sort appropriately
+
+		usernames_to_assignment_dict = collections.defaultdict(dict)
+		seen_asg_names = set()
+
+		for part in gradebook.values():
+			for name, entry in part.items():
+				seen_asg_names.add(name)
+				for username, grade in entry.items():
+					user_dict = usernames_to_assignment_dict[username]
+					if name in user_dict:
+						raise ValueError("Two entries in different part with same name, yikes")
+					user_dict[name] = grade
+
+		sorted_asg_names = sorted(seen_asg_names)
+
+		# Now we can build up the rows.
+		rows = LocatedExternalList()
+		rows.__name__ = self.request.view_name
+		rows.__parent__ = self.request.context
+
+		# First a header row
+		rows.append( ['User'] + sorted_asg_names )
+
+		# Now a row for each user and each assignment in the same order
+		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
+			row = [username]
+			for assignment in sorted_asg_names:
+				grade = user_dict[assignment].value if assignment in user_dict else ""
+				row.append(grade)
+			rows.append(row)
+
+		# Anyone enrolled but not submitted gets a blank row
+		# at the bottom
+		# TODO: Does LegacyEnrollmentStatus (ForCredit) play into this?
+		#
+		enrollments = ICourseEnrollments(ICourseInstance(gradebook))
+		for user in enrollments.iter_enrollments():
+			if user.username not in usernames_to_assignment_dict:
+				rows.append( [user.username] )
+
+		# Convert to CSV
+		# In the future, we might switch based on the accept header
+		# and provide it as json or XLS alternately
+		buf = StringIO()
+		writer = csv.writer(buf)
+		writer.writerows(rows)
+
+		self.request.response.body = buf.getvalue()
+		self.request.response.content_disposition = b'attachment; filename="contents.csv"'
+
+		return self.request.response
