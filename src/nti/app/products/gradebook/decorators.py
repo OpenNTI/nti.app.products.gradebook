@@ -39,8 +39,8 @@ from .interfaces import IGradeBook
 LINKS = StandardExternalFields.LINKS
 
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
-def _course_when_instructed_by_current_user(data):
-	request = get_current_request()
+def _course_when_instructed_by_current_user(data, request=None):
+	request = request or get_current_request()
 	if not request:
 		return
 	username = request.authenticated_userid
@@ -57,7 +57,7 @@ def _course_when_instructed_by_current_user(data):
 class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context) is not None
+		return _course_when_instructed_by_current_user(context, self.request) is not None
 
 	def _do_decorate_external(self, course, result):
 		course = ICourseInstance(course)
@@ -72,7 +72,7 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context) is not None
+		return _course_when_instructed_by_current_user(context, self.request) is not None
 
 	def _do_decorate_external(self, book, result):
 		_links = result.setdefault(LINKS, [])
@@ -125,7 +125,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context) is not None
+		return _course_when_instructed_by_current_user(context, self.request) is not None
 
 	def _do_decorate_external(self, assignment, external):
 		course = ICourseInstance(assignment)
