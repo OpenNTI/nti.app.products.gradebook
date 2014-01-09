@@ -189,6 +189,7 @@ import collections
 from nti.externalization.interfaces import LocatedExternalList
 from cStringIO import StringIO
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
+from .interfaces import NO_SUBMIT_PART_NAME
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -201,6 +202,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 	Provides a downloadable table of all the assignments
 	present in the gradebook. There is a column
 	for each assignment and a row for each user.
+
+	.. note:: This is hardcoded to export in D2L compatible format.
+		(https://php.radford.edu/~knowledge/lore/attachment.php?id=57)
+		Dialects would be easily possible.
 	"""
 
 
@@ -213,8 +218,14 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		usernames_to_assignment_dict = collections.defaultdict(dict)
 		seen_asg_names = set()
 
+		final_grade_entry = None
+
 		for part in gradebook.values():
 			for name, entry in part.items():
+				if part.__name__ == NO_SUBMIT_PART_NAME and name == 'Final Grade':
+					final_grade_entry = entry
+					continue
+
 				seen_asg_names.add(name)
 				for username, grade in entry.items():
 					user_dict = usernames_to_assignment_dict[username]
@@ -230,7 +241,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.__parent__ = self.request.context
 
 		# First a header row
-		rows.append( ['User'] + sorted_asg_names )
+		rows.append( ['OrgDefinedId']
+					 + [x + ' Points Grade' for x in sorted_asg_names]
+					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
+					 + ['End-of-Line Indicator'] )
 
 		# Now a row for each user and each assignment in the same order
 		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
@@ -238,16 +252,26 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			for assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
 				row.append(grade)
+
+			final_grade = final_grade_entry.get(username) if final_grade_entry else None
+			row.append(final_grade.value if final_grade else 0)
+			row.append( 100 )
+
+			# End-of-line
+			row.append('#')
+
 			rows.append(row)
 
 		# Anyone enrolled but not submitted gets a blank row
 		# at the bottom
 		# TODO: Does LegacyEnrollmentStatus (ForCredit) play into this?
-		#
-		enrollments = ICourseEnrollments(ICourseInstance(gradebook))
-		for user in enrollments.iter_enrollments():
-			if user.username not in usernames_to_assignment_dict:
-				rows.append( [user.username] )
+		# Grade format certainly does, we don't do it for non-enrolled students;
+		# we may need to restrict it too in the general rows
+		if False:
+			enrollments = ICourseEnrollments(ICourseInstance(gradebook))
+			for user in enrollments.iter_enrollments():
+				if user.username not in usernames_to_assignment_dict:
+					rows.append( [user.username] )
 
 		# Convert to CSV
 		# In the future, we might switch based on the accept header

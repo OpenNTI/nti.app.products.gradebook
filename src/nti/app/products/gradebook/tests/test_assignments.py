@@ -275,7 +275,7 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
-		csv_text = 'User,Final Grade,Main Title,Trivial Test\r\nsjohnson@nextthought.com,75,90,\r\nharp4162\r\n'
+		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,90,,75,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
 
 	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
