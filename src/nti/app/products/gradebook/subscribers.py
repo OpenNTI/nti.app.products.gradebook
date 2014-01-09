@@ -34,6 +34,7 @@ from . import assignments
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
+from .interfaces import IPendingAssessmentAutoGradePolicy
 
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
@@ -75,6 +76,21 @@ def _find_entry_for_item(item):
 
 	return entry
 
+def _find_autograde_policy_for_course(course):
+	registry = component
+
+	# Courses may be ISites
+	try:
+		registry = course.getSiteManager()
+		name = ''
+		# If it is, we want the default utility
+	except LookupError:
+		# If it isn't we need a named utility
+		# This only works for the legacy courses
+		name = course.ContentPackageNTIID
+
+	return registry.queryUtility(IPendingAssessmentAutoGradePolicy, name=name)
+
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
 	entry = _find_entry_for_item(item)
@@ -82,6 +98,14 @@ def _assignment_history_item_added(item, event):
 		user = nti_interfaces.IUser(item)
 		grade = Grade()
 		entry[user.username] = grade
+
+		# If there is an auto-grading policy for the course instance,
+		# then let it convert the auto-assessed part of the submission
+		# into the initial grade value
+		course = ICourseInstance(item)
+		policy = _find_autograde_policy_for_course(course)
+		if policy is not None:
+			grade.value = grade.AutoGrade = policy.autograde(item.pendingAssessment)
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):

@@ -69,7 +69,7 @@ class TestAssignments(SharedApplicationTestBase):
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				entries = assignments.synchronize_gradebook(course)
-				assert_that(entries, is_(3))
+				assert_that(entries, is_(4))
 
 				book = grades_interfaces.IGradeBook(course)
 				assert_that(book, has_key('default'))
@@ -78,7 +78,7 @@ class TestAssignments(SharedApplicationTestBase):
 
 				assert_that(book, has_key('quizzes'))
 				part = book['quizzes']
-				assert_that(part, has_length(1))
+				assert_that(part, has_length(2))
 
 				assert_that( part, has_key('Main Title'))
 
@@ -100,7 +100,7 @@ class TestAssignments(SharedApplicationTestBase):
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				result = assignments.get_course_assignments(course, sort=True, reverse=True)
-				assert_that(result, has_length(3))
+				assert_that(result, has_length(4))
 				for a in result:
 					# No request means no links
 					assert_that( a, externalizes( does_not( has_key( 'GradeSubmittedCount' ))))
@@ -133,7 +133,7 @@ class TestAssignments(SharedApplicationTestBase):
 				for package in lib.contentPackages:
 					course = ICourseInstance(package)
 					asgs = assignments.get_course_assignments(course)
-					assert_that( asgs, has_length(3))
+					assert_that( asgs, has_length(4))
 					for asg in asgs:
 						assert_that( asg, externalizes( has_entry( 'GradeSubmittedCount', 0 )))
 						ext = to_external_object(asg)
@@ -275,5 +275,56 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
-		csv_text = 'User,Final Grade,Main Title\r\nsjohnson@nextthought.com,75,90\r\nharp4162\r\n'
+		csv_text = 'User,Final Grade,Main Title,Trivial Test\r\nsjohnson@nextthought.com,75,90,\r\nharp4162\r\n'
 		assert_that( res.text, is_(csv_text))
+
+	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
+	def test_20_autograde_policy(self):
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
+		# Re-enum to pick up instructor
+		with mock_dataserver.mock_db_trans(self.ds):
+			lib = component.getUtility(IContentPackageLibrary)
+			del lib.contentPackages
+			getattr(lib, 'contentPackages')
+
+		# XXX: Dirty registration of an autograde policy
+		from ..autograde_policies import TrivialFixedScaleAutoGradePolicy
+		component.provideUtility(TrivialFixedScaleAutoGradePolicy(), name="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice")
+
+		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
+		qs_id1 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset1"
+		qs_id2 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset2"
+		question_id1 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
+		question_id2 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
+		from nti.assessment.submission import QuestionSubmission
+		from nti.assessment.submission import QuestionSetSubmission
+		from nti.assessment.submission import AssignmentSubmission
+
+		# Get one correct and one incorrect
+		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[1]),))
+		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, questions=(QuestionSubmission(questionId=question_id2, parts=[0]),))
+
+
+		submission = AssignmentSubmission(assignmentId=assignment_id, parts=(qs1_submission, qs2_submission))
+
+		ext_obj = to_external_object( submission )
+		del ext_obj['Class']
+		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
+		# Make sure we're enrolled
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201 )
+
+		self.testapp.post_json( '/dataserver2/Objects/' + assignment_id,
+								ext_obj,
+								status=201)
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_res = self.testapp.get( history_path )
+		# We were half right
+		assert_that( history_res.json_body['Items'].values(),
+					 contains( has_entry( 'Grade', has_entries( 'value', 10.0,
+																'AutoGrade', 10.0))) )

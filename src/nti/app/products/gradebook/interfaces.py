@@ -194,6 +194,12 @@ class IGradeBook(IContainer,
 						description="For expedience and while while we expect these to be relatively small, we inline them",
 						readonly=True)
 
+def _grade_property():
+	return schema.Variant((schema.Number(title="Number grade"),
+						   schema.Bool(title='Boolean grade'),
+						   schema.ValidTextLine(title='String grade')),
+						  title="The grade",
+						  required=False)
 
 class IGrade(IContained,
 			 IShouldHaveTraversablePath):
@@ -216,15 +222,20 @@ class IGrade(IContained,
 	AssignmentId = ValidNTIID(title="The assignment this is for",
 							  description="This comes from the entry containing it.",
 							  required=False)
-	# XXX: This may change depending on input from OU
-	value = schema.Variant(
-				(schema.Number(title="Number grade"),
-				 schema.Bool(title='Boolean grade'),
-				 schema.ValidTextLine(title='String grade')),
-		title="The grade", required=False)
 
-	# Storing or returning the calculated 'AutoGrade'
-	# turns out not to be useful in the current designs: due to the mix
-	# of auto-assessable and non-auto-assessable parts, the instructor
-	# needs to review each individual part.
-	#AutoGrade = schema.Float(title="Auto grade", min=0.0, required=False, readonly=True)
+	value = _grade_property()
+
+	AutoGrade = _grade_property()
+
+class IPendingAssessmentAutoGradePolicy(interface.Interface):
+	"""
+	An object that can interpret the results of the
+	auto-assessed parts of an assignment and produce
+	an output 'grade' value.
+	"""
+
+	def autograde(item):
+		"""
+		Given the :class:`nti.assessment.interfaces.IQAssignmentSubmissionPendingAssessment`,
+		examine the parts and produce a value usable as the auto-graded value.
+		"""
