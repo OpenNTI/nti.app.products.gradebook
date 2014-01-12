@@ -64,7 +64,7 @@ class _NTIIDMixin(object):
 			for location in lineage(self):
 				if IGradeBook.providedBy(location):
 					continue
-				parts.append(ntiids.escape_provider(location.__name__))
+				parts.append(ntiids.make_specific_safe(location.__name__))
 				if ICourseInstance.providedBy(location):
 					break
 			parts.reverse()
