@@ -188,7 +188,7 @@ import csv
 import collections
 from nti.externalization.interfaces import LocatedExternalList
 from cStringIO import StringIO
-from nti.contenttypes.courses.interfaces import ICourseEnrollments
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from .interfaces import NO_SUBMIT_PART_NAME
 
 @view_config(route_name='objects.generic.traversal',
@@ -203,14 +203,30 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 	present in the gradebook. There is a column
 	for each assignment and a row for each user.
 
+	A query param `LegacyEnrollmentStatus` can be set to
+	either 'ForCredit' or 'Open' to restrict the results to that
+	subset of students.
+
 	.. note:: This is hardcoded to export in D2L compatible format.
 		(https://php.radford.edu/~knowledge/lore/attachment.php?id=57)
 		Dialects would be easily possible.
 	"""
 
+	def _make_enrollment_predicate(self):
+		status_filter = self.request.GET.get('LegacyEnrollmentStatus')
+		if not status_filter:
+			return lambda course, user: True
+
+		def f(course,user):
+			enrollment = component.getMultiAdapter((course, user),
+												   ICourseInstanceEnrollment)
+			return enrollment.LegacyEnrollmentStatus == status_filter # Let this blow up when this goes away
+		return f
 
 	def __call__(self):
 		gradebook = self.request.context
+		course = ICourseInstance(gradebook)
+		predicate = self._make_enrollment_predicate()
 
 		# We build a dictionary of {username: {Assignment: Grade} }
 		# We keep track of known assignment names so we can sort appropriately
@@ -248,6 +264,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 		# Now a row for each user and each assignment in the same order
 		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
+			user = User.get_user(username)
+			if not user or not predicate(course,user):
+				continue
+
 			row = [username]
 			for assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
@@ -263,15 +283,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			rows.append(row)
 
 		# Anyone enrolled but not submitted gets a blank row
-		# at the bottom
-		# TODO: Does LegacyEnrollmentStatus (ForCredit) play into this?
-		# Grade format certainly does, we don't do it for non-enrolled students;
-		# we may need to restrict it too in the general rows
-		if False:
-			enrollments = ICourseEnrollments(ICourseInstance(gradebook))
-			for user in enrollments.iter_enrollments():
-				if user.username not in usernames_to_assignment_dict:
-					rows.append( [user.username] )
+		# at the bottom...except that breaks the D2L model
 
 		# Convert to CSV
 		# In the future, we might switch based on the accept header

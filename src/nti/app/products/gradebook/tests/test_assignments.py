@@ -278,6 +278,17 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,90,,75,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
 
+		# He can filter it to Open and ForCredit subsets
+		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=Open', extra_environ=instructor_environ)
+		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
+		assert_that( res.text, is_(csv_text))
+
+		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit', extra_environ=instructor_environ)
+		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
+		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
+		assert_that( res.text, is_(csv_text))
+
+
 	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
 	def test_20_autograde_policy(self):
 		# This only works in the OU environment because that's where the purchasables are
