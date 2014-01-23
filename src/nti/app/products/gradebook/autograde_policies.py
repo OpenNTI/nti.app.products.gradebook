@@ -19,7 +19,9 @@ from .interfaces import IPendingAssessmentAutoGradePolicy
 @interface.implementer(IPendingAssessmentAutoGradePolicy)
 class TrivialFixedScaleAutoGradePolicy(object):
 	"""
-	Scales everything equally, normalized to a particular value.
+	Scales each question equally, normalized to a particular value.
+	If any part of a question is auto-assessed as incorrect, the entire
+	question is graded as incorrect.
 
 	We ignore the weight of parts.
 	"""
@@ -36,9 +38,19 @@ class TrivialFixedScaleAutoGradePolicy(object):
 		theoretical_best = 0.0
 		for assessed_set in item.parts:
 			for assessed_question in assessed_set.questions:
+				theoretical_best += 1.0 # scale to the number of questions
+				part_sum = 0.0
 				for assessed_part in assessed_question.parts:
-					assessed_sum += assessed_part.assessedValue
-					theoretical_best += 1.0
+					if not assessed_part.assessedValue:
+						# WRONG part, whole question is toast
+						part_sum = 0.0
+						break
+					part_sum += assessed_part.assessedValue
+				# scale the parts to the whole question
+				part_sum = part_sum / float(len(assessed_question.parts))
+				# and finally count it for the question
+				assessed_sum += part_sum
+
 
 		# No submit part
 		if not theoretical_best:

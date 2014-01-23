@@ -316,8 +316,9 @@ class TestAssignments(SharedApplicationTestBase):
 		from nti.assessment.submission import AssignmentSubmission
 
 		# Get one correct and one incorrect
-		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[1]),))
-		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, questions=(QuestionSubmission(questionId=question_id2, parts=[0]),))
+		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
+		# The incorrect one is partially correct on parts, but the whole thing is still graded wrong
+		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, questions=(QuestionSubmission(questionId=question_id2, parts=[0,1]),))
 
 
 		submission = AssignmentSubmission(assignmentId=assignment_id, parts=(qs1_submission, qs2_submission))
