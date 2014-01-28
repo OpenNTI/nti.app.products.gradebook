@@ -105,7 +105,9 @@ def _assignment_history_item_added(item, event):
 		course = ICourseInstance(item)
 		policy = _find_autograde_policy_for_course(course)
 		if policy is not None:
-			grade.value = grade.AutoGrade = policy.autograde(item.pendingAssessment)
+			grade.AutoGrade = policy.autograde(item.pendingAssessment)
+			if grade.value is None:
+				grade.value = grade.AutoGrade
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
