@@ -30,6 +30,10 @@
 			 for=".interfaces.IGrade" />
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBook" />
+	<adapter factory=".adapters._as_course"
+			 for=".interfaces.IGradeBookPart" />
+	<adapter factory=".adapters._as_course"
+			 for=".interfaces.IGradeBookEntry" />
 
 	<!-- Traversal -->
 
@@ -47,12 +51,13 @@
 			 provides="zope.traversing.interfaces.IPathAdapter"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"/>
 
+	<!-- Currently any grade can be created without a submission
 	<adapter factory="nti.dataserver.traversal.ContainerAdapterTraversable"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
-
-	<adapter factory=".gradebook.NoSubmitGradeBookEntryTraversable"
-			 for=".gradebook.NoSubmitGradeBookEntry pyramid.interfaces.IRequest"
+	-->
+	<adapter factory=".gradebook.GradeBookEntryWithoutSubmissionTraversable"
+			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
 

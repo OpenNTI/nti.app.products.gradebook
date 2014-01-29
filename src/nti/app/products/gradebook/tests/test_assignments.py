@@ -16,6 +16,7 @@ from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_entry
 from hamcrest import has_entries
+from hamcrest import has_item
 from hamcrest import contains
 
 import os
@@ -150,7 +151,7 @@ class TestAssignments(SharedApplicationTestBase):
 	assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1"
 	question_set_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo"
 
-	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('harp4162', 'user@not_enrolled'),testapp=True,default_authenticate=True)
 	def test_instructor_access_to_history_items_edit_grade(self):
 		# This only works in the OU environment because that's where the purchasables are
 		extra_env = self.testapp.extra_environ or {}
@@ -246,13 +247,14 @@ class TestAssignments(SharedApplicationTestBase):
 																				has_entry( 'value', 90 )))))
 
 		# A non-submittable part can be directly graded by the professor
-		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/sjohnson@nextthought.com'
+		final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/'
+		path = final_grade_path + 'sjohnson@nextthought.com'
 		grade['value'] = 75
 		res = self.testapp.put_json( path, grade, extra_environ=instructor_environ )
 		__traceback_info__ = res.json_body
 		final_assignment_id = res.json_body['AssignmentId']
 
-		# And it is now in the part
+		# And it is now in the gradebook part...
 		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/'
 		res = self.testapp.get(path,  extra_environ=instructor_environ)
 		assert_that( res.json_body,
@@ -263,12 +265,37 @@ class TestAssignments(SharedApplicationTestBase):
 														'Items', has_entry( self.extra_environ_default_user.lower(),
 																			has_entry( 'value', 75 ))))))
 
-		# as well as the student's history
+		# ...as well as the student's history (for both the instructor and professor)
 		for env in instructor_environ, {}:
-			res = self.testapp.get(history_path,  extra_environ=env)
-			assert_that( res.json_body, has_entry('Items', has_entry(final_assignment_id,
-																	 has_entry( 'Grade',
-																				has_entry( 'value', 75 )))))
+			history_res = self.testapp.get(history_path,  extra_environ=env)
+			assert_that( history_res.json_body, has_entry('Items', has_entry(final_assignment_id,
+																			 has_entry( 'Grade',
+																						has_entry( 'value', 75 )))))
+
+			# Both of them can leave feedback on it
+			history_feedback_container_href = history_res.json_body['Items'][final_assignment_id]['Feedback']['href']
+
+			from nti.app.assessment.feedback import UsersCourseAssignmentHistoryItemFeedback
+			feedback = UsersCourseAssignmentHistoryItemFeedback(body=['Some feedback'])
+			ext_feedback = to_external_object(feedback)
+			__traceback_info__ = ext_feedback
+			res = self.testapp.post_json( history_feedback_container_href,
+										  ext_feedback,
+										  extra_environ=env,
+										  status=201 )
+			history_res = self.testapp.get(history_path,  extra_environ=env)
+			assert_that( history_res.json_body, has_entry('Items', has_entry(final_assignment_id,
+																			 has_entry('Feedback',
+																					   has_entry('Items', has_item(has_entry('body', ['Some feedback'])))))))
+
+
+		# The instructor cannot do this for users that don't exist...
+		self.testapp.put_json( final_grade_path + 'foo@bar', grade, extra_environ=instructor_environ,
+							   status=404 )
+		# ...or for users not enrolled
+		self.testapp.put_json( final_grade_path + 'user@not_enrolled', grade, extra_environ=instructor_environ,
+							   status=404 )
+
 
 		# The instructor can download the gradebook as csv and it has
 		# the grade in it

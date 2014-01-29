@@ -226,37 +226,70 @@ class GradeBookPart(SchemaConfigured,
 
 from .grades import Grade
 
-class NoSubmitGradeBookEntryGrade(Grade):
+class GradeWithoutSubmission(Grade):
+	"""
+	A dummy grade we temporarily create before
+	a submission comes in. These are never persistent.
+	"""
 	__external_class_name__ = 'Grade'
+	__external_can_create__ = False
 
-class NoSubmitGradeBookEntry(GradeBookEntry):
+	def __reduce__(self):
+		raise TypeError('Temporary grade only')
+	__reduce_ex__ = __reduce__
+
+NoSubmitGradeBookEntryGrade = GradeWithoutSubmission
+
+class GradeBookEntryWithoutSubmission(GradeBookEntry):
+	"""
+	An entry in the gradebook that doesn't necessarily require
+	students to already have a submission.
+	"""
 	__external_class_name__ = 'GradeBookEntry'
+	__external_can_create__ = False
 
+NoSubmitGradeBookEntry = GradeBookEntryWithoutSubmission
+
+from nti.app.products.courseware.interfaces import IPrincipalEnrollmentCatalog # XXX Not real happy with this dependency
 
 from nti.dataserver.traversal import ContainerAdapterTraversable
 
-class NoSubmitGradeBookEntryTraversable(ContainerAdapterTraversable):
+class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
 	"""
 	Entries that cannot be submitted by students auto-generate
-	NoSubmitGradeBookGrade objects (that they own but do not contain)
+	:class:`.GradeWithoutSubmission` objects (that they own but do not contain)
 	when directly traversed to during request processing.
 
 	We do this at request traversal time, rather than as part of the
 	the get/__getitem__ method of the class, to not break any of the container
 	assumptions.
+
+	In general, prefer to register this only for special named parts; it is dangerous
+	as a main traversal mechanism because of the possibility of blocking
+	student submissions and the wide-ranging consequences of interfering
+	with traversal.
 	"""
 
 	def traverse(self, name, furtherPath):
 		try:
-			return super(NoSubmitGradeBookEntryTraversable,self).traverse(name, furtherPath)
+			return super(GradeBookEntryWithoutSubmissionTraversable,self).traverse(name, furtherPath)
 		except KeyError:
 			# Check first for items in the container and named adapters.
 			# Only if that fails do we dummy up a grade,
-			# and only then if there is a real user by that name.
-			if not User.get_user(name):
+			# and only then if there is a real user by that name
+			# who is enrolled in this course.
+			user = User.get_user(name)
+			if not user:
 				raise
 
-			result = NoSubmitGradeBookEntryGrade()
+			course = ICourseInstance(self.context)
+			enrollments = []
+			for catalog in component.subscribers( (user,), IPrincipalEnrollmentCatalog ):
+				enrollments.extend(catalog.iter_enrollments())
+			if course not in enrollments:
+				raise
+
+			result = GradeWithoutSubmission()
 			result.__parent__ = self.context
 			result.__name__ = name
 			return result
@@ -265,7 +298,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 	"""
 	A special part of the gradebook for those things that
 	cannot be submitted by students, only entered by the
-	instructor.
+	instructor. These assignments are validated as such.
 
 	We use a special entry; see :class:`.NoSubmitGradeBookEntry`
 	for details.
@@ -273,7 +306,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 
 	__external_class_name__ = 'GradeBookPart'
 
-	entryFactory = NoSubmitGradeBookEntry
+	entryFactory = GradeBookEntryWithoutSubmission
 
 	def validateAssignment(self, assignment):
 		if assignment.category_name != NO_SUBMIT_PART_NAME:
