@@ -52,7 +52,7 @@
 			 provides="zope.traversing.interfaces.ITraversable" />
 
 	<adapter factory=".gradebook.NoSubmitGradeBookEntryTraversable"
-			 for=".gradebook.GradeBookEntry pyramid.interfaces.IRequest"
+			 for=".gradebook.NoSubmitGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
 
