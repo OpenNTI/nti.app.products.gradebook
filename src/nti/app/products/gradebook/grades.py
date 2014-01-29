@@ -18,6 +18,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 
 from nti.dataserver import mimetype
+from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization.externalization import make_repr
 
@@ -29,10 +30,10 @@ from .interfaces import IGrade
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
-from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import ace_denying_all
+
 
 @interface.implementer(IGrade,
 					   zmime_interfaces.IContentTypeAware)
@@ -71,7 +72,7 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 
 		course = ICourseInstance(self, None)
 		if course is not None:
-			acl.extend( (ace_allowing(i, ACT_UPDATE) for i in course.instructors) )
+			acl.extend((ace_allowing(i, ALL_PERMISSIONS) for i in course.instructors))
 		if self.Username: # This will become conditional on whether we are published
 			acl.append( ace_allowing(self.Username, ACT_READ) )
 		acl.append( ace_denying_all() )
@@ -92,6 +93,5 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 #		xhash ^= hash(self.NTIID)
 #		xhash ^= hash(self.username)
 #		return xhash
-
 
 	__repr__ = make_repr()
