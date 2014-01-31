@@ -41,6 +41,11 @@ from nti.dataserver.tests import mock_dataserver
 from nti.externalization.tests import externalizes
 from nti.externalization.externalization import to_external_object
 
+from nti.assessment.submission import QuestionSubmission
+from nti.assessment.submission import QuestionSetSubmission
+from nti.assessment.submission import AssignmentSubmission
+
+
 class TestAssignments(SharedApplicationTestBase):
 
 	@classmethod
@@ -163,8 +168,6 @@ class TestAssignments(SharedApplicationTestBase):
 			lib = component.getUtility(IContentPackageLibrary)
 			del lib.contentPackages
 			getattr(lib, 'contentPackages')
-		from nti.assessment.submission import QuestionSetSubmission
-		from nti.assessment.submission import AssignmentSubmission
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
 
@@ -315,6 +318,32 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
+		# If the instructor does this for something that the student could ordinarily
+		# submit...
+		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+		path = trivial_grade_path + 'sjohnson@nextthought.com'
+		grade['value'] = 10
+		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+
+		# ... the student can no longer submit
+		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
+		qs_id1 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset1"
+		qs_id2 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset2"
+		question_id1 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
+		question_id2 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
+
+		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
+		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, questions=(QuestionSubmission(questionId=question_id2, parts=[0,1]),))
+
+		submission = AssignmentSubmission(assignmentId=assignment_id, parts=(qs1_submission, qs2_submission))
+
+		ext_obj = to_external_object( submission )
+
+		res = self.testapp.post_json( '/dataserver2/Objects/' + assignment_id,
+								ext_obj,
+								status=422)
+		assert_that( res.json_body, has_entry('message', "Assignment already submitted"))
+
 
 	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
 	def test_20_autograde_policy(self):
@@ -338,9 +367,6 @@ class TestAssignments(SharedApplicationTestBase):
 		qs_id2 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset2"
 		question_id1 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
 		question_id2 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
-		from nti.assessment.submission import QuestionSubmission
-		from nti.assessment.submission import QuestionSetSubmission
-		from nti.assessment.submission import AssignmentSubmission
 
 		# Get one correct and one incorrect
 		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
