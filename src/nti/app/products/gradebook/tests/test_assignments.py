@@ -318,10 +318,39 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
-		# If the instructor does this for something that the student could ordinarily
+
+	@WithSharedApplicationMockDS(users=('harp4162',),testapp=True,default_authenticate=True)
+	def test_instructor_grade_stops_student_submission(self):
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
+		# Re-enum to pick up instructor
+		with mock_dataserver.mock_db_trans(self.ds):
+			lib = component.getUtility(IContentPackageLibrary)
+			del lib.contentPackages
+			getattr(lib, 'contentPackages')
+
+		# Make sure we're enrolled
+		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+									  'CLC 3403',
+									  status=201 )
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		# The instructor must also be enrolled, as that's how permissioning is setup right now
+		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201,
+								extra_environ=instructor_environ)
+
+		# If the instructor puts in a grade for something that the student could ordinarily
 		# submit...
 		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
 		path = trivial_grade_path + 'sjohnson@nextthought.com'
+		grade = {'Class': 'Grade'}
 		grade['value'] = 10
 		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
@@ -343,6 +372,7 @@ class TestAssignments(SharedApplicationTestBase):
 								ext_obj,
 								status=422)
 		assert_that( res.json_body, has_entry('message', "Assignment already submitted"))
+		assert_that( res.json_body, has_entry('code', "NotUnique"))
 
 
 	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
