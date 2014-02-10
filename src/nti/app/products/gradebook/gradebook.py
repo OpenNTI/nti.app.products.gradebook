@@ -42,6 +42,7 @@ from .interfaces import IGradeBook
 from .interfaces import IGradeBookPart
 from .interfaces import IGradeBookEntry
 from .interfaces import ISubmittedAssignmentHistory
+from .interfaces import ISubmittedAssignmentHistorySummaries
 from .interfaces import NTIID_TYPE_GRADE_BOOK
 from .interfaces import NTIID_TYPE_GRADE_BOOK_PART
 from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
@@ -316,12 +317,15 @@ class NoSubmitGradeBookPart(GradeBookPart):
 		return True
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
 class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 
 	__name__ = 'SubmittedAssignmentHistory'
+
+	as_summary = False
 
 	def __init__(self, entry, request=None):
 		self.context = self.__parent__ = entry
@@ -341,9 +345,17 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 												 IUsersCourseAssignmentHistory)
 			try:
 				item = history[column.AssignmentId]
+				if self.as_summary:
+					item = IUsersCourseAssignmentHistoryItemSummary(item)
 			except KeyError: # pragma: no cover
 				# Hopefully only seen during migration;
 				# in production this is an issue
 				logger.exception("Mismatch between recorded submission and history submission for %s", username_that_submitted)
 			else:
 				yield (username_that_submitted, item)
+
+@interface.implementer(ISubmittedAssignmentHistorySummaries)
+@component.adapter(IGradeBookEntry)
+class _DefaultGradeBookEntrySubmittedAssignmentHistorySummaries(_DefaultGradeBookEntrySubmittedAssignmentHistory):
+	__name__ = 'SubmittedAssignmentHistorySummaries'
+	as_summary = True

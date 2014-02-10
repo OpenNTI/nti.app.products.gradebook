@@ -24,6 +24,8 @@
 
 	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides=".interfaces.ISubmittedAssignmentHistory"/>
+	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistorySummaries"
+			 provides=".interfaces.ISubmittedAssignmentHistorySummaries"/>
 
 	<!-- ... to containing course -->
 	<adapter factory=".adapters._as_course"
@@ -45,11 +47,20 @@
 			 factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
 
-
 	<adapter name="SubmittedAssignmentHistory"
 			 factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides="zope.traversing.interfaces.IPathAdapter"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"/>
+
+	<adapter name="SubmittedAssignmentHistorySummaries"
+			 factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistorySummaries"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+	<adapter name="SubmittedAssignmentHistorySummaries"
+			 factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistorySummaries"
+			 provides="zope.traversing.interfaces.IPathAdapter"
+			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"/>
+
 
 	<!-- Currently any grade can be created without a submission
 	<adapter factory="nti.dataserver.traversal.ContainerAdapterTraversable"
@@ -92,6 +103,9 @@
 
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
+				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<subscriber factory=".decorators._CourseInstanceGradebookLinkDecorator"

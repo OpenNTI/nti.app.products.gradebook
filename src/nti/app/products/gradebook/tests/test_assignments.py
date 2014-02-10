@@ -201,6 +201,9 @@ class TestAssignments(SharedApplicationTestBase):
 		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
 
+		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
+		self.testapp.get(sum_link, extra_environ=instructor_environ)
+
 		bulk_link = self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistory')
 		res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
 

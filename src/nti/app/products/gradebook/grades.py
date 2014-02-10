@@ -23,6 +23,8 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization.externalization import make_repr
 
 from nti.utils.property import alias
+from nti.utils.property import CachedProperty
+
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
@@ -66,7 +68,7 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 		if self.__parent__ is not None:
 			return self.__parent__.AssignmentId
 
-	@property
+	@CachedProperty
 	def __acl__(self):
 		acl = acl_from_aces()
 

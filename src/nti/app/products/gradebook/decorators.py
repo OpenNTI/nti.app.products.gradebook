@@ -18,8 +18,6 @@ from zope import component
 
 from pyramid.threadlocal import get_current_request
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
@@ -79,7 +77,7 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		link = Link(book, rel='ExportContents', elements=('contents.csv',))
 		_links.append(link)
 
-@component.adapter(IUsersCourseAssignmentHistoryItem)
+
 @interface.implementer(IExternalObjectDecorator)
 class _UsersCourseAssignmentHistoryItemDecorator(object):
 
@@ -105,7 +103,7 @@ class _UsersCourseAssignmentHistoryItemDecorator(object):
 			external['Grade'] = to_external_object(grade)
 
 from .interfaces import ISubmittedAssignmentHistory
-
+from .interfaces import ISubmittedAssignmentHistorySummaries
 
 @interface.implementer(IExternalMappingDecorator)
 class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
@@ -140,4 +138,9 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 
 		link_to_bulk_history = Link(ISubmittedAssignmentHistory(column),
 									rel='GradeSubmittedAssignmentHistory')
-		external.setdefault(LINKS, []).append(link_to_bulk_history)
+		link_to_summ_history = Link(ISubmittedAssignmentHistorySummaries(column),
+									rel='GradeSubmittedAssignmentHistorySummaries')
+
+		ext_links = external.setdefault(LINKS, [])
+		ext_links.append(link_to_bulk_history)
+		ext_links.append(link_to_summ_history)

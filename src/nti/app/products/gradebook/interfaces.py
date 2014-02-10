@@ -124,6 +124,16 @@ class ISubmittedAssignmentHistory(IShouldHaveTraversablePath):
 	entry's assignment.
 	"""
 
+class ISubmittedAssignmentHistorySummaries(IShouldHaveTraversablePath):
+	"""
+	Something that can get all the assignment history summaries
+	that have been submitted. Typically this will be
+	registered as an adapter for :class:`.IGradeBookEntry`,
+	in which case the scope of what it returns is limited to that
+	entry's assignment.
+	"""
+
+
 class IGradeBookPart(IContainer,
 					 IContained,
 					 IShouldHaveTraversablePath):
