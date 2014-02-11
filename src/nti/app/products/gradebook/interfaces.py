@@ -123,13 +123,20 @@ class ISubmittedAssignmentHistoryBase(IShouldHaveTraversablePath):
 	entry's assignment.
 	"""
 
-	def __iter__(self):
+	def __iter__():
 		"""
 		Iterating across this object iterates across (username, historyitem)
 		pairs, like iterating across a dictionary.
 		"""
 
-	def items(self, usernames=None, placeholder=None):
+	def __len__():
+		"""
+		The length of this item is how many submitted assignments
+		there have been (and hence how many non-null items can
+		be expected).
+		"""
+
+	def items(usernames=None, placeholder=None):
 		"""
 		Return an iterator over the items (username, historyitem)
 		that make up this object. This is just like iterating over

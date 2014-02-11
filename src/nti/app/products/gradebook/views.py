@@ -158,7 +158,13 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 	TotalItemCount
 		How many total submissions there are. If any filter, sorting
 		or paging options are specified, this will be the same as the
-		number of enrolled students in the class.
+		number of enrolled students in the class (because we will
+		ultimately return that many rows due to the presence of null
+		rows for non-submitted students).
+
+	TotalNonNullItemCount
+		How many total submissions there are. This does not depend
+		on the presence of any filter, sort, or paging options.
 
 	The following query parameters are supported:
 
@@ -231,6 +237,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 			result['Items'] = dict(context)
 			result['TotalItemCount'] = len(result['Items'])
 			result['FilteredTotalItemCount'] = result['TotalItemCount']
+
+		result['TotalNonNullItemCount'] = len(context)
 
 		return result
 

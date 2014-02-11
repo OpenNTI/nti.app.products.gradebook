@@ -207,12 +207,14 @@ class TestAssignments(SharedApplicationTestBase):
 		# We can filter to just enrolled, which will exclude us
 		sum_res = self.testapp.get(sum_link, {'filter': 'LegacyEnrollmentStatusForCredit'}, extra_environ=instructor_environ)
 		assert_that( sum_res.json_body, has_entry( 'TotalItemCount', 1 ) )
+		assert_that( sum_res.json_body, has_entry( 'TotalNonNullItemCount', 1 ) )
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 0) )
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(0)))
 
 		# Or we can filter to just open, which will include us
 		sum_res = self.testapp.get(sum_link, {'filter': 'LegacyEnrollmentStatusOpen'}, extra_environ=instructor_environ)
 		assert_that( sum_res.json_body, has_entry( 'TotalItemCount', 1 ) )
+		assert_that( sum_res.json_body, has_entry( 'TotalNonNullItemCount', 1 ) )
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 1) )
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
 

@@ -342,6 +342,11 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 		"""
 		return self.context.lastModified
 
+	def __len__(self):
+		# We can safely assume that the number of submitted assignments
+		# is the number of grades we have recorded. Yes?
+		return len(self.context)
+
 	def __iter__(self, usernames=_NotGiven, placeholder=_NotGiven):
 		column = self.context
 		course = ICourseInstance(self)
