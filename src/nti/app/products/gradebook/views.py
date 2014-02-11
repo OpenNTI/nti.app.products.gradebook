@@ -215,11 +215,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
 			restricted_usernames = set(IEnumerableEntityContainer(restricted).iter_usernames()) if restricted is not None else set()
 			everyone_usernames = set(IEnumerableEntityContainer(everyone).iter_usernames())
+			# instructors are also a member of the restricted set,
+			# so take them out (otherwise the count will be wrong)
 			if filter_name == 'LegacyEnrollmentStatusForCredit':
-				filter_usernames = restricted_usernames
+				filter_usernames = restricted_usernames - {x.id for x in course.instructors}
 			elif filter_name == 'LegacyEnrollmentStatusOpen':
-				# instructors are also a member of the restricted set,
-				# so take them out (otherwise the count will be wrong)
 				filter_usernames = everyone_usernames - restricted_usernames - {x.id for x in course.instructors}
 
 			result['TotalItemCount'] = ICourseEnrollments(course).count_enrollments()
