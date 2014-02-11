@@ -114,8 +114,7 @@ class IGradeBookEntry(IContainer,
 						description="For expedience and while while we expect these to be relatively small, we inline them",
 						readonly=True)
 
-
-class ISubmittedAssignmentHistory(IShouldHaveTraversablePath):
+class ISubmittedAssignmentHistoryBase(IShouldHaveTraversablePath):
 	"""
 	Something that can get all the assignment histories
 	that have been submitted. Typically this will be
@@ -124,14 +123,36 @@ class ISubmittedAssignmentHistory(IShouldHaveTraversablePath):
 	entry's assignment.
 	"""
 
-class ISubmittedAssignmentHistorySummaries(IShouldHaveTraversablePath):
-	"""
-	Something that can get all the assignment history summaries
-	that have been submitted. Typically this will be
-	registered as an adapter for :class:`.IGradeBookEntry`,
-	in which case the scope of what it returns is limited to that
-	entry's assignment.
-	"""
+	def __iter__(self):
+		"""
+		Iterating across this object iterates across (username, historyitem)
+		pairs, like iterating across a dictionary.
+		"""
+
+	def items(self, usernames=None, placeholder=None):
+		"""
+		Return an iterator over the items (username, historyitem)
+		that make up this object. This is just like iterating over
+		this object normally, except the option of filtering.
+
+		:keyword usernames: If given, an iterable of usernames.
+			Only usernames that are in this iterable are returned.
+			Furthermore, the items are returned in the same order
+			as the usernames in the iterable. Note that if the username
+			doesn't exist, nothing is returned for that entry
+			unless `placeholder` is also provided.
+		:keyword placeholder: If given (even if given as None)
+			then all users in `usernames` will be returned; those
+			that have not submitted will be returned with this placeholder
+			value. This only makes sense if usernames is given.
+		"""
+
+class ISubmittedAssignmentHistory(ISubmittedAssignmentHistoryBase):
+	"Returns full assignment history items."
+
+
+class ISubmittedAssignmentHistorySummaries(ISubmittedAssignmentHistoryBase):
+	"Returns summary assignment history items"
 
 
 class IGradeBookPart(IContainer,

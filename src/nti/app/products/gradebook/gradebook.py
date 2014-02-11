@@ -318,7 +318,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
-
+_NotGiven = object()
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
 class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
@@ -334,10 +334,20 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 		if ICourseInstance.isOrExtends(iface):
 			return find_interface(self, ICourseInstance)
 
-	def __iter__(self):
-		column = self.__parent__
+	@property
+	def lastModified(self):
+		"""
+		Our last modified time is the time the column was modified
+		by addition/removal of a grade.
+		"""
+		return self.context.lastModified
+
+	def __iter__(self, usernames=_NotGiven, placeholder=_NotGiven):
+		column = self.context
 		course = ICourseInstance(self)
-		for username_that_submitted in column:
+		if usernames is _NotGiven:
+			usernames = column
+		for username_that_submitted in usernames:
 			user = User.get_user(username_that_submitted)
 			if not user:
 				continue
@@ -347,12 +357,39 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 				item = history[column.AssignmentId]
 				if self.as_summary:
 					item = IUsersCourseAssignmentHistoryItemSummary(item)
-			except KeyError: # pragma: no cover
-				# Hopefully only seen during migration;
-				# in production this is an issue
-				logger.exception("Mismatch between recorded submission and history submission for %s", username_that_submitted)
+			except KeyError:
+				if placeholder is not _NotGiven:
+					yield (username_that_submitted, placeholder)
+				else:
+					# Hopefully only seen during migration;
+					# in production this is an issue
+					logger.exception("Mismatch between recorded submission and history submission for %s",
+									 username_that_submitted)
 			else:
 				yield (username_that_submitted, item)
+
+	def items(self, usernames=_NotGiven, placeholder=_NotGiven):
+		"""
+		Return an iterator over the items (username, historyitem)
+		that make up this object. This is just like iterating over
+		this object normally, except the option of filtering.
+
+		:keyword usernames: If given, an iterable of usernames.
+			Only usernames that are in this iterable are returned.
+			Furthermore, the items are returned in the same order
+			as the usernames in the iterable. Note that if the username
+			doesn't exist, nothing is returned for that entry
+			unless `placeholder` is also provided.
+		:keyword placeholder: If given (even if given as None)
+			then all users in `usernames` will be returned; those
+			that have not submitted will be returned with this placeholder
+			value. This only makes sense if usernames is given.
+		"""
+
+		if placeholder is not _NotGiven and usernames is _NotGiven:
+			raise ValueError("Placeholder only makes sense if usernames is given")
+
+		return self.__iter__(usernames=usernames, placeholder=placeholder)
 
 @interface.implementer(ISubmittedAssignmentHistorySummaries)
 @component.adapter(IGradeBookEntry)

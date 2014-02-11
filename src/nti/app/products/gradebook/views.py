@@ -28,7 +28,7 @@ from nti.dataserver import authorization as nauth
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
-from .interfaces import ISubmittedAssignmentHistory
+from .interfaces import ISubmittedAssignmentHistoryBase
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
@@ -131,14 +131,64 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
+from nti.dataserver.interfaces import IEnumerableEntityContainer
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
+from nti.dataserver.users import Entity
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 request_method='GET',
-			 context=ISubmittedAssignmentHistory,
+			 context=ISubmittedAssignmentHistoryBase,
 			 permission=nauth.ACT_READ)
 class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
+	"""
+	Support retrieving the submitted assignment history (and summaries)
+	typically for a particular column of the gradebok.
 
+	The return dictionary will have the following entries:
+
+	Items
+		A dictionary from student username to submission history item
+		(or possibly null)
+
+	FilteredTotalItemCount
+		The total number of items that match the filter, if specified;
+		identical to TotalItemCount if there is no filter.
+
+	TotalItemCount
+		How many total submissions there are. If any filter, sorting
+		or paging options are specified, this will be the same as the
+		number of enrolled students in the class.
+
+	The following query parameters are supported:
+
+	sortOn
+		The field to sort on. Options are ``lastModified``,
+		``createdTime``, ``LikeCount``, ``RecursiveLikeCount``, and
+		``ReferencedByCount``. Only ``lastModified``, ``createdTime``
+		are valid for the stream views.
+
+	sortOrder
+		The sort direction. Options are ``ascending`` and
+		``descending``. If you do not specify, a value that makes the
+		most sense for the ``sortOn`` parameter will be used by
+		default.
+
+	filter
+		Whether to filter the returned data in some fashion. Several
+		values are defined:
+
+		* ``LegacyEnrollmentStatusForCredit``: Only students that are
+		  enrolled for credit are returned. An entry in the dictionary is
+		  returned for each such student, even if they haven't submitted;
+		  the value for students that haven't submitted is null.
+
+		* ``LegacyEnrollmentStatusOpen``: Only students that are
+		  enrolled NOT for credit are returned. An entry in the dictionary is
+		  returned for each such student, even if they haven't submitted;
+		  the value for students that haven't submitted is null.
+
+	"""
 	def __call__(self):
 		request = self.request
 		context = request.context
@@ -149,10 +199,38 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 			raise hexc.HTTPForbidden()
 
 		result = LocatedExternalDict()
-		result['Items'] = dict(context)
 		column = context.__parent__
 		result.__parent__ = column
 		result.__name__ = context.__name__
+
+		filter_name = self.request.params.get('filter')
+		if filter_name in ('LegacyEnrollmentStatusForCredit', 'LegacyEnrollmentStatusOpen'):
+			# Get the set of usernames. Right now, we have a direct
+			# dependency on the legacy course instance, so we need some better
+			# abstractions around this. This will break when we have
+			# non-legacy courses
+			everyone = course.legacy_community
+			restricted_id = course.LegacyScopes['restricted']
+			restricted = Entity.get_entity(restricted_id) if restricted_id else None
+
+			restricted_usernames = set(IEnumerableEntityContainer(restricted).iter_usernames()) if restricted is not None else set()
+			everyone_usernames = set(IEnumerableEntityContainer(everyone).iter_usernames())
+			if filter_name == 'LegacyEnrollmentStatusForCredit':
+				filter_usernames = restricted_usernames
+			elif filter_name == 'LegacyEnrollmentStatusOpen':
+				# instructors are also a member of the restricted set,
+				# so take them out (otherwise the count will be wrong)
+				filter_usernames = everyone_usernames - restricted_usernames - {x.id for x in course.instructors}
+
+			result['TotalItemCount'] = ICourseEnrollments(course).count_enrollments()
+			result['FilteredTotalItemCount'] = len(filter_usernames)
+
+			result['Items'] = dict(context.items(usernames=filter_usernames,placeholder=None))
+		else:
+			# Everything
+			result['Items'] = dict(context)
+			result['TotalItemCount'] = len(result['Items'])
+			result['FilteredTotalItemCount'] = result['TotalItemCount']
 
 		return result
 
