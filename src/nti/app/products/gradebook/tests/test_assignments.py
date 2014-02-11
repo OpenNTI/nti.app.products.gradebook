@@ -337,6 +337,85 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
+	@WithSharedApplicationMockDS(users=('harp4162', 'aaa@nextthought.com'),
+								 testapp=True,
+								 default_authenticate=True)
+	def test_filter_sort_page_history(self):
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		# Note that our username comes first, but our realname (Madden Jason) comes
+		# after (Johnson Steve) so we can test sorting by name
+		jmadden_environ = self._make_extra_environ(username='aaa@nextthought.com')
+		jmadden_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		# Re-enum to pick up instructor; also setup profile names
+		with mock_dataserver.mock_db_trans(self.ds):
+			lib = component.getUtility(IContentPackageLibrary)
+			del lib.contentPackages
+			getattr(lib, 'contentPackages')
+			from nti.dataserver.users.interfaces import IFriendlyNamed
+			from nti.dataserver.users import User
+			IFriendlyNamed(User.get_user('sjohnson@nextthought.com')).realname = 'Steve Johnson'
+			IFriendlyNamed(User.get_user('aaa@nextthought.com')).realname = 'Jason Madden'
+
+		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
+		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
+
+		ext_obj = to_external_object( submission )
+		del ext_obj['Class']
+
+		# Make sure we're all enrolled
+		for uname, env in (('sjohnson@nextthought.com',None),
+						   ('harp4162', instructor_environ),
+						   ('aaa@nextthought.com', jmadden_environ)):
+			self.testapp.post_json( '/dataserver2/users/'+uname+'/Courses/EnrolledCourses',
+									'CLC 3403',
+									extra_environ=env,
+									status=201 )
+
+		# Now both students submit
+		for uname, env in (('sjohnson@nextthought.com',None),
+						   ('aaa@nextthought.com', jmadden_environ)):
+
+			self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
+									ext_obj,
+									extra_environ=env,
+									status=201)
+
+		# Check that it should show up in the counter
+		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
+		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 2 ))
+
+		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
+		self.testapp.get(sum_link, extra_environ=instructor_environ)
+
+		# Sorting requires filtering. Default is ascending for realname
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen', 'sortOn': 'realname'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'TotalItemCount', 2 ) )
+		assert_that( sum_res.json_body, has_entry( 'TotalNonNullItemCount', 2 ) )
+		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 2) )
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'realname',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
+
+
 
 	@WithSharedApplicationMockDS(users=('harp4162',),testapp=True,default_authenticate=True)
 	def test_instructor_grade_stops_student_submission(self):

@@ -134,6 +134,7 @@ from nti.contenttypes.courses.interfaces import is_instructed_by_name
 from nti.dataserver.interfaces import IEnumerableEntityContainer
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.dataserver.users import Entity
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -169,10 +170,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 	The following query parameters are supported:
 
 	sortOn
-		The field to sort on. Options are ``lastModified``,
-		``createdTime``, ``LikeCount``, ``RecursiveLikeCount``, and
-		``ReferencedByCount``. Only ``lastModified``, ``createdTime``
-		are valid for the stream views.
+		The field to sort on. Options are ``realname`` to sort on the parts
+		of the user's realname (\"lastname\" first; note that this is
+		imprecise and likely to sort non-English names incorrectly.)
+		Note that if you sort, the Items dictionary becomes an ordered
+		list of pairs.
 
 	sortOrder
 		The sort direction. Options are ``ascending`` and
@@ -210,6 +212,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		result.__name__ = context.__name__
 
 		filter_name = self.request.params.get('filter')
+		sort_name = self.request.params.get('sortOn')
 		if filter_name in ('LegacyEnrollmentStatusForCredit', 'LegacyEnrollmentStatusOpen'):
 			# Get the set of usernames. Right now, we have a direct
 			# dependency on the legacy course instance, so we need some better
@@ -231,7 +234,34 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 			result['TotalItemCount'] = ICourseEnrollments(course).count_enrollments()
 			result['FilteredTotalItemCount'] = len(filter_usernames)
 
-			result['Items'] = dict(context.items(usernames=filter_usernames,placeholder=None))
+			# Because the items() method returns things in the order that they are
+			# listed in usernames, we can sort usernames first to get the correct
+			# order. This is especially helpful when paging as we can consume the part
+			# of the generator needed.
+			items_factory = dict # don't use an ordered dict if we don't sort
+			if sort_name == 'realname':
+				# An alternative way to d this would be to get the
+				# intids of the users (available from the EntityContainer)
+				# and then have an index on the reverse name in the entity
+				# catalog (we have the name parts, but keyword indexes are
+				# not sortable)
+				def _key(username):
+					user = Entity.get_entity(username)
+					if user is None: # deleted
+						return username
+					parts = IFriendlyNamed(user).get_searchable_realname_parts()
+					if not parts:
+						return username
+
+					parts.reverse() # last name first
+					return ' '.join(parts).lower()
+
+				filter_usernames = sorted(filter_usernames,
+										  key=_key,
+										  reverse=self.request.params.get('sortOrder', 'ascending') == 'descending')
+				items_factory = list
+
+			result['Items'] = items_factory(context.items(usernames=filter_usernames,placeholder=None))
 		else:
 			# Everything
 			result['Items'] = dict(context)
