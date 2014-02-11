@@ -14,6 +14,7 @@ from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
 
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
+from nti.dataserver.interfaces import ILastModified
 
 from nti.utils import schema
 from nti.ntiids.schema import ValidNTIID
@@ -240,6 +241,7 @@ def _grade_property():
 						  required=False)
 
 class IGrade(IContained,
+			 ILastModified,
 			 IShouldHaveTraversablePath):
 	"""
 	A single grade for a single user.

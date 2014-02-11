@@ -19,11 +19,12 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.dataserver import mimetype
 from nti.dataserver.interfaces import ALL_PERMISSIONS
-from nti.dataserver.datastructures import ModDateTrackingObject
+from nti.dataserver.datastructures import CreatedModDateTrackingObject
 from nti.externalization.externalization import make_repr
 
 from nti.utils.property import alias
 from nti.utils.property import CachedProperty
+from nti.utils.property import Lazy
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -39,7 +40,7 @@ from nti.dataserver.authorization_acl import ace_denying_all
 
 @interface.implementer(IGrade,
 					   zmime_interfaces.IContentTypeAware)
-class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
+class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 			SchemaConfigured,
 			zcontained.Contained):
 
@@ -47,12 +48,17 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 
 	createDirectFieldProperties(IGrade)
 
-#	ntiid = alias('NTIID')
-
 	grade = alias('value')
 	username = alias('Username')
 	assignmentId = alias('AssignmentId')
 	Username = alias('__name__')
+
+	# Right now, we inherit the 'creator' property
+	# from CreatedModDateTrackingObject, but we have no real
+	# need for it (also, some extent objects in the database
+	# don't have a value for it), so provide a default that
+	# ignores it
+	creator = None
 
 	def __init__(self, **kwargs):
 		if 'grade' in kwargs and 'value' not in kwargs:
@@ -62,6 +68,15 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 			kwargs['Username'] = kwargs['username']
 			del kwargs['username']
 		super(Grade,self).__init__(**kwargs)
+
+	@Lazy
+	def createdTime(self):
+		# Some old objects in the database won't have
+		# a value for created time; in that case,
+		# default to lastModified.
+		# Some old objects in the database will have a lastModified
+		# of 0, though, nothing we can do about that...
+		return self.lastModified
 
 	@property
 	def AssignmentId(self):
@@ -89,11 +104,5 @@ class Grade(ModDateTrackingObject, # NOTE: This is *not* persistent
 
 		except AttributeError:
 			return NotImplemented
-
-#	def __hash__(self):
-#		xhash = 47
-#		xhash ^= hash(self.NTIID)
-#		xhash ^= hash(self.username)
-#		return xhash
 
 	__repr__ = make_repr()
