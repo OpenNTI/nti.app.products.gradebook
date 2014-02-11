@@ -196,6 +196,16 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		  returned for each such student, even if they haven't submitted;
 		  the value for students that haven't submitted is null.
 
+	batchSize
+		Integer giving the page size. Must be greater than zero.
+		Paging only happens when this is supplied together with
+		``batchStart`` (or ``batchAround`` for those views that support it).
+
+	batchStart
+		Integer giving the index of the first object to return,
+		starting with zero. Paging only happens when this is
+		supplied together with ``batchSize``.
+
 	"""
 	def __call__(self):
 		request = self.request
@@ -261,7 +271,17 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 										  reverse=self.request.params.get('sortOrder', 'ascending') == 'descending')
 				items_factory = list
 
-			result['Items'] = items_factory(context.items(usernames=filter_usernames,placeholder=None))
+			items_iter = context.items(usernames=filter_usernames,placeholder=None)
+			batch_size, batch_start = self._get_batch_size_start()
+			if batch_size is not None and batch_start is not None:
+				number_items_needed = batch_size + batch_start + 2
+				self._batch_tuple_iterable(result, ( (None, x) for x in items_iter),
+										   number_items_needed, batch_size, batch_start)
+			elif items_factory is list:
+				self._batch_tuple_iterable(result, ( (None, x) for x in items_iter),
+										   result['TotalItemCount'])
+			else:
+				result['Items'] = items_factory(items_iter)
 		else:
 			# Everything
 			result['Items'] = dict(context)
