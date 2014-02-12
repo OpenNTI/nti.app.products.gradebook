@@ -173,7 +173,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		The field to sort on. Options are ``realname`` to sort on the parts
 		of the user's realname (\"lastname\" first; note that this is
 		imprecise and likely to sort non-English names incorrectly.);
-		``dateSubmitted``; ``feedbackCount``; ``gradeValue``.
+		``dateSubmitted``; ``feedbackCount``; ``gradeValue``; ``username``.
 		Note that if you sort, the Items dictionary becomes an ordered
 		list of pairs.
 
@@ -274,7 +274,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 										  reverse=sort_reverse)
 				items_factory = list
 				items_iter = context.items(usernames=filter_usernames,placeholder=None)
-
+			elif sort_name == 'username':
+				filter_usernames = sorted(filter_usernames,
+										  reverse=sort_reverse)
+				items_factory = list
+				items_iter = context.items(usernames=filter_usernames,placeholder=None)
 			elif sort_name == 'dateSubmitted':
 				filter_usernames = sorted(filter_usernames)
 				all_items = context.items(usernames=filter_usernames,placeholder=None)

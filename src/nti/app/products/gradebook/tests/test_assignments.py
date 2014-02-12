@@ -452,6 +452,25 @@ class TestAssignments(SharedApplicationTestBase):
 					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
 
 
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'username'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
+
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'username',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
+
+
 	@WithSharedApplicationMockDS(users=('harp4162',),testapp=True,default_authenticate=True)
 	def test_instructor_grade_stops_student_submission(self):
 		# This only works in the OU environment because that's where the purchasables are
