@@ -100,6 +100,12 @@
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<!-- Decorators -->
+	<adapter factory=".adapters.grade_for_history_item"
+			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
+			 provides=".interfaces.IGrade" />
+	<adapter factory=".adapters.grade_for_history_item"
+			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
+			 provides=".interfaces.IGrade" />
 
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"

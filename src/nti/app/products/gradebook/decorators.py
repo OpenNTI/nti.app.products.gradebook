@@ -14,14 +14,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope import component
 
 from pyramid.threadlocal import get_current_request
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
-from nti.dataserver.interfaces import IUser
+
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
@@ -31,7 +30,7 @@ from nti.externalization.externalization import to_external_object
 
 from nti.appserver.pyramid_renderers import AbstractAuthenticatedRequestAwareDecorator
 
-from .grades import Grade
+from .interfaces import IGrade
 from .interfaces import IGradeBook
 
 LINKS = StandardExternalFields.LINKS
@@ -78,28 +77,15 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		_links.append(link)
 
 
+
 @interface.implementer(IExternalObjectDecorator)
 class _UsersCourseAssignmentHistoryItemDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, item, external):
-		course = ICourseInstance(item)
-		user = IUser(item)
-		book = IGradeBook(course)
-		assignmentId = item.Submission.assignmentId
-
-		entry = book.getColumnForAssignmentId(assignmentId)
-		if entry is not None:
-			grade = entry.get(user.username)
-			if grade is None:
-				# Always dummy up a grade (at the right location in
-				# the hierarchy) so that we have an 'edit' link if
-				# necessary
-				grade = Grade()
-				grade.__parent__ = entry
-				grade.__name__ = user.username
-
+		grade = IGrade(item)
+		if grade is not None:
 			external['Grade'] = to_external_object(grade)
 
 from .interfaces import ISubmittedAssignmentHistory

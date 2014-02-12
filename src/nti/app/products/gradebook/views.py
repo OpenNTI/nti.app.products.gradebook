@@ -172,7 +172,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 	sortOn
 		The field to sort on. Options are ``realname`` to sort on the parts
 		of the user's realname (\"lastname\" first; note that this is
-		imprecise and likely to sort non-English names incorrectly.)
+		imprecise and likely to sort non-English names incorrectly.);
+		``dateSubmitted``; ``feedbackCount``; ``gradeValue``.
 		Note that if you sort, the Items dictionary becomes an ordered
 		list of pairs.
 
@@ -249,8 +250,10 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 			# order. This is especially helpful when paging as we can consume the part
 			# of the generator needed.
 			items_factory = dict # don't use an ordered dict if we don't sort
+			items_iter = None
+			sort_reverse = self.request.params.get('sortOrder', 'ascending') == 'descending'
 			if sort_name == 'realname':
-				# An alternative way to d this would be to get the
+				# An alternative way to do this would be to get the
 				# intids of the users (available from the EntityContainer)
 				# and then have an index on the reverse name in the entity
 				# catalog (we have the name parts, but keyword indexes are
@@ -268,10 +271,37 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
 				filter_usernames = sorted(filter_usernames,
 										  key=_key,
-										  reverse=self.request.params.get('sortOrder', 'ascending') == 'descending')
+										  reverse=sort_reverse)
 				items_factory = list
+				items_iter = context.items(usernames=filter_usernames,placeholder=None)
 
-			items_iter = context.items(usernames=filter_usernames,placeholder=None)
+			elif sort_name == 'dateSubmitted':
+				filter_usernames = sorted(filter_usernames)
+				all_items = context.items(usernames=filter_usernames,placeholder=None)
+				items_iter = sorted(all_items,
+									key=lambda x: x[1].createdTime,
+									reverse=sort_reverse)
+				items_factory = list
+			elif sort_name == 'feedbackCount':
+				filter_usernames = sorted(filter_usernames)
+				all_items = context.items(usernames=filter_usernames,placeholder=None)
+				items_iter = sorted(all_items,
+									key=lambda x: x[1].FeedbackCount,
+									reverse=sort_reverse)
+				items_factory = list
+			elif sort_name == 'gradeValue':
+				filter_usernames = sorted(filter_usernames)
+				all_items = context.items(usernames=filter_usernames,placeholder=None)
+				items_iter = sorted(all_items,
+									key=lambda item: IGrade(item[1]).value, # this is pretty inefficient
+									reverse=sort_reverse)
+				items_factory = list
+			elif sort_name: # pragma: no cover
+				# We're not silently ignoring because in the past
+				# we've had clients send in the wrong value for a long time
+				# before anybody noticed
+				raise hexc.HTTPBadRequest("Unsupported sort option")
+
 			batch_size, batch_start = self._get_batch_size_start()
 			if batch_size is not None and batch_start is not None:
 				number_items_needed = batch_size + batch_start + 2
