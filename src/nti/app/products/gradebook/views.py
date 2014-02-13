@@ -305,6 +305,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 				# we've had clients send in the wrong value for a long time
 				# before anybody noticed
 				raise hexc.HTTPBadRequest("Unsupported sort option")
+			else:
+				items_iter = context.items(usernames=filter_usernames,placeholder=None)
 
 			batch_size, batch_start = self._get_batch_size_start()
 			if batch_size is not None and batch_start is not None:
@@ -316,6 +318,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 										   result['TotalItemCount'])
 			else:
 				result['Items'] = items_factory(items_iter)
+
 		else:
 			# Everything
 			result['Items'] = dict(context)
