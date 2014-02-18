@@ -309,13 +309,9 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 				items_iter = context.items(usernames=filter_usernames,placeholder=None)
 
 			batch_size, batch_start = self._get_batch_size_start()
-			if batch_size is not None and batch_start is not None:
-				number_items_needed = batch_size + batch_start + 2
-				self._batch_tuple_iterable(result, ( (None, x) for x in items_iter),
-										   number_items_needed, batch_size, batch_start)
-			elif items_factory is list:
-				self._batch_tuple_iterable(result, ( (None, x) for x in items_iter),
-										   result['TotalItemCount'])
+			if (batch_size is not None and batch_start is not None) or items_factory is list:
+				self._batch_tuple_iterable(result, items_iter,
+										   selector=lambda x: x)
 			else:
 				result['Items'] = items_factory(items_iter)
 
