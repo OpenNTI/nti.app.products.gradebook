@@ -171,11 +171,13 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
 	sortOn
 		The field to sort on. Options are ``realname`` to sort on the parts
-		of the user's realname (\"lastname\" first; note that this is
+		of the user's realname ("lastname" first; note that this is
 		imprecise and likely to sort non-English names incorrectly.);
 		``dateSubmitted``; ``feedbackCount``; ``gradeValue``; ``username``.
 		Note that if you sort, the Items dictionary becomes an ordered
-		list of pairs.
+		list of pairs. Also note that sorting by gradeValue may not have
+		the expected results, depending on what sort of grade values are
+		being used.
 
 	sortOrder
 		The sort direction. Options are ``ascending`` and
@@ -283,21 +285,21 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 				filter_usernames = sorted(filter_usernames)
 				all_items = context.items(usernames=filter_usernames,placeholder=None)
 				items_iter = sorted(all_items,
-									key=lambda x: x[1].createdTime,
+									key=lambda x: x[1].createdTime if x[1] else 0,
 									reverse=sort_reverse)
 				items_factory = list
 			elif sort_name == 'feedbackCount':
 				filter_usernames = sorted(filter_usernames)
 				all_items = context.items(usernames=filter_usernames,placeholder=None)
 				items_iter = sorted(all_items,
-									key=lambda x: x[1].FeedbackCount,
+									key=lambda x: x[1].FeedbackCount if x[1] else 0,
 									reverse=sort_reverse)
 				items_factory = list
 			elif sort_name == 'gradeValue':
 				filter_usernames = sorted(filter_usernames)
 				all_items = context.items(usernames=filter_usernames,placeholder=None)
 				items_iter = sorted(all_items,
-									key=lambda item: IGrade(item[1]).value, # this is pretty inefficient
+									key=lambda x: IGrade(x[1]).value if x[1] else 0, # this is pretty inefficient
 									reverse=sort_reverse)
 				items_factory = list
 			elif sort_name: # pragma: no cover

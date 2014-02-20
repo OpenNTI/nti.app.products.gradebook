@@ -379,6 +379,23 @@ class TestAssignments(SharedApplicationTestBase):
 									extra_environ=env,
 									status=201 )
 
+		# Before we submit, we have no count
+		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
+		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 0 ))
+
+		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
+		self.testapp.get(sum_link, extra_environ=instructor_environ)
+		# We can request it sorted, even with nothing in it, and it works
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'feedbackCount'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
+		assert_that( [x[1] for x in sum_res.json_body['Items']],
+					 is_([None, None]) )
+
 		# Now both students submit
 		for uname, env in (('sjohnson@nextthought.com',None),
 						   ('aaa@nextthought.com', jmadden_environ)):
@@ -391,7 +408,6 @@ class TestAssignments(SharedApplicationTestBase):
 		# Check that it should show up in the counter
 		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 2 ))
-
 		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
 		self.testapp.get(sum_link, extra_environ=instructor_environ)
 
