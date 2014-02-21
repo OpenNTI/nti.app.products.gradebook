@@ -12,11 +12,13 @@ from hamcrest import assert_that
 from nti.app.products.gradebook import gradebook
 from nti.app.products.gradebook import interfaces as grades_interfaces
 
-from nti.app.products.gradebook.tests import ConfiguringTestBase
-
 from nti.testing.matchers import verifiably_provides, validly_provides
 
-class TestGradeBook(ConfiguringTestBase):
+from . import SharedConfiguringTestLayer
+import unittest
+
+class TestGradebook(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
 
 	def test_interfaces(self):
 		gb = gradebook.GradeBook()
@@ -37,4 +39,3 @@ class TestGradeBook(ConfiguringTestBase):
 		gbe.__name__ = gbe.displayName = 'entry'
 		assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
 		assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
-

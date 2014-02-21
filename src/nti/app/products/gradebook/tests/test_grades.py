@@ -17,32 +17,34 @@ from ..grades import Grade
 from ..interfaces import IGrade
 
 import time
+import unittest
+
+class TestGrades(unittest.TestCase):
+
+	def test_implements(self):
+		now = time.time()
+
+		grade = Grade()
+		grade.__name__ = 'foo@bar'
 
 
-def test_implements():
-	now = time.time()
+		assert_that( grade, validly_provides(IGrade) )
 
-	grade = Grade()
-	grade.__name__ = 'foo@bar'
+		assert_that( grade, has_property( 'createdTime', grade.lastModified ))
+		assert_that( grade, has_property( 'lastModified', greater_than_or_equal_to(now)))
 
+		grade.createdTime = 1
+		assert_that( grade, has_property( 'createdTime', 1 ))
 
-	assert_that( grade, validly_provides(IGrade) )
+	def test_unpickle_old_state(self):
 
-	assert_that( grade, has_property( 'createdTime', grade.lastModified ))
-	assert_that( grade, has_property( 'lastModified', greater_than_or_equal_to(now)))
+		grade = Grade()
+		grade.__name__ = 'foo@bar'
 
-	grade.createdTime = 1
-	assert_that( grade, has_property( 'createdTime', 1 ))
+		state = grade.__dict__.copy()
+		del state['createdTime']
 
-def test_unpickle_old_state():
+		grade = Grade.__new__(Grade)
+		grade.__setstate__(state)
 
-	grade = Grade()
-	grade.__name__ = 'foo@bar'
-
-	state = grade.__dict__.copy()
-	del state['createdTime']
-
-	grade = Grade.__new__(Grade)
-	grade.__setstate__(state)
-
-	assert_that( grade, has_property( 'createdTime', grade.lastModified ))
+		assert_that( grade, has_property( 'createdTime', grade.lastModified ))

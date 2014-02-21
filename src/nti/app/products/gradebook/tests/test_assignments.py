@@ -11,7 +11,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import has_property
+from hamcrest import none
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_entry
@@ -19,20 +19,18 @@ from hamcrest import has_entries
 from hamcrest import has_item
 from hamcrest import contains
 
-import os
+
 import urllib
 from zope import component
 from zope import interface
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.filesystem import CachedNotifyingStaticFilesystemLibrary as Library
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.app.products.gradebook import assignments
 from nti.app.products.gradebook import interfaces as grades_interfaces
 
-from nti.app.testing.application_webtest import SharedApplicationTestBase
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 import pyramid.interfaces
@@ -45,32 +43,20 @@ from nti.assessment.submission import QuestionSubmission
 from nti.assessment.submission import QuestionSetSubmission
 from nti.assessment.submission import AssignmentSubmission
 
+from nti.dataserver.users import User
 
-class TestAssignments(SharedApplicationTestBase):
+from . import InstructedCourseApplicationTestLayer
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
-	@classmethod
-	def _setup_library(cls, *args, **kwargs):
-		lib = Library(
-					paths=(os.path.join(
-								   os.path.dirname(__file__),
-								   'Library',
-								   'CLC3403_LawAndJustice'),
-				   ))
-		return lib
+class TestAssignments(ApplicationLayerTest):
+	layer = InstructedCourseApplicationTestLayer
 
-	@mock_dataserver.WithMockDSTrans
+	@WithSharedApplicationMockDS
 	def test_synchronize_gradebook(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
+
 			lib = component.getUtility(IContentPackageLibrary)
-			from zope.component.interfaces import IComponents
-			from nti.app.products.courseware.interfaces import ICourseCatalog
-			components = component.getUtility(IComponents, name='platform.ou.edu')
-			catalog = components.getUtility( ICourseCatalog )
-			# XXX
-			# This test is unclean, we re-register globally
-			global_catalog = component.getUtility(ICourseCatalog)
-			global_catalog._entries[:] = catalog._entries
 
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
@@ -88,20 +74,12 @@ class TestAssignments(SharedApplicationTestBase):
 
 				assert_that( part, has_key('Main Title'))
 
-	@mock_dataserver.WithMockDSTrans
+	@WithSharedApplicationMockDS
 	def test_get_course_assignments(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
+
 			lib = component.getUtility(IContentPackageLibrary)
-			getattr(lib, 'contentPackages')
-			from zope.component.interfaces import IComponents
-			from nti.app.products.courseware.interfaces import ICourseCatalog
-			components = component.getUtility(IComponents, name='platform.ou.edu')
-			catalog = components.getUtility( ICourseCatalog )
-			# XXX
-			# This test is unclean, we re-register globally
-			global_catalog = component.getUtility(ICourseCatalog)
-			global_catalog._entries[:] = catalog._entries
 
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
@@ -110,18 +88,6 @@ class TestAssignments(SharedApplicationTestBase):
 				for a in result:
 					# No request means no links
 					assert_that( a, externalizes( does_not( has_key( 'GradeSubmittedCount' ))))
-
-			# Now create a request as the instructor and check
-			# that the extra data is there
-			self._create_user('harp4162')
-			# re-enumerate to pick up the user
-			del lib.contentPackages
-			del global_catalog._entries[:]
-			getattr(lib, 'contentPackages')
-			# XXX
-			# This test is unclean, we re-register globally
-			global_catalog = component.getUtility(ICourseCatalog)
-			global_catalog._entries[:] = catalog._entries
 
 			request = self.beginRequest()
 			request.environ['REMOTE_USER'] = 'harp4162'
@@ -156,18 +122,14 @@ class TestAssignments(SharedApplicationTestBase):
 	assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1"
 	question_set_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo"
 
-	@WithSharedApplicationMockDS(users=('harp4162', 'user@not_enrolled'),testapp=True,default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('user@not_enrolled'),testapp=True,default_authenticate=True)
 	def test_instructor_access_to_history_items_edit_grade(self):
+
 		# This only works in the OU environment because that's where the purchasables are
 		extra_env = self.testapp.extra_environ or {}
 		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
 		self.testapp.extra_environ = extra_env
 
-		# Re-enum to pick up instructor
-		with mock_dataserver.mock_db_trans(self.ds):
-			lib = component.getUtility(IContentPackageLibrary)
-			del lib.contentPackages
-			getattr(lib, 'contentPackages')
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
 
@@ -337,10 +299,11 @@ class TestAssignments(SharedApplicationTestBase):
 		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
-	@WithSharedApplicationMockDS(users=('harp4162', 'aaa@nextthought.com'),
+	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
 								 testapp=True,
 								 default_authenticate=True)
 	def test_filter_sort_page_history(self):
+
 		# This only works in the OU environment because that's where the purchasables are
 		extra_env = self.testapp.extra_environ or {}
 		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
@@ -354,13 +317,10 @@ class TestAssignments(SharedApplicationTestBase):
 		jmadden_environ = self._make_extra_environ(username='aaa@nextthought.com')
 		jmadden_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
 
-		# Re-enum to pick up instructor; also setup profile names
+		#  setup profile names
 		with mock_dataserver.mock_db_trans(self.ds):
-			lib = component.getUtility(IContentPackageLibrary)
-			del lib.contentPackages
-			getattr(lib, 'contentPackages')
 			from nti.dataserver.users.interfaces import IFriendlyNamed
-			from nti.dataserver.users import User
+
 			IFriendlyNamed(User.get_user('sjohnson@nextthought.com')).realname = 'Steve Johnson'
 			IFriendlyNamed(User.get_user('aaa@nextthought.com')).realname = 'Jason Madden'
 
@@ -413,7 +373,8 @@ class TestAssignments(SharedApplicationTestBase):
 
 		# Sorting requires filtering. Default is ascending for realname
 		sum_res = self.testapp.get(sum_link,
-								   {'filter': 'LegacyEnrollmentStatusOpen', 'sortOn': 'realname'},
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'realname'},
 								   extra_environ=instructor_environ)
 		assert_that( sum_res.json_body, has_entry( 'TotalItemCount', 2 ) )
 		assert_that( sum_res.json_body, has_entry( 'TotalNonNullItemCount', 2 ) )
@@ -421,6 +382,8 @@ class TestAssignments(SharedApplicationTestBase):
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
 		assert_that( [x[0] for x in sum_res.json_body['Items']],
 					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
+
+		sj_hist_oid = sum_res.json_body['Items'][0][1]['OID']
 
 		sum_res = self.testapp.get(sum_link,
 								   {'filter': 'LegacyEnrollmentStatusOpen',
@@ -441,6 +404,18 @@ class TestAssignments(SharedApplicationTestBase):
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
 		assert_that( [x[0] for x in sum_res.json_body['Items']],
 					 is_(['aaa@nextthought.com']))
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'realname',
+									'sortOrder': 'descending',
+									'batchSize': 1,
+									'batchStart': 0,
+									'batchAround': sj_hist_oid },
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com']))
 
 		sum_res = self.testapp.get(sum_link,
 								   {'filter': 'LegacyEnrollmentStatusOpen',
@@ -487,18 +462,12 @@ class TestAssignments(SharedApplicationTestBase):
 					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
 
 
-	@WithSharedApplicationMockDS(users=('harp4162',),testapp=True,default_authenticate=True)
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_instructor_grade_stops_student_submission(self):
 		# This only works in the OU environment because that's where the purchasables are
 		extra_env = self.testapp.extra_environ or {}
 		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
 		self.testapp.extra_environ = extra_env
-
-		# Re-enum to pick up instructor
-		with mock_dataserver.mock_db_trans(self.ds):
-			lib = component.getUtility(IContentPackageLibrary)
-			del lib.contentPackages
-			getattr(lib, 'contentPackages')
 
 		# Make sure we're enrolled
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
@@ -543,18 +512,12 @@ class TestAssignments(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry('code', "NotUnique"))
 
 
-	@WithSharedApplicationMockDS(users=('harp4162'),testapp=True,default_authenticate=True)
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_20_autograde_policy(self):
 		# This only works in the OU environment because that's where the purchasables are
 		extra_env = self.testapp.extra_environ or {}
 		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
 		self.testapp.extra_environ = extra_env
-
-		# Re-enum to pick up instructor
-		with mock_dataserver.mock_db_trans(self.ds):
-			lib = component.getUtility(IContentPackageLibrary)
-			del lib.contentPackages
-			getattr(lib, 'contentPackages')
 
 		# XXX: Dirty registration of an autograde policy
 		from ..autograde_policies import TrivialFixedScaleAutoGradePolicy

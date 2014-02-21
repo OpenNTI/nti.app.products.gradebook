@@ -13,16 +13,17 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 
-import os
+
 import unittest
-
-from nti.contentlibrary.filesystem import CachedNotifyingStaticFilesystemLibrary as Library
-
-from nti.app.testing.application_webtest import SharedApplicationTestBase
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-class TestViews(SharedApplicationTestBase):
+
+from . import InstructedCourseApplicationTestLayer
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+class TestViews(ApplicationLayerTest):
+	layer = InstructedCourseApplicationTestLayer
 
 	gradebook_part = {'Name':'Quizzes', 'order':1,
 					  'MimeType':'application/vnd.nextthought.gradebookpart'}
@@ -33,16 +34,6 @@ class TestViews(SharedApplicationTestBase):
 
 	grade = {'username':'sjohnson@nextthought.com', 'grade':85, 'NTIID':None,
 			 'MimeType':'application/vnd.nextthought.grade'}
-
-	@classmethod
-	def _setup_library(cls, *args, **kwargs):
-		lib = Library(
-					paths=(os.path.join(
-								   os.path.dirname(__file__),
-								   'Library',
-								   'CLC3403_LawAndJustice'),
-				   ))
-		return lib
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_gradebook_delete(self):

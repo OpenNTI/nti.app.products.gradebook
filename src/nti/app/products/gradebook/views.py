@@ -128,7 +128,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
 		return super(GradeWithoutSubmissionPutView,self)._do_call()
 
-
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
 from nti.dataserver.interfaces import IEnumerableEntityContainer
@@ -209,6 +209,14 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		starting with zero. Paging only happens when this is
 		supplied together with ``batchSize``.
 
+	batchAround
+		String parameter giving the ``OID`` of an object to build a batch (page)
+		around. When you give this parameter, ``batchStart`` is ignored and
+		the found object is centered at one-half the ``batchSize`` in the returned
+		page (assuming there are enough following objects). If the object is not
+		found (after all the filters are applied) then an empty batch is returned.
+		(Even if you supply this value, you should still supply a value for ``batchStart``
+		such as 1).
 	"""
 	def __call__(self):
 		request = self.request
@@ -311,8 +319,31 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 				items_iter = context.items(usernames=filter_usernames,placeholder=None)
 
 			batch_size, batch_start = self._get_batch_size_start()
+			# TODO: Similar to code in ugd_query_views
+			if self.request.params.get( 'batchAround', '' ) and batch_size is not None:
+				batchAround = self.request.params.get( 'batchAround' )
+				items_factory = list
+				# Ok, they have requested that we compute a beginning index for them.
+				# We do this by materializing the list in memory and walking through
+				# to find the index of the requested object.
+				batch_start = None
+				result_list = []
+				for i, key_value in enumerate(items_iter):
+					# Only keep testing until we find what we need
+					if batch_start is None:
+						if to_external_ntiid_oid( key_value[1] ) == batchAround:
+							batch_start = max( 1, i - (batch_size // 2) - 1 )
+					result_list.append( key_value )
+				items_iter = result_list
+				if batch_start is None:
+					# Well, we got here without finding the matching value.
+					# So return an empty page.
+					batch_start = len(result_list)
+
 			if (batch_size is not None and batch_start is not None) or items_factory is list:
 				self._batch_tuple_iterable(result, items_iter,
+										   batch_size=batch_size,
+										   batch_start=batch_start,
 										   selector=lambda x: x)
 			else:
 				result['Items'] = items_factory(items_iter)

@@ -23,10 +23,13 @@ from .. import grades
 from .. import gradebook
 from .. import gradescheme
 
-from .  import ConfiguringTestBase
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-class TestExternal(ConfiguringTestBase):
+from . import SharedConfiguringTestLayer
+import unittest
+
+class TestExternal(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)

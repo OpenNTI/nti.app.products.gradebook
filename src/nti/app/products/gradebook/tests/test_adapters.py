@@ -17,9 +17,11 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from .. import interfaces as grades_interfaces
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
+import unittest
 
-class TestAdapters(ConfiguringTestBase):
+class TestAdapters(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_course_instance(self):
