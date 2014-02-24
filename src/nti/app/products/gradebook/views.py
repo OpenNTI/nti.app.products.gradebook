@@ -135,6 +135,7 @@ from nti.dataserver.interfaces import IEnumerableEntityContainer
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IFriendlyNamed
+import operator
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -217,6 +218,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		found (after all the filters are applied) then an empty batch is returned.
 		(Even if you supply this value, you should still supply a value for ``batchStart``
 		such as 1).
+
+	batchAroundCreator
+		String parameter giving the ``Creator`` of an object to build a batch (page)
+		around. Otherwise identical to ``batchAround``.
+
 	"""
 	def __call__(self):
 		request = self.request
@@ -319,9 +325,18 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 				items_iter = context.items(usernames=filter_usernames,placeholder=None)
 
 			batch_size, batch_start = self._get_batch_size_start()
+			batchAround = None
+			batchAroundKey = None
 			# TODO: Similar to code in ugd_query_views
 			if self.request.params.get( 'batchAround', '' ) and batch_size is not None:
 				batchAround = self.request.params.get( 'batchAround' )
+				batchAroundKey = lambda key_value: to_external_ntiid_oid( key_value[1] )
+			elif self.request.params.get( 'batchAroundCreator', '') and batch_size is not None:
+				# This branch we could optimize based on the usernames array above
+				batchAround = self.request.params.get('batchAroundCreator').lower()
+				batchAroundKey = lambda key_value: key_value[0].lower()
+
+			if batchAround is not None:
 				items_factory = list
 				# Ok, they have requested that we compute a beginning index for them.
 				# We do this by materializing the list in memory and walking through
@@ -331,7 +346,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 				for i, key_value in enumerate(items_iter):
 					# Only keep testing until we find what we need
 					if batch_start is None:
-						if to_external_ntiid_oid( key_value[1] ) == batchAround:
+						if batchAroundKey( key_value ) == batchAround:
 							batch_start = max( 1, i - (batch_size // 2) - 1 )
 					result_list.append( key_value )
 				items_iter = result_list
