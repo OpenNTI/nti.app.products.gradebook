@@ -164,7 +164,20 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
 
 		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
+		assert_that( sum_link,
+					 is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main%20Title/SubmittedAssignmentHistorySummaries'))
+
 		self.testapp.get(sum_link, extra_environ=instructor_environ)
+
+		bulk_link = self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistory')
+		assert_that( bulk_link,
+					 is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main%20Title/SubmittedAssignmentHistory'))
+
+		# We can walk it down to just one user
+		res = self.testapp.get(sum_link + '/' + self.extra_environ_default_user.lower())
+		assert_that( res.json_body, has_entry( 'Class', 'UsersCourseAssignmentHistoryItemSummary'))
+		res = self.testapp.get(bulk_link + '/' + self.extra_environ_default_user.lower())
+		assert_that( res.json_body, has_entry( 'Class', 'UsersCourseAssignmentHistoryItem'))
 
 		# We can filter to just enrolled, which will exclude us
 		sum_res = self.testapp.get(sum_link, {'filter': 'LegacyEnrollmentStatusForCredit'}, extra_environ=instructor_environ)
@@ -180,7 +193,7 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 1) )
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
 
-		bulk_link = self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistory')
+
 		res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
 
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )

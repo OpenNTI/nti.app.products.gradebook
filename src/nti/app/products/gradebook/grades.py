@@ -17,7 +17,7 @@ from zope.container import contained as zcontained
 from zope.mimetype import interfaces as zmime_interfaces
 
 
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
 from nti.externalization.externalization import make_repr

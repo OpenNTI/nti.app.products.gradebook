@@ -396,6 +396,13 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 
 		return self.__iter__(usernames=usernames, placeholder=placeholder)
 
+	def __getitem__(self, username):
+		"We are traversable to users"
+		(username, item), = self.items(usernames=(username,), placeholder=None)
+		if item is not None:
+			return item
+		raise KeyError(username)
+
 @interface.implementer(ISubmittedAssignmentHistorySummaries)
 @component.adapter(IGradeBookEntry)
 class _DefaultGradeBookEntrySubmittedAssignmentHistorySummaries(_DefaultGradeBookEntrySubmittedAssignmentHistory):
