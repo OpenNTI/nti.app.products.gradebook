@@ -135,7 +135,10 @@ from nti.dataserver.interfaces import IEnumerableEntityContainer
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IFriendlyNamed
-import operator
+from nti.appserver.interfaces import IIntIdUserSearchPolicy
+from zope.intid.interfaces import IIntIds
+from nti.dataserver.interfaces import IUser
+
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -226,6 +229,13 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 	batchAroundCreator
 		String parameter giving the ``Creator`` of an object to build a batch (page)
 		around. Otherwise identical to ``batchAround``.
+
+	usernameSearchTerm
+		If provided, only users that match this search term
+		will be returned. This search is based on the username and
+		realname and alias, and does prefix matching, the same as
+		the normal search algorithm for users. This is independent
+		of filtering.
 	"""
 	def __call__(self):
 		request = self.request
@@ -243,6 +253,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
 		filter_name = self.request.params.get('filter')
 		sort_name = self.request.params.get('sortOn')
+		username_search_term = self.request.params.get('usernameSearchTerm')
 		if filter_name in ('LegacyEnrollmentStatusForCredit', 'LegacyEnrollmentStatusOpen'):
 			# Get the set of usernames. Right now, we have a direct
 			# dependency on the legacy course instance, so we need some better
@@ -263,6 +274,15 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
 			result['TotalItemCount'] = ICourseEnrollments(course).count_enrollments()
 			result['FilteredTotalItemCount'] = len(filter_usernames)
+
+			if username_search_term:
+				policy = component.getAdapter(self.remoteUser, IIntIdUserSearchPolicy, name='comprehensive')
+				id_util = component.getUtility(IIntIds)
+				matched_unames = [x.username for x in policy.query(username_search_term.lower(),
+																   provided=IUser)]
+				filter_usernames = {x for x in filter_usernames if x in matched_unames}
+				result['FilteredTotalItemCount'] = len(filter_usernames)
+
 
 			# Because the items() method returns things in the order that they are
 			# listed in usernames, we can sort usernames first to get the correct

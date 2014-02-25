@@ -23,6 +23,7 @@ from hamcrest import contains
 import urllib
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
@@ -334,8 +335,12 @@ class TestAssignments(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			from nti.dataserver.users.interfaces import IFriendlyNamed
 
-			IFriendlyNamed(User.get_user('sjohnson@nextthought.com')).realname = 'Steve Johnson'
-			IFriendlyNamed(User.get_user('aaa@nextthought.com')).realname = 'Jason Madden'
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Steve Johnson'
+			lifecycleevent.modified(prof.__parent__)
+			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
@@ -406,6 +411,17 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
 		assert_that( [x[0] for x in sum_res.json_body['Items']],
 					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'realname',
+									'usernameSearchTerm': 'Jason'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
+		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 1 ) )
+		assert_that( sum_res.json_body, has_entry( 'TotalItemCount', 2 ) )
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['aaa@nextthought.com']))
 
 		sum_res = self.testapp.get(sum_link,
 								   {'filter': 'LegacyEnrollmentStatusOpen',
