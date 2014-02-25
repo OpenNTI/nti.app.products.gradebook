@@ -420,7 +420,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		sum_res = self.testapp.get(sum_link,
 								   {'filter': 'LegacyEnrollmentStatusOpen',
-									'sortOn': 'realname',
+									'sortOn': 'username',
 									'sortOrder': 'descending',
 									'batchSize': 1,
 									'batchStart': 0,
@@ -431,7 +431,19 @@ class TestAssignments(ApplicationLayerTest):
 					 is_(['sjohnson@nextthought.com']))
 		sum_res = self.testapp.get(sum_link,
 								   {'filter': 'LegacyEnrollmentStatusOpen',
-									'sortOn': 'realname',
+									'sortOn': 'username',
+									'sortOrder': 'ascending',
+									'batchSize': 1,
+									'batchStart': 0,
+									'batchAround': sj_hist_oid },
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com']))
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'username',
 									'sortOrder': 'descending',
 									'batchSize': 1,
 									'batchStart': 0,

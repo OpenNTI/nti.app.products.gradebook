@@ -211,18 +211,21 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 		supplied together with ``batchSize``.
 
 	batchAround
-		String parameter giving the ``OID`` of an object to build a batch (page)
-		around. When you give this parameter, ``batchStart`` is ignored and
-		the found object is centered at one-half the ``batchSize`` in the returned
-		page (assuming there are enough following objects). If the object is not
-		found (after all the filters are applied) then an empty batch is returned.
-		(Even if you supply this value, you should still supply a value for ``batchStart``
-		such as 1).
+		String parameter giving the ``OID`` of an object to build a
+		batch (page) around. When you give this parameter,
+		``batchStart`` is ignored and the found object is centered at
+		one-half the ``batchSize`` in the returned page---assuming
+		there are enough following objects). If there are very few
+		matching objects, and/or the ``batchSize`` is small, then the
+		object may not be centered, but we do guarantee it will be in
+		the returned values. If the object is not found (after all the
+		filters are applied) then an empty batch is returned. (Even if
+		you supply this value, you should still supply a value for
+		``batchStart`` such as 1).
 
 	batchAroundCreator
 		String parameter giving the ``Creator`` of an object to build a batch (page)
 		around. Otherwise identical to ``batchAround``.
-
 	"""
 	def __call__(self):
 		request = self.request
@@ -328,33 +331,47 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 			batchAround = None
 			batchAroundKey = None
 			# TODO: Similar to code in ugd_query_views
-			if self.request.params.get( 'batchAround', '' ) and batch_size is not None:
-				batchAround = self.request.params.get( 'batchAround' )
-				batchAroundKey = lambda key_value: to_external_ntiid_oid( key_value[1] )
-			elif self.request.params.get( 'batchAroundCreator', '') and batch_size is not None:
-				# This branch we could optimize based on the usernames array above
-				batchAround = self.request.params.get('batchAroundCreator').lower()
-				batchAroundKey = lambda key_value: key_value[0].lower()
+			if batch_size is not None:
+				if self.request.params.get( 'batchAround', '' ):
+					batchAround = self.request.params.get( 'batchAround' )
+					batchAroundKey = lambda key_value: to_external_ntiid_oid( key_value[1] )
+				elif self.request.params.get( 'batchAroundCreator', ''):
+					# This branch we could optimize based on the usernames array above
+					batchAround = self.request.params.get('batchAroundCreator').lower()
+					batchAroundKey = lambda key_value: key_value[0].lower()
 
 			if batchAround is not None:
 				items_factory = list
 				# Ok, they have requested that we compute a beginning index for them.
 				# We do this by materializing the list in memory and walking through
 				# to find the index of the requested object.
-				batch_start = None
+				batch_start = None # ignore input
 				result_list = []
+				match_index = None
 				for i, key_value in enumerate(items_iter):
+					result_list.append( key_value )
+
 					# Only keep testing until we find what we need
+					# TODO: We should be able to break under some
+					# circumstances, yes? If the items_iter is a generator,
+					# that would be benificial
 					if batch_start is None:
 						if batchAroundKey( key_value ) == batchAround:
-							batch_start = max( 1, i - (batch_size // 2) - 1 )
-					result_list.append( key_value )
+							batch_start = max( 0, i - (batch_size // 2) - 1 )
+							match_index = i
+
 				items_iter = result_list
 				if batch_start is None:
 					# Well, we got here without finding the matching value.
 					# So return an empty page.
 					batch_start = len(result_list)
-
+				elif match_index <= batch_start + batch_size:
+					# For very small batches, when the match is at
+					# the beginning of the list (typically),
+					# we could wind up returning a list that doesn't include
+					# the around value. Do our best to make sure that
+					# doesn't happen.
+					batch_start = max( 0, match_index - (batch_size // 2))
 			if (batch_size is not None and batch_start is not None) or items_factory is list:
 				self._batch_tuple_iterable(result, items_iter,
 										   batch_size=batch_size,
