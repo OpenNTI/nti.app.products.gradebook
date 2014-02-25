@@ -16,7 +16,7 @@ import numbers
 from zope import interface
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -28,13 +28,13 @@ class LetterGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	_type = six.string_types
-	
+
 	grades = FP(grades_interfaces.ILetterGradeScheme['grades'])
 	ranges = FP(grades_interfaces.ILetterGradeScheme['ranges'])
 
 	default_grades = ('A', 'B', 'C', 'D', 'F')
 	default_ranges = ((90, 100), (80, 89), (70, 79), (60, 69), (0, 59))
-	
+
 	def __init__(self, grades=None, ranges=None):
 		super(LetterGradeScheme, self).__init__()
 		self.grades = self.default_grades if grades is None else grades
@@ -47,7 +47,7 @@ class LetterGradeScheme(SchemaConfigured):
 			if value >= _min and value <= _max:
 				return self.grades[i]
 		return None
-		
+
 	def toNumber(self, letter):
 		try:
 			index = self.grades.index(letter.upper())
@@ -73,7 +73,7 @@ class LetterGradeScheme(SchemaConfigured):
 		dem = self._max_in_ranges()
 		num = self.toNumber(letter)
 		return num / float(dem)
-	
+
 	def fromCorrectness(self, value):
 		dem = float(self._max_in_ranges())
 		for i, r in enumerate(self.ranges):
@@ -155,14 +155,14 @@ class NumericGradeScheme(SchemaConfigured):
 		xhash ^= hash(self.min)
 		xhash ^= hash(self.max)
 		return xhash
-	
+
 @interface.implementer(grades_interfaces.IIntegerGradeScheme)
 class IntegerGradeScheme(NumericGradeScheme):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.IIntegerGradeScheme)
 
 	_type = (int, long)
-	
+
 	def fromUnicode(self, value):
 		value = int(value)
 		self.validate(value)
@@ -174,7 +174,7 @@ class BooleanGradeScheme(SchemaConfigured):
 	createDirectFieldProperties(grades_interfaces.IBooleanGradeScheme)
 
 	_type  = bool
-	
+
 	true_values = ('1', 'y', 't', 'yes', 'true')
 	false_values = ('0', 'n', 'f', 'no', 'false')
 

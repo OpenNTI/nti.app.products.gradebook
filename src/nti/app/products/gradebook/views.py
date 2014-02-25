@@ -285,7 +285,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 					if not parts:
 						return username
 
-					parts.reverse() # last name first
+					parts = reversed(parts) # last name first
 					return ' '.join(parts).lower()
 
 				filter_usernames = sorted(filter_usernames,
