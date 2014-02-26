@@ -136,7 +136,7 @@ from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
-from zope.intid.interfaces import IIntIds
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.dataserver.interfaces import IUser
 
 
@@ -145,7 +145,8 @@ from nti.dataserver.interfaces import IUser
 			 request_method='GET',
 			 context=ISubmittedAssignmentHistoryBase,
 			 permission=nauth.ACT_READ)
-class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
+class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
+										BatchingUtilsMixin):
 	"""
 	Support retrieving the submitted assignment history (and summaries)
 	typically for a particular column of the gradebok.
@@ -277,7 +278,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView):
 
 			if username_search_term:
 				policy = component.getAdapter(self.remoteUser, IIntIdUserSearchPolicy, name='comprehensive')
-				id_util = component.getUtility(IIntIds)
 				matched_unames = [x.username for x in policy.query(username_search_term.lower(),
 																   provided=IUser)]
 				filter_usernames = {x for x in filter_usernames if x in matched_unames}
