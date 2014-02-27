@@ -606,3 +606,51 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entries( 'value', 10.0,
 																'AutoGrade', 10.0))) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
+	def test_instructor_grade_is_ugd_notable(self):
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
+		# Make sure we're enrolled
+		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+									  'CLC 3403',
+									  status=201 )
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		# The instructor must also be enrolled, as that's how permissioning is setup right now
+		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201,
+								extra_environ=instructor_environ)
+
+		# If the instructor puts in a grade...
+		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+		path = trivial_grade_path + 'sjohnson@nextthought.com'
+		grade = {'Class': 'Grade'}
+		grade['value'] = 10
+		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+
+
+		# It shows up as a notable item for the student
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 1))
+
+
+		# If the instructor deletes it...
+		# (delete indirectly by resetting the submission to be sure the right
+		# event chain works)
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_res = self.testapp.get(history_path)
+
+		submission = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
+		self.testapp.delete( submission['href'], extra_environ=instructor_environ )
+
+		# The notable item is gone
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))

@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope import component
 
 from zope.container import contained as zcontained
 
@@ -31,6 +32,7 @@ from nti.utils.schema import createDirectFieldProperties
 
 from .interfaces import IGrade
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.wref.interfaces import IWeakRef
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization_acl import acl_from_aces
@@ -106,3 +108,45 @@ class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 			return NotImplemented
 
 	__repr__ = make_repr()
+
+
+
+@interface.implementer(IWeakRef)
+@component.adapter(IGrade)
+class GradeWeakRef(object):
+	"""
+	A weak reference to a grade. Because grades are non-persistent,
+	we reference them by name inside of a part of a gradebook.
+	This means that we can resolve to different object instances
+	even during the same transaction, although they are logically the same
+	grade.
+	"""
+
+	__slots__ = ('_part_wref', '_username')
+
+	def __init__( self, grade ):
+		if grade.__parent__ is None or not grade.Username:
+			raise TypeError("Too soon, grade has no parent or username")
+
+		self._part_wref = IWeakRef(grade.__parent__)
+		self._username = grade.Username
+
+	def __call__(self):
+		part = self._part_wref()
+		if part is not None:
+			return part.get(self._username)
+
+	def __eq__(self, other):
+		try:
+			return self is other or (self._username, self._part_wref) == (other._username, other._part_wref)
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		return hash((self._username, self._part_wref))
+
+	def __getstate__(self):
+		return self._part_wref, self._username
+
+	def __setstate__(self, state):
+		self._part_wref, self._username = state

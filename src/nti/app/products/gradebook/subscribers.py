@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import lifecycleevent
 
+from zope.annotation.interfaces import IAnnotations
+
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -27,7 +29,10 @@ from nti.app.products.courseware.interfaces import ICourseInstanceAvailableEvent
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import users
+from nti.dataserver.activitystream_change import Change
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
+from nti.wref.interfaces import IWeakRef
 
 from .grades import Grade
 from . import assignments
@@ -123,3 +128,61 @@ def _assignment_history_item_removed(item, event):
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
 	assignments.synchronize_gradebook(course)
+
+###
+# Storing notable items.
+# We keep a parallel datastructure holding persistent objects
+# that get indexed. It's updated based on events on grades, which
+# fire when they are added or removed
+###
+
+_CHANGE_KEY = 'nti.app.products.gradebook.subscribers.PART_CHANGE_KEY'
+
+def _get_part_change_storage(part):
+	annotes = IAnnotations(part)
+	changes = annotes.get(_CHANGE_KEY)
+	if changes is None:
+		changes = CaseInsensitiveLastModifiedBTreeContainer()
+		changes.__name__ = _CHANGE_KEY
+		changes.__parent__ = part
+		annotes[_CHANGE_KEY] = changes
+	return changes
+
+@component.adapter(IGrade, IObjectAddedEvent)
+def _store_grade_created_event(grade, event):
+	change = Change( Change.CREATED, grade)
+
+	if grade.creator is not None:
+		change.creator = grade.creator
+	else:
+		# If we can get to a course, we arbitrarily assume
+		# it's from the first instructor in the list
+		try:
+			change.creator = nti_interfaces.IUser(ICourseInstance(grade).instructors[0])
+		except (TypeError,IndexError,AttributeError):
+			pass
+
+	# Give the change a sharedWith value of the target
+	# username; that way it gets indexed cheaply as directed
+	# to the user.
+	# NOTE: See __acl__ on the grade object; this
+	# may change if we have a richer publishing workflow
+	change.sharedWith = (grade.Username,)
+
+	# Now store it, firing events to index, etc. Remember this
+	# only happens if the name and parent aren't already
+	# set (which they will be because they were copied from
+	# grade)
+	del change.__name__
+	del change.__parent__
+	# Define it as top-level content for indexing purposes
+	change.__is_toplevel_content__ = True
+	_get_part_change_storage(grade.__parent__)[grade.Username] = change
+
+@component.adapter(IGrade, IObjectRemovedEvent)
+def _remove_grade_created_event(grade, event):
+	try:
+		del _get_part_change_storage(grade.__parent__)[grade.Username]
+	except KeyError:
+		# hmm...
+		pass
