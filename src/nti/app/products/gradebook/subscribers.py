@@ -136,21 +136,26 @@ def _synchronize_gradebook_with_course_instance(course, event):
 # fire when they are added or removed
 ###
 
-_CHANGE_KEY = 'nti.app.products.gradebook.subscribers.PART_CHANGE_KEY'
+_CHANGE_KEY = 'nti.app.products.gradebook.subscribers.ENTRY_CHANGE_KEY'
 
-def _get_part_change_storage(part):
-	annotes = IAnnotations(part)
+def _get_entry_change_storage(entry):
+	annotes = IAnnotations(entry)
 	changes = annotes.get(_CHANGE_KEY)
 	if changes is None:
 		changes = CaseInsensitiveLastModifiedBTreeContainer()
 		changes.__name__ = _CHANGE_KEY
-		changes.__parent__ = part
+		changes.__parent__ = entry
 		annotes[_CHANGE_KEY] = changes
-	return changes
+	return annotes[_CHANGE_KEY]
 
 @component.adapter(IGrade, IObjectAddedEvent)
 def _store_grade_created_event(grade, event):
-	change = Change( Change.CREATED, grade)
+	change = Change(Change.CREATED, grade)
+
+	# Copy the date info from the grade (primarily relevant
+	# for migration); the change doesn't do this itself
+	change.lastModified = grade.lastModified
+	change.createdTime = grade.createdTime
 
 	if grade.creator is not None:
 		change.creator = grade.creator
@@ -177,12 +182,15 @@ def _store_grade_created_event(grade, event):
 	del change.__parent__
 	# Define it as top-level content for indexing purposes
 	change.__is_toplevel_content__ = True
-	_get_part_change_storage(grade.__parent__)[grade.Username] = change
+	_get_entry_change_storage(grade.__parent__)[grade.Username] = change
+	assert change.__parent__ is _get_entry_change_storage(grade.__parent__)
+	assert change.__name__ == grade.Username
+	return change
 
 @component.adapter(IGrade, IObjectRemovedEvent)
 def _remove_grade_created_event(grade, event):
 	try:
-		del _get_part_change_storage(grade.__parent__)[grade.Username]
+		del _get_entry_change_storage(grade.__parent__)[grade.Username]
 	except KeyError:
 		# hmm...
 		pass
