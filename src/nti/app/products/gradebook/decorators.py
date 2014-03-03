@@ -28,7 +28,7 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_external_object
 
-from nti.appserver.pyramid_renderers import AbstractAuthenticatedRequestAwareDecorator
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
