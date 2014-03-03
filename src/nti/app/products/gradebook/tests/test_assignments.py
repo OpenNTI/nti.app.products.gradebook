@@ -296,11 +296,19 @@ class TestAssignments(ApplicationLayerTest):
 
 
 		# The instructor can download the gradebook as csv and it has
-		# the grade in it
+		# the grade in it.
+		#  setup profile names
+		with mock_dataserver.mock_db_trans(self.ds):
+			from nti.dataserver.users.interfaces import IFriendlyNamed
+
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Steve Johnson'
+			lifecycleevent.modified(prof.__parent__)
+
 		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
-		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,90,,75,100,#\r\n'
+		csv_text = u'Username,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,Steve,Johnson,Steve Johnson,90,,75,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
 
 		# He can filter it to Open and ForCredit subsets
@@ -310,7 +318,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit', extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
-		csv_text = 'OrgDefinedId,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
+		csv_text =  u'Username,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
 	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),

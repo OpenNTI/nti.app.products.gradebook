@@ -26,6 +26,9 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.users.interfaces import IUserProfile
+import nameparser
+
 from .interfaces import IGrade
 from .interfaces import IGradeBook
 from .interfaces import ISubmittedAssignmentHistoryBase
@@ -507,8 +510,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.__name__ = self.request.view_name
 		rows.__parent__ = self.request.context
 
-		# First a header row
-		rows.append( ['OrgDefinedId']
+		# First a header row.
+		# Note that we are allowed to use multiple columns to identify
+		# students
+		rows.append( ['Username', 'First Name', 'Last Name', 'Full Name']
 					 + [x + ' Points Grade' for x in sorted_asg_names]
 					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
 					 + ['End-of-Line Indicator'] )
@@ -519,7 +524,17 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			if not user or not predicate(course,user):
 				continue
 
-			row = [username]
+			profile = IUserProfile(user)
+			realname = profile.realname or ''
+			if realname and '@' not in realname and realname != username:
+				human_name = nameparser.HumanName( realname )
+				firstname = human_name.first or ''
+				lastname = human_name.last or ''
+			else:
+				firstname = ''
+				lastname = ''
+
+			row = [username, firstname, lastname, realname]
 			for assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
 				row.append(grade)
