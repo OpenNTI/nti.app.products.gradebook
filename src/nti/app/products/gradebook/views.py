@@ -18,7 +18,7 @@ from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 from pyramid import httpexceptions as hexc
 
-from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
