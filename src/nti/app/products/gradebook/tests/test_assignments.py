@@ -345,10 +345,14 @@ class TestAssignments(ApplicationLayerTest):
 
 			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
 			prof.realname = 'Steve Johnson'
+			# get both the user and the profile in the index with this
+			# updated data
 			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
 			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
 			prof.realname = 'Jason Madden'
 			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))

@@ -282,7 +282,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			if username_search_term:
 				policy = component.getAdapter(self.remoteUser, IIntIdUserSearchPolicy, name='comprehensive')
 				matched_unames = [x.username for x in policy.query(username_search_term.lower(),
-																   provided=IUser)]
+																   provided=IUser.providedBy)]
 				filter_usernames = {x for x in filter_usernames if x in matched_unames}
 				result['FilteredTotalItemCount'] = len(filter_usernames)
 
