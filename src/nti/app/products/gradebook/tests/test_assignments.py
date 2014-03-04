@@ -575,6 +575,11 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry('message', "Assignment already submitted"))
 		assert_that( res.json_body, has_entry('code', "NotUnique"))
 
+		# ... this didn't cause an activity item to be added for the instructor
+		activity_link = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/CourseActivity'
+		res = self.testapp.get(activity_link, extra_environ=instructor_environ)
+		assert_that( res.json_body, has_entry('TotalItemCount', 0) )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_20_autograde_policy(self):

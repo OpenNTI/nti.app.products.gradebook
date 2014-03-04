@@ -88,7 +88,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 from nti.assessment.submission import AssignmentSubmission
 from nti.dataserver.users import User
-
+from nti.app.products.courseware.interfaces import ICourseInstanceActivity
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
@@ -123,6 +123,12 @@ class GradeWithoutSubmissionPutView(GradePutView):
 														IUsersCourseAssignmentHistory )
 
 		assignment_history.recordSubmission( submission, pending_assessment )
+
+		# We don't want this phony-submission showing up as course activity
+		# See nti.app.assessment.subscribers
+		activity = ICourseInstanceActivity(course)
+		activity.remove(submission)
+
 
 		# This inserted the 'real' grade. To actually
 		# updated it with the given values, let the super
