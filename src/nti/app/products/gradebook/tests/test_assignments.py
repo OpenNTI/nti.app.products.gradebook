@@ -557,10 +557,12 @@ class TestAssignments(ApplicationLayerTest):
 		# If the instructor puts in a grade for something that the student could ordinarily
 		# submit...
 		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
-		path = trivial_grade_path + 'sjohnson@nextthought.com'
-		grade = {'Class': 'Grade'}
-		grade['value'] = 10
-		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+		path = trivial_grade_path + 'SJohnson@nextthought.COM' # Notice we are mangling the case
+		# Note the bad MimeType, but it doesn't matter
+		grade = {"MimeType":"application/vnd.nextthought.courseware.grade","tags":[],"value":"324 -"}
+		res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+		assert_that( res.json_body, has_entry('MimeType', 'application/vnd.nextthought.grade'))
+		assert_that( res.json_body, has_entry('value', '324 -'))
 
 		# ... the student can no longer submit
 		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"

@@ -98,12 +98,17 @@ from nti.app.products.courseware.interfaces import ICourseInstanceActivity
 class GradeWithoutSubmissionPutView(GradePutView):
 	"Called to put to a grade that doesn't yet exist."
 
+	#: We don't want extra catching of key errors
+	_EXTRA_INPUT_ERRORS = ()
+
 	def _do_call(self):
 		# So we make one exist
 		entry = self.request.context.__parent__
 		username = self.request.context.__name__
 
 		user = User.get_user(username)
+		# canonicalize the username in the event case got mangled
+		username = user.username
 		assignmentId = entry.AssignmentId
 
 		# We insert the history item, which the user himself
