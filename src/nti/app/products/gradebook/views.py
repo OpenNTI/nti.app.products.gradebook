@@ -147,7 +147,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.dataserver.interfaces import IUser
-
+from natsort import natsorted
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -191,7 +191,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		Note that if you sort, the Items dictionary becomes an ordered
 		list of pairs. Also note that sorting by gradeValue may not have
 		the expected results, depending on what sort of grade values are
-		being used.
+		being used; we do our best.
 
 	sortOrder
 		The sort direction. Options are ``ascending`` and
@@ -344,9 +344,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			elif sort_name == 'gradeValue':
 				filter_usernames = sorted(filter_usernames)
 				all_items = context.items(usernames=filter_usernames,placeholder=None)
-				items_iter = sorted(all_items,
-									key=lambda x: IGrade(x[1]).value if x[1] else 0, # this is pretty inefficient
-									reverse=sort_reverse)
+				items_iter = natsorted(all_items,
+									   key=lambda x: IGrade(x[1]).value if x[1] else 0, # this is pretty inefficient
+									   )
+				if sort_reverse:
+					items_iter = reversed(items_iter)
 				items_factory = list
 			elif sort_name: # pragma: no cover
 				# We're not silently ignoring because in the past

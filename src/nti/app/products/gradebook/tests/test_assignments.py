@@ -505,7 +505,14 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
 		assert_that( [x[0] for x in sum_res.json_body['Items']],
 					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
-
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'gradeValue',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
 
 		sum_res = self.testapp.get(sum_link,
 								   {'filter': 'LegacyEnrollmentStatusOpen',

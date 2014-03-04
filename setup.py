@@ -34,6 +34,7 @@ setup(
 		'nti.app.assessment',
 		'nti.contenttypes.courses',
 		'nti.dataserver',
+		'natsort'
 	],
 	entry_points=entry_points
 )
