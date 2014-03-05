@@ -247,7 +247,7 @@ class TestAssignments(ApplicationLayerTest):
 		# A non-submittable part can be directly graded by the professor
 		final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/'
 		path = final_grade_path + 'sjohnson@nextthought.com'
-		grade['value'] = 75
+		grade['value'] = "75 -" # Use a string like the app typically sends
 		res = self.testapp.put_json( path, grade, extra_environ=instructor_environ )
 		__traceback_info__ = res.json_body
 		final_assignment_id = res.json_body['AssignmentId']
@@ -261,14 +261,14 @@ class TestAssignments(ApplicationLayerTest):
 										   has_entries( 'Class', 'GradeBookEntry',
 														'MimeType', 'application/vnd.nextthought.gradebook.gradebookentry',
 														'Items', has_entry( self.extra_environ_default_user.lower(),
-																			has_entry( 'value', 75 ))))))
+																			has_entry( 'value', "75 -" ))))))
 
 		# ...as well as the student's history (for both the instructor and professor)
 		for env in instructor_environ, {}:
 			history_res = self.testapp.get(history_path,  extra_environ=env)
 			assert_that( history_res.json_body, has_entry('Items', has_entry(final_assignment_id,
 																			 has_entry( 'Grade',
-																						has_entry( 'value', 75 )))))
+																						has_entry( 'value', "75 -" )))))
 
 			# Both of them can leave feedback on it
 			history_feedback_container_href = history_res.json_body['Items'][final_assignment_id]['Feedback']['href']

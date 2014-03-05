@@ -531,7 +531,22 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
 					 + ['End-of-Line Indicator'] )
 
-		# Now a row for each user and each assignment in the same order
+		# Now a row for each user and each assignment in the same order.
+		# Note that the webapp tends to send string values even when the user
+		# typed a number: "75 -". For export purposes, if we can reverse that to a number,
+		# we want it to be a number.
+		def _tx(value):
+			if not isinstance(value, basestring):
+				return value
+			if value.endswith(' -'):
+				try:
+					return int(value[:-2])
+				except ValueError:
+					try:
+						return float(value[:-2])
+					except ValueError:
+						return value
+
 		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
 			user = User.get_user(username)
 			if not user or not predicate(course,user):
@@ -550,10 +565,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			row = [username, firstname, lastname, realname]
 			for assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
-				row.append(grade)
+				row.append(_tx(grade))
 
 			final_grade = final_grade_entry.get(username) if final_grade_entry else None
-			row.append(final_grade.value if final_grade else 0)
+			row.append(_tx(final_grade.value) if final_grade else 0)
 			row.append( 100 )
 
 			# End-of-line
