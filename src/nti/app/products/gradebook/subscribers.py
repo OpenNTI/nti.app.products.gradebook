@@ -32,7 +32,6 @@ from nti.dataserver import users
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
-from nti.wref.interfaces import IWeakRef
 
 from .grades import Grade
 from . import assignments
