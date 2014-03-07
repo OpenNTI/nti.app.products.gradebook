@@ -17,8 +17,8 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from .interfaces import IGrade
-from .interfaces import IGradeBookEntry
 from .interfaces import IGradeBook
+from .interfaces import IGradeBookEntry
 
 from nti.dataserver.interfaces import IUser
 
@@ -37,7 +37,6 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 	# get gradebook entry definition
 	gradebook = IGradeBook(course)
 	entry = gradebook.getColumnForAssignmentId(assignmentId)
-
 	return entry
 
 from nti.dataserver.traversal import find_interface
@@ -55,7 +54,6 @@ def _as_course(context):
 
 def _no_pickle(*args):
 	raise TypeError("This object cannot be pickled")
-
 
 @interface.implementer(IGrade)
 def grade_for_history_item(item):
@@ -79,3 +77,4 @@ def grade_for_history_item(item):
 			grade.__name__ = user.username
 
 		return grade
+	return None
