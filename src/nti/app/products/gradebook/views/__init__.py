@@ -252,6 +252,9 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		the normal search algorithm for users. This is independent
 		of filtering.
 	"""
+
+	_BATCH_LINK_DROP_PARAMS = BatchingUtilsMixin._BATCH_LINK_DROP_PARAMS + ('batchAroundCreator',)
+
 	def __call__(self):
 		request = self.request
 		context = request.context
