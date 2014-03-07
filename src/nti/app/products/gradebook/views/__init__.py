@@ -29,9 +29,9 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.users.interfaces import IUserProfile
 import nameparser
 
-from .interfaces import IGrade
-from .interfaces import IGradeBook
-from .interfaces import ISubmittedAssignmentHistoryBase
+from ..interfaces import IGrade
+from ..interfaces import IGradeBook
+from ..interfaces import ISubmittedAssignmentHistoryBase
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
@@ -93,7 +93,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceActivity
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
 			 renderer='rest',
-			 context='.gradebook.GradeWithoutSubmission',
+			 context='nti.app.products.gradebook.gradebook.GradeWithoutSubmission',
 			 request_method='PUT')
 class GradeWithoutSubmissionPutView(GradePutView):
 	"Called to put to a grade that doesn't yet exist."
@@ -456,7 +456,7 @@ import collections
 from nti.externalization.interfaces import LocatedExternalList
 from cStringIO import StringIO
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
-from .interfaces import NO_SUBMIT_PART_NAME
+from ..interfaces import NO_SUBMIT_PART_NAME
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
