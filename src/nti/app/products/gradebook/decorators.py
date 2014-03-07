@@ -84,7 +84,7 @@ class _UsersCourseAssignmentHistoryItemDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, item, external):
-		grade = IGrade(item)
+		grade = IGrade(item, None)
 		if grade is not None:
 			external['Grade'] = to_external_object(grade)
 
