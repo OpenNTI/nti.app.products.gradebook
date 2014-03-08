@@ -83,11 +83,12 @@ def _find_entry_for_item(item):
 def _find_autograde_policy_for_course(course):
 	registry = component
 
-	# Courses may be ISites
+	# Courses may be ISites (couldn't we do this with
+	# the context argument?)
 	try:
 		registry = course.getSiteManager()
 		name = ''
-		# If it is, we want the default utility
+		# If it is, we want the default utility in this course
 	except LookupError:
 		# If it isn't we need a named utility
 		# This only works for the legacy courses

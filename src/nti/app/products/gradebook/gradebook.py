@@ -359,12 +359,22 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 		# is the number of grades we have recorded. Yes?
 		return len(self.context)
 
-	def __iter__(self, usernames=_NotGiven, placeholder=_NotGiven):
+	def __iter__(self,
+				 usernames=_NotGiven,
+				 placeholder=_NotGiven,
+				 forced_placeholder_usernames=None):
 		column = self.context
 		course = ICourseInstance(self)
 		if usernames is _NotGiven:
 			usernames = column
+		if not forced_placeholder_usernames:
+			forced_placeholder_usernames = ()
+
 		for username_that_submitted in usernames:
+			if username_that_submitted in forced_placeholder_usernames:
+				yield (username_that_submitted, placeholder)
+				continue
+
 			user = User.get_user(username_that_submitted)
 			if not user:
 				continue
@@ -385,7 +395,10 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 			else:
 				yield (username_that_submitted, item)
 
-	def items(self, usernames=_NotGiven, placeholder=_NotGiven):
+	def items(self,
+			  usernames=_NotGiven,
+			  placeholder=_NotGiven,
+			  forced_placeholder_usernames=None):
 		"""
 		Return an iterator over the items (username, historyitem)
 		that make up this object. This is just like iterating over
@@ -401,12 +414,23 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 			then all users in `usernames` will be returned; those
 			that have not submitted will be returned with this placeholder
 			value. This only makes sense if usernames is given.
+		:keyword forced_placeholder_usernames: If given and not None, a container of usernames
+			that define a subset of `usernames` that will return the
+			placeholder, even if they did have a submission. Obviously
+			this only makes sense if a placeholder is defined. This can make
+			iteration faster if you know that only some subset of the usernames
+			will actually be looked at (e.g., a particular numerical range).
 		"""
 
 		if placeholder is not _NotGiven and usernames is _NotGiven:
 			raise ValueError("Placeholder only makes sense if usernames is given")
 
-		return self.__iter__(usernames=usernames, placeholder=placeholder)
+		if forced_placeholder_usernames is not None and placeholder is _NotGiven:
+			raise ValueError("Ignoring users only works with a ploceholder")
+
+		return self.__iter__(usernames=usernames,
+							 placeholder=placeholder,
+							 forced_placeholder_usernames=forced_placeholder_usernames)
 
 	def __getitem__(self, username):
 		"We are traversable to users"
