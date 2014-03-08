@@ -316,8 +316,20 @@ class NoSubmitGradeBookPart(GradeBookPart):
 			raise ValueError("Too many parts")
 		return True
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
+# By directly using this API and (not the adapter interface) and
+# setting create to False, in a large course with many users but few
+# submissions, we gain a significant performance improvement if we
+# iterate across the entire list: 9 or 10x (This is because
+# creating---and then discarding when we abort the GET request
+# transaction---all those histories is expensive, requesting new OIDs
+# from the database and firing lots of events). I'm not formalizing
+# this API yet because we shouldn't be iterating across and
+# materializing the entire list; if we can make that stop we won't
+# need this.
+# from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.adapters import _history_for_user_in_course
+
 _NotGiven = object()
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
@@ -356,13 +368,13 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 			user = User.get_user(username_that_submitted)
 			if not user:
 				continue
-			history = component.getMultiAdapter( (course, user),
-												 IUsersCourseAssignmentHistory)
+			history = _history_for_user_in_course(course, user, create=False)
+
 			try:
 				item = history[column.AssignmentId]
 				if self.as_summary:
 					item = IUsersCourseAssignmentHistoryItemSummary(item)
-			except KeyError:
+			except (KeyError,TypeError):
 				if placeholder is not _NotGiven:
 					yield (username_that_submitted, placeholder)
 				else:
