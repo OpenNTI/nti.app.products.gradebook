@@ -345,6 +345,8 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 	def __conform__(self, iface):
 		if ICourseInstance.isOrExtends(iface):
 			return find_interface(self, ICourseInstance)
+		if IGradeBookEntry.isOrExtends(iface):
+			return self.context
 
 	@property
 	def lastModified(self):

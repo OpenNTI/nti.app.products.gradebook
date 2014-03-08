@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
+import operator
 
 from zope import component
 from zope import interface
@@ -21,7 +21,7 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 
-from natsort import natsorted
+from natsort import natsort_key
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
@@ -34,7 +34,8 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.oids import to_external_ntiid_oid
 
 from ..interfaces import ISubmittedAssignmentHistoryBase
-from ..interfaces import IGrade
+from ..interfaces import IGradeBookEntry
+
 
 from nti.dataserver import authorization as nauth
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -151,11 +152,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 	def _make_force_placeholder_usernames(self, filter_usernames):
 		batch_size, batch_start = self._get_batch_size_start()
 		if batch_size is None or batch_start is None:
-			return
+			return ()
 
 		for x in self._BATCH_LINK_DROP_PARAMS:
 			if self.request.params.get(x):
-				return
+				return ()
 
 		forced_placeholder_usernames = None
 
@@ -259,12 +260,45 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 				# We can optimize this by sorting on the created dates of the grade
 				# in the gradebook; those should correspond one-to-one to submitted
 				# assignments---we assume as much when we set TotalNonNullItemCount.
+				# (The exception will be if an instructor manually assigns a grade *before*
+				# the submission occurs. However, the cases where that currently happens
+				# we aren't expecting a submission at all, plus that case causes the creation
+				# of a fake submission anyway).
 				# This will let us apply the force-placeholder trick
-				filter_usernames = sorted(filter_usernames)
-				all_items = context.items(usernames=filter_usernames,placeholder=None)
-				items_iter = sorted(all_items,
-									key=lambda x: x[1].createdTime if x[1] else 0,
-									reverse=sort_reverse)
+				sorted_usernames = sorted(filter_usernames,reverse=sort_reverse)
+				grade_column = IGradeBookEntry(context)
+				# Iterate the grade column in the order of sorted usernames so that
+				# the stable sort will preserve username sort order for ties
+				# (if we just use column.items(), we always get ascending)
+				sorted_items_by_grade_created_time = sorted(( (k, grade_column[k]) for k in sorted_usernames
+															  if k in grade_column ),
+															key=lambda x: x[1].createdTime,
+															reverse=sort_reverse)
+				sorted_usernames_by_grade_created_time = map(operator.itemgetter(0),
+															 sorted_items_by_grade_created_time)
+				# Now everyone that has no grade is always at the end, sorted by username.
+				# We can return placeholders for everyone who has no submission by definition
+				# because of the one-to-one correspondence
+				# NOTE: If we do this, we get different return value than when sorting by username (missing grades)
+				# Users who have dropped the course or something?
+				users_with_grades = set(sorted_usernames_by_grade_created_time)
+				users_without_grades = {x for x in filter_usernames if x not in users_with_grades}
+				assert users_with_grades.isdisjoint(users_without_grades)
+				force_ignore_placeholders = set() #users_without_grades
+				for u in sorted_usernames:
+					if u not in users_with_grades:
+						sorted_usernames_by_grade_created_time.append(u)
+
+				filter_usernames = sorted_usernames_by_grade_created_time
+				assert len(filter_usernames) == len(sorted_usernames)
+
+				# Now if we're able to do batch-based placeholders, add those
+				# too
+				force_ignore_placeholders.update(self._make_force_placeholder_usernames(filter_usernames))
+
+				items_iter = context.items(usernames=filter_usernames,
+										   placeholder=None,
+										   forced_placeholder_usernames=force_ignore_placeholders)
 				items_factory = list
 			elif sort_name == 'feedbackCount':
 				# We can optimize this by sorting on the value of the grades directly
@@ -276,13 +310,47 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 									reverse=sort_reverse)
 				items_factory = list
 			elif sort_name == 'gradeValue':
-				filter_usernames = sorted(filter_usernames)
-				all_items = context.items(usernames=filter_usernames,placeholder=None)
-				items_iter = natsorted(all_items,
-									   key=lambda x: IGrade(x[1]).value if x[1] else 0, # this is pretty inefficient
-									   )
-				if sort_reverse:
-					items_iter = reversed(items_iter)
+				# XXX: Very similar to 'dateSubmitted'
+				# We can optimize this by sorting on the values of the grade
+				# in the gradebook; those should correspond one-to-one to submitted
+				# assignments---we assume as much when we set TotalNonNullItemCount.
+				# (The exception will be if an instructor manually assigns a grade *before*
+				# the submission occurs. However, the cases where that currently happens
+				# we aren't expecting a submission at all, plus that case causes the creation
+				# of a fake submission anyway).
+				# This will let us apply the force-placeholder trick
+				sorted_usernames = sorted(filter_usernames, reverse=sort_reverse)
+				grade_column = IGradeBookEntry(context)
+				# Iterate the grade column in the order of sorted usernames so that
+				# the stable sort will preserve username sort order for ties
+				# (if we just use column.items(), we always get ascending)
+				sorted_items_by_grade_value = sorted(( (k, grade_column[k]) for k in sorted_usernames
+													   if k in grade_column ),
+													 key=lambda x: natsort_key(x[1].value),
+													 reverse=sort_reverse)
+				sorted_usernames_by_grade_value = map(operator.itemgetter(0),
+													  sorted_items_by_grade_value)
+				# Now everyone that has no grade is always at the end, sorted by username.
+				# We can return placeholders for everyone who has no submission by definition
+				# because of the one-to-one correspondence
+				users_with_grades = set(sorted_usernames_by_grade_value)
+				users_without_grades = {x for x in filter_usernames if x not in users_with_grades}
+				assert users_with_grades.isdisjoint(users_without_grades)
+				force_ignore_placeholders = set() # users_without_grades ## This seems wonky
+				for u in sorted_usernames:
+					if u not in users_with_grades:
+						sorted_usernames_by_grade_value.append(u)
+
+				filter_usernames = sorted_usernames_by_grade_value
+				assert len(filter_usernames) == len(sorted_usernames)
+
+				# Now if we're able to do batch-based placeholders, add those
+				# too
+				force_ignore_placeholders.update(self._make_force_placeholder_usernames(filter_usernames))
+
+				items_iter = context.items(usernames=filter_usernames,
+										   placeholder=None,
+										   forced_placeholder_usernames=force_ignore_placeholders)
 				items_factory = list
 			elif sort_name == 'username' or not sort_name:
 				# Default to sorting based on usernames
@@ -363,6 +431,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			result['TotalItemCount'] = len(result['Items'])
 			result['FilteredTotalItemCount'] = result['TotalItemCount']
 
-		result['TotalNonNullItemCount'] = len(context)
+		result['TotalNonNullItemCount'] = len(context) # XXX Probably need a filtered version of this?
 
 		return result
