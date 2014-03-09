@@ -8,9 +8,13 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import is_in
 
-from nti.app.products.gradebook import gradebook
-from nti.app.products.gradebook import interfaces as grades_interfaces
+
+from .. import gradebook
+from .. import grades
+from .. import interfaces as grades_interfaces
 
 from nti.testing.matchers import verifiably_provides, validly_provides
 
@@ -39,3 +43,15 @@ class TestGradebook(unittest.TestCase):
 		gbe.__name__ = gbe.displayName = 'entry'
 		assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
 		assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
+
+	def test_gradebook_entry_case_insensitive_for_contains(self):
+		# Because it should be case insensitive for everything,
+		# but we have existing objects that aren't. Sigh.
+		gbe = gradebook.GradeBookEntry()
+		grade = grades.Grade()
+
+		gbe['key'] = grade
+		assert_that( 'KEY', is_in(gbe) )
+
+		assert_that( gbe.get('KEY'), is_( grade ) )
+		assert_that( gbe.__getitem__('KEY'), is_( grade ))

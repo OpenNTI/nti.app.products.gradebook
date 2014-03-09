@@ -125,6 +125,12 @@ _GradeBookFactory= an_factory(GradeBook, 'GradeBook')
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class GradeBookEntry(SchemaConfigured,
+					 # XXX: FIXME: This is wrong, this should be a Case/INSENSITIVE/ btree,
+					 # usernames are case insensitive. Everyone that uses this this
+					 # has to be aware and can't do the usual thing of lower-casing for their
+					 # own comparisons. Until we do a database migration we partially
+					 # ameliorate this for __contains__ (at the cost of a performance penalty),
+					 # but we can't completely
 					 nti_containers.CheckingLastModifiedBTreeContainer,
 					 zcontained.Contained,
 					 _NTIIDMixin):
@@ -153,6 +159,46 @@ class GradeBookEntry(SchemaConfigured,
 		super(GradeBookEntry, self).__setstate__(state)
 		if '_SampleContainer__data' not in self.__dict__:
 			self._SampleContainer__data = self._newContainerData()
+
+	@property
+	def _gbe_len(self):
+		return len(self)
+
+	@CachedProperty('_gbe_len')
+	def _lower_keys_to_upper_key(self):
+		# Caching based on the length isn't exactly correct, as an add
+		# followed by a delete will be missed. However, we don't have a pattern
+		# that does that, and it's much cheaper than calculating a set of the usernames
+		return {k.lower():k for k in self.keys()}
+
+	def __contains__(self, key):
+		result = super(GradeBookEntry,self).__contains__(key)
+		if not result and key and isinstance(key, basestring):
+			# Sigh, long expensive path
+			result = key.lower() in self._lower_keys_to_upper_key
+		return result
+
+	has_key = __contains__
+
+	def __getitem__(self, key):
+		try:
+			return super(GradeBookEntry,self).__getitem__(key)
+		except KeyError:
+			if not key or not isinstance(key, basestring):
+				raise
+
+			# Sigh, long expensive path
+			upper = self._lower_keys_to_upper_key.get(key.lower())
+			if upper:
+				return self.__getitem__(upper)
+
+			raise
+
+	def get(self, key, default=None):
+		try:
+			return self.__getitem__(key)
+		except KeyError:
+			return default
 
 	@property
 	def Items(self):
@@ -224,6 +270,7 @@ class GradeBookPart(SchemaConfigured,
 		return self.displayName
 
 	__repr__ = make_repr()
+
 
 from .grades import Grade
 
@@ -367,12 +414,19 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 				 forced_placeholder_usernames=None):
 		column = self.context
 		course = ICourseInstance(self)
+		assignment_id = column.AssignmentId
 		if usernames is _NotGiven:
 			usernames = column
 		if not forced_placeholder_usernames:
 			forced_placeholder_usernames = ()
+		# ensure we have a set (for speed) that we can be case-insensitive on
+		# (for correctness)
+		forced_placeholder_usernames = {x.lower() for x in forced_placeholder_usernames}
+
 
 		for username_that_submitted in usernames:
+			username_that_submitted = username_that_submitted.lower()
+
 			if username_that_submitted in forced_placeholder_usernames:
 				yield (username_that_submitted, placeholder)
 				continue
@@ -380,10 +434,11 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 			user = User.get_user(username_that_submitted)
 			if not user:
 				continue
+			username_that_submitted = user.username # go back to canonical
 			history = _history_for_user_in_course(course, user, create=False)
 
 			try:
-				item = history[column.AssignmentId]
+				item = history[assignment_id]
 				if self.as_summary:
 					item = IUsersCourseAssignmentHistoryItemSummary(item)
 			except (KeyError,TypeError):
