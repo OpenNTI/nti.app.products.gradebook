@@ -532,6 +532,44 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( [x[0] for x in sum_res.json_body['Items']],
 					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
 
+		# Submission filtering, with enrollment filtering
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen,HasSubmission',
+									'sortOn': 'username',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen,NoSubmission',
+									'sortOn': 'username',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(0)))
+		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', is_(0) ) )
+
+		# Submission filtering, without enrollment filtering
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'HasSubmission',
+									'sortOn': 'username',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'NoSubmission',
+									'sortOn': 'username',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(0)))
+		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', is_(0) ) )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_instructor_grade_stops_student_submission(self):

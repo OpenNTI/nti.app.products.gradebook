@@ -115,6 +115,12 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		  returned for each such student, even if they haven't submitted;
 		  the value for students that haven't submitted is null.
 
+		* ``HasSubmission``: Only students that have a submission are returned.
+		  Can be combined with the enrollment status filter using a comma.
+
+		* ``NoSubmission``: Only students that do not have a submission are returned.
+		  Can be combined with the enrollment status filter using a comma.
+
 	batchSize
 		Integer giving the page size. Must be greater than zero.
 		Paging only happens when this is supplied together with
@@ -215,7 +221,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 																											sort_reverse))
 		return items_iter
 
-	def __sort_usernames_by_submission(self, filter_usernames, sort_reverse, key=None):
+	def __sort_usernames_by_submission(self, filter_usernames, sort_reverse=False, key=None):
 		"""
 		Divides the users into two parts, those that have a submission and those that don't.
 		Based on the key you provide, usernames that have a grade entry (username, IGrade)
@@ -310,6 +316,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 										placeholder=None,
 										forced_placeholder_usernames=force_ignore_placeholders)
 		return items_iter
+
 	def _do_sort_dateSubmitted(self, filter_usernames, sort_reverse):
 		# We can optimize this by sorting on the created dates of the grade
 		# in the gradebook; those should correspond one-to-one to submitted
@@ -357,7 +364,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		result.__parent__ = column
 		result.__name__ = context.__name__
 
-		filter_name = self.request.params.get('filter')
+		filter_names = self.request.params.get('filter','').split(',')
 		sort_name = self.request.params.get('sortOn')
 		username_search_term = self.request.params.get('usernameSearchTerm')
 		sort_reverse = self.request.params.get('sortOrder', 'ascending') == 'descending'
@@ -384,21 +391,34 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		everyone = course.legacy_community
 		everyone_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 		student_usernames = everyone_usernames - {x.id.lower() for x in course.instructors}
+		filter_usernames = student_usernames
+		filtered = False
+		if filter_names:
+			if 'LegacyEnrollmentStatusForCredit' in filter_names or 'LegacyEnrollmentStatusOpen' in filter_names:
+				filtered = True
+				restricted_id = course.LegacyScopes['restricted']
+				restricted = Entity.get_entity(restricted_id) if restricted_id else None
 
-		if filter_name in ('LegacyEnrollmentStatusForCredit', 'LegacyEnrollmentStatusOpen'):
-			restricted_id = course.LegacyScopes['restricted']
-			restricted = Entity.get_entity(restricted_id) if restricted_id else None
+				restricted_usernames = ({x.lower() for x in IEnumerableEntityContainer(restricted).iter_usernames()}
+										if restricted is not None
+										else set())
 
-			restricted_usernames = ({x.lower() for x in IEnumerableEntityContainer(restricted).iter_usernames()}
-									if restricted is not None
-									else set())
+				# instructors are also a member of the restricted set,
+				# so take them out (otherwise the count will be wrong)
+				if 'LegacyEnrollmentStatusForCredit' in filter_names:
+					filter_usernames = restricted_usernames - {x.id.lower() for x in course.instructors}
+				elif 'LegacyEnrollmentStatusOpen' in filter_names:
+					filter_usernames = student_usernames - restricted_usernames
 
-			# instructors are also a member of the restricted set,
-			# so take them out (otherwise the count will be wrong)
-			if filter_name == 'LegacyEnrollmentStatusForCredit':
-				filter_usernames = restricted_usernames - {x.id.lower() for x in course.instructors}
-			elif filter_name == 'LegacyEnrollmentStatusOpen':
-				filter_usernames = student_usernames - restricted_usernames
+			if 'HasSubmission' in filter_names or 'NoSubmission' in filter_names:
+				filtered = True
+				x = self.__sort_usernames_by_submission(filter_usernames)
+				_, users_with_grades, users_without_grades = x
+
+				if 'HasSubmission' in filter_names:
+					filter_usernames = users_with_grades
+				elif 'NoSubmission' in filter_names:
+					filter_usernames = users_without_grades
 
 			# XXX: This is a lie unless we also sort (which for all practical use
 			# cases, we do) because it depends on placeholders for missing items
@@ -409,7 +429,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			# No placeholder unless they sort, which means only submitted items.
 			# But if they sort, we set items_factory to list, and go through
 			# _batch_tuple_iterables which resets these values
-			filter_usernames = student_usernames
+
 			result['TotalItemCount'] = len(context)
 			result['FilteredTotalItemCount'] = result['TotalItemCount']
 			items_iter = context.items()
@@ -437,7 +457,9 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			# Leave as a dict, and don't generate
 			# placeholders (unless they filtered, always generate placeholders
 			# if they filter)
-			items_iter = self._do_sort_username(filter_usernames, sort_reverse, placeholder=bool(filter_name))
+			items_iter = self._do_sort_username(filter_usernames,
+												sort_reverse,
+												placeholder=filtered)
 
 
 		batchAround = None
