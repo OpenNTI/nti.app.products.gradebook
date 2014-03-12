@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
-.. $Id$
+$Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -14,12 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 import operator
 
 from zope import component
-from zope import interface
-
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
-
 
 from natsort import natsort_key
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -35,7 +30,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from ..interfaces import ISubmittedAssignmentHistoryBase
 from ..interfaces import IGradeBookEntry
-
 
 from nti.dataserver import authorization as nauth
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -277,7 +271,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		x = self.__sort_usernames_by_submission(filter_usernames,
 												sort_reverse,
 												key=None)
-		filter_usernames, users_with_grades, users_without_grades = x
+		filter_usernames, _, users_without_grades = x
 		# By forcing placeholders on those we know haven't submitted
 		# (because they have no grade) we can be a little bit faster.
 		# Unfortunately, we cannot apply the standard batch-based trick
@@ -313,7 +307,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		x = self.__sort_usernames_by_submission(filter_usernames,
 												sort_reverse,
 												key)
-		filter_usernames, users_with_grades, users_without_grades = x
+		filter_usernames, _, users_without_grades = x
 
 		# Now everyone that has no grade is always at the end, sorted by username.
 		# We can return placeholders for everyone who has no submission by definition
@@ -474,7 +468,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 												sort_reverse,
 												placeholder=filtered)
 
-
 		batchAround = None
 		batchAroundTest = None
 		# We must defer reading these until after we sort, sometimes
@@ -502,8 +495,5 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 									   selector=lambda x: x)
 		else:
 			result['Items'] = items_factory(items_iter)
-
-
-
 
 		return result
