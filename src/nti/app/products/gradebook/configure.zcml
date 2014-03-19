@@ -39,6 +39,16 @@
 
 	<adapter factory=".grades.GradeWeakRef" />
 
+	<adapter factory=".adapters.grade_for_history_item"
+			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
+			 provides=".interfaces.IGrade" />
+	<adapter factory=".adapters.grade_for_history_item"
+			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
+			 provides=".interfaces.IGrade" />
+
+	<adapter factory=".adapters.history_item_for_grade" />
+	<adapter factory=".adapters.grade_to_user" />
+
 	<!-- Traversal -->
 
 	<adapter name="GradeBook"
@@ -102,12 +112,6 @@
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<!-- Decorators -->
-	<adapter factory=".adapters.grade_for_history_item"
-			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
-			 provides=".interfaces.IGrade" />
-	<adapter factory=".adapters.grade_for_history_item"
-			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
-			 provides=".interfaces.IGrade" />
 
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
