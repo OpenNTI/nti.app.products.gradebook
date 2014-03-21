@@ -21,7 +21,6 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
 
-
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -43,8 +42,8 @@ def _course_when_instructed_by_current_user(data, request=None):
 	username = request.authenticated_userid
 	if not username:
 		return
-	course = ICourseInstance(data)
-	if not is_instructed_by_name(course, username):
+	course = ICourseInstance(data, None)
+	if course is None or not is_instructed_by_name(course, username):
 		# We're not an instructor
 		return
 
@@ -57,12 +56,12 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		return _course_when_instructed_by_current_user(context, self.request) is not None
 
 	def _do_decorate_external(self, course, result):
-		course = ICourseInstance(course)
-
-		_links = result.setdefault(LINKS, [])
-		book = IGradeBook(course)
-		link = Link(book, rel="GradeBook")
-		_links.append(link)
+		course = ICourseInstance(course, None)
+		if course is not None:
+			_links = result.setdefault(LINKS, [])
+			book = IGradeBook(course)
+			link = Link(book, rel="GradeBook")
+			_links.append(link)
 
 
 @interface.implementer(IExternalMappingDecorator)
@@ -75,7 +74,6 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		_links = result.setdefault(LINKS, [])
 		link = Link(book, rel='ExportContents', elements=('contents.csv',))
 		_links.append(link)
-
 
 
 @interface.implementer(IExternalObjectDecorator)
@@ -112,7 +110,9 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		return _course_when_instructed_by_current_user(context, self.request) is not None
 
 	def _do_decorate_external(self, assignment, external):
-		course = ICourseInstance(assignment)
+		course = ICourseInstance(assignment, None)
+		if course is None:
+			return
 
 		book = IGradeBook(course)
 		column = book.getColumnForAssignmentId(assignment.__name__)

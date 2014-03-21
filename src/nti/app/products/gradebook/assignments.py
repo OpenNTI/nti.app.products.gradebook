@@ -80,6 +80,8 @@ def synchronize_gradebook(course):
 	exists in the book but not the course assignments, and there are
 	no recorded grades, it is removed.
 	"""
+	if course is None:
+		return
 
 	assignments = get_course_assignments(course)
 	book = IGradeBook(course)
