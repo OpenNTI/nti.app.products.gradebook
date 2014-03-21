@@ -33,6 +33,9 @@ from ..interfaces import IGrade
 from ..interfaces import IGradeBook
 from ..interfaces import ISubmittedAssignmentHistoryBase
 
+import zope.i18nmessageid
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.app.products.gradebook')
+
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
 def GradeBookPathAdapter(context, request):

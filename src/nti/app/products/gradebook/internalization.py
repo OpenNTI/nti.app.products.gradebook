@@ -23,6 +23,8 @@ from nti.externalization import interfaces as ext_interfaces
 from . import utils
 from . import interfaces as grade_interfaces
 
+from . import MessageFactory as _
+
 @interface.implementer(ext_interfaces.IInternalObjectUpdater)
 @component.adapter(grade_interfaces.IGrade)
 class _GradeObjectUpdater(InterfaceObjectIO):
@@ -60,23 +62,23 @@ class _LetterGradeSchemeObjectUpdater(object):
 
 		request = get_current_request()
 		if len(grades) < 1 or len(set(grades)) != len(grades):
-			utils.raise_field_error(request, "grades",
-									"must specify a valid unique list of letter grades")
+			utils.raise_field_error(request, _("grades"),
+									_( "must specify a valid unique list of letter grades") )
 
 		if len(grades) != len(ranges):
-			utils.raise_field_error(request, "ranges",
-									"must specify equal number of ranges to grades")
+			utils.raise_field_error(request, _("ranges"),
+									_("must specify equal number of ranges to grades"))
 
 		for idx, r in enumerate(ranges):
 			if not r or len(r) != 2:
-				utils.raise_field_error(request, "range",
-										"'%r' is not a valid range" % r)
+				utils.raise_field_error(request, _("range"),
+										_("'%r' is not a valid range" % r))
 			elif r[0] >= r[1]:
-				utils.raise_field_error(request, "range",
-										"'%r' is not a valid range" % r)
+				utils.raise_field_error(request, _("range"),
+										_("'%r' is not a valid range" % r))
 			elif r[0] < 0 or r[1] < 0:
-				utils.raise_field_error(request, "range",
-										"'%r' has invalid values" % r)
+				utils.raise_field_error(request, _("range"),
+										_("'%r' has invalid values" % r))
 			else:
 				ranges[idx] = tuple(r)
 
@@ -87,8 +89,8 @@ class _LetterGradeSchemeObjectUpdater(object):
 			a = sorted_ranges[idx]
 			b = sorted_ranges[idx + 1]
 			if a[0] <= b[0]:
-				utils.raise_field_error(request, "range",
-										"'%r' overlaps '%r'" % (a, b))
+				utils.raise_field_error(request, _("range"),
+										_("'%r' overlaps '%r'" % (a, b)))
 
 		self.obj.ranges = tuple(ranges)
 		self.obj.grades = tuple(grades)

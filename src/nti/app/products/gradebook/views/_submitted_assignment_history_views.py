@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import operator
@@ -459,7 +461,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 				# We're not silently ignoring because in the past
 				# we've had clients send in the wrong value for a long time
 				# before anybody noticed
-				raise hexc.HTTPBadRequest("Unsupported sort option")
+				raise hexc.HTTPBadRequest( _("Unsupported sort option") )
 		else:
 			# Leave as a dict, and don't generate
 			# placeholders (unless they filtered, always generate placeholders
