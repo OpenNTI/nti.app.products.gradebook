@@ -146,7 +146,11 @@
 	<subscriber handler=".subscribers._assignment_history_item_removed" />
 	<subscriber handler=".subscribers._synchronize_gradebook_with_course_instance" />
 
-	<subscriber handler=".subscribers._store_grade_created_event" />
+	<subscriber handler=".subscribers._store_grade_created_event"
+				for=".interfaces.IGrade zope.lifecycleevent.IObjectAddedEvent"/>
+	<subscriber handler=".subscribers._store_grade_created_event"
+				for=".interfaces.IGrade zope.lifecycleevent.IObjectModifiedEvent"/>
+
 	<subscriber handler=".subscribers._remove_grade_created_event" />
 
 

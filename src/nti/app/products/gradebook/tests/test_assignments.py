@@ -142,6 +142,7 @@ class TestAssignments(ApplicationLayerTest):
 									  'CLC 3403',
 									  status=201 )
 
+		# submit
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
 								ext_obj,
 								status=201)
@@ -150,6 +151,10 @@ class TestAssignments(ApplicationLayerTest):
 		history_res = self.testapp.get( history_path )
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entry( 'Links', [] ))) )
+
+		# because this grade was not auto-graded, the student has no notable mention of it
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
 
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
@@ -638,6 +643,10 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get(activity_link, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry('TotalItemCount', 0) )
 
+		# and it shows up as a notable item for the student
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 1))
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_20_autograde_policy(self):
@@ -671,6 +680,10 @@ class TestAssignments(ApplicationLayerTest):
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 								'CLC 3403',
 								status=201 )
+		# Make sure we have no notable items
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
+
 
 		self.testapp.post_json( '/dataserver2/Objects/' + assignment_id,
 								ext_obj,
@@ -681,6 +694,11 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entries( 'value', 10.0,
 																'AutoGrade', 10.0))) )
+
+		# Because it auto-grades, we have a notable item
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 1))
+
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)

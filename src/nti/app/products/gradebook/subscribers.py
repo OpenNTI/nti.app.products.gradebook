@@ -102,7 +102,6 @@ def _assignment_history_item_added(item, event):
 	if entry is not None:
 		user = nti_interfaces.IUser(item)
 		grade = Grade()
-		entry[user.username] = grade
 
 		# If there is an auto-grading policy for the course instance,
 		# then let it convert the auto-assessed part of the submission
@@ -113,6 +112,9 @@ def _assignment_history_item_added(item, event):
 			grade.AutoGrade = policy.autograde(item.pendingAssessment)
 			if grade.value is None:
 				grade.value = grade.AutoGrade
+
+		# Finally after we finish filling it in, publish it
+		entry[user.username] = grade
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
@@ -148,8 +150,13 @@ def _get_entry_change_storage(entry):
 		annotes[_CHANGE_KEY] = changes
 	return annotes[_CHANGE_KEY]
 
-@component.adapter(IGrade, IObjectAddedEvent)
-def _store_grade_created_event(grade, event):
+
+def _do_store_grade_created_event(grade, event):
+	storage = _get_entry_change_storage(grade.__parent__)
+	if grade.Username in storage:
+		storage[grade.Username].updateLastMod()
+		return
+
 	change = Change(Change.CREATED, grade)
 
 	# Copy the date info from the grade (primarily relevant
@@ -182,10 +189,18 @@ def _store_grade_created_event(grade, event):
 	del change.__parent__
 	# Define it as top-level content for indexing purposes
 	change.__is_toplevel_content__ = True
-	_get_entry_change_storage(grade.__parent__)[grade.Username] = change
+	storage[grade.Username] = change
 	assert change.__parent__ is _get_entry_change_storage(grade.__parent__)
 	assert change.__name__ == grade.Username
 	return change
+
+
+def _store_grade_created_event(grade, event):
+	# We're registered for both added and modified events,
+	# and we only store a change when the grade actually
+	# gets a value for the first time.
+	if grade.value is not None:
+		_do_store_grade_created_event(grade, event)
 
 @component.adapter(IGrade, IObjectRemovedEvent)
 def _remove_grade_created_event(grade, event):
