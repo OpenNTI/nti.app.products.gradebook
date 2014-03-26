@@ -461,7 +461,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 				# We're not silently ignoring because in the past
 				# we've had clients send in the wrong value for a long time
 				# before anybody noticed
-				raise hexc.HTTPBadRequest( _("Unsupported sort option") )
+				raise hexc.HTTPBadRequest("Unsupported sort option")
 		else:
 			# Leave as a dict, and don't generate
 			# placeholders (unless they filtered, always generate placeholders

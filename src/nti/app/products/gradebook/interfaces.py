@@ -48,22 +48,22 @@ class IGradeScheme(interface.Interface):
 		"""
 
 class INumericGradeScheme(IGradeScheme):
-	min = schema.Number(title=_("min value"), default=0.0, min=0.0)
-	max = schema.Number(title=_("max value"), default=100.0)
+	min = schema.Number(title="min value", default=0.0, min=0.0)
+	max = schema.Number(title="max value", default=100.0)
 
 class IIntegerGradeScheme(INumericGradeScheme):
-	min = schema.Int(title=_("min value"), default=0, min=0)
-	max = schema.Int(title=_("max value"), default=100)
+	min = schema.Int(title="min value", default=0, min=0)
+	max = schema.Int(title="max value", default=100)
 
 class ILetterGradeScheme(IGradeScheme):
 
-	grades = schema.ListOrTuple(schema.TextLine(title=_("the letter"),
+	grades = schema.ListOrTuple(schema.TextLine(title="the letter",
 										  min_length=1,
 										  max_length=1),
 						  unique=True,
 						  min_length=1)
 
-	ranges = schema.ListOrTuple(schema.ListOrTuple(schema.Number(title=_("the range value"), min=0),
+	ranges = schema.ListOrTuple(schema.ListOrTuple(schema.Number(title="the range value", min=0),
 												   min_length=2,
 												   max_length=2),
 						  unique=True,
@@ -109,12 +109,12 @@ class IGradeBookEntry(IContainer,
 #						  min=0.0,
 #						  max=1.0,
 #						  default=1.0)
-	order = schema.Int(title=_("The entry order"), min=1)
-	DueDate = schema.Date(title=_("The date on which the assignment is due"), required=False,
+	order = schema.Int(title="The entry order", min=1)
+	DueDate = schema.Date(title="The date on which the assignment is due", required=False,
 						  readonly=True)
 
-	Items = schema.Dict(title=_('For externalization only, a copy of the {username: grade} contents}'),
-						description=_("For expedience and while while we expect these to be relatively small, we inline them"),
+	Items = schema.Dict(title="For externalization only, a copy of the {username: grade} contents}",
+						description="For expedience and while while we expect these to be relatively small, we inline them",
 						readonly=True)
 
 class ISubmittedAssignmentHistoryBase(IShouldHaveTraversablePath):
@@ -181,21 +181,21 @@ class IGradeBookPart(IContainer,
 	def validateAssignment(assignment):
 		"Check that the given assignment is valid to go in this part."
 
-	Name = schema.ValidTextLine(title=_("Part name"), required=False)
-	displayName = schema.ValidTextLine(title=_("Part name"), required=False)
-	gradeScheme = schema.Object(IGradeScheme, description=_("A :class:`.IGradeScheme`"),
-								  title=_("The grade scheme for this part"), required=False)
+	Name = schema.ValidTextLine(title="Part name", required=False)
+	displayName = schema.ValidTextLine(title="Part name", required=False)
+	gradeScheme = schema.Object(IGradeScheme, description="A :class:`.IGradeScheme`",
+								  title="The grade scheme for this part", required=False)
 #	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
 #						  min=0.0,
 #						  max=1.0,
 #						  default=1.0,
 #						  required=True)
-	order = schema.Int(title=_("The part order"), min=1)
+	order = schema.Int(title="The part order", min=1)
 
 	#TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
 
-	Items = schema.Dict(title=_('For externalization only, a copy of the {assignmentId: GradeBookEntry} contents}'),
-						description=_("For expedience and while while we expect these to be relatively small, we inline them"),
+	Items = schema.Dict(title="For externalization only, a copy of the {assignmentId: GradeBookEntry} contents}",
+						description="For expedience and while while we expect these to be relatively small, we inline them",
 						readonly=True)
 
 
@@ -231,15 +231,15 @@ class IGradeBook(IContainer,
 		return the :IGradeBookEntry associated with the specified ntiid
 		"""
 
-	Items = schema.Dict(title=_('For externalization only, a copy of the {category name: GradeBookPart} contents}'),
-						description=_("For expedience and while while we expect these to be relatively small, we inline them"),
+	Items = schema.Dict(title="For externalization only, a copy of the {category name: GradeBookPart} contents}",
+						description="For expedience and while while we expect these to be relatively small, we inline them",
 						readonly=True)
 
 def _grade_property():
-	return schema.Variant((schema.Number(title=_("Number grade")),
-						   schema.Bool(title=_('Boolean grade')),
-						   schema.ValidTextLine(title=_('String grade'))),
-						  title=_("The grade"),
+	return schema.Variant((schema.Number(title="Number grade"),
+						   schema.Bool(title="Boolean grade"),
+						   schema.ValidTextLine(title="String grade")),
+						  title="The grade",
 						  required=False)
 
 class IGrade(IContained,
@@ -256,13 +256,13 @@ class IGrade(IContained,
 	containers(IGradeBookEntry)
 	__parent__.required = False
 
-	Username = schema.ValidTextLine(title=_("Username"),
-									description=_("""Because grades are stored by username, this is
-									equivalent to __name__"""),
+	Username = schema.ValidTextLine(title="Username",
+									description="Because grades are stored by username, this is"
+									" equivalent to __name__",
 									required=True)
 	#NTIID = ValidNTIID(title="Grade entry ntiid", required=True)
-	AssignmentId = ValidNTIID(title=_("The assignment this is for"),
-							  description=_("This comes from the entry containing it."),
+	AssignmentId = ValidNTIID(title="The assignment this is for",
+							  description="This comes from the entry containing it.",
 							  required=False)
 
 	value = _grade_property()

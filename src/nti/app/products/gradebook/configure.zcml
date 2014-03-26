@@ -8,6 +8,10 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
+	<!-- I18N -->
+	<i18n:registerTranslations directory="locales" />
+
+
 	<!-- Adapters -->
 
 	<adapter factory=".gradebook._GradeBookFactory"
