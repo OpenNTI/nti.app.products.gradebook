@@ -24,7 +24,6 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 from nti.externalization.externalization import make_repr
 
 from nti.utils.property import alias
-from nti.utils.property import CachedProperty
 from nti.utils.property import Lazy
 
 from nti.utils.schema import SchemaConfigured
@@ -85,7 +84,7 @@ class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 		if self.__parent__ is not None:
 			return self.__parent__.AssignmentId
 
-	@CachedProperty
+	@property # Since we're not persistent, the regular use of CachedProperty fails
 	def __acl__(self):
 		acl = acl_from_aces()
 

@@ -150,7 +150,6 @@ def _get_entry_change_storage(entry):
 		annotes[_CHANGE_KEY] = changes
 	return annotes[_CHANGE_KEY]
 
-
 def _do_store_grade_created_event(grade, event):
 	storage = _get_entry_change_storage(grade.__parent__)
 	if grade.Username in storage:
@@ -180,6 +179,7 @@ def _do_store_grade_created_event(grade, event):
 	# NOTE: See __acl__ on the grade object; this
 	# may change if we have a richer publishing workflow
 	change.sharedWith = (grade.Username,)
+	change.__copy_object_acl__ = True
 
 	# Now store it, firing events to index, etc. Remember this
 	# only happens if the name and parent aren't already

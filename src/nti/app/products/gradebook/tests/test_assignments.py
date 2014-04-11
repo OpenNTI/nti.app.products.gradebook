@@ -587,15 +587,15 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', is_(0) ) )
 
 
-	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason'),testapp=True,default_authenticate=True)
 	def test_instructor_grade_stops_student_submission(self):
 		# This only works in the OU environment because that's where the purchasables are
-		extra_env = self.testapp.extra_environ or {}
+		extra_env = self._make_extra_environ(username='jason')
 		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
 		self.testapp.extra_environ = extra_env
 
 		# Make sure we're enrolled
-		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+		res = self.testapp.post_json( '/dataserver2/users/jason/Courses/EnrolledCourses',
 									  'CLC 3403',
 									  status=201 )
 
@@ -611,7 +611,7 @@ class TestAssignments(ApplicationLayerTest):
 		# If the instructor puts in a grade for something that the student could ordinarily
 		# submit...
 		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
-		path = trivial_grade_path + 'SJohnson@nextthought.COM' # Notice we are mangling the case
+		path = trivial_grade_path + 'JaSoN' # Notice we are mangling the case
 		# Note the bad MimeType, but it doesn't matter
 		grade = {"MimeType":"application/vnd.nextthought.courseware.grade","tags":[],"value":"324 -"}
 		res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
@@ -643,10 +643,17 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get(activity_link, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry('TotalItemCount', 0) )
 
-		# and it shows up as a notable item for the student
-		notable_res = self.fetch_user_recursive_notable_ugd()
+		# and it shows up as a notable item for the student...
+		notable_res = self.fetch_user_recursive_notable_ugd(username='jason')
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 1))
 
+		# ... and can be fetched directly
+		oid = notable_res.json_body['Items'][0]['OID']
+		from nti.ntiids import ntiids
+		ntiid = ntiids.make_ntiid(provider='ignored',
+								  specific=oid,
+								  nttype=ntiids.TYPE_OID)
+		self.fetch_by_ntiid(ntiid)
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_20_autograde_policy(self):
