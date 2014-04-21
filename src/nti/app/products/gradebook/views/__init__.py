@@ -54,7 +54,10 @@ class GradePutView(AbstractAuthenticatedView,
 	content_predicate = IGrade.providedBy
 
 	def _do_call(self):
+
 		theObject = self.request.context
+		theObject.creator = self.getRemoteUser()
+		
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
 
