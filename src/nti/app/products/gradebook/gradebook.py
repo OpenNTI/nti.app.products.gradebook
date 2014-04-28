@@ -383,7 +383,9 @@ _NotGiven = object()
 class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 
 	__name__ = 'SubmittedAssignmentHistory'
-
+	# We don't externalize this item, but we do create links to it,
+	# and they want a mimeType
+	mimeType = 'application/json'
 	as_summary = False
 
 	def __init__(self, entry, request=None):
