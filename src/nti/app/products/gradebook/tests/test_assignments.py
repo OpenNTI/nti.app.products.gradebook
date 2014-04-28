@@ -11,13 +11,13 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import none
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import has_item
 from hamcrest import contains
+from hamcrest import has_property
 
 
 import urllib
@@ -40,6 +40,7 @@ from nti.dataserver.tests import mock_dataserver
 from nti.externalization.tests import externalizes
 from nti.externalization.externalization import to_external_object
 
+from nti.assessment.interfaces import IQAssignment
 from nti.assessment.submission import QuestionSubmission
 from nti.assessment.submission import QuestionSetSubmission
 from nti.assessment.submission import AssignmentSubmission
@@ -59,8 +60,13 @@ class TestAssignments(ApplicationLayerTest):
 
 			lib = component.getUtility(IContentPackageLibrary)
 
+
+			law_course = None
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
+				if course.__name__ == 'CLC3403':
+					law_course = course
+
 				entries = assignments.synchronize_gradebook(course)
 				assert_that(entries, is_(4))
 
@@ -74,6 +80,22 @@ class TestAssignments(ApplicationLayerTest):
 				assert_that(part, has_length(2))
 
 				assert_that( part, has_key('Main Title'))
+
+			# Changing the title changes the display name, but
+			# not the key
+
+			asg = component.getUtility(IQAssignment, name="tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1")
+			assert_that( asg.title, is_('Main Title') )
+
+			try:
+				asg.title = 'New Title'
+				assignments.synchronize_gradebook(law_course)
+				book = grades_interfaces.IGradeBook(law_course)
+				part = book['quizzes']
+				entry = part['Main Title']
+				assert_that( entry, has_property('displayName', 'New Title'))
+			finally:
+				asg.title = 'Main Title'
 
 	@WithSharedApplicationMockDS
 	def test_get_course_assignments(self):

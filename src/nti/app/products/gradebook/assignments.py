@@ -68,6 +68,8 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 							   order=order,
 							   AssignmentId=assignmentId)
 		part[INameChooser(part).chooseName(displayName, entry)] = entry
+	elif entry.displayName != displayName:
+		entry.displayName = displayName
 
 	return entry
 get_create_assignment_entry = create_assignment_entry

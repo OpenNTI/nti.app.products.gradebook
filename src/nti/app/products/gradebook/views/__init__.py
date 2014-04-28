@@ -57,7 +57,7 @@ class GradePutView(AbstractAuthenticatedView,
 
 		theObject = self.request.context
 		theObject.creator = self.getRemoteUser()
-		
+
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
 
@@ -221,10 +221,11 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		predicate = self._make_enrollment_predicate()
 
 		# We build a dictionary of {username: {Assignment: Grade} }
-		# We keep track of known assignment names so we can sort appropriately
-
+		# We keep track of known assignment names so we can sort appropriately;
+		# it is keyed by the column name (as that's the only thing guaranteed
+		# to be unique) and the value is the display name
 		usernames_to_assignment_dict = collections.defaultdict(dict)
-		seen_asg_names = set()
+		seen_asg_names = dict()
 
 		final_grade_entry = None
 
@@ -234,14 +235,16 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					final_grade_entry = entry
 					continue
 
-				seen_asg_names.add(name)
+				seen_asg_names[name] = entry.displayName or 'Unknown'
 				for username, grade in entry.items():
 					user_dict = usernames_to_assignment_dict[username]
 					if name in user_dict:
 						raise ValueError("Two entries in different part with same name, yikes")
 					user_dict[name] = grade
 
-		sorted_asg_names = sorted(seen_asg_names)
+		# Now, sort the *display* names, maintaining the
+		# association to the actual part name
+		sorted_asg_names = sorted((v, k) for k, v in seen_asg_names.items())
 
 		# Now we can build up the rows.
 		rows = LocatedExternalList()
@@ -252,7 +255,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# Note that we are allowed to use multiple columns to identify
 		# students
 		rows.append( ['Username', 'First Name', 'Last Name', 'Full Name']
-					 + [x + ' Points Grade' for x in sorted_asg_names]
+					 + [x[0] + ' Points Grade' for x in sorted_asg_names]
 					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
 					 + ['End-of-Line Indicator'] )
 
@@ -288,7 +291,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				lastname = ''
 
 			row = [username, firstname, lastname, realname]
-			for assignment in sorted_asg_names:
+			for _, assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
 				row.append(_tx(grade))
 
