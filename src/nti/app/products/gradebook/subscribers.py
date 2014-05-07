@@ -150,6 +150,11 @@ def _get_entry_change_storage(entry):
 		annotes[_CHANGE_KEY] = changes
 	return annotes[_CHANGE_KEY]
 
+from zope.securitypolicy.interfaces import IPrincipalRoleMap
+from zope.securitypolicy.interfaces import Allow
+from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
+
+
 def _do_store_grade_created_event(grade, event):
 	storage = _get_entry_change_storage(grade.__parent__)
 	if grade.Username in storage:
@@ -169,7 +174,12 @@ def _do_store_grade_created_event(grade, event):
 		# If we can get to a course, we arbitrarily assume
 		# it's from the first instructor in the list
 		try:
-			change.creator = nti_interfaces.IUser(ICourseInstance(grade).instructors[0])
+			instance = ICourseInstance(grade)
+			roles = IPrincipalRoleMap(instance)
+			for instructor in instance.instructors:
+				if roles.getSetting(RID_INSTRUCTOR, instructor.id) is Allow:
+					change.creator = grade.creator = nti_interfaces.IUser(instructor)
+					break
 		except (TypeError,IndexError,AttributeError):
 			pass
 

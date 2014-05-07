@@ -727,6 +727,8 @@ class TestAssignments(ApplicationLayerTest):
 		# Because it auto-grades, we have a notable item
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 1))
+		assert_that( notable_res.json_body['Items'][0]['Item'],
+					 has_entry('Creator', 'harp4162'))
 
 
 
