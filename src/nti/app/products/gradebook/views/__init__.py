@@ -251,11 +251,20 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.__name__ = self.request.view_name
 		rows.__parent__ = self.request.context
 
+		def _tx_string(s):
+			# At least in python 2, the CSV writer only works
+			# correctly with str objects, implicitly encoding
+			# otherwise
+			if isinstance(s, unicode):
+				s = s.encode('utf-8')
+			return s
+
 		# First a header row.
 		# Note that we are allowed to use multiple columns to identify
 		# students
 		rows.append( ['Username', 'First Name', 'Last Name', 'Full Name']
-					 + [x[0] + ' Points Grade' for x in sorted_asg_names]
+					 # Assignment names could theoretically have non-ascii chars
+					 + [_tx_string(x[0]) + ' Points Grade' for x in sorted_asg_names]
 					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
 					 + ['End-of-Line Indicator'] )
 
@@ -263,7 +272,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# Note that the webapp tends to send string values even when the user
 		# typed a number: "75 -". For export purposes, if we can reverse that to a number,
 		# we want it to be a number.
-		def _tx(value):
+		def _tx_grade(value):
 			if not isinstance(value, basestring):
 				return value
 			if value.endswith(' -'):
@@ -273,7 +282,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					try:
 						return float(value[:-2])
 					except ValueError:
-						return value
+						return _tx_string(value)
 
 		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
 			user = User.get_user(username)
@@ -290,13 +299,13 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				firstname = ''
 				lastname = ''
 
-			row = [username, firstname, lastname, realname]
+			row = [_tx_string(x) for x in (username, firstname, lastname, realname)]
 			for _, assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
-				row.append(_tx(grade))
+				row.append(_tx_grade(grade))
 
 			final_grade = final_grade_entry.get(username) if final_grade_entry else None
-			row.append(_tx(final_grade.value) if final_grade else 0)
+			row.append(_tx_grade(final_grade.value) if final_grade else 0)
 			row.append( 100 )
 
 			# End-of-line
