@@ -323,7 +323,9 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		writer = csv.writer(buf)
 		writer.writerows(rows)
 
+		filename = course.__name__ + '-grades.csv'
 		self.request.response.body = buf.getvalue()
-		self.request.response.content_disposition = b'attachment; filename="contents.csv"'
+		self.request.response.content_disposition = str( 'attachment; filename="%s"' % filename )
+		self.request.response.content_type = str( 'application/octet-stream' )
 
 		return self.request.response
