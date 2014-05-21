@@ -334,17 +334,17 @@ class TestAssignments(ApplicationLayerTest):
 
 		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
+		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
 		csv_text = u'Username,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
 
 		# He can filter it to Open and ForCredit subsets
 		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=Open', extra_environ=instructor_environ)
-		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
+		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
 		assert_that( res.text, is_(csv_text))
 
 		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit', extra_environ=instructor_environ)
-		assert_that( res.content_disposition, is_( 'attachment; filename="contents.csv"'))
+		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
 		csv_text =  u'Username,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
