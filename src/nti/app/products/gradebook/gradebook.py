@@ -189,7 +189,7 @@ class GradeBookEntry(SchemaConfigured,
 
 			# Sigh, long expensive path
 			upper = self._lower_keys_to_upper_key.get(key.lower())
-			if upper:
+			if upper and upper != key: # careful not to infinite recurse
 				return self.__getitem__(upper)
 
 			raise
