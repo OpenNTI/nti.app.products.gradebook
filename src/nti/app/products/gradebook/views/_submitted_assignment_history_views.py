@@ -12,7 +12,7 @@ from . import MessageFactory as _
 logger = __import__('logging').getLogger(__name__)
 
 import operator
-
+from six import string_types
 from zope import component
 
 from pyramid.view import view_config
@@ -342,9 +342,23 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 												  key=lambda x: x[1].createdTime)
 
 	def _do_sort_gradeValue(self, filter_usernames, sort_reverse):
+		def grade_key(item):
+			# Users who have no value for their grade, typically
+			# a blank string from the UI, we want to sort to the end
+			# as a group.
+			# TODO: Not sure how this interacts with the placeholders for
+			# people entirely missing a value
+			grade = item[1]
+			value = grade.value
+			if value is None:
+				value = 'ZZZZZZZZZZZ'
+			if isinstance(value, string_types) and not value.strip():
+				value = 'ZZZZZZZZZZZ'
+			return natsort_key(value)
+
 		return self.__do_sort_by_grade_attribute( filter_usernames,
 												  sort_reverse,
-												  key=lambda x: natsort_key(x[1].value) )
+												  key=grade_key )
 
 
 	def _do_sort_username(self, filter_usernames, sort_reverse, placeholder=True):
