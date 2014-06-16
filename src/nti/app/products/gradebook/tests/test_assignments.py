@@ -813,3 +813,6 @@ class TestAssignments(ApplicationLayerTest):
 		# the user has no notable item for it
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
+
+		# The prof can put the grade back again
+		self.testapp.put_json(path, grade, extra_environ=instructor_environ)

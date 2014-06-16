@@ -95,6 +95,7 @@ from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 from nti.assessment.submission import AssignmentSubmission
 from nti.dataserver.users import User
 from nti.app.products.courseware.interfaces import ICourseInstanceActivity
+from ..grades import Grade
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
@@ -122,6 +123,8 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		# creates the grade
 		# TODO: This is very similar to what nti.app.assessment.adapters
 		# does for the student, just with fewer constraints...
+		# TODO: The handling for a previously deleted grade is
+		# what the subscriber does...this whole thing should be simplified
 		submission = AssignmentSubmission()
 		submission.assignmentId = assignmentId
 		submission.creator = user
@@ -133,18 +136,24 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		assignment_history = component.getMultiAdapter( (course, submission.creator),
 														IUsersCourseAssignmentHistory )
 
-		assignment_history.recordSubmission( submission, pending_assessment )
+		try:
+			assignment_history.recordSubmission( submission, pending_assessment )
+		except KeyError:
+			# In case there is already a submission (but no grade)
+			# we need to deal with creating the grade object ourself.
+			# This code path hits if a grade is deleted
+			grade = self.request.context = Grade()
+			entry[username] = grade
+		else:
+			# We don't want this phony-submission showing up as course activity
+			# See nti.app.assessment.subscribers
+			activity = ICourseInstanceActivity(course)
+			activity.remove(submission)
 
-		# We don't want this phony-submission showing up as course activity
-		# See nti.app.assessment.subscribers
-		activity = ICourseInstanceActivity(course)
-		activity.remove(submission)
-
-
-		# This inserted the 'real' grade. To actually
-		# updated it with the given values, let the super
-		# class do the work
-		self.request.context = entry[username]
+			# This inserted the 'real' grade. To actually
+			# updated it with the given values, let the super
+			# class do the work
+			self.request.context = entry[username]
 
 		return super(GradeWithoutSubmissionPutView,self)._do_call()
 
