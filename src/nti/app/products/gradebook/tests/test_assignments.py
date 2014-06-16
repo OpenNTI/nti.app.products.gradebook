@@ -778,3 +778,38 @@ class TestAssignments(ApplicationLayerTest):
 		# The notable item is gone
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
+
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
+	def test_instructor_delete_grade(self):
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
+		# Make sure we're enrolled
+		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+									  'CLC 3403',
+									  status=201 )
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		# The instructor must also be enrolled, as that's how permissioning is setup right now
+		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201,
+								extra_environ=instructor_environ)
+
+		# If the instructor puts in a grade...
+		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+		path = trivial_grade_path + 'sjohnson@nextthought.com'
+		grade = {'Class': 'Grade'}
+		grade['value'] = 10
+		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+
+		# he can later delete it
+		self.testapp.delete(grade_res.json_body['href'], extra_environ=instructor_environ)
+
+		# the user has no notable item for it
+		notable_res = self.fetch_user_recursive_notable_ugd()
+		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))

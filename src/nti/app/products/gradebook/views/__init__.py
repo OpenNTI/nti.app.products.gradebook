@@ -176,6 +176,23 @@ class GradebookDeleteView(UGDDeleteView):
 
 		return True
 
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='DELETE',
+			 context=IGrade,
+			 permission=nauth.ACT_DELETE)
+class GradeDeleteView(UGDDeleteView):
+	"""
+	Instructors can delete an individual grade.
+	"""
+
+	def _do_delete_object(self, context):
+		# delete the grade from its container (column, GradeBookEntry)
+		del context.__parent__[context.__name__]
+
+		return True
+
+
 import csv
 import collections
 from nti.externalization.interfaces import LocatedExternalList
