@@ -13,12 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 import operator
 from six import string_types
+
 from zope import component
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from natsort import natsort_key
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.contenttypes.courses.interfaces import ICourseEnrollments

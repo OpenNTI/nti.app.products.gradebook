@@ -13,7 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-
 from .interfaces import IPendingAssessmentAutoGradePolicy
 
 @interface.implementer(IPendingAssessmentAutoGradePolicy)

@@ -3,7 +3,7 @@
 """
 Grades definition
 
-$Id$
+.. $Id$
 """
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -17,27 +17,28 @@ from zope.container import contained as zcontained
 
 from zope.mimetype import interfaces as zmime_interfaces
 
-
-from nti.mimetype import mimetype
-from nti.dataserver.interfaces import ALL_PERMISSIONS
-from nti.dataserver.datastructures import CreatedModDateTrackingObject
-from nti.externalization.externalization import make_repr
-
-from nti.utils.property import alias
-from nti.utils.property import Lazy
-
-from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
-
-from .interfaces import IGrade
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.wref.interfaces import IWeakRef
 
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import ace_denying_all
+from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
+from nti.externalization.externalization import make_repr
+
+from nti.mimetype import mimetype
+
+from nti.schema.field import SchemaConfigured
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.utils.property import Lazy
+from nti.utils.property import alias
+
+from nti.wref.interfaces import IWeakRef
+
+from .interfaces import IGrade
 
 @interface.implementer(IGrade,
 					   zmime_interfaces.IContentTypeAware)

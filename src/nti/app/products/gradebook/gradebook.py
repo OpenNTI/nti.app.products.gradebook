@@ -33,8 +33,9 @@ from nti.ntiids import ntiids
 
 from nti.utils.property import alias
 from nti.utils.property import CachedProperty
-from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
+
+from nti.schema.field import SchemaConfigured
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.externalization.externalization import make_repr
 

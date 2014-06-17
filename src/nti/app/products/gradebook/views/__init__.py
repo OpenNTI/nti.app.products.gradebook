@@ -3,12 +3,14 @@
 """
 Views and other functions related to grades and gradebook.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import nameparser
 
 from zope import component
 from zope import interface
@@ -27,7 +29,6 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.interfaces import IUserProfile
-import nameparser
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
