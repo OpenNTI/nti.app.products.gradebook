@@ -3,12 +3,14 @@
 """
 gradebook internalization
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+from . import MessageFactory as _
 
 import operator
 
@@ -22,8 +24,6 @@ from nti.externalization import interfaces as ext_interfaces
 
 from . import utils
 from . import interfaces as grade_interfaces
-
-from . import MessageFactory as _
 
 @interface.implementer(ext_interfaces.IInternalObjectUpdater)
 @component.adapter(grade_interfaces.IGrade)

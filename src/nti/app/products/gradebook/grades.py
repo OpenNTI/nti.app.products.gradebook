@@ -20,16 +20,18 @@ from zope.mimetype import interfaces as zmime_interfaces
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
-from nti.dataserver.interfaces import ALL_PERMISSIONS
-from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
+
+from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.externalization import WithRepr
 
 from nti.mimetype import mimetype
 
+from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -40,8 +42,9 @@ from nti.wref.interfaces import IWeakRef
 
 from .interfaces import IGrade
 
-@interface.implementer(IGrade,
-					   zmime_interfaces.IContentTypeAware)
+@interface.implementer(IGrade, zmime_interfaces.IContentTypeAware)
+@WithRepr
+@EqHash('username', 'assignmentId', 'value')
 class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 			SchemaConfigured,
 			zcontained.Contained):
@@ -52,8 +55,8 @@ class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 
 	grade = alias('value')
 	username = alias('Username')
-	assignmentId = alias('AssignmentId')
 	Username = alias('__name__')
+	assignmentId = alias('AssignmentId')
 
 	# Right now, we inherit the 'creator' property
 	# from CreatedModDateTrackingObject, but we have no real
@@ -97,19 +100,6 @@ class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 		acl.append( ace_denying_all() )
 
 		return acl
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.username == other.username
-									 and self.assignmentId == other.assignmentId
-									 and self.value == other.value )
-
-		except AttributeError:
-			return NotImplemented
-
-	__repr__ = make_repr()
-
-
 
 @interface.implementer(IWeakRef)
 @component.adapter(IGrade)

@@ -3,7 +3,7 @@
 """
 Grade book definition
 
-$Id$
+.. $Id$
 """
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -18,14 +18,16 @@ from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
 from pyramid.traversal import lineage
-from nti.dataserver.traversal import find_interface
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.assessment.interfaces import IQAssignment
 
-from nti.dataserver import containers as nti_containers
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
 from nti.dataserver.users import User
+from nti.dataserver.traversal import find_interface
+from nti.dataserver import containers as nti_containers
+
+from nti.externalization.externalization import WithRepr
 
 from nti.mimetype.mimetype import MIME_BASE
 
@@ -34,20 +36,19 @@ from nti.ntiids import ntiids
 from nti.utils.property import alias
 from nti.utils.property import CachedProperty
 
+from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from nti.externalization.externalization import make_repr
 
 from .interfaces import IGradeBook
 from .interfaces import IGradeBookPart
 from .interfaces import IGradeBookEntry
-from .interfaces import ISubmittedAssignmentHistory
-from .interfaces import ISubmittedAssignmentHistorySummaries
+from .interfaces import NO_SUBMIT_PART_NAME
 from .interfaces import NTIID_TYPE_GRADE_BOOK
 from .interfaces import NTIID_TYPE_GRADE_BOOK_PART
 from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
-from .interfaces import NO_SUBMIT_PART_NAME
+from .interfaces import ISubmittedAssignmentHistory
+from .interfaces import ISubmittedAssignmentHistorySummaries
 
 class _NTIIDMixin(object):
 
@@ -125,6 +126,8 @@ _GradeBookFactory= an_factory(GradeBook, 'GradeBook')
 @interface.implementer(IGradeBookEntry,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
+@WithRepr
+@EqHash('NTIID',)
 class GradeBookEntry(SchemaConfigured,
 					 # XXX: FIXME: This is wrong, this should be a Case/INSENSITIVE/ btree,
 					 # usernames are case insensitive. Everyone that uses this this
@@ -215,23 +218,10 @@ class GradeBookEntry(SchemaConfigured,
 	def __str__(self):
 		return self.displayName
 
-	__repr__ = make_repr()
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.NTIID == other.NTIID)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.NTIID)
-		return xhash
-
-
 @interface.implementer(IGradeBookPart,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
+@WithRepr
 class GradeBookPart(SchemaConfigured,
 					nti_containers.CheckingLastModifiedBTreeContainer,
 					zcontained.Contained,
@@ -269,9 +259,6 @@ class GradeBookPart(SchemaConfigured,
 
 	def __str__(self):
 		return self.displayName
-
-	__repr__ = make_repr()
-
 
 from .grades import Grade
 

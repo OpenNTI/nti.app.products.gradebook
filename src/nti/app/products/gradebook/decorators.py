@@ -6,7 +6,7 @@ Decorators for providing access to the various grades pieces.
 .. note:: As a namespace, all attributes injected into external
 	data should begin with the string `Grade`.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -17,6 +17,8 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
@@ -26,8 +28,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_external_object
-
-from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
@@ -63,7 +63,6 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 			link = Link(book, rel="GradeBook")
 			_links.append(link)
 
-
 @interface.implementer(IExternalMappingDecorator)
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
@@ -74,7 +73,6 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		_links = result.setdefault(LINKS, [])
 		link = Link(book, rel='ExportContents', elements=('contents.csv',))
 		_links.append(link)
-
 
 @interface.implementer(IExternalObjectDecorator)
 class _UsersCourseAssignmentHistoryItemDecorator(object):

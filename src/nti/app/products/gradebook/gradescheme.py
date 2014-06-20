@@ -3,7 +3,7 @@
 """
 Grade schemes
 
-$Id$
+.. $Id$
 """
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,7 +16,11 @@ import numbers
 from zope import interface
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
+from nti.externalization.externalization import WithRepr
+
 from nti.mimetype import mimetype
+
+from nti.schema.schema import EqHash
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -24,6 +28,8 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from . import interfaces as grades_interfaces
 
 @interface.implementer(grades_interfaces.ILetterGradeScheme)
+@WithRepr
+@EqHash('grades', 'ranges')
 class LetterGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -92,19 +98,6 @@ class LetterGradeScheme(SchemaConfigured):
 		elif not value.upper() in self.grades:
 			raise ValueError("Invalid grade value")
 
-	def __eq__(self, other):
-		try:
-			return self is other or (self.grades == other.grades
-									 and self.ranges == other.ranges)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.grades)
-		xhash ^= hash(self.ranges)
-		return xhash
-
 class ExtendedLetterGradeScheme(LetterGradeScheme):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -119,6 +112,8 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 					  (57, 59),  (50, 56), (0, 49))
 
 @interface.implementer(grades_interfaces.INumericGradeScheme)
+@WithRepr
+@EqHash('min', 'max')
 class NumericGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.INumericGradeScheme)
@@ -144,18 +139,6 @@ class NumericGradeScheme(SchemaConfigured):
 		result = value * (self.max - self.min) + self.min
 		return result
 
-	def __eq__(self, other):
-		try:
-			return self is other or (self.min == other.min and self.max == other.max)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.min)
-		xhash ^= hash(self.max)
-		return xhash
-
 @interface.implementer(grades_interfaces.IIntegerGradeScheme)
 class IntegerGradeScheme(NumericGradeScheme):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
@@ -169,6 +152,7 @@ class IntegerGradeScheme(NumericGradeScheme):
 		return value
 
 @interface.implementer(grades_interfaces.IBooleanGradeScheme)
+@WithRepr
 class BooleanGradeScheme(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(grades_interfaces.IBooleanGradeScheme)

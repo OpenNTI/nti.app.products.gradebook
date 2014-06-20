@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-Gradebook event subscribers
-
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -33,9 +31,9 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
-from .grades import Grade
 from . import assignments
 
+from .grades import Grade
 from .interfaces import IGrade
 from .interfaces import IGradeBook
 from .interfaces import IPendingAssessmentAutoGradePolicy
@@ -203,7 +201,6 @@ def _do_store_grade_created_event(grade, event):
 	assert change.__parent__ is _get_entry_change_storage(grade.__parent__)
 	assert change.__name__ == grade.Username
 	return change
-
 
 def _store_grade_created_event(grade, event):
 	# We're registered for both added and modified events,

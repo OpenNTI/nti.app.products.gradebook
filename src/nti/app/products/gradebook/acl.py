@@ -3,7 +3,7 @@
 """
 Relating to ACL implementations for objects defined in this package.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -20,8 +20,8 @@ from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 from nti.dataserver.interfaces import IACLProvider
-from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.utils.property import Lazy
