@@ -814,5 +814,14 @@ class TestAssignments(ApplicationLayerTest):
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
 
+		# deleting the same (or any missing) grade raises
+		# a 404
+		self.testapp.delete(grade_res.json_body['href'],
+							status=404,
+							extra_environ=instructor_environ)
+
 		# The prof can put the grade back again
 		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+
+		# and delete again
+		self.testapp.delete(grade_res.json_body['href'], extra_environ=instructor_environ)

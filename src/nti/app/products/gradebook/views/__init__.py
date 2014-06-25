@@ -18,7 +18,6 @@ from zope.traversing.interfaces import IPathAdapter
 
 from pyramid.view import view_config
 from pyramid.interfaces import IRequest
-from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
@@ -32,7 +31,6 @@ from nti.dataserver.users.interfaces import IUserProfile
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
-from ..interfaces import ISubmittedAssignmentHistoryBase
 
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.app.products.gradebook')
@@ -198,9 +196,18 @@ class GradeDeleteView(UGDDeleteView):
 
 	def _do_delete_object(self, context):
 		# delete the grade from its container (column, GradeBookEntry)
-		del context.__parent__[context.__name__]
-
-		return True
+		# One would think that if we got here it's because
+		# there is actually a grade recorded so `del` would be
+		# safe; one would be wrong. That's because of
+		# ..gradebook.GradeBookEntryWithoutSubmissionTraversable which
+		# dummies up a grade for anyone that asks. So if we can't find
+		# it, follow the contract and let a 404 error be raised
+		try:
+			del context.__parent__[context.__name__]
+		except KeyError:
+			return None
+		else:
+			return True
 
 
 import csv
