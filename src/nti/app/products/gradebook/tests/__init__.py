@@ -19,6 +19,8 @@ from nti.dataserver import users
 from zope.component.interfaces import IComponents
 from nti.app.products.courseware.interfaces import ICourseCatalog
 
+from nti.app.products.courseware.tests import publish_ou_course_entries
+
 class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 
 	@classmethod
@@ -44,17 +46,9 @@ class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 		def _create():
 			with mock_db_trans():
 				users.User.create_user( username='harp4162', password='temp001')
+
 				# Re-enum to pick up instructor
-				lib = component.getUtility(IContentPackageLibrary)
-				#del lib.contentPackages
-				getattr(lib, 'contentPackages')
-
-				components = component.getUtility(IComponents, name='platform.ou.edu')
-				catalog = components.getUtility( ICourseCatalog )
-
-				# re-register globally
-				global_catalog = component.getUtility(ICourseCatalog)
-				global_catalog._entries[:] = catalog._entries
+				publish_ou_course_entries()
 
 		_create()
 	@classmethod
@@ -64,10 +58,10 @@ class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 
 		components = component.getUtility(IComponents, name='platform.ou.edu')
 		catalog = components.getUtility( ICourseCatalog )
-		del catalog._entries[:]
+		catalog.clear()
 
 		global_catalog = component.getUtility(ICourseCatalog)
-		del global_catalog._entries[:]
+		global_catalog.clear()
 
 	# TODO: May need to recreate the application with this library?
 
