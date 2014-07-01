@@ -14,6 +14,7 @@ from hamcrest import assert_that
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_entry
+from hamcrest import not_none
 from hamcrest import has_entries
 from hamcrest import has_item
 from hamcrest import contains
@@ -607,6 +608,31 @@ class TestAssignments(ApplicationLayerTest):
 								   extra_environ=instructor_environ)
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(0)))
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', is_(0) ) )
+
+
+		# If the instructor deletes a grade for a user, the submission date
+		# sorting still works and values are still returned
+
+
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_res = self.testapp.get(history_path)
+
+		grade = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1']['Grade']
+		self.testapp.delete( grade['href'], extra_environ=instructor_environ )
+
+
+		sum_res = self.testapp.get(sum_link,
+								   {'filter': 'LegacyEnrollmentStatusOpen',
+									'sortOn': 'dateSubmitted',
+									'sortOrder': 'descending'},
+								   extra_environ=instructor_environ)
+		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
+		assert_that( [x[0] for x in sum_res.json_body['Items']],
+					 is_(['aaa@nextthought.com', 'sjohnson@nextthought.com']))
+		# sj's submission should not be none
+		assert_that( sum_res.json_body['Items'][0][1], is_( not_none() ))
+		assert_that( sum_res.json_body['Items'][1][1], is_( not_none() ))
+
 
 
 	@WithSharedApplicationMockDS(users=('jason'),testapp=True,default_authenticate=True)

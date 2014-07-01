@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import operator
 from six import string_types
+import time
 
 from zope import component
 
@@ -331,6 +332,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		return items_iter
 
 	def _do_sort_dateSubmitted(self, filter_usernames, sort_reverse):
+		# XXX: This used to be true, but now we allow deleting individual grades:
+
 		# We can optimize this by sorting on the created dates of the grade
 		# in the gradebook; those should correspond one-to-one to submitted
 		# assignments---we assume as much when we set TotalNonNullItemCount.
@@ -339,9 +342,33 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# we aren't expecting a submission at all, plus that case causes the creation
 		# of a fake submission anyway).
 		# This will let us apply the force-placeholder trick
-		return self.__do_sort_by_grade_attribute( filter_usernames,
-												  sort_reverse,
-												  key=lambda x: x[1].createdTime)
+		#return self.__do_sort_by_grade_attribute( filter_usernames,
+		#										  sort_reverse,
+		#										  key=lambda x: x[1].createdTime)
+
+		# So now this is almost exactly like sorting by feedback count
+		x = self.__sort_usernames_by_submission(filter_usernames,
+												sort_reverse,
+												key=None)
+		filter_usernames, _, _users_without_grades = x
+		all_items = self.context.items(usernames=filter_usernames,
+									   placeholder=None)
+
+		if sort_reverse:
+			missing_value = -1 # impossible small
+		else:
+			missing_value = time.time() + 10000 # improbably large
+
+		key = lambda x: x[1].createdTime if x[1] else missing_value
+
+		items_iter = sorted(all_items,
+							key=key,
+							reverse=sort_reverse)
+
+
+		return items_iter
+
+
 
 	def _do_sort_gradeValue(self, filter_usernames, sort_reverse):
 		def grade_key(item):
