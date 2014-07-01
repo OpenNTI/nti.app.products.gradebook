@@ -95,11 +95,9 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 	to implement the UI:
 
 	* A count of how many submissions there have been
-		for this assignment.
-	* A count of how many submissions have been graded.
-		(Actually this is disabled now and not sent for
-		performance reasons; the design doesn't seem to require
-		it.)
+		for this assignment (this is a performance problem).
+	* A count of how many submissions have been graded
+		(this is cheap).
 	* A link to a view that can access the submissions (history
 		items) in bulk.
 	"""
@@ -120,7 +118,10 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 
 		external['GradeSubmittedCount'] = len(column)
 
-		link_to_bulk_history = Link(ISubmittedAssignmentHistory(column),
+		asg_history = ISubmittedAssignmentHistory(column)
+		external['GradeAssignmentSubmittedCount'] = len(asg_history)
+
+		link_to_bulk_history = Link(asg_history,
 									rel='GradeSubmittedAssignmentHistory')
 		link_to_summ_history = Link(ISubmittedAssignmentHistorySummaries(column),
 									rel='GradeSubmittedAssignmentHistorySummaries')

@@ -364,6 +364,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSumma
 # need this.
 # from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.adapters import _history_for_user_in_course
+from nti.app.assessment.adapters import _histories_for_course
 
 _NotGiven = object()
 @interface.implementer(ISubmittedAssignmentHistory)
@@ -393,10 +394,32 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 		"""
 		return self.context.lastModified
 
+	def __bool__(self):
+		return True
+	__nonzero__ = __bool__
+
 	def __len__(self):
-		# We can safely assume that the number of submitted assignments
-		# is the number of grades we have recorded. Yes?
-		return len(self.context)
+		"""
+		Getting the length of this object is extremely slow and should
+		be avoided.
+
+		The length is defined as the number of people that have submitted
+		to the assignment; this is distinct from the number of grades that may
+		exist, and much more expensive to compute.
+		"""
+
+		column = self.context
+		assignment_id = column.AssignmentId
+		course = ICourseInstance(self)
+		histories = _histories_for_course(course)
+
+		count = 0
+		for history in histories.values():
+			if assignment_id in history:
+				count += 1
+
+		return count
+
 
 	def __iter__(self,
 				 usernames=_NotGiven,

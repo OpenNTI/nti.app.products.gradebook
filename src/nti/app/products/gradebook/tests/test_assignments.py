@@ -426,6 +426,7 @@ class TestAssignments(ApplicationLayerTest):
 		# Check that it should show up in the counter
 		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 2 ))
+		assert_that(res.json_body, has_entry('GradeAssignmentSubmittedCount', 2))
 		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
 		self.testapp.get(sum_link, extra_environ=instructor_environ)
 
@@ -633,6 +634,10 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body['Items'][0][1], is_( not_none() ))
 		assert_that( sum_res.json_body['Items'][1][1], is_( not_none() ))
 
+
+		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
+		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
+		assert_that(res.json_body, has_entry('GradeAssignmentSubmittedCount', 2))
 
 
 	@WithSharedApplicationMockDS(users=('jason'),testapp=True,default_authenticate=True)
