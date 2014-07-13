@@ -59,10 +59,14 @@ def _grade_modified(grade, event):
 			lifecycleevent.modified(item)
 
 def _find_entry_for_item(item):
-	course = ICourseInstance(item)
-	book = IGradeBook(course)
-
 	assignmentId = item.Submission.assignmentId
+	course = ICourseInstance(item, None)
+	if course is None:
+		# Typically during tests
+		logger.warning("Assignment %s has no course", assignmentId)
+		return None
+
+	book = IGradeBook(course)
 
 	entry = book.getColumnForAssignmentId(assignmentId)
 	if entry is None:
