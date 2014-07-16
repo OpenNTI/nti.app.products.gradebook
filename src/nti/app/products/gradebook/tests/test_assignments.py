@@ -57,7 +57,7 @@ class TestAssignments(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_synchronize_gradebook(self):
 
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
 
 			lib = component.getUtility(IContentPackageLibrary)
 
@@ -101,7 +101,7 @@ class TestAssignments(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_get_course_assignments(self):
 
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds,site_name='platform.ou.edu'):
 
 			lib = component.getUtility(IContentPackageLibrary)
 
