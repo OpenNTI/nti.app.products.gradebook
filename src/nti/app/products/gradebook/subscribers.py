@@ -25,6 +25,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.products.courseware.interfaces import ICourseInstanceAvailableEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import users
 from nti.dataserver.activitystream_change import Change
@@ -83,20 +84,44 @@ def _find_entry_for_item(item):
 	return entry
 
 def _find_autograde_policy_for_course(course):
+
+	# We need to actually be registering these as annotations
+	# or some such...
+	policy = IPendingAssessmentAutoGradePolicy(course, None)
+	if policy is not None:
+		return policy
+
 	registry = component
 
 	# Courses may be ISites (couldn't we do this with
 	# the context argument?)
 	try:
 		registry = course.getSiteManager()
-		name = ''
+		names = ('',)
 		# If it is, we want the default utility in this course
 	except LookupError:
 		# If it isn't we need a named utility
-		# This only works for the legacy courses
-		name = course.ContentPackageNTIID
+		# We look for a bunch of different names, depending on the
+		# kind of course.
+		# XXX: We probably want to replace this with an adapter
+		# that we can setup at course sync time as an annotation?
+		names = list()
+		try:
+			# Legacy single-package courses
+			names.append(course.ContentPackageNTIID)
+		except AttributeError:
+			# new-style
+			names.extend( (x.ntiid for x in course.ContentPackageBundle.ContentPackages) )
 
-	return registry.queryUtility(IPendingAssessmentAutoGradePolicy, name=name)
+		cat_entry = ICourseCatalogEntry(course, None)
+		if cat_entry:
+			names.append(cat_entry.ntiid)
+
+	for name in names:
+		try:
+			return registry.getUtility(IPendingAssessmentAutoGradePolicy, name=name)
+		except LookupError:
+			pass
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
