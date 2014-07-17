@@ -20,6 +20,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 from pyramid.traversal import lineage
 
 from nti.assessment.interfaces import IQAssignment
+from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -211,8 +212,11 @@ class GradeBookEntry(SchemaConfigured,
 	@property
 	def DueDate(self):
 		try:
-			return component.getUtility(IQAssignment, name=self.assignmentId).available_for_submission_ending
-		except LookupError:
+			asg =component.getUtility(IQAssignment, name=self.assignmentId)
+			course = ICourseInstance(self)
+			datecontext = IQAssignmentDateContext(course)
+			return datecontext.of(asg).available_for_submission_ending
+		except (LookupError,TypeError):
 			return None
 
 	def __str__(self):
