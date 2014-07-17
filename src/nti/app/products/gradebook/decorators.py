@@ -14,14 +14,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope import component
 
-from pyramid.threadlocal import get_current_request
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.contentlibrary.interfaces import IContentPackage
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
+from nti.dataserver.traversal import find_interface
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
@@ -35,15 +37,20 @@ from .interfaces import IGradeBook
 LINKS = StandardExternalFields.LINKS
 
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
-def _course_when_instructed_by_current_user(data, request=None):
-	request = request or get_current_request()
-	if not request:
-		return
-	username = request.authenticated_userid
-	if not username:
-		return
-	course = ICourseInstance(data, None)
-	if course is None or not is_instructed_by_name(course, username):
+def _course_when_instructed_by_current_user(data, user):
+	if user is None:
+		return None
+
+	course = component.queryMultiAdapter( (data, user), ICourseInstance)
+	if course is None:
+		course = ICourseInstance(data, None)
+		if course is None:
+			course = ICourseInstance( find_interface(data, IContentPackage, strict=False),
+									  None)
+		if course is not None:
+			logger.warning("No enrollment found, assuming generic course. Tests only?")
+
+	if course is None or not is_instructed_by_name(course, user.username):
 		# We're not an instructor
 		return
 
@@ -52,22 +59,24 @@ def _course_when_instructed_by_current_user(data, request=None):
 @interface.implementer(IExternalMappingDecorator)
 class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
+	course = None
+
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context, self.request) is not None
+		self.course = _course_when_instructed_by_current_user(context, self.remoteUser)
+		return self.course is not None
 
 	def _do_decorate_external(self, course, result):
-		course = ICourseInstance(course, None)
-		if course is not None:
-			_links = result.setdefault(LINKS, [])
-			book = IGradeBook(course)
-			link = Link(book, rel="GradeBook")
-			_links.append(link)
+		course = self.course
+		_links = result.setdefault(LINKS, [])
+		book = IGradeBook(course)
+		link = Link(book, rel="GradeBook")
+		_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context, self.request) is not None
+		return _course_when_instructed_by_current_user(context, self.remoteUser) is not None
 
 	def _do_decorate_external(self, book, result):
 		_links = result.setdefault(LINKS, [])
@@ -102,13 +111,14 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		items) in bulk.
 	"""
 
+	course = None
+
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context, self.request) is not None
+		self.course = _course_when_instructed_by_current_user(context, self.remoteUser)
+		return self.course is not None
 
 	def _do_decorate_external(self, assignment, external):
-		course = ICourseInstance(assignment, None)
-		if course is None:
-			return
+		course = self.course
 
 		book = IGradeBook(course)
 		column = book.getColumnForAssignmentId(assignment.__name__)
