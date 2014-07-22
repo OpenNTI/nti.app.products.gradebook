@@ -24,8 +24,12 @@ from natsort import natsort_key
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
+
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import is_instructed_by_name
+from nti.contenttypes.courses.interfaces import ES_PUBLIC
+from nti.contenttypes.courses.interfaces import ES_CREDIT
+
 from nti.dataserver.interfaces import IEnumerableEntityContainer
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.users import Entity
@@ -440,16 +444,16 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# listed in usernames, we can sort usernames first to get the correct
 		# order. This is especially helpful when paging as we can consume the part
 		# of the generator needed.
-		everyone = course.legacy_community
+		everyone = course.SharingScopes[ES_PUBLIC]
 		everyone_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 		student_usernames = everyone_usernames - {x.id.lower() for x in course.instructors}
 		filter_usernames = student_usernames
 		filtered = False
 		if filter_names:
 			if 'LegacyEnrollmentStatusForCredit' in filter_names or 'LegacyEnrollmentStatusOpen' in filter_names:
+
 				filtered = True
-				restricted_id = course.LegacyScopes['restricted']
-				restricted = Entity.get_entity(restricted_id) if restricted_id else None
+				restricted = course.SharingScopes.get(ES_CREDIT)
 
 				restricted_usernames = ({x.lower() for x in IEnumerableEntityContainer(restricted).iter_usernames()}
 										if restricted is not None

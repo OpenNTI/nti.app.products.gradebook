@@ -183,11 +183,13 @@ class TestAssignments(ApplicationLayerTest):
 		instructor_environ = self._make_extra_environ(username='harp4162')
 		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
 
-		# The instructor must also be enrolled, as that's how permissioning is setup right now
-		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
-								'CLC 3403',
-								status=201,
-								extra_environ=instructor_environ)
+		# In the past, the instructor had to also be enrolled, but
+		# because permissioning is handled at a lower level now that's not necessary;
+		# in fact, it throws counts off
+		#self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
+		#						'CLC 3403',
+		#						status=201,
+		#						extra_environ=instructor_environ)
 		# First, it should show up in the counter
 		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
@@ -389,8 +391,11 @@ class TestAssignments(ApplicationLayerTest):
 		del ext_obj['Class']
 
 		# Make sure we're all enrolled
+		# In the past, the instructor had to also be enrolled, but
+		# because permissioning is handled at a lower level now that's not necessary;
+		# in fact, it throws counts off
 		for uname, env in (('sjohnson@nextthought.com',None),
-						   ('harp4162', instructor_environ),
+						   #('harp4162', instructor_environ),
 						   ('aaa@nextthought.com', jmadden_environ)):
 			self.testapp.post_json( '/dataserver2/users/'+uname+'/Courses/EnrolledCourses',
 									'CLC 3403',

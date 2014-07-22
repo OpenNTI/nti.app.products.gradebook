@@ -290,7 +290,7 @@ class GradeBookEntryWithoutSubmission(GradeBookEntry):
 
 NoSubmitGradeBookEntry = GradeBookEntryWithoutSubmission
 
-from nti.app.products.courseware.interfaces import IPrincipalEnrollmentCatalog # XXX Not real happy with this dependency
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver.traversal import ContainerAdapterTraversable
 
@@ -321,18 +321,15 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
 			user = User.get_user(name)
 			if not user:
 				raise
-
 			course = ICourseInstance(self.context)
-			enrollments = []
-			for catalog in component.subscribers( (user,), IPrincipalEnrollmentCatalog ):
-				enrollments.extend(catalog.iter_enrollments())
-			if course not in enrollments:
-				raise
+			course_enrollments = ICourseEnrollments(course)
+			if course_enrollments.get_enrollment_for_principal(user):
+				result = GradeWithoutSubmission()
+				result.__parent__ = self.context
+				result.__name__ = name
+				return result
+			raise
 
-			result = GradeWithoutSubmission()
-			result.__parent__ = self.context
-			result.__name__ = name
-			return result
 
 class NoSubmitGradeBookPart(GradeBookPart):
 	"""
