@@ -41,14 +41,31 @@ def _course_when_instructed_by_current_user(data, user):
 	if user is None:
 		return None
 
-	course = component.queryMultiAdapter( (data, user), ICourseInstance)
+	if ICourseInstance.providedBy(data):
+		# Yay, they gave us one directly!
+		course = data
+	else:
+		# Try to find the course within the context of the user;
+		# this takes into account the user's enrollment status
+		# to find the best course (sub) instance
+		course = component.queryMultiAdapter( (data, user), ICourseInstance)
+
 	if course is None:
+		# Ok, can we get there genericlly, as in the old-school
+		# fashion?
 		course = ICourseInstance(data, None)
 		if course is None:
+			# Hmm, maybe we have an assignment-like object and we can
+			# try to find the content package it came from and from there
+			# go to the one-to-one mapping to courses we used to have
 			course = ICourseInstance( find_interface(data, IContentPackage, strict=False),
 									  None)
 		if course is not None:
-			logger.warning("No enrollment found, assuming generic course. Tests only?")
+			# Snap. Well, we found a course (good!), but not by taking
+			# the user into account (bad!)
+			logger.warning("No enrollment for user %s in course %s found "
+						   "for data %s; assuming generic/global course instance",
+						   user, course, data)
 
 	if course is None or not is_instructed_by_name(course, user.username):
 		# We're not an instructor
