@@ -26,7 +26,6 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
 
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
-from nti.contenttypes.courses.interfaces import is_instructed_by_name
 from nti.contenttypes.courses.interfaces import ES_PUBLIC
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 
@@ -39,6 +38,8 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from ..interfaces import ISubmittedAssignmentHistoryBase
 from ..interfaces import IGradeBookEntry
+from ..interfaces import ACT_VIEW_GRADES
+from nti.appserver.pyramid_authorization import has_permission
 
 from nti.dataserver import authorization as nauth
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -410,11 +411,10 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 	def __call__(self):
 		request = self.request
 		context = self.context
-		username = request.authenticated_userid
 		course = ICourseInstance(context)
 		grade_column = self.grade_column
 
-		if not is_instructed_by_name(course, username):
+		if not has_permission(ACT_VIEW_GRADES, course, request):
 			raise hexc.HTTPForbidden()
 
 		result = LocatedExternalDict()

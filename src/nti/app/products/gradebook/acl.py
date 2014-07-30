@@ -16,6 +16,7 @@ from zope import component
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
+from .interfaces import ACT_VIEW_GRADES
 from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 
@@ -50,6 +51,7 @@ class _GradeBookACLProvider(object):
 		course = ICourseInstance(self.context, None)
 		if course is not None:
 			acl.extend( (ace_allowing(i, ACT_READ, type(self)) for i in course.instructors) )
+			acl.extend( (ace_allowing(i, ACT_VIEW_GRADES, type(self)) for i in course.instructors) )
 
 		acl.append( ace_allowing( ROLE_ADMIN, ALL_PERMISSIONS, type(self) ) )
 

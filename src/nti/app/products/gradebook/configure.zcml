@@ -12,6 +12,21 @@
 	<i18n:registerTranslations directory="locales" />
 
 
+   <permission
+        id="nti.actions.gradebook.view_grades"
+        title="View grades" />
+    <!--
+        The instructors/TA of a course (locally added to this role
+        for the course) can view grades
+    -->
+    <grant
+        permission="nti.actions.gradebook.view_grades"
+        role="nti.roles.course_instructor" />
+    <grant
+        permission="nti.actions.gradebook.view_grades"
+        role="nti.roles.course_ta" />
+
+
 	<!-- Adapters -->
 
 	<adapter factory=".gradebook._GradeBookFactory"

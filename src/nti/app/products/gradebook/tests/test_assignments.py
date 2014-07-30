@@ -116,6 +116,7 @@ class TestAssignments(ApplicationLayerTest):
 			request = self.beginRequest()
 			request.environ['REMOTE_USER'] = 'harp4162'
 			# XXX: NOTE: This is unclean
+			from zope.security._definitions import system_user
 			class Policy(object):
 				interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 				def authenticated_userid( self, request ):
@@ -123,8 +124,13 @@ class TestAssignments(ApplicationLayerTest):
 				def effective_principals(self, request):
 					return ['harp4162']
 
+				interaction = None
+				principal = system_user
+
 			old = component.getUtility(pyramid.interfaces.IAuthenticationPolicy)
 			component.provideUtility( Policy() )
+			from zope.security.management import newInteraction, endInteraction
+			newInteraction(Policy())
 			try:
 				for package in lib.contentPackages:
 					course = ICourseInstance(package)
@@ -142,6 +148,7 @@ class TestAssignments(ApplicationLayerTest):
 				component.provideUtility( old, provides=pyramid.interfaces.IAuthenticationPolicy )
 				assert_that( component.getUtility(pyramid.interfaces.IAuthenticationPolicy),
 							 is_(old) )
+				endInteraction()
 
 	assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1"
 	question_set_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo"

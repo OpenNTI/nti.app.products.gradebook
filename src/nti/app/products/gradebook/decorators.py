@@ -33,10 +33,12 @@ from nti.externalization.externalization import to_external_object
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
+from .interfaces import ACT_VIEW_GRADES
 
 LINKS = StandardExternalFields.LINKS
 
-from nti.contenttypes.courses.interfaces import is_instructed_by_name
+from nti.appserver.pyramid_authorization import has_permission
+
 def _course_when_instructed_by_current_user(data, user):
 	if user is None:
 		return None
@@ -63,11 +65,11 @@ def _course_when_instructed_by_current_user(data, user):
 		if course is not None:
 			# Snap. Well, we found a course (good!), but not by taking
 			# the user into account (bad!)
-			logger.warning("No enrollment for user %s in course %s found "
-						   "for data %s; assuming generic/global course instance",
-						   user, course, data)
+			logger.debug("No enrollment for user %s in course %s found "
+						 "for data %s; assuming generic/global course instance",
+						 user, course, data)
 
-	if course is None or not is_instructed_by_name(course, user.username):
+	if course is None or not has_permission(ACT_VIEW_GRADES, course):
 		# We're not an instructor
 		return
 

@@ -29,6 +29,10 @@ from nti.schema.field import TextLine
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
+from zope.security.permission import Permission
+
+ACT_VIEW_GRADES = Permission('nti.actions.gradebook.view_grades')
+
 # ## NTIID values
 
 NTIID_TYPE_GRADE_BOOK = 'gradebook'
