@@ -37,9 +37,19 @@ from .interfaces import ACT_VIEW_GRADES
 
 LINKS = StandardExternalFields.LINKS
 
-from nti.appserver.pyramid_authorization import has_permission
+from zope.security.management import checkPermission
+from zope.security.management import NoInteraction
 
-def _course_when_instructed_by_current_user(data, user):
+def _grades_readable(grades):
+	# We use check permission here specifically to avoid the ACLs
+	# which could get in our way if we climebed the parent tree
+	# up through legacy courses. We want this all to come from the gradebook
+	try:
+		return checkPermission(ACT_VIEW_GRADES.id, IGradeBook(grades))
+	except NoInteraction:
+		return False
+
+def _find_course_for_user(data, user):
 	if user is None:
 		return None
 
@@ -69,10 +79,6 @@ def _course_when_instructed_by_current_user(data, user):
 						 "for data %s; assuming generic/global course instance",
 						 user, course, data)
 
-	if course is None or not has_permission(ACT_VIEW_GRADES, course):
-		# We're not an instructor
-		return
-
 	return course
 
 @interface.implementer(IExternalMappingDecorator)
@@ -81,8 +87,8 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 	course = None
 
 	def _predicate(self, context, result):
-		self.course = _course_when_instructed_by_current_user(context, self.remoteUser)
-		return self.course is not None
+		self.course = _find_course_for_user(context, self.remoteUser)
+		return self.course is not None and _grades_readable(self.course)
 
 	def _do_decorate_external(self, course, result):
 		course = self.course
@@ -95,7 +101,7 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		return _course_when_instructed_by_current_user(context, self.remoteUser) is not None
+		return self._is_authenticated and _grades_readable(context)
 
 	def _do_decorate_external(self, book, result):
 		_links = result.setdefault(LINKS, [])
@@ -133,8 +139,8 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 	course = None
 
 	def _predicate(self, context, result):
-		self.course = _course_when_instructed_by_current_user(context, self.remoteUser)
-		return self.course is not None
+		self.course = _find_course_for_user(context, self.remoteUser)
+		return self.course is not None and _grades_readable(self.course)
 
 	def _do_decorate_external(self, assignment, external):
 		course = self.course

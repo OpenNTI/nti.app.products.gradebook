@@ -54,6 +54,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 class TestAssignments(ApplicationLayerTest):
 	layer = InstructedCourseApplicationTestLayer
 
+	default_origin = str('http://janux.ou.edu')
+
 	@WithSharedApplicationMockDS
 	def test_synchronize_gradebook(self):
 
@@ -824,18 +826,12 @@ class TestAssignments(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_instructor_delete_grade(self):
-		# This only works in the OU environment because that's where the purchasables are
-		extra_env = self.testapp.extra_environ or {}
-		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
-		self.testapp.extra_environ = extra_env
-
 		# Make sure we're enrolled
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 									  'CLC 3403',
 									  status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
-		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
 
 		# The instructor must also be enrolled, as that's how permissioning is setup right now
 		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
@@ -868,3 +864,29 @@ class TestAssignments(ApplicationLayerTest):
 
 		# and delete again
 		self.testapp.delete(grade_res.json_body['href'], extra_environ=instructor_environ)
+
+	@WithSharedApplicationMockDS(users=('regular_user',),testapp=True,default_authenticate=True)
+	def test_gradebook_rel_presence(self):
+		# Make sure we're enrolled
+		normal_environ = self._make_extra_environ(username='regular_user')
+
+		res = self.testapp.post_json( '/dataserver2/users/regular_user/Courses/EnrolledCourses',
+									  'CLC 3403',
+									  status=201,
+									  extra_environ=normal_environ  )
+
+		course_instance_href = res.json_body['CourseInstance']['href']
+
+		res = self.testapp.get(course_instance_href, extra_environ=normal_environ)
+
+		self.forbid_link_with_rel(res.json_body, 'GradeBook')
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+
+		res = self.testapp.get(course_instance_href, extra_environ=instructor_environ)
+
+		gb_href = self.require_link_href_with_rel(res.json_body, 'GradeBook')
+
+		self.testapp.get(gb_href, extra_environ=instructor_environ)
+
+		self.testapp.get(gb_href, extra_environ=normal_environ, status=403)
