@@ -767,7 +767,8 @@ class TestAssignments(ApplicationLayerTest):
 		# We were half right
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entries( 'value', 10.0,
-																'AutoGrade', 10.0))) )
+																'AutoGrade', 10.0,
+																'AutoGradeMax', 20.0))) )
 
 		# Because it auto-grades, we have a notable item
 		notable_res = self.fetch_user_recursive_notable_ugd()

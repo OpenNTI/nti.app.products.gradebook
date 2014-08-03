@@ -12,8 +12,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope import component
 
 from .interfaces import IPendingAssessmentAutoGradePolicy
+from nti.assessment.interfaces import IQAssignmentPolicies
+
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 @interface.implementer(IPendingAssessmentAutoGradePolicy)
 class TrivialFixedScaleAutoGradePolicy(object):
@@ -57,4 +61,68 @@ class TrivialFixedScaleAutoGradePolicy(object):
 
 		# Each part was between 0 and 1. Now normalize
 		as_percent = assessed_sum / theoretical_best
-		return as_percent * self.normalize_to
+		return as_percent * self.normalize_to, self.normalize_to
+
+
+def _policy_based_autograde_policy(course, assignmentId):
+
+	policy = None
+	policies = IQAssignmentPolicies(course)
+	if policies:
+		policy = policies.getPolicyForAssignment(assignmentId)
+	if policy:
+		total_points =  float(policy['auto_grade']['total_points'])
+
+		policy = TrivialFixedScaleAutoGradePolicy()
+		policy.normalize_to = total_points
+		return policy
+
+
+
+def find_autograde_policy_for_assignment_in_course(course, assignmentId):
+	# XXX: We don't *really* need to be taking the assignmentId, it's
+	# part of the item submitted for autograding. We could wrap the logic
+	# all up in the policy itself. But this makes the API intent fairly clear...
+
+	# Is there a nice new one?
+	policy = _policy_based_autograde_policy(course, assignmentId)
+	if policy is not None:
+		return policy
+
+	# We need to actually be registering these as annotations
+	# or some such...
+	policy = IPendingAssessmentAutoGradePolicy(course, None)
+	if policy is not None:
+		return policy
+
+	registry = component
+
+	# Courses may be ISites (couldn't we do this with
+	# the context argument?)
+	try:
+		registry = course.getSiteManager()
+		names = ('',)
+		# If it is, we want the default utility in this course
+	except LookupError:
+		# If it isn't we need a named utility
+		# We look for a bunch of different names, depending on the
+		# kind of course.
+		# XXX: We probably want to replace this with an adapter
+		# that we can setup at course sync time as an annotation?
+		names = list()
+		try:
+			# Legacy single-package courses
+			names.append(course.ContentPackageNTIID)
+		except AttributeError:
+			# new-style
+			names.extend( (x.ntiid for x in course.ContentPackageBundle.ContentPackages) )
+
+		cat_entry = ICourseCatalogEntry(course, None)
+		if cat_entry:
+			names.append(cat_entry.ntiid)
+
+	for name in names:
+		try:
+			return registry.getUtility(IPendingAssessmentAutoGradePolicy, name=name)
+		except LookupError:
+			pass

@@ -25,7 +25,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
 
 from nti.dataserver import users
 from nti.dataserver.activitystream_change import Change
@@ -37,7 +37,8 @@ from . import assignments
 from .grades import Grade
 from .interfaces import IGrade
 from .interfaces import IGradeBook
-from .interfaces import IPendingAssessmentAutoGradePolicy
+
+from .autograde_policies import find_autograde_policy_for_assignment_in_course
 
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
@@ -83,45 +84,6 @@ def _find_entry_for_item(item):
 
 	return entry
 
-def _find_autograde_policy_for_course(course):
-
-	# We need to actually be registering these as annotations
-	# or some such...
-	policy = IPendingAssessmentAutoGradePolicy(course, None)
-	if policy is not None:
-		return policy
-
-	registry = component
-
-	# Courses may be ISites (couldn't we do this with
-	# the context argument?)
-	try:
-		registry = course.getSiteManager()
-		names = ('',)
-		# If it is, we want the default utility in this course
-	except LookupError:
-		# If it isn't we need a named utility
-		# We look for a bunch of different names, depending on the
-		# kind of course.
-		# XXX: We probably want to replace this with an adapter
-		# that we can setup at course sync time as an annotation?
-		names = list()
-		try:
-			# Legacy single-package courses
-			names.append(course.ContentPackageNTIID)
-		except AttributeError:
-			# new-style
-			names.extend( (x.ntiid for x in course.ContentPackageBundle.ContentPackages) )
-
-		cat_entry = ICourseCatalogEntry(course, None)
-		if cat_entry:
-			names.append(cat_entry.ntiid)
-
-	for name in names:
-		try:
-			return registry.getUtility(IPendingAssessmentAutoGradePolicy, name=name)
-		except LookupError:
-			pass
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
@@ -134,9 +96,11 @@ def _assignment_history_item_added(item, event):
 		# then let it convert the auto-assessed part of the submission
 		# into the initial grade value
 		course = ICourseInstance(item)
-		policy = _find_autograde_policy_for_course(course)
+		policy = find_autograde_policy_for_assignment_in_course(course, item.Submission.assignmentId)
 		if policy is not None:
-			grade.AutoGrade = policy.autograde(item.pendingAssessment)
+			autograde = policy.autograde(item.pendingAssessment)
+			if autograde is not None:
+				grade.AutoGrade, grade.AutoGradeMax = autograde
 			if grade.value is None:
 				grade.value = grade.AutoGrade
 

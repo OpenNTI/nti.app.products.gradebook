@@ -280,6 +280,7 @@ class IGrade(IContained,
 	value = _grade_property()
 
 	AutoGrade = _grade_property()
+	AutoGradeMax = _grade_property()
 
 class IPendingAssessmentAutoGradePolicy(interface.Interface):
 	"""
@@ -291,5 +292,8 @@ class IPendingAssessmentAutoGradePolicy(interface.Interface):
 	def autograde(item):
 		"""
 		Given the :class:`nti.assessment.interfaces.IQAssignmentSubmissionPendingAssessment`,
-		examine the parts and produce a value usable as the auto-graded value.
+		examine the parts and produce a tuple usable as the auto-graded value:
+		(AutoGrade, AutoGradeMax)
+
+		Return None if no autograding is possible.
 		"""
