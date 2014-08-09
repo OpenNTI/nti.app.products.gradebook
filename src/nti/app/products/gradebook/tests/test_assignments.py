@@ -19,7 +19,7 @@ from hamcrest import has_entries
 from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import has_property
-
+from hamcrest import greater_than
 
 import urllib
 from zope import component
@@ -29,6 +29,8 @@ from zope import lifecycleevent
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+
+from nti.testing.time import time_monotonically_increases
 
 from nti.app.products.gradebook import assignments
 from nti.app.products.gradebook import interfaces as grades_interfaces
@@ -777,21 +779,14 @@ class TestAssignments(ApplicationLayerTest):
 					 has_entry('Creator', 'harp4162'))
 
 
-
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
-	def test_instructor_grade_is_ugd_notable(self):
-		# This only works in the OU environment because that's where the purchasables are
-		extra_env = self.testapp.extra_environ or {}
-		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
-		self.testapp.extra_environ = extra_env
-
+	def test_instructor_grade_is_ugd_notable_to_student(self):
 		# Make sure we're enrolled
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 									  'CLC 3403',
 									  status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
-		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
 
 		# The instructor must also be enrolled, as that's how permissioning is setup right now
 		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
@@ -824,6 +819,52 @@ class TestAssignments(ApplicationLayerTest):
 		# The notable item is gone
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
+
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
+	@time_monotonically_increases
+	def test_mutating_grade_changes_history_item_last_modified(self):
+		# Make sure we're enrolled
+		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+									  'CLC 3403',
+									  status=201 )
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+
+		# The instructor must also be enrolled, as that's how permissioning is setup right now
+		self.testapp.post_json( '/dataserver2/users/harp4162/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201,
+								extra_environ=instructor_environ)
+
+		# If the instructor puts in a grade...
+		trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+		path = trivial_grade_path + 'sjohnson@nextthought.com'
+		grade = {'Class': 'Grade'}
+		grade['value'] = 10
+		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+
+		# ...the student sees a history item
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_res = self.testapp.get(history_path)
+
+		history_item = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
+		history_lm = history_item['Last Modified']
+		history_value = history_item['Grade']['value']
+
+
+		# If the instructor updates it
+		grade['value'] = 5
+		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+
+		history_res = self.testapp.get(history_path)
+		history_item2 = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
+
+		history_lm2 = history_item['Last Modified']
+		history_value2 = history_item['Grade']['value']
+
+		# The date and data are modified
+		assert_that( history_item2, has_entries('Last Modified', greater_than(history_lm),
+												'Grade', has_entry('value', 5)))
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_instructor_delete_grade(self):

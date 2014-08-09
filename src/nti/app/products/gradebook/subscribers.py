@@ -49,16 +49,29 @@ def find_gradebook_in_lineage(obj):
 
 @component.adapter(IGrade, IObjectModifiedEvent)
 def _grade_modified(grade, event):
-	course = ICourseInstance(grade)
+	"""
+	When a grade is modified, make sure that the history item that
+	conceptually contains it is updated too.
+	"""
+	entry = grade.__parent__
+	if entry is None or not entry.AssignmentId:
+		# not yet
+		return
+
 	user = users.User.get_user(grade.username)
-	book = IGradeBook(course)
-	entry = book.get_entry_by_ntiid(grade.ntiid)
-	if user and entry is not None and entry.AssignmentId:
-		assignment_history = component.getMultiAdapter( (course, user),
-													    IUsersCourseAssignmentHistory)
-		if entry.AssignmentId in assignment_history:
-			item = assignment_history[entry.assignmentId]
-			lifecycleevent.modified(item)
+	if user is None:
+		return
+
+	course = ICourseInstance(grade, None)
+	if course is None:
+		# not yet
+		return
+
+	assignment_history = component.getMultiAdapter( (course, user),
+												    IUsersCourseAssignmentHistory)
+	if entry.AssignmentId in assignment_history:
+		item = assignment_history[entry.assignmentId]
+		item.updateLastModIfGreater(grade.lastModified)
 
 def _find_entry_for_item(item):
 	assignmentId = item.Submission.assignmentId

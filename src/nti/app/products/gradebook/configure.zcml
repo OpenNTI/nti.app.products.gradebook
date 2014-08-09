@@ -172,6 +172,7 @@
 				for=".interfaces.IGrade zope.lifecycleevent.IObjectModifiedEvent"/>
 
 	<subscriber handler=".subscribers._remove_grade_created_event" />
+	<subscriber handler=".subscribers._grade_modified" />
 
 
 	<!-- NTIID Resolvers -->
