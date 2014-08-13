@@ -9,6 +9,11 @@ entry_points = {
 	],
 }
 
+import platform
+py_impl = getattr(platform, 'python_implementation', lambda: None)
+IS_PYPY = py_impl() == 'PyPy'
+
+
 setup(
 	name='nti.app.products.gradebook',
 	version=VERSION,
@@ -37,7 +42,12 @@ setup(
 		'nti.app.assessment',
 		'nti.contenttypes.courses',
 		'nti.dataserver',
-		'natsort'
+		'natsort',
+		# fastnumbers: from natsort 3.4.1: 'natsort' will now use the
+		# 'fastnumbers' module if it is installed. This gives up to an
+		# extra 30% boost in speed over the previous performance
+		# enhancements.
+		'fastnumbers' if not IS_PYPY else '',
 	],
 	entry_points=entry_points
 )
