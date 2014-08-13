@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope.container.interfaces import INameChooser
 
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
+# XXX: Direct dependency. Break this.
+from nti.app.assessment.assignment_filters import AssignmentPolicyExclusionFilter
 
 from .interfaces import IGradeBook
 from .interfaces import NO_SUBMIT_PART_NAME
@@ -32,7 +34,12 @@ def _assignment_comparator(a, b):
 	return 0
 
 def get_course_assignments(course, sort=True, reverse=False):
-	assignments = list(ICourseAssignmentCatalog(course).iter_assignments())
+	# Filter out excluded assignments so they don't show in the gradebook
+	# either
+	policy_filter = AssignmentPolicyExclusionFilter(None, course)
+	assignments = [x
+				   for x in ICourseAssignmentCatalog(course).iter_assignments()
+				   if policy_filter.allow_assignment_for_user_in_course(x, None, course)]
 
 	if sort:
 		assignments = sorted(assignments, cmp=_assignment_comparator, reverse=reverse)
