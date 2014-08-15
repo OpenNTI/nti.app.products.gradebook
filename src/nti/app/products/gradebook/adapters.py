@@ -45,13 +45,11 @@ from nti.dataserver.traversal import find_interface
 @interface.implementer(ICourseInstance)
 def _as_course(context):
 	"Registered as an adapter for things we expect to be a descendant of a course"
-	try:
-		return find_interface(context, ICourseInstance)
-	except TypeError:
-		logger.warn( "incorrect lineage for grade object %s, should be tests only",
-					 context,
-					 exc_info=True)
-		return None
+	return find_interface(context, ICourseInstance,
+						  # Don't be strict so that we can still find it
+						  # if some parent object has already had its
+						  # __parent__ set to None, as during object removal
+						  strict=False)
 
 def _no_pickle(*args):
 	raise TypeError("This object cannot be pickled")
