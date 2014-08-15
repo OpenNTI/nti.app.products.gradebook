@@ -244,8 +244,12 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			return lambda course, user: True
 
 		def f(course,user):
+			# TODO: Replace this with nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord
 			enrollment = component.getMultiAdapter((course, user),
 												   ICourseInstanceEnrollment)
+			if enrollment is None:
+				# We have a submitted assignment for a user no longer enrolled.
+				return False
 			return enrollment.LegacyEnrollmentStatus == status_filter # Let this blow up when this goes away
 		return f
 
