@@ -28,6 +28,8 @@ from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ES_PUBLIC
 from nti.contenttypes.courses.interfaces import ES_CREDIT
+from nti.contenttypes.courses.interfaces import ES_CREDIT_DEGREE
+from nti.contenttypes.courses.interfaces import ES_CREDIT_NONDEGREE
 
 from nti.dataserver.interfaces import IEnumerableEntityContainer
 from nti.dataserver.interfaces import IUser
@@ -444,23 +446,27 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# listed in usernames, we can sort usernames first to get the correct
 		# order. This is especially helpful when paging as we can consume the part
 		# of the generator needed.
-		everyone = course.SharingScopes[ES_PUBLIC]
-		everyone_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
+		enrollments = ICourseEnrollments(course)
+		everyone_usernames = {x.Principal.username.lower() for x in enrollments.iter_enrollments()}
 		student_usernames = everyone_usernames - {x.id.lower() for x in course.instructors}
 		filter_usernames = student_usernames
 		filtered = False
 		if filter_names:
 			if 'LegacyEnrollmentStatusForCredit' in filter_names or 'LegacyEnrollmentStatusOpen' in filter_names:
-
 				filtered = True
-				restricted = course.SharingScopes.get(ES_CREDIT)
 
-				restricted_usernames = ({x.lower() for x in IEnumerableEntityContainer(restricted).iter_usernames()}
-										if restricted is not None
-										else set())
+				restricted_usernames = ({x.Principal.username.lower()
+										 for x in enrollments.iter_enrollments()
+										 # XXX: TODO: Hardcoding the scopes and relationships
+										 if x.Scope in (ES_CREDIT_NONDEGREE,
+														ES_CREDIT_DEGREE,
+														ES_CREDIT)})
+
 
 				# instructors are also a member of the restricted set,
 				# so take them out (otherwise the count will be wrong)
+				# (shouldn't be needed to do that on new courses, but necessary
+				# for legacy courses)
 				if 'LegacyEnrollmentStatusForCredit' in filter_names:
 					filter_usernames = restricted_usernames - {x.id.lower() for x in course.instructors}
 				elif 'LegacyEnrollmentStatusOpen' in filter_names:
