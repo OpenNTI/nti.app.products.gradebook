@@ -139,7 +139,21 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 	course = None
 
 	def _predicate(self, context, result):
-		self.course = _find_course_for_user(context, self.remoteUser)
+		# Take either the course in our context lineage (e.g,
+		# .../Courses/Fall2013/CLC3403_LawAndJustice/AssignmentsByOutlineNode)
+		# or that we can find mapped to the assignment. This lets us
+		# generate correct links for the same assignment instance used
+		# across multiple sections; it does fall down though if the
+		# assignment actually isn't in that course...but I don't know
+		# how that could happen
+		# XXX Need a specific unit test for this
+		self.course = find_interface(self.request.context, ICourseInstance,
+									 strict=False)
+		if self.course is not None:
+			logger.debug("Using course instance from request %r for context %s",
+						 self.request.context, context)
+		if self.course is None:
+			self.course = _find_course_for_user(context, self.remoteUser)
 		return self.course is not None and _grades_readable(self.course)
 
 	def _do_decorate_external(self, assignment, external):
