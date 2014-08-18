@@ -44,6 +44,14 @@ class TrivialFixedScaleAutoGradePolicy(object):
 				theoretical_best += 1.0 # scale to the number of questions
 				part_sum = 0.0
 				for assessed_part in assessed_question.parts:
+					if not hasattr(assessed_part, 'assessedValue'):
+						# Almost certainly trying to autograde something
+						# that cannot be autograded, like a modeled content
+						# or file response
+						# XXX: Better, earlier error at initial grade time
+						# This error is typically caught by view code
+						raise interface.Invalid("Submitted ungradable type to autograde assignment")
+
 					if not assessed_part.assessedValue:
 						# WRONG part, whole question is toast
 						part_sum = 0.0
