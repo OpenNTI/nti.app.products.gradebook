@@ -447,7 +447,9 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# order. This is especially helpful when paging as we can consume the part
 		# of the generator needed.
 		enrollments = ICourseEnrollments(course)
-		everyone_usernames = {x.Principal.username.lower() for x in enrollments.iter_enrollments()}
+		everyone_usernames = {x.Principal.username.lower()
+							  for x in enrollments.iter_enrollments()
+							  if x.Principal is not None}
 		student_usernames = everyone_usernames - {x.id.lower() for x in course.instructors}
 		filter_usernames = student_usernames
 		filtered = False
