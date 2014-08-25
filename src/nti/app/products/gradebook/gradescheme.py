@@ -16,7 +16,7 @@ import numbers
 from zope import interface
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
-from nti.externalization.externalization import WithRepr
+from nti.externalization.representation import WithRepr
 
 from nti.mimetype import mimetype
 

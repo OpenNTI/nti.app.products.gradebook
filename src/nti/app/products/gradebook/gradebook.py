@@ -28,7 +28,7 @@ from nti.dataserver.users import User
 from nti.dataserver.traversal import find_interface
 from nti.dataserver import containers as nti_containers
 
-from nti.externalization.externalization import WithRepr
+from nti.externalization.representation import WithRepr
 
 from nti.mimetype.mimetype import MIME_BASE
 
