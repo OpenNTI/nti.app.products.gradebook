@@ -78,7 +78,8 @@ def _policy_based_autograde_policy(course, assignmentId):
 	policies = IQAssignmentPolicies(course)
 	if policies:
 		policy = policies.getPolicyForAssignment(assignmentId)
-	if policy:
+
+	if policy and 'auto_grade' in policy and 'total_points' in policy['auto_grade']:
 		total_points =  float(policy['auto_grade']['total_points'])
 
 		policy = TrivialFixedScaleAutoGradePolicy()
