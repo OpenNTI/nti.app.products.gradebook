@@ -73,20 +73,17 @@ class TrivialFixedScaleAutoGradePolicy(object):
 
 
 def _policy_based_autograde_policy(course, assignmentId):
-
 	policy = None
-	policies = IQAssignmentPolicies(course)
-	if policies:
+	policies = IQAssignmentPolicies(course, None)
+	if policies is not None:
 		policy = policies.getPolicyForAssignment(assignmentId)
 
-	if policy and 'auto_grade' in policy and 'total_points' in policy['auto_grade']:
-		total_points =  float(policy['auto_grade']['total_points'])
-
+	total_points = policy.get('auto_grade', {}).get('total_points') if policy else None
+	if policy and total_points is not None:
 		policy = TrivialFixedScaleAutoGradePolicy()
+		total_points = float(total_points)
 		policy.normalize_to = total_points
 		return policy
-
-
 
 def find_autograde_policy_for_assignment_in_course(course, assignmentId):
 	# XXX: We don't *really* need to be taking the assignmentId, it's
