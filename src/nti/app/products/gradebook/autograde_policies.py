@@ -78,7 +78,8 @@ def _policy_based_autograde_policy(course, assignmentId):
 	if policies is not None:
 		policy = policies.getPolicyForAssignment(assignmentId)
 
-	total_points = policy.get('auto_grade', {}).get('total_points') if policy else None
+	auto_grade = policy.get('auto_grade') if policy else None
+	total_points = (auto_grade or {}).get('total_points')
 	if policy and total_points is not None:
 		policy = TrivialFixedScaleAutoGradePolicy()
 		total_points = float(total_points)
