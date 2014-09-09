@@ -11,9 +11,10 @@ from . import MessageFactory as _
 
 logger = __import__('logging').getLogger(__name__)
 
-import operator
-from six import string_types
 import time
+import operator
+
+from six import string_types
 
 from zope import component
 
@@ -22,31 +23,30 @@ from pyramid import httpexceptions as hexc
 
 from natsort import natsort_key
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
-from nti.appserver.interfaces import IIntIdUserSearchPolicy
 
-from nti.contenttypes.courses.interfaces import ICourseEnrollments
-from nti.contenttypes.courses.interfaces import ES_PUBLIC
+from nti.appserver.interfaces import IIntIdUserSearchPolicy
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ES_CREDIT_DEGREE
 from nti.contenttypes.courses.interfaces import ES_CREDIT_NONDEGREE
 
-from nti.dataserver.interfaces import IEnumerableEntityContainer
-from nti.dataserver.interfaces import IUser
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
+
 from nti.dataserver.users import Entity
+from nti.dataserver.interfaces import IUser
+from nti.dataserver import authorization as nauth
 from nti.dataserver.users.interfaces import IFriendlyNamed
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.oids import to_external_ntiid_oid
 
-from ..interfaces import ISubmittedAssignmentHistoryBase
 from ..interfaces import IGradeBookEntry
 from ..interfaces import ACT_VIEW_GRADES
-from nti.appserver.pyramid_authorization import has_permission
-
-from nti.dataserver import authorization as nauth
-from nti.app.base.abstract_views import AbstractAuthenticatedView
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
+from ..interfaces import ISubmittedAssignmentHistoryBase
 
 # Due to heavy use of interfaces, disable warning about
 # "too many positional arguments" (because of self),
@@ -372,10 +372,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 							key=key,
 							reverse=sort_reverse)
 
-
 		return items_iter
-
-
 
 	def _do_sort_gradeValue(self, filter_usernames, sort_reverse):
 		def grade_key(item):
@@ -395,7 +392,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		return self.__do_sort_by_grade_attribute( filter_usernames,
 												  sort_reverse,
 												  key=grade_key )
-
 
 	def _do_sort_username(self, filter_usernames, sort_reverse, placeholder=True):
 		filter_usernames = sorted(filter_usernames,

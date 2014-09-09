@@ -272,7 +272,8 @@ class IGrade(IContained,
 							 description="Because grades are stored by username, this is "
 							 "equivalent to __name__",
 							 required=True)
-	#NTIID = ValidNTIID(title="Grade entry ntiid", required=True)
+
+	# NTIID = ValidNTIID(title="Grade entry ntiid", required=True)
 	AssignmentId = ValidNTIID(title="The assignment this is for",
 							  description="This comes from the entry containing it.",
 							  required=False)
@@ -297,3 +298,13 @@ class IPendingAssessmentAutoGradePolicy(interface.Interface):
 
 		Return None if no autograding is possible.
 		"""
+
+class IUsernameSortSubstitution(interface.Interface):
+	"""
+	Marker interface to register an utility that replaces
+	the username value for another one whenever in the gradebook we want to sort
+	by username.
+	"""
+
+	def replace(username):
+		pass
