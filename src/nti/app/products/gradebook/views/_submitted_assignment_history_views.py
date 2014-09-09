@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -41,12 +41,13 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver import authorization as nauth
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.interfaces import LocatedExternalDict
 
 from ..interfaces import IGradeBookEntry
 from ..interfaces import ACT_VIEW_GRADES
 from ..interfaces import ISubmittedAssignmentHistoryBase
+from ..interfaces import IUsernameSortSubstitutionPolicy
 
 # Due to heavy use of interfaces, disable warning about
 # "too many positional arguments" (because of self),
@@ -236,6 +237,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		filter_usernames = sorted(filter_usernames,
 								  key=_key,
 								  reverse=sort_reverse)
+
 		items_iter = self.context.items(usernames=filter_usernames,
 										placeholder=None,
 										forced_placeholder_usernames=self._make_force_placeholder_usernames(filter_usernames,
@@ -394,7 +396,16 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 												  key=grade_key )
 
 	def _do_sort_username(self, filter_usernames, sort_reverse, placeholder=True):
+		
+		substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
+		def _key(username):
+			if substituter is None:
+				return username
+			result = substituter.replace(username) or username
+			return result
+
 		filter_usernames = sorted(filter_usernames,
+								  key=_key,
 								  reverse=sort_reverse)
 		kwargs = {}
 		if placeholder:
@@ -404,7 +415,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		items_iter = self.context.items(usernames=filter_usernames,
 										**kwargs)
 		return items_iter
-
 
 	def __call__(self):
 		request = self.request
@@ -459,7 +469,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 										 if x.Scope in (ES_CREDIT_NONDEGREE,
 														ES_CREDIT_DEGREE,
 														ES_CREDIT)})
-
 
 				# instructors are also a member of the restricted set,
 				# so take them out (otherwise the count will be wrong)

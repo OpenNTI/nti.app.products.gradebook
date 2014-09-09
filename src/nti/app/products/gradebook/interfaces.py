@@ -299,7 +299,7 @@ class IPendingAssessmentAutoGradePolicy(interface.Interface):
 		Return None if no autograding is possible.
 		"""
 
-class IUsernameSortSubstitution(interface.Interface):
+class IUsernameSortSubstitutionPolicy(interface.Interface):
 	"""
 	Marker interface to register an utility that replaces
 	the username value for another one whenever in the gradebook we want to sort
