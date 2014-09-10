@@ -8,14 +8,15 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 
 	<!-- I18N -->
 	<i18n:registerTranslations directory="locales" />
 
-
    <permission
         id="nti.actions.gradebook.view_grades"
         title="View grades" />
+        
     <!--
         The instructors/TA of a course (locally added to this role
         for the course) can view grades
@@ -23,6 +24,7 @@
     <grant
         permission="nti.actions.gradebook.view_grades"
         role="nti.roles.course_instructor" />
+        
     <grant
         permission="nti.actions.gradebook.view_grades"
         role="nti.roles.course_ta" />
@@ -44,6 +46,7 @@
 
 	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides=".interfaces.ISubmittedAssignmentHistory"/>
+
 	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistorySummaries"
 			 provides=".interfaces.ISubmittedAssignmentHistorySummaries"/>
 
@@ -136,6 +139,7 @@
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -160,6 +164,11 @@
 				for=".interfaces.IGradeBook
 					 pyramid.interfaces.IRequest"/>
 
+	<subscriber factory=".decorators._GradeHistoryItemLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for=".interfaces.IGrade
+					 pyramid.interfaces.IRequest"/>
+					 
 	<!-- Events -->
 
 	<subscriber handler=".subscribers._assignment_history_item_added" />
@@ -168,12 +177,12 @@
 
 	<subscriber handler=".subscribers._store_grade_created_event"
 				for=".interfaces.IGrade zope.lifecycleevent.IObjectAddedEvent"/>
+				
 	<subscriber handler=".subscribers._store_grade_created_event"
 				for=".interfaces.IGrade zope.lifecycleevent.IObjectModifiedEvent"/>
 
-	<subscriber handler=".subscribers._remove_grade_created_event" />
 	<subscriber handler=".subscribers._grade_modified" />
-
+	<subscriber handler=".subscribers._remove_grade_created_event" />
 
 	<!-- NTIID Resolvers -->
 

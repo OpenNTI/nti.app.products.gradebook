@@ -16,19 +16,24 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
+from zope.security.management import NoInteraction
+from zope.security.management import checkPermission
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contentlibrary.interfaces import IContentPackage
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
+from nti.dataserver.users import User 
 from nti.dataserver.traversal import find_interface
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
 
 from .interfaces import IGrade
@@ -36,9 +41,6 @@ from .interfaces import IGradeBook
 from .interfaces import ACT_VIEW_GRADES
 
 LINKS = StandardExternalFields.LINKS
-
-from zope.security.management import checkPermission
-from zope.security.management import NoInteraction
 
 def _grades_readable(grades):
 	# We use check permission here specifically to avoid the ACLs
@@ -118,6 +120,31 @@ class _UsersCourseAssignmentHistoryItemDecorator(object):
 		if grade is not None:
 			external['Grade'] = to_external_object(grade)
 
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+
+@component.adapter(IGrade)
+@interface.implementer(IExternalMappingDecorator)
+class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _predicate(self, context, result):
+		return bool(self._is_authenticated and context.AssignmentId)
+
+	def _do_decorate_external(self, context, result):
+		user = User.get_user(context.Username) if context.Username else None
+		course = find_interface(context, ICourseInstance)
+		user_history = component.queryMultiAdapter(	(course, user), 
+													IUsersCourseAssignmentHistory )
+		
+		if not user_history:
+			return
+		
+		for item in user_history.values():
+			if item.assignmentId == context.AssignmentId:
+				links = result.setdefault(LINKS, [])
+				link = Link(item, rel='AssignmentHistoryItem')
+				links.append(link)
+				return
+				
 from .interfaces import ISubmittedAssignmentHistory
 from .interfaces import ISubmittedAssignmentHistorySummaries
 
