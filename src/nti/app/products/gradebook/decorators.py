@@ -131,7 +131,7 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
 
 	def _do_decorate_external(self, context, result):
 		user = User.get_user(context.Username) if context.Username else None
-		course = find_interface(context, ICourseInstance)
+		course = find_interface(context, ICourseInstance, strict=False)
 		user_history = component.queryMultiAdapter(	(course, user), 
 													IUsersCourseAssignmentHistory )
 		
