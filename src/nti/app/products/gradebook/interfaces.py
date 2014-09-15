@@ -7,7 +7,7 @@ from __future__ import unicode_literals, print_function, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-
+from zope.security.permission import Permission
 from zope.container.constraints import contains
 from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
@@ -28,8 +28,6 @@ from nti.schema.field import Variant
 from nti.schema.field import TextLine
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
-
-from zope.security.permission import Permission
 
 ACT_VIEW_GRADES = Permission('nti.actions.gradebook.view_grades')
 

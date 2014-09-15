@@ -13,17 +13,20 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
+from nti.dataserver.users import User
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.traversal import find_interface
+
+from .grades import Grade
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
 from .interfaces import IGradeBookEntry
-
-from nti.dataserver.interfaces import IUser
-
-from .grades import Grade
 
 @interface.implementer(IGradeBookEntry)
 @component.adapter(IGrade)
@@ -39,8 +42,6 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 	gradebook = IGradeBook(course)
 	entry = gradebook.getColumnForAssignmentId(assignmentId)
 	return entry
-
-from nti.dataserver.traversal import find_interface
 
 @interface.implementer(ICourseInstance)
 def _as_course(context):
@@ -75,26 +76,20 @@ def grade_for_history_item(item):
 			grade.__getstate__ = _no_pickle
 			grade.__parent__ = entry
 			grade.__name__ = user.username
-
 		return grade
 	return None
 
 @interface.implementer(IUsersCourseAssignmentHistoryItem)
 @component.adapter(IGrade)
 def history_item_for_grade(grade):
-	course = ICourseInstance(grade)
 	user = IUser(grade)
-
-	history = component.getMultiAdapter( (course, user),
-										 IUsersCourseAssignmentHistory)
-
+	course = ICourseInstance(grade)
+	history = component.getMultiAdapter((course, user), IUsersCourseAssignmentHistory)
 	assg_id = grade.__parent__.AssignmentId
 	try:
 		return history[assg_id]
 	except KeyError:
 		raise TypeError("No history for grade")
-
-from nti.dataserver.users import User
 
 @interface.implementer(IUser)
 @component.adapter(IGrade)

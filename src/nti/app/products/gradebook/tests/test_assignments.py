@@ -184,7 +184,7 @@ class TestAssignments(ApplicationLayerTest):
 		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
 		history_res = self.testapp.get( history_path )
 		assert_that( history_res.json_body['Items'].values(),
-					 contains( has_entry( 'Grade', has_entry( 'Links', [] ))) )
+					 contains( has_entry( 'Grade', has_entry( 'Links', has_length(1) ))) )
 
 		# because this grade was not auto-graded, the student has no notable mention of it
 		notable_res = self.fetch_user_recursive_notable_ugd()

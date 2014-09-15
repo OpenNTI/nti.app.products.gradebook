@@ -20,20 +20,22 @@ from zope import component
 from pyramid.threadlocal import get_current_request
 
 from nti.externalization.datastructures import InterfaceObjectIO
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IInternalObjectUpdater
 
-from . import utils
-from . import interfaces as grade_interfaces
+from .interfaces import IGrade
+from .interfaces import ILetterGradeScheme
 
-@interface.implementer(ext_interfaces.IInternalObjectUpdater)
-@component.adapter(grade_interfaces.IGrade)
+from .utils import raise_field_error
+
+@interface.implementer(IInternalObjectUpdater)
+@component.adapter(IGrade)
 class _GradeObjectUpdater(InterfaceObjectIO):
 
 	# INterface object io doesn't seem to have a way to pull this
 	# info from the iface so we do it manually.
 	_excluded_in_ivars_ = InterfaceObjectIO._excluded_in_ivars_.union( {'AssignmentId', 'Username'})
 
-	_ext_iface_upper_bound = grade_interfaces.IGrade
+	_ext_iface_upper_bound = IGrade
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		result = False
@@ -45,8 +47,8 @@ class _GradeObjectUpdater(InterfaceObjectIO):
 
 		return result
 
-@interface.implementer(ext_interfaces.IInternalObjectUpdater)
-@component.adapter(grade_interfaces.ILetterGradeScheme)
+@interface.implementer(IInternalObjectUpdater)
+@component.adapter(ILetterGradeScheme)
 class _LetterGradeSchemeObjectUpdater(object):
 
 	__slots__ = ('obj',)
@@ -62,25 +64,25 @@ class _LetterGradeSchemeObjectUpdater(object):
 
 		request = get_current_request()
 		if len(grades) < 1 or len(set(grades)) != len(grades):
-			utils.raise_field_error(request, "grades",
-									_( "must specify a valid unique list of letter grades") )
+			raise_field_error(request, "grades",
+							  _( "must specify a valid unique list of letter grades") )
 
 		if len(grades) != len(ranges):
-			utils.raise_field_error(request, "ranges",
-									_("must specify equal number of ranges to grades"))
+			raise_field_error(request, "ranges",
+							  _("must specify equal number of ranges to grades"))
 
 		# XXX: If we wanted to localize these messages, we must
 		# take the explicit string formatting out
 		for idx, r in enumerate(ranges):
 			if not r or len(r) != 2:
-				utils.raise_field_error(request, "range",
-										"'%r' is not a valid range" % r)
+				raise_field_error(request, "range",
+								  "'%r' is not a valid range" % r)
 			elif r[0] >= r[1]:
-				utils.raise_field_error(request, "range",
-										"'%r' is not a valid range" % r)
+				raise_field_error(request, "range",
+								  "'%r' is not a valid range" % r)
 			elif r[0] < 0 or r[1] < 0:
-				utils.raise_field_error(request, "range",
-										"'%r' has invalid values" % r)
+				raise_field_error(request, "range",
+								  "'%r' has invalid values" % r)
 			else:
 				ranges[idx] = tuple(r)
 
@@ -91,8 +93,8 @@ class _LetterGradeSchemeObjectUpdater(object):
 			a = sorted_ranges[idx]
 			b = sorted_ranges[idx + 1]
 			if a[0] <= b[0]:
-				utils.raise_field_error(request, "range",
-										"'%r' overlaps '%r'" % (a, b))
+				raise_field_error(request, "range",
+								  "'%r' overlaps '%r'" % (a, b))
 
 		self.obj.ranges = tuple(ranges)
 		self.obj.grades = tuple(grades)

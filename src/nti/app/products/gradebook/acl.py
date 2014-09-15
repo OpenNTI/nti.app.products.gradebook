@@ -16,11 +16,10 @@ from zope import component
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
-from .interfaces import ACT_VIEW_GRADES
 from nti.dataserver.authorization import ROLE_ADMIN
-from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
@@ -28,6 +27,7 @@ from nti.dataserver.authorization_acl import ace_denying_all
 from nti.utils.property import Lazy
 
 from .interfaces import IGradeBook
+from .interfaces import ACT_VIEW_GRADES
 
 @interface.implementer(IACLProvider)
 @component.adapter(IGradeBook)
@@ -50,6 +50,7 @@ class _GradeBookACLProvider(object):
 
 		course = ICourseInstance(self.context, None)
 		if course is not None:
+			#TODO: Use roles
 			acl.extend( (ace_allowing(i, ACT_READ, type(self)) for i in course.instructors) )
 			acl.extend( (ace_allowing(i, ACT_VIEW_GRADES, type(self)) for i in course.instructors) )
 

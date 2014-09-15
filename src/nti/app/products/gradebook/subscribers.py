@@ -9,10 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
-from zope import lifecycleevent
-
 from zope.annotation.interfaces import IAnnotations
-
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -22,21 +19,20 @@ from pyramid.traversal import find_interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
-
-from nti.dataserver import users
+from nti.dataserver.users import User
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.activitystream_change import Change
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
-from . import assignments
-
 from .grades import Grade
+
 from .interfaces import IGrade
 from .interfaces import IGradeBook
+
+from .assignments import synchronize_gradebook
 
 from .autograde_policies import find_autograde_policy_for_assignment_in_course
 
@@ -58,7 +54,7 @@ def _grade_modified(grade, event):
 		# not yet
 		return
 
-	user = users.User.get_user(grade.username)
+	user = User.get_user(grade.username)
 	if user is None:
 		return
 
@@ -97,12 +93,11 @@ def _find_entry_for_item(item):
 
 	return entry
 
-
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
 def _assignment_history_item_added(item, event):
 	entry = _find_entry_for_item(item)
 	if entry is not None:
-		user = nti_interfaces.IUser(item)
+		user = IUser(item)
 		grade = Grade()
 
 		# If there is an auto-grading policy for the course instance,
@@ -116,7 +111,6 @@ def _assignment_history_item_added(item, event):
 				grade.AutoGrade, grade.AutoGradeMax = autograde
 			if grade.value is None:
 				grade.value = grade.AutoGrade
-
 		# Finally after we finish filling it in, publish it
 		entry[user.username] = grade
 
@@ -124,7 +118,7 @@ def _assignment_history_item_added(item, event):
 def _assignment_history_item_removed(item, event):
 	entry = _find_entry_for_item(item)
 	if entry is not None:
-		user = nti_interfaces.IUser(item)
+		user = IUser(item)
 		try:
 			del entry[user.username]
 		except KeyError:
@@ -133,7 +127,7 @@ def _assignment_history_item_removed(item, event):
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
-	assignments.synchronize_gradebook(course)
+	synchronize_gradebook(course)
 
 ###
 # Storing notable items.
@@ -154,10 +148,10 @@ def _get_entry_change_storage(entry):
 		annotes[_CHANGE_KEY] = changes
 	return annotes[_CHANGE_KEY]
 
-from zope.securitypolicy.interfaces import IPrincipalRoleMap
 from zope.securitypolicy.interfaces import Allow
-from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
+from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
+from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 
 def _do_store_grade_created_event(grade, event):
 	storage = _get_entry_change_storage(grade.__parent__)
@@ -182,7 +176,7 @@ def _do_store_grade_created_event(grade, event):
 			roles = IPrincipalRoleMap(instance)
 			for instructor in instance.instructors:
 				if roles.getSetting(RID_INSTRUCTOR, instructor.id) is Allow:
-					change.creator = grade.creator = nti_interfaces.IUser(instructor)
+					change.creator = grade.creator = IUser(instructor)
 					break
 		except (TypeError,IndexError,AttributeError):
 			pass
