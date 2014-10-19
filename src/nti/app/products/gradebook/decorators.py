@@ -19,6 +19,8 @@ from zope import component
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
+from ZODB import loglevels
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contentlibrary.interfaces import IContentPackage
@@ -177,8 +179,9 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		self.course = find_interface(self.request.context, ICourseInstance,
 									 strict=False)
 		if self.course is not None:
-			logger.debug("Using course instance from request %r for context %s",
-						 self.request.context, context)
+			logger.log(loglevels.TRACE, 
+					   "Using course instance from request %r for context %s",
+					   self.request.context, context)
 		if self.course is None:
 			self.course = _find_course_for_user(context, self.remoteUser)
 		return self.course is not None and _grades_readable(self.course)
