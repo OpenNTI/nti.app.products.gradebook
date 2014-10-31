@@ -16,7 +16,7 @@
    <permission
         id="nti.actions.gradebook.view_grades"
         title="View grades" />
-        
+
     <!--
         The instructors/TA of a course (locally added to this role
         for the course) can view grades
@@ -24,7 +24,7 @@
     <grant
         permission="nti.actions.gradebook.view_grades"
         role="nti.roles.course_instructor" />
-        
+
     <grant
         permission="nti.actions.gradebook.view_grades"
         role="nti.roles.course_ta" />
@@ -168,7 +168,7 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest"/>
-					 
+
 	<!-- Events -->
 
 	<subscriber handler=".subscribers._assignment_history_item_added" />
@@ -177,7 +177,7 @@
 
 	<subscriber handler=".subscribers._store_grade_created_event"
 				for=".interfaces.IGrade zope.lifecycleevent.IObjectAddedEvent"/>
-				
+
 	<subscriber handler=".subscribers._store_grade_created_event"
 				for=".interfaces.IGrade zope.lifecycleevent.IObjectModifiedEvent"/>
 
@@ -194,5 +194,10 @@
 
 	<adapter factory=".acl._GradeBookACLProvider"
 			 for=".interfaces.IGradeBook"/>
+
+	<!-- Notables -->
+	<subscriber factory=".notables.AssignmentGradeNotableFilter"
+				provides="nti.dataserver.interfaces.INotableFilter"
+				for="*" />
 
 </configure>
