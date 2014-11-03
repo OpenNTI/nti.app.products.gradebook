@@ -73,7 +73,6 @@
 	<adapter factory=".adapters.grade_to_user" />
 
 	<!-- Traversal -->
-
 	<adapter name="GradeBook"
 			 factory=".views.GradeBookPathAdapter"
 			 provides="zope.traversing.interfaces.IPathAdapter"/>
@@ -125,7 +124,6 @@
 
 
 	<!-- Internalization -->
-
 	<adapter factory=".internalization._GradeObjectUpdater"
 			 for=".interfaces.IGrade"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
@@ -135,7 +133,6 @@
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<!-- Decorators -->
-
 	<subscriber factory=".decorators._UsersCourseAssignmentHistoryItemDecorator"
 				for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -170,7 +167,6 @@
 					 pyramid.interfaces.IRequest"/>
 
 	<!-- Events -->
-
 	<subscriber handler=".subscribers._assignment_history_item_added" />
 	<subscriber handler=".subscribers._assignment_history_item_removed" />
 	<subscriber handler=".subscribers._synchronize_gradebook_with_course_instance" />
@@ -185,19 +181,17 @@
 	<subscriber handler=".subscribers._remove_grade_created_event" />
 
 	<!-- NTIID Resolvers -->
-
 	<utility factory=".ntiids._GradeBookResolver" name="gradebook" />
 	<utility factory=".ntiids._GradeBookPartResolver" name="gradebookpart" />
 	<utility factory=".ntiids._GradeBookEntryResolver" name="gradebookentry" />
 
 	<!-- ACLs -->
-
 	<adapter factory=".acl._GradeBookACLProvider"
 			 for=".interfaces.IGradeBook"/>
 
 	<!-- Notables -->
 	<subscriber factory=".notables.AssignmentGradeNotableFilter"
 				provides="nti.dataserver.interfaces.INotableFilter"
-				for="*" />
+				for=".interfaces.IGrade" />
 
 </configure>

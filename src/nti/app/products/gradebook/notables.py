@@ -3,7 +3,7 @@
 """
 Functions and architecture for general activity streams.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -12,9 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.app.products.gradebook.interfaces import IGrade
-
 from nti.dataserver.interfaces import INotableFilter
+
+from .interfaces import IGrade
 
 @interface.implementer( INotableFilter )
 class AssignmentGradeNotableFilter(object):
@@ -25,5 +25,4 @@ class AssignmentGradeNotableFilter(object):
 		self.context = context
 
 	def is_notable(self, obj, user):
-		return 	IGrade.providedBy( obj ) \
-			and	obj.Username == user.username
+		return IGrade.providedBy(obj) and obj.Username == user.username
