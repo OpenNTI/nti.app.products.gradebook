@@ -189,9 +189,4 @@
 	<adapter factory=".acl._GradeBookACLProvider"
 			 for=".interfaces.IGradeBook"/>
 
-	<!-- Notables -->
-	<subscriber factory=".notables.AssignmentGradeNotableFilter"
-				provides="nti.dataserver.interfaces.INotableFilter"
-				for=".interfaces.IGrade" />
-
 </configure>
