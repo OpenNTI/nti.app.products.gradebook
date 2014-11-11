@@ -8,24 +8,35 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from functools import partial
+
 from zope import component
+
 from zope.annotation.interfaces import IAnnotations
+
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from zope.securitypolicy.interfaces import Allow
+from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
 from pyramid.traversal import find_interface
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
 from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
+
+from nti.site.hostpolicy import run_job_in_all_host_sites
 
 from .grades import Grade
 
@@ -148,11 +159,6 @@ def _get_entry_change_storage(entry):
 		annotes[_CHANGE_KEY] = changes
 	return annotes[_CHANGE_KEY]
 
-from zope.securitypolicy.interfaces import Allow
-from zope.securitypolicy.interfaces import IPrincipalRoleMap
-
-from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
-
 def _do_store_grade_created_event(grade, event):
 	storage = _get_entry_change_storage(grade.__parent__)
 	if grade.Username in storage:
@@ -161,16 +167,16 @@ def _do_store_grade_created_event(grade, event):
 
 	change = Change(Change.CREATED, grade)
 
-	# Copy the date info from the grade (primarily relevant
-	# for migration); the change doesn't do this itself
+	## Copy the date info from the grade (primarily relevant
+	## for migration); the change doesn't do this itself
 	change.lastModified = grade.lastModified
 	change.createdTime = grade.createdTime
 
 	if grade.creator is not None:
 		change.creator = grade.creator
 	else:
-		# If we can get to a course, we arbitrarily assume
-		# it's from the first instructor in the list
+		## If we can get to a course, we arbitrarily assume
+		## it's from the first instructor in the list
 		try:
 			instance = ICourseInstance(grade)
 			roles = IPrincipalRoleMap(instance)
@@ -181,21 +187,21 @@ def _do_store_grade_created_event(grade, event):
 		except (TypeError,IndexError,AttributeError):
 			pass
 
-	# Give the change a sharedWith value of the target
-	# username; that way it gets indexed cheaply as directed
-	# to the user.
-	# NOTE: See __acl__ on the grade object; this
-	# may change if we have a richer publishing workflow
+	## Give the change a sharedWith value of the target
+	## username; that way it gets indexed cheaply as directed
+	## to the user.
+	## NOTE: See __acl__ on the grade object; this
+	## may change if we have a richer publishing workflow
 	change.sharedWith = (grade.Username,)
 	change.__copy_object_acl__ = True
 
-	# Now store it, firing events to index, etc. Remember this
-	# only happens if the name and parent aren't already
-	# set (which they will be because they were copied from
-	# grade)
+	## Now store it, firing events to index, etc. Remember this
+	## only happens if the name and parent aren't already
+	## set (which they will be because they were copied from grade)
 	del change.__name__
 	del change.__parent__
-	# Define it as top-level content for indexing purposes
+	
+	## Define it as top-level content for indexing purposes
 	change.__is_toplevel_content__ = True
 	storage[grade.Username] = change
 	assert change.__parent__ is _get_entry_change_storage(grade.__parent__)
@@ -203,9 +209,9 @@ def _do_store_grade_created_event(grade, event):
 	return change
 
 def _store_grade_created_event(grade, event):
-	# We're registered for both added and modified events,
-	# and we only store a change when the grade actually
-	# gets a value for the first time.
+	## We're registered for both added and modified events,
+	## and we only store a change when the grade actually
+	## gets a value for the first time.
 	if grade.value is not None:
 		_do_store_grade_created_event(grade, event)
 
@@ -216,3 +222,17 @@ def _remove_grade_created_event(grade, event):
 	except KeyError:
 		# hmm...
 		pass
+
+def delete_user_data(user):
+	username = user.username
+	for enrollments in component.subscribers( (user,), IPrincipalEnrollments):
+		for enrollment in enrollments.iter_enrollments():
+			course = ICourseInstance(enrollment, None)
+			book = IGradeBook(course, None)
+			if book is not None:
+				book.removeUser(username)
+
+@component.adapter(IUser, IObjectRemovedEvent)
+def _on_user_removed(user, event):
+	func = partial(delete_user_data, user=user)
+	run_job_in_all_host_sites(func)

@@ -7,28 +7,28 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_property
-from hamcrest import greater_than_or_equal_to
-from hamcrest import calling
-from hamcrest import raises
 from hamcrest import none
-from hamcrest import same_instance
+from hamcrest import raises
+from hamcrest import calling
 from hamcrest import has_entry
-
-from nti.testing.matchers import validly_provides
-
-from ..grades import Grade
-from ..grades import GradeWeakRef
-from ..gradebook import GradeBookEntry
-from ..interfaces import IGrade
-from nti.wref.interfaces import IWeakRef
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import same_instance
+from hamcrest import greater_than_or_equal_to
 
 import time
 import unittest
-
 import cPickle as pickle
+
+from nti.wref.interfaces import IWeakRef
+
+from nti.app.products.gradebook.grades import Grade
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.grades import GradeWeakRef
+from nti.app.products.gradebook.gradebook import GradeBookEntry
+
+from nti.testing.matchers import validly_provides
 
 class TestGrades(unittest.TestCase):
 
@@ -87,9 +87,12 @@ class TestGrades(unittest.TestCase):
 		assert_that( pickle.loads(pickle.dumps(wref)), is_(wref))
 
 class _GradeBookEntry(GradeBookEntry):
+	
 	def __conform__(self, iface):
 		return _CheapWref(self)
+	
 from zope import interface
+
 @interface.implementer(IWeakRef)
 class _CheapWref(object):
 	def __init__( self, gbe ):

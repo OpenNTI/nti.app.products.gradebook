@@ -100,16 +100,14 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 	_ntiid_type = NTIID_TYPE_GRADE_BOOK
 
 	def getColumnForAssignmentId(self, assignmentId):
-		# TODO: This could be indexed
 		for part in self.values():
 			entry = part.get_entry_by_assignment(assignmentId)
 			if entry is not None:
 				return entry
 		return None
+	get_entry_by_assignment = getColumnForAssignmentId
 
-	get_entry_by_assignment = alias('getColumnForAssignmentId')
-
-	def get_entry_by_ntiid(self, ntiid):
+	def getEntryByNTIID(self, ntiid):
 		result = None
 		type_ = ntiids.get_type(ntiid)
 		if type_ == NTIID_TYPE_GRADE_BOOK_ENTRY:
@@ -117,7 +115,16 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 			part, entry = specific.split('.')[-2:]
 			result = self.get(part, {}).get(entry)
 		return result
-
+	get_entry_by_ntiid = getEntryByNTIID
+	
+	def removeUser(self, username):
+		result = 0
+		for part in self.values():
+			if part.removeUser(username):
+				result +=1
+		return result
+	remove_user = removeUser
+	
 	@property
 	def Items(self):
 		return dict(self)
@@ -159,7 +166,6 @@ class GradeBookEntry(SchemaConfigured,
 		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
 		SchemaConfigured.__init__(self, **kwargs)
 
-
 	def __setstate__(self, state):
 		super(GradeBookEntry, self).__setstate__(state)
 		if '_SampleContainer__data' not in self.__dict__:
@@ -182,7 +188,6 @@ class GradeBookEntry(SchemaConfigured,
 			# Sigh, long expensive path
 			result = key.lower() in self._lower_keys_to_upper_key
 		return result
-
 	has_key = __contains__
 
 	def __getitem__(self, key):
@@ -196,7 +201,6 @@ class GradeBookEntry(SchemaConfigured,
 			upper = self._lower_keys_to_upper_key.get(key.lower())
 			if upper and upper != key: # careful not to infinite recurse
 				return self.__getitem__(upper)
-
 			raise
 
 	def get(self, key, default=None):
@@ -250,13 +254,23 @@ class GradeBookPart(SchemaConfigured,
 	def validateAssignment(self, assignment):
 		return True
 
-	def get_entry_by_assignment(self, assignmentId):
-		# TODO: This could be indexed
+	def getEntryByAssignment(self, assignmentId):
 		for entry in self.values():
 			if entry.assignmentId == assignmentId:
 				return entry
 		return None
-
+	get_entry_by_assignment = getEntryByAssignment
+	
+	def removeUser(self, username):
+		result = 0
+		username = username.lower()
+		for entry in self.values():
+			if username in entry:
+				del entry[username]
+				result += 1
+		return result
+	remove_user = removeUser
+	
 	@property
 	def Items(self):
 		return dict(self)

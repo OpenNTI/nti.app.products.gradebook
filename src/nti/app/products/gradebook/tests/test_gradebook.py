@@ -7,21 +7,25 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
+import unittest
+
 from hamcrest import is_
 from hamcrest import is_in
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import assert_that
+does_not = is_not
 
-
-from .. import gradebook
-from .. import grades
-from .. import interfaces as grades_interfaces
+from nti.app.products.gradebook import grades
+from nti.app.products.gradebook import gradebook
+from nti.app.products.gradebook import interfaces as grades_interfaces
 
 from nti.testing.matchers import verifiably_provides, validly_provides
 
-from . import SharedConfiguringTestLayer
-import unittest
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
 class TestGradebook(unittest.TestCase):
+	
 	layer = SharedConfiguringTestLayer
 
 	def test_interfaces(self):
@@ -55,3 +59,25 @@ class TestGradebook(unittest.TestCase):
 
 		assert_that( gbe.get('KEY'), is_( grade ) )
 		assert_that( gbe.__getitem__('KEY'), is_( grade ))
+		
+	def test_gradebook_delete(self):
+		book = gradebook.GradeBook()
+		
+		part = gradebook.GradeBookPart()
+		part.order = 1
+		part.displayName = 'part'
+		book['part'] = part
+		
+		entry = gradebook.GradeBookEntry()
+		entry.order = 1
+		entry.assignmentId = 'xzy'
+		entry.displayName = 'entry'
+		part['entry'] = entry
+		
+		grade = grades.Grade()
+		entry['ichigo'] = grade
+		
+		assert_that(entry, has_key('ichigo'))
+
+		book.remove_user('ichigo')
+		assert_that(entry, does_not(has_key('ichigo')))

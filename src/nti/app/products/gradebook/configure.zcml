@@ -31,7 +31,6 @@
 
 
 	<!-- Adapters -->
-
 	<adapter factory=".gradebook._GradeBookFactory"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
@@ -95,7 +94,6 @@
 			 provides="zope.traversing.interfaces.IPathAdapter"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"/>
 
-
 	<!-- Currently any grade can be created without a submission
 	<adapter factory="nti.dataserver.traversal.ContainerAdapterTraversable"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
@@ -104,7 +102,6 @@
 	<adapter factory=".gradebook.GradeBookEntryWithoutSubmissionTraversable"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
-
 
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
@@ -167,6 +164,7 @@
 					 pyramid.interfaces.IRequest"/>
 
 	<!-- Events -->
+	<subscriber handler=".subscribers._on_user_removed" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />
 	<subscriber handler=".subscribers._assignment_history_item_removed" />
 	<subscriber handler=".subscribers._synchronize_gradebook_with_course_instance" />
