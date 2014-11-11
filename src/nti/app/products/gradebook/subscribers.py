@@ -234,6 +234,6 @@ def delete_user_data(user):
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _on_user_removed(user, event):
-	logger.info("Removing user %s gradebook data", user)
+	logger.info("Removing gradebook data for user %s", user)
 	func = partial(delete_user_data, user=user)
 	run_job_in_all_host_sites(func)
