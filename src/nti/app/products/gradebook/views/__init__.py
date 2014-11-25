@@ -5,6 +5,7 @@ Views and other functions related to grades and gradebook.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -33,11 +34,36 @@ from nti.dataserver.users.interfaces import IUserProfile
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
 
+from ..grades import Grade
+
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
 def GradeBookPathAdapter(context, request):
 	result = IGradeBook(context)
 	return result
+
+def _mark_btree_bucket_as_changed(grade):
+	# Now, because grades are not persistent objects,
+	# the btree bucket containing this grade has to be
+	# manually told that its contents have changed.
+	# XXX: Note that this is very expensive,
+	# waking up each bucket of the tree.
+	column = grade.__parent__
+	btree = column._SampleContainer__data
+	bucket = btree._firstbucket
+	found = False
+	while bucket is not None:
+		if bucket.has_key(grade.__name__):
+			bucket._p_changed = True
+			if bucket._p_jar is None: # The first bucket is stored special
+				btree._p_changed = True
+			found = True
+			break
+		bucket = bucket._next
+	if not found:
+		# before there are buckets, it might be inline data?
+		btree._p_changed = True
+	return found
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
@@ -51,7 +77,6 @@ class GradePutView(AbstractAuthenticatedView,
 	content_predicate = IGrade.providedBy
 
 	def _do_call(self):
-
 		theObject = self.request.context
 		theObject.creator = self.getRemoteUser()
 
@@ -62,30 +87,8 @@ class GradePutView(AbstractAuthenticatedView,
 		self.updateContentObject(theObject, externalValue)
 		theObject.updateLastMod()
 
-		# Now, because grades are not persistent objects,
-		# the btree bucket containing this grade has to be
-		# manually told that its contents have changed.
-		# XXX: Note that this is very expensive,
-		# waking up each bucket of the tree.
-
-		column = theObject.__parent__
-		btree = column._SampleContainer__data
-		bucket = btree._firstbucket
-		found = False
-		while bucket is not None:
-			if bucket.has_key(theObject.__name__):
-				bucket._p_changed = True
-				if bucket._p_jar is None: # The first bucket is stored special
-					btree._p_changed = True
-				found = True
-				break
-			bucket = bucket._next
-		if not found:
-			# before there are buckets, it might be inline data?
-			btree._p_changed = True
-
+		_mark_btree_bucket_as_changed(theObject)
 		return theObject
-
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
@@ -95,8 +98,6 @@ from nti.assessment.submission import AssignmentSubmission
 from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.dataserver.users import User
-
-from ..grades import Grade
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
