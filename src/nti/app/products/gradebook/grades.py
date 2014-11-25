@@ -15,8 +15,6 @@ from zope import component
 
 from zope.container import contained as zcontained
 
-from zope.annotation.interfaces import IAttributeAnnotatable
-
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -44,9 +42,7 @@ from nti.wref.interfaces import IWeakRef
 
 from .interfaces import IGrade
 
-@interface.implementer(	IGrade,
-						IContentTypeAware,
-						IAttributeAnnotatable)
+@interface.implementer(	IGrade, IContentTypeAware)
 @WithRepr
 @EqHash('username', 'assignmentId', 'value')
 class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
