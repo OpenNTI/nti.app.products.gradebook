@@ -15,7 +15,9 @@ from zope import component
 
 from zope.container import contained as zcontained
 
-from zope.mimetype import interfaces as zmime_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -42,7 +44,9 @@ from nti.wref.interfaces import IWeakRef
 
 from .interfaces import IGrade
 
-@interface.implementer(IGrade, zmime_interfaces.IContentTypeAware)
+@interface.implementer(	IGrade,
+						IContentTypeAware,
+						IAttributeAnnotatable)
 @WithRepr
 @EqHash('username', 'assignmentId', 'value')
 class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
@@ -91,14 +95,12 @@ class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 	@property # Since we're not persistent, the regular use of CachedProperty fails
 	def __acl__(self):
 		acl = acl_from_aces()
-
 		course = ICourseInstance(self, None)
 		if course is not None:
 			acl.extend((ace_allowing(i, ALL_PERMISSIONS) for i in course.instructors))
 		if self.Username: # This will become conditional on whether we are published
 			acl.append( ace_allowing(self.Username, ACT_READ) )
 		acl.append( ace_denying_all() )
-
 		return acl
 
 @interface.implementer(IWeakRef)
@@ -128,7 +130,8 @@ class GradeWeakRef(object):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self._username, self._part_wref) == (other._username, other._part_wref)
+			return 	self is other or \
+					(self._username, self._part_wref) == (other._username, other._part_wref)
 		except AttributeError:
 			return NotImplemented
 

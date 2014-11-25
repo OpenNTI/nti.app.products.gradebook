@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from .. import MessageFactory
+
 import nameparser
 
 from zope import component
@@ -26,14 +28,10 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
-
 from nti.dataserver.users.interfaces import IUserProfile
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
-
-import zope.i18nmessageid
-MessageFactory = zope.i18nmessageid.MessageFactory('nti.app.products.gradebook')
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
@@ -90,10 +88,14 @@ class GradePutView(AbstractAuthenticatedView,
 
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
-from nti.assessment.submission import AssignmentSubmission
-from nti.dataserver.users import User
+
 from nti.app.products.courseware.interfaces import ICourseInstanceActivity
+
+from nti.assessment.submission import AssignmentSubmission
+from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
+
+from nti.dataserver.users import User
+
 from ..grades import Grade
 
 @view_config(route_name='objects.generic.traversal',
@@ -111,7 +113,6 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		# So we make one exist
 		entry = self.request.context.__parent__
 		username = self.request.context.__name__
-
 		user = User.get_user(username)
 		# canonicalize the username in the event case got mangled
 		username = user.username
@@ -128,9 +129,10 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		submission.assignmentId = assignmentId
 		submission.creator = user
 
-		pending_assessment = QAssignmentSubmissionPendingAssessment( assignmentId=submission.assignmentId,
-																	 parts=[] )
 		course = ICourseInstance(entry)
+		pending_assessment = QAssignmentSubmissionPendingAssessment( 
+													assignmentId=submission.assignmentId,
+													parts=[] )
 
 		assignment_history = component.getMultiAdapter( (course, submission.creator),
 														IUsersCourseAssignmentHistory )
@@ -154,14 +156,18 @@ class GradeWithoutSubmissionPutView(GradePutView):
 			# class do the work
 			self.request.context = entry[username]
 
-		return super(GradeWithoutSubmissionPutView,self)._do_call()
+		result = super(GradeWithoutSubmissionPutView,self)._do_call()
+		return result
+
+
+from zope import lifecycleevent
+
+from zope.annotation import IAnnotations
+
+from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from ._submitted_assignment_history_views import SubmittedAssignmentHistoryGetView
 SubmittedAssignmentHistoryGetView = SubmittedAssignmentHistoryGetView # Export
-
-from nti.appserver.ugd_edit_views import UGDDeleteView
-from zope.annotation import IAnnotations
-from zope import lifecycleevent
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -209,12 +215,14 @@ class GradeDeleteView(UGDDeleteView):
 		else:
 			return True
 
-
 import csv
 import collections
-from nti.externalization.interfaces import LocatedExternalList
 from cStringIO import StringIO
+
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
+from nti.externalization.interfaces import LocatedExternalList
+
 from ..interfaces import NO_SUBMIT_PART_NAME
 
 @view_config(route_name='objects.generic.traversal',

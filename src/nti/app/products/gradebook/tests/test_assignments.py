@@ -8,50 +8,52 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import is_not
 from hamcrest import has_key
+from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import not_none
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import is_not
-does_not = is_not
-from hamcrest import has_entry
-from hamcrest import not_none
 from hamcrest import has_entries
-from hamcrest import has_item
-from hamcrest import contains
 from hamcrest import has_property
 from hamcrest import greater_than
+does_not = is_not
 
 import urllib
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
-from nti.testing.time import time_monotonically_increases
-
-from nti.app.products.gradebook import assignments
-from nti.app.products.gradebook import interfaces as grades_interfaces
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
 import pyramid.interfaces
-
-from nti.dataserver.tests import mock_dataserver
-from nti.externalization.tests import externalizes
-from nti.externalization.externalization import to_external_object
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.submission import QuestionSubmission
 from nti.assessment.submission import QuestionSetSubmission
 from nti.assessment.submission import AssignmentSubmission
 
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
 from nti.dataserver.users import User
 
-from . import InstructedCourseApplicationTestLayer
+from nti.app.products.gradebook import assignments
+from nti.app.products.gradebook import interfaces as grades_interfaces
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.dataserver.tests import mock_dataserver
+from nti.externalization.tests import externalizes
+from nti.externalization.externalization import to_external_object
+
+from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLayer
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.testing.time import time_monotonically_increases
 
 class TestAssignments(ApplicationLayerTest):
 	layer = InstructedCourseApplicationTestLayer
@@ -171,10 +173,11 @@ class TestAssignments(ApplicationLayerTest):
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
+		
 		# Make sure we're enrolled
-		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-									  'CLC 3403',
-									  status=201 )
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201 )
 
 		# submit
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
@@ -334,7 +337,6 @@ class TestAssignments(ApplicationLayerTest):
 		# ...or for users not enrolled
 		self.testapp.put_json( final_grade_path + 'user@not_enrolled', grade, extra_environ=instructor_environ,
 							   status=404 )
-
 
 		# The instructor can download the gradebook as csv and it has
 		# the grade in it.
@@ -626,10 +628,8 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(0)))
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', is_(0) ) )
 
-
 		# If the instructor deletes a grade for a user, the submission date
 		# sorting still works and values are still returned
-
 
 		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
 		history_res = self.testapp.get(history_path)
@@ -664,9 +664,9 @@ class TestAssignments(ApplicationLayerTest):
 		self.testapp.extra_environ = extra_env
 
 		# Make sure we're enrolled
-		res = self.testapp.post_json( '/dataserver2/users/jason/Courses/EnrolledCourses',
-									  'CLC 3403',
-									  status=201 )
+		self.testapp.post_json( '/dataserver2/users/jason/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
 		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
@@ -718,7 +718,9 @@ class TestAssignments(ApplicationLayerTest):
 
 		# ... and can be fetched directly
 		oid = notable_res.json_body['Items'][0]['OID']
+		
 		from nti.ntiids import ntiids
+		
 		ntiid = ntiids.make_ntiid(provider='ignored',
 								  specific=oid,
 								  nttype=ntiids.TYPE_OID)
@@ -732,8 +734,9 @@ class TestAssignments(ApplicationLayerTest):
 		self.testapp.extra_environ = extra_env
 
 		# XXX: Dirty registration of an autograde policy
-		from ..autograde_policies import TrivialFixedScaleAutoGradePolicy
-		component.provideUtility(TrivialFixedScaleAutoGradePolicy(), name="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice")
+		from nti.app.products.gradebook.autograde_policies import TrivialFixedScaleAutoGradePolicy
+		component.provideUtility(TrivialFixedScaleAutoGradePolicy(), 
+								name="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice")
 
 		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
 		qs_id1 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset1"
@@ -782,9 +785,9 @@ class TestAssignments(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_instructor_grade_is_ugd_notable_to_student(self):
 		# Make sure we're enrolled
-		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-									  'CLC 3403',
-									  status=201 )
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
 
@@ -799,13 +802,11 @@ class TestAssignments(ApplicationLayerTest):
 		path = trivial_grade_path + 'sjohnson@nextthought.com'
 		grade = {'Class': 'Grade'}
 		grade['value'] = 10
-		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
-
+		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
 		# It shows up as a notable item for the student
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 1))
-
 
 		# If the instructor deletes it...
 		# (delete indirectly by resetting the submission to be sure the right
@@ -824,9 +825,9 @@ class TestAssignments(ApplicationLayerTest):
 	@time_monotonically_increases
 	def test_mutating_grade_changes_history_item_last_modified(self):
 		# Make sure we're enrolled
-		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-									  'CLC 3403',
-									  status=201 )
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								'CLC 3403',
+								status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
 
@@ -841,7 +842,7 @@ class TestAssignments(ApplicationLayerTest):
 		path = trivial_grade_path + 'sjohnson@nextthought.com'
 		grade = {'Class': 'Grade'}
 		grade['value'] = 10
-		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
 		# ...the student sees a history item
 		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
@@ -849,18 +850,18 @@ class TestAssignments(ApplicationLayerTest):
 
 		history_item = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
 		history_lm = history_item['Last Modified']
-		history_value = history_item['Grade']['value']
+		history_item['Grade']['value']
 
 
 		# If the instructor updates it
 		grade['value'] = 5
-		grade_res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
 		history_res = self.testapp.get(history_path)
 		history_item2 = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
 
-		history_lm2 = history_item['Last Modified']
-		history_value2 = history_item['Grade']['value']
+		history_item['Last Modified']
+		history_item['Grade']['value']
 
 		# The date and data are modified
 		assert_that( history_item2, has_entries('Last Modified', greater_than(history_lm),
@@ -869,9 +870,9 @@ class TestAssignments(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_instructor_delete_grade(self):
 		# Make sure we're enrolled
-		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-									  'CLC 3403',
-									  status=201 )
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								'CLC 3403',
+								 status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
 

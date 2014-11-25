@@ -7,11 +7,13 @@ from __future__ import unicode_literals, print_function, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.security.permission import Permission
+
 from zope.container.constraints import contains
 from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
 from zope.container.constraints import containers
+
+from zope.security.permission import Permission
 
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
