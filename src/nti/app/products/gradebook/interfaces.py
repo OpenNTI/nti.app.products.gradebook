@@ -283,6 +283,12 @@ class IGrade(IContained,
 	AutoGrade = _grade_property()
 	AutoGradeMax = _grade_property()
 
+class IExcusedGrade(interface.Interface):
+	"""
+	Marker interface for an Excused grade
+	"""
+	pass
+
 class IPendingAssessmentAutoGradePolicy(interface.Interface):
 	"""
 	An object that can interpret the results of the

@@ -5,6 +5,7 @@ Grades definition
 
 .. $Id$
 """
+
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -42,7 +43,7 @@ from nti.wref.interfaces import IWeakRef
 
 from .interfaces import IGrade
 
-@interface.implementer(	IGrade, IContentTypeAware)
+@interface.implementer(IGrade, IContentTypeAware)
 @WithRepr
 @EqHash('username', 'assignmentId', 'value')
 class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
@@ -139,3 +140,11 @@ class GradeWeakRef(object):
 
 	def __setstate__(self, state):
 		self._part_wref, self._username = state
+
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+
+@interface.implementer(IAttributeAnnotatable)
+class PersistentGrade(Grade, PersistentPropertyHolder):
+	pass

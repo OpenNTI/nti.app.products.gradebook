@@ -5,6 +5,7 @@ Grade book definition
 
 .. $Id$
 """
+
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -279,6 +280,7 @@ class GradeBookPart(SchemaConfigured,
 		return self.displayName
 
 from .grades import Grade
+from .grades import PersistentGrade
 
 class GradeWithoutSubmission(Grade):
 	"""
@@ -293,6 +295,11 @@ class GradeWithoutSubmission(Grade):
 	__reduce_ex__ = __reduce__
 
 NoSubmitGradeBookEntryGrade = GradeWithoutSubmission
+
+class PersistentGradeWithoutSubmission(GradeWithoutSubmission, PersistentGrade):
+	pass
+
+PersistentNoSubmitGradeBookEntryGrade = PersistentGradeWithoutSubmission
 
 class GradeBookEntryWithoutSubmission(GradeBookEntry):
 	"""
@@ -344,7 +351,6 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
 				return result
 			raise
 
-
 class NoSubmitGradeBookPart(GradeBookPart):
 	"""
 	A special part of the gradebook for those things that
@@ -378,8 +384,8 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSumma
 # materializing the entire list; if we can make that stop we won't
 # need this.
 # from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-from nti.app.assessment.adapters import _history_for_user_in_course
 from nti.app.assessment.adapters import _histories_for_course
+from nti.app.assessment.adapters import _history_for_user_in_course
 
 _NotGiven = object()
 @interface.implementer(ISubmittedAssignmentHistory)
