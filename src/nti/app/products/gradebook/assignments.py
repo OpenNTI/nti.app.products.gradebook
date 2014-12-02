@@ -11,7 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope.container.interfaces import INameChooser
 
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
-# XXX: Direct dependency. Break this.
 from nti.app.assessment.assignment_filters import AssignmentPolicyExclusionFilter
 
 from .interfaces import IGradeBook
@@ -30,16 +29,16 @@ def _assignment_comparator(a, b):
 	b_begin = b.available_for_submission_beginning
 	if a_begin and b_begin:
 		return -1 if a_begin < b_begin else 1
-
 	return 0
 
 def get_course_assignments(course, sort=True, reverse=False):
 	# Filter out excluded assignments so they don't show in the gradebook
 	# either
-	policy_filter = AssignmentPolicyExclusionFilter(None, course)
-	assignments = [x
-				   for x in ICourseAssignmentCatalog(course).iter_assignments()
-				   if policy_filter.allow_assignment_for_user_in_course(x, None, course)]
+	policy_filter = AssignmentPolicyExclusionFilter(course=course)
+	assignment_catalog = ICourseAssignmentCatalog(course)
+	assignments = \
+			[x for x in assignment_catalog.iter_assignments()
+			 if policy_filter.allow_assignment_for_user_in_course(x, None, course)]
 
 	if sort:
 		assignments = sorted(assignments, cmp=_assignment_comparator, reverse=reverse)
@@ -69,7 +68,8 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 	entry = book.getColumnForAssignmentId(assignmentId)
 	if entry is None:
 		part = get_create_assignment_part(course, assignment.category_name)
-		part.validateAssignment(assignment) # Hmm, maybe we should just ask it to create the entry
+		# Hmm, maybe we should just ask it to create the entry
+		part.validateAssignment(assignment) 
 		entry = part.entryFactory(
 							   displayName=displayName,
 							   order=order,
