@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
+from zope.interface.interface import taggedValue
 
 from zope.container.constraints import contains
 from zope.container.interfaces import IContainer
@@ -14,6 +15,8 @@ from zope.container.interfaces import IContained
 from zope.container.constraints import containers
 
 from zope.security.permission import Permission
+
+from nti.app.client_preferences.interfaces import TAG_EXTERNAL_PREFERENCE_GROUP
 
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
@@ -314,3 +317,13 @@ class IUsernameSortSubstitutionPolicy(interface.Interface):
 
 	def replace(username):
 		pass
+	
+class IGradebookSettings(interface.Interface):
+	"""
+	The root of the settings tree for gradebook
+	"""
+	taggedValue(TAG_EXTERNAL_PREFERENCE_GROUP, 'write')
+
+	hide_avatars = Bool(title="Enable/disable showing avatars in the gradebook",
+						description="Enable/disable showing avatars in the gradebook",
+						default=False)
