@@ -286,7 +286,7 @@ class IGrade(IContained,
 	AutoGrade = _grade_property()
 	AutoGradeMax = _grade_property()
 
-class IExcusedGrade(interface.Interface):
+class IExcusedGrade(IGrade):
 	"""
 	Marker interface for an Excused grade
 	"""

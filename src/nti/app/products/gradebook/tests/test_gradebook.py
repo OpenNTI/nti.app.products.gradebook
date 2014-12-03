@@ -7,14 +7,14 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import unittest
-
 from hamcrest import is_
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import assert_that
 does_not = is_not
+
+import unittest
 
 from nti.app.products.gradebook import grades
 from nti.app.products.gradebook import gradebook

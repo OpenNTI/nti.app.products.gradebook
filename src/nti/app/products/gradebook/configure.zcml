@@ -163,6 +163,11 @@
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest"/>
 
+	<subscriber factory=".decorators._ExcusedGradeDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for=".interfaces.IGrade
+					 pyramid.interfaces.IRequest"/>
+
 	<!-- Events -->
 	<subscriber handler=".subscribers._on_user_removed" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />

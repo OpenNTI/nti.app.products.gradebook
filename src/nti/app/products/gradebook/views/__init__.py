@@ -33,6 +33,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
+from ..interfaces import IExcusedGrade
 
 from ..grades import Grade
 
@@ -90,6 +91,52 @@ class GradePutView(AbstractAuthenticatedView,
 		_mark_btree_bucket_as_changed(theObject)
 		return theObject
 
+@view_config(route_name='objects.generic.traversal',
+			 permission=nauth.ACT_UPDATE,
+			 renderer='rest',
+			 context=IGrade,
+			 name="excuse",
+			 request_method='POST')
+class ExcuseGradeView(AbstractAuthenticatedView,
+				 	  ModeledContentUploadRequestUtilsMixin,
+				   	  ModeledContentEditRequestUtilsMixin):
+
+	content_predicate = IGrade.providedBy
+
+	def _do_call(self):
+		theObject = self.request.context
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
+
+		if not IExcusedGrade.providedBy(theObject):
+			interface.alsoProvides(theObject, IExcusedGrade)
+			theObject.updateLastMod()
+			_mark_btree_bucket_as_changed(theObject)
+		return theObject
+
+@view_config(route_name='objects.generic.traversal',
+			 permission=nauth.ACT_UPDATE,
+			 renderer='rest',
+			 context=IGrade,
+			 name="unexcuse",
+			 request_method='POST')
+class UnexcuseGradeView(AbstractAuthenticatedView,
+				 	    ModeledContentUploadRequestUtilsMixin,
+				   	    ModeledContentEditRequestUtilsMixin):
+
+	content_predicate = IGrade.providedBy
+
+	def _do_call(self):
+		theObject = self.request.context
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
+
+		if IExcusedGrade.providedBy(theObject):
+			interface.noLongerProvides(theObject, IExcusedGrade)
+			theObject.updateLastMod()
+			_mark_btree_bucket_as_changed(theObject)
+		return theObject
+		
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
 from nti.app.products.courseware.interfaces import ICourseInstanceActivity
@@ -184,11 +231,9 @@ class GradebookDeleteView(UGDDeleteView):
 	def _do_delete_object(self, context):
 		# We happen to know that it is stored as
 		# an annotation.
-
 		annots = IAnnotations(context.__parent__)
 		del annots[context.__name__]
 		lifecycleevent.removed(context)
-
 		return True
 
 @view_config(route_name='objects.generic.traversal',
@@ -357,7 +402,6 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 			# End-of-line
 			row.append('#')
-
 			rows.append(row)
 
 		# Anyone enrolled but not submitted gets a blank row

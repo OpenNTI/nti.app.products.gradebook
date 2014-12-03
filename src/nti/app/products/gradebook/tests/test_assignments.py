@@ -193,7 +193,6 @@ class TestAssignments(ApplicationLayerTest):
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
 
-
 		instructor_environ = self._make_extra_environ(username='harp4162')
 		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
 
@@ -237,7 +236,6 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'TotalNonNullItemCount', 1 ) )
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 1) )
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(1)))
-
 
 		res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
 
@@ -655,7 +653,6 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
 		assert_that(res.json_body, has_entry('GradeAssignmentSubmittedCount', 2))
 
-
 	@WithSharedApplicationMockDS(users=('jason'),testapp=True,default_authenticate=True)
 	def test_instructor_grade_stops_student_submission(self):
 		# This only works in the OU environment because that's where the purchasables are
@@ -686,7 +683,16 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry('MimeType', 'application/vnd.nextthought.grade'))
 		assert_that( res.json_body, has_entry('value', '324 -'))
-
+		
+		href = res.json_body['href']
+		excuse_ref = href + "/excuse"
+		res = self.testapp.post(excuse_ref, extra_environ=instructor_environ, status=200)
+		assert_that(res.json_body, has_entry('IsExcused', is_(True)))
+		
+		unexcuse_ref = href + "/unexcuse"
+		res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ, status=200)
+		assert_that(res.json_body, has_entry('IsExcused', is_(False)))
+		
 		# ... the student can no longer submit
 		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
 		qs_id1 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset1"

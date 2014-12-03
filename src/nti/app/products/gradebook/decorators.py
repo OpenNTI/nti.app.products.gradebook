@@ -9,6 +9,7 @@ Decorators for providing access to the various grades pieces.
 .. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.app.products.gradebook.interfaces import IExcusedGrade
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,6 +21,8 @@ from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
 from ZODB import loglevels
+
+from nti.app.products.courseware.utils import is_course_instructor
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
@@ -146,7 +149,24 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
 				link = Link(item, rel='AssignmentHistoryItem')
 				links.append(link)
 				return
-				
+		
+@component.adapter(IGrade)
+@interface.implementer(IExternalMappingDecorator)
+class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _predicate(self, context, result):
+		return bool(self._is_authenticated)
+
+	def _do_decorate_external(self, context, result):
+		user = self.remoteUser
+		course = find_interface(context, ICourseInstance, strict=False)
+		result['IsExcused'] = bool(IExcusedGrade.providedBy(context))
+		if is_course_instructor(course, user):
+			links = result.setdefault(LINKS, [])
+			rel = 'excuse' if not IExcusedGrade.providedBy(context) else 'unexcuse'
+			link = Link(context, elements=(rel,), rel=rel, method='POST')
+			links.append(link)
+			
 from .interfaces import ISubmittedAssignmentHistory
 from .interfaces import ISubmittedAssignmentHistorySummaries
 
