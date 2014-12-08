@@ -14,10 +14,11 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from .interfaces import IPendingAssessmentAutoGradePolicy
 from nti.assessment.interfaces import IQAssignmentPolicies
 
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
+from .interfaces import IPendingAssessmentAutoGradePolicy
 
 @interface.implementer(IPendingAssessmentAutoGradePolicy)
 class TrivialFixedScaleAutoGradePolicy(object):
@@ -62,7 +63,6 @@ class TrivialFixedScaleAutoGradePolicy(object):
 				# and finally count it for the question
 				assessed_sum += part_sum
 
-
 		# No submit part
 		if not theoretical_best:
 			return None
@@ -71,20 +71,26 @@ class TrivialFixedScaleAutoGradePolicy(object):
 		as_percent = assessed_sum / theoretical_best
 		return as_percent * self.normalize_to, self.normalize_to
 
-
 def _policy_based_autograde_policy(course, assignmentId):
-	policy = None
 	policies = IQAssignmentPolicies(course, None)
 	if policies is not None:
 		policy = policies.getPolicyForAssignment(assignmentId)
+	else:
+		policy = None
 
-	auto_grade = policy.get('auto_grade') if policy else None
-	total_points = (auto_grade or {}).get('total_points')
-	if policy and total_points is not None:
-		policy = TrivialFixedScaleAutoGradePolicy()
-		total_points = float(total_points)
-		policy.normalize_to = total_points
-		return policy
+	if policy is not None:
+		name = policy.get('name') # policy
+		if not name:
+			auto_grade = policy.get('auto_grade') or {}
+			total_points = auto_grade.get('total_points')
+			if total_points is not None:
+				total_points = float(total_points)
+				policy = TrivialFixedScaleAutoGradePolicy()
+				policy.normalize_to = total_points
+				return policy
+		else:
+			policy = component.queryUtility(IPendingAssessmentAutoGradePolicy, name=name)
+			return policy
 
 def find_autograde_policy_for_assignment_in_course(course, assignmentId):
 	# XXX: We don't *really* need to be taking the assignmentId, it's
@@ -122,7 +128,7 @@ def find_autograde_policy_for_assignment_in_course(course, assignmentId):
 			names.append(course.ContentPackageNTIID)
 		except AttributeError:
 			# new-style
-			names.extend( (x.ntiid for x in course.ContentPackageBundle.ContentPackages) )
+			names.extend((x.ntiid for x in course.ContentPackageBundle.ContentPackages))
 
 		cat_entry = ICourseCatalogEntry(course, None)
 		if cat_entry:
