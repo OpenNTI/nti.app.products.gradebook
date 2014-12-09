@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import copy
+
 from zope import interface
 from zope import component
 from zope.interface import Invalid
@@ -77,32 +79,61 @@ class TrivialFixedScaleAutoGradePolicy(object):
 class PointBasedAutoGradePolicy(object):
 	
 	def __init__(self, auto_grade, assignmentId):
-		self.auto_grade = auto_grade
 		self.assignmentId = assignmentId
-		self.validate(assignmentId, auto_grade)
+		self.auto_grade = copy.copy(auto_grade)
+		self.validate()
 	
-	@classmethod
-	def validate(cls, assignment, auto_grade):
-		assignment = assignment if IQAssignment.providedBy(assignment) \
-					 else component.getUtility(IQAssignment, name=str(assignment))
-		
-		assignmentId = assignment.ntiid
-		total_points = auto_grade.get('total_points')
+	def validate(self):
+		"""
+		simple policy validation. This should be done at sync or rendering time
+		"""
+		assignment =  component.getUtility(IQAssignment, name=self.assignmentId)
+		total_points = self.auto_grade.get('total_points')
 		if not total_points or int(total_points) <= 0:
-			msg = "Invalid total-points for policy in assignment %s" % assignmentId
-			raise ValueError(msg)
+			msg = "Invalid total-points for policy in assignment %s" % self.assignmentId
+			raise Invalid(msg)
 	
-		question_map = auto_grade.get('questions') or auto_grade
 		for part in assignment.parts:
 			for question in part.question_set.questions:
 				ntiid = question.ntiid
-				points = question_map.get(ntiid)
+				points = self.question_points(ntiid)
 				if not points or int(points) <= 0:
 					msg = "Invalid points in policy for question %s" % ntiid
-					raise ValueError(msg)
+					raise Invalid(msg)
 
+	def question_points(self, ntiid):
+		question_map = self.auto_grade.get('questions') or self.auto_grade
+		points = question_map.get(ntiid) or question_map('default')
+		return points
+	
 	def autograde(self, item):
-		return None
+		assessed_sum = 0.0
+		theoretical_best = self.auto_grade('total_points')
+		for assessed_set in item.parts:
+			for assessed_question in assessed_set.questions:
+				part_sum = 0.0
+				
+				for assessed_part in assessed_question.parts:
+					if not hasattr(assessed_part, 'assessedValue'):
+						raise Invalid("Submitted ungradable type to autograde assignment")
+
+					if not assessed_part.assessedValue:
+						# WRONG part, whole question is toast
+						part_sum = 0.0
+						break
+					part_sum += assessed_part.assessedValue
+				
+				# scale the parts to the whole question. most of the times
+				# questions have one part.
+				part_sum = part_sum / float(len(assessed_question.parts))
+				
+				question_points = self.question_points(assessed_question.questionId)
+				scaled_points = question_points * part_sum
+				
+				# and finally count it for the question
+				assessed_sum += scaled_points
+
+		return assessed_sum, theoretical_best
 
 def _policy_based_autograde_policy(course, assignmentId):
 	policies = IQAssignmentPolicies(course, None)
