@@ -13,7 +13,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+from zope.interface import Invalid
 
+from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentPolicies
 
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -47,11 +49,11 @@ class TrivialFixedScaleAutoGradePolicy(object):
 				for assessed_part in assessed_question.parts:
 					if not hasattr(assessed_part, 'assessedValue'):
 						# Almost certainly trying to autograde something
-						# that cannot be autograded, like a modeled content
-						# or file response
+						# that cannot be autograded, like a modeled content or
+						# file response
 						# XXX: Better, earlier error at initial grade time
 						# This error is typically caught by view code
-						raise interface.Invalid("Submitted ungradable type to autograde assignment")
+						raise Invalid("Submitted ungradable type to autograde assignment")
 
 					if not assessed_part.assessedValue:
 						# WRONG part, whole question is toast
@@ -71,6 +73,37 @@ class TrivialFixedScaleAutoGradePolicy(object):
 		as_percent = assessed_sum / theoretical_best
 		return as_percent * self.normalize_to, self.normalize_to
 
+@interface.implementer(IPendingAssessmentAutoGradePolicy)
+class PointBasedAutoGradePolicy(object):
+	
+	def __init__(self, policy, assignmentId):
+		self.policy = policy
+		self.assignmentId = assignmentId
+		self.validate(assignmentId, policy)
+	
+	@classmethod
+	def validate(cls, assignment, policy):
+		assignment = assignment if IQAssignment.providedBy(assignment) \
+					 else component.getUtility(IQAssignment, name=str(assignment))
+		
+		assignmentId = assignment.ntiid
+		total_points = policy.get('total_points')
+		if not total_points or int(total_points) <= 0:
+			msg = "Invalid total-points for policy in assignment %s" % assignmentId
+			raise ValueError(msg)
+	
+		question_map = policy.get('questions') or policy
+		for part in assignment.parts:
+			for question in part.question_set.questions:
+				ntiid = question.ntiid
+				points = question_map.get(ntiid)
+				if not points or int(points) <= 0:
+					msg = "Invalid points in policy for question %s" % ntiid
+					raise ValueError(msg)
+
+	def autograde(self, item):
+		return None
+
 def _policy_based_autograde_policy(course, assignmentId):
 	policies = IQAssignmentPolicies(course, None)
 	if policies is not None:
@@ -88,6 +121,9 @@ def _policy_based_autograde_policy(course, assignmentId):
 				policy = TrivialFixedScaleAutoGradePolicy()
 				policy.normalize_to = total_points
 				return policy
+		elif name.lower() in ('pointbased', 'points', 'pointbasedpolicy'):
+			policy = PointBasedAutoGradePolicy(policy, assignmentId)
+			return policy
 		else:
 			policy = component.queryUtility(IPendingAssessmentAutoGradePolicy, name=name)
 			return policy
