@@ -76,23 +76,23 @@ class TrivialFixedScaleAutoGradePolicy(object):
 @interface.implementer(IPendingAssessmentAutoGradePolicy)
 class PointBasedAutoGradePolicy(object):
 	
-	def __init__(self, policy, assignmentId):
-		self.policy = policy
+	def __init__(self, auto_grade, assignmentId):
+		self.auto_grade = auto_grade
 		self.assignmentId = assignmentId
-		self.validate(assignmentId, policy)
+		self.validate(assignmentId, auto_grade)
 	
 	@classmethod
-	def validate(cls, assignment, policy):
+	def validate(cls, assignment, auto_grade):
 		assignment = assignment if IQAssignment.providedBy(assignment) \
 					 else component.getUtility(IQAssignment, name=str(assignment))
 		
 		assignmentId = assignment.ntiid
-		total_points = policy.get('total_points')
+		total_points = auto_grade.get('total_points')
 		if not total_points or int(total_points) <= 0:
 			msg = "Invalid total-points for policy in assignment %s" % assignmentId
 			raise ValueError(msg)
 	
-		question_map = policy.get('questions') or policy
+		question_map = auto_grade.get('questions') or auto_grade
 		for part in assignment.parts:
 			for question in part.question_set.questions:
 				ntiid = question.ntiid
@@ -112,9 +112,9 @@ def _policy_based_autograde_policy(course, assignmentId):
 		policy = None
 
 	if policy is not None:
-		name = policy.get('name') # policy
+		auto_grade = policy.get('auto_grade') or {}
+		name = auto_grade.get('name') 
 		if not name:
-			auto_grade = policy.get('auto_grade') or {}
 			total_points = auto_grade.get('total_points')
 			if total_points is not None:
 				total_points = float(total_points)
@@ -122,7 +122,7 @@ def _policy_based_autograde_policy(course, assignmentId):
 				policy.normalize_to = total_points
 				return policy
 		elif name.lower() in ('pointbased', 'points', 'pointbasedpolicy'):
-			policy = PointBasedAutoGradePolicy(policy, assignmentId)
+			policy = PointBasedAutoGradePolicy(auto_grade, assignmentId)
 			return policy
 		else:
 			policy = component.queryUtility(IPendingAssessmentAutoGradePolicy, name=name)
