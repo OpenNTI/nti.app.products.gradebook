@@ -152,7 +152,7 @@ def _policy_based_autograde_policy(course, assignmentId):
 				policy = TrivialFixedScaleAutoGradePolicy()
 				policy.normalize_to = total_points
 				return policy
-		elif name.lower() in ('pointbased', 'points', 'pointbasedpolicy'):
+		elif name.lower() in ('pointbased'):
 			policy = PointBasedAutoGradePolicy(auto_grade, assignmentId)
 			return policy
 		else:
