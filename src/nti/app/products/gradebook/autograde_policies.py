@@ -103,12 +103,12 @@ class PointBasedAutoGradePolicy(object):
 
 	def question_points(self, ntiid):
 		question_map = self.auto_grade.get('questions') or self.auto_grade
-		points = question_map.get(ntiid) or question_map('default')
+		points = question_map.get(ntiid) or question_map.get('default')
 		return points
 	
 	def autograde(self, item):
 		assessed_sum = 0.0
-		theoretical_best = self.auto_grade('total_points')
+		theoretical_best = self.auto_grade.get('total_points')
 		for assessed_set in item.parts:
 			for assessed_question in assessed_set.questions:
 				part_sum = 0.0
