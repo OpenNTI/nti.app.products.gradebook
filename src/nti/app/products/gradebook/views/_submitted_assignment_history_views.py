@@ -253,16 +253,16 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 
 		Return
 		"""
-		sorted_usernames = sorted(filter_usernames,reverse=sort_reverse)
+		sorted_usernames = sorted(filter_usernames, reverse=sort_reverse)
 
 		# Iterate the grade column in the order of sorted usernames so that
 		# the stable sort will preserve username sort order for ties
 		# (if we just use column.items(), we always get ascending)
 		grade_column = self.grade_column
-		sorted_items_by_grade_attribute = sorted(( (k, grade_column[k]) for k in sorted_usernames
-													  if k in grade_column ),
+		in_gradebook = [k for k in sorted_usernames if k in grade_column ]
+		sorted_items_by_grade_attribute = sorted( ( (k, grade_column[k]) for k in in_gradebook),
 													key=key,
-													reverse=sort_reverse)
+													reverse=sort_reverse )
 		sorted_usernames_by_grade_attribute = map(operator.itemgetter(0),
 												  sorted_items_by_grade_attribute)
 		# Now everyone that has no grade is always at the end, sorted by username.
