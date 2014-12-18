@@ -23,9 +23,9 @@ from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -35,6 +35,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
+from ..interfaces import IUsernameSortSubstitutionPolicy
 
 from ..grades import Grade
 
@@ -272,6 +273,13 @@ from nti.externalization.interfaces import LocatedExternalList
 
 from ..interfaces import NO_SUBMIT_PART_NAME
 
+def _replace(username):
+	substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
+	if substituter is None:
+		return username
+	result = substituter.replace(username) or username
+	return result
+
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 request_method='GET',
@@ -358,7 +366,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.append( ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
 					 # Assignment names could theoretically have non-ascii chars
 					 + [_tx_string(x[0]) + ' Points Grade' for x in sorted_asg_names]
-					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
+					 + ['Adjusted Final Grade Numerator', 
+					 	'Adjusted Final Grade Denominator']
 					 + ['End-of-Line Indicator'] )
 
 		# Now a row for each user and each assignment in the same order.
@@ -383,9 +392,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				continue
 
 			profile = IUserProfile(user)
-			# XXX Hack for OU, probably want some IExternalId interface
-			# that maps to the external_id per site
-			external_id = getattr( user, 'OU4x4', '' )
+			external_id = _replace(username)
 
 			realname = profile.realname or ''
 			if realname and '@' not in realname and realname != username:
