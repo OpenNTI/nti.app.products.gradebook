@@ -91,7 +91,8 @@ class TestAssignments(ApplicationLayerTest):
 			# Changing the title changes the display name, but
 			# not the key
 
-			asg = component.getUtility(IQAssignment, name="tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1")
+			asg = component.getUtility(IQAssignment, 
+									   name="tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1")
 			assert_that( asg.title, is_('Main Title') )
 
 			try:
@@ -349,7 +350,7 @@ class TestAssignments(ApplicationLayerTest):
 		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
-		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
 
 		# He can filter it to Open and ForCredit subsets
