@@ -25,6 +25,7 @@ from pyramid.interfaces import IRequest
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -136,7 +137,7 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 			theObject.updateLastMod()
 			_mark_btree_bucket_as_changed(theObject)
 		return theObject
-		
+
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
 from nti.app.products.courseware.interfaces import ICourseInstanceActivity
@@ -178,7 +179,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		submission.creator = user
 
 		course = ICourseInstance(entry)
-		pending_assessment = QAssignmentSubmissionPendingAssessment( 
+		pending_assessment = QAssignmentSubmissionPendingAssessment(
 													assignmentId=submission.assignmentId,
 													parts=[] )
 
@@ -354,7 +355,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# First a header row.
 		# Note that we are allowed to use multiple columns to identify
 		# students
-		rows.append( ['Username', 'First Name', 'Last Name', 'Full Name']
+		rows.append( ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
 					 # Assignment names could theoretically have non-ascii chars
 					 + [_tx_string(x[0]) + ' Points Grade' for x in sorted_asg_names]
 					 + ['Adjusted Final Grade Numerator', 'Adjusted Final Grade Denominator']
@@ -382,6 +383,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				continue
 
 			profile = IUserProfile(user)
+			# XXX Hack for OU, probably want some IExternalId interface
+			# that maps to the external_id per site
+			external_id = getattr( user, 'OU4x4', '' )
+
 			realname = profile.realname or ''
 			if realname and '@' not in realname and realname != username:
 				human_name = nameparser.HumanName( realname )
@@ -391,7 +396,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				firstname = ''
 				lastname = ''
 
-			row = [_tx_string(x) for x in (username, firstname, lastname, realname)]
+			row = [_tx_string(x) for x in (username, external_id, firstname, lastname, realname)]
 			for _, assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
 				row.append(_tx_grade(grade))

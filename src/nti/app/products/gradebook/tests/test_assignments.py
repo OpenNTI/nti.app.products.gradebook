@@ -173,7 +173,7 @@ class TestAssignments(ApplicationLayerTest):
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
-		
+
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 								'CLC 3403',
@@ -349,7 +349,7 @@ class TestAssignments(ApplicationLayerTest):
 		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
-		csv_text = u'Username,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
 
 		# He can filter it to Open and ForCredit subsets
@@ -359,7 +359,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit', extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
-		csv_text =  u'Username,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
+		csv_text =  u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
 
 	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
@@ -683,16 +683,16 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry('MimeType', 'application/vnd.nextthought.grade'))
 		assert_that( res.json_body, has_entry('value', '324 -'))
-		
+
 		href = res.json_body['href']
 		excuse_ref = href + "/excuse"
 		res = self.testapp.post(excuse_ref, extra_environ=instructor_environ, status=200)
 		assert_that(res.json_body, has_entry('IsExcused', is_(True)))
-		
+
 		unexcuse_ref = href + "/unexcuse"
 		res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ, status=200)
 		assert_that(res.json_body, has_entry('IsExcused', is_(False)))
-		
+
 		# ... the student can no longer submit
 		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
 		qs_id1 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset1"
@@ -724,9 +724,9 @@ class TestAssignments(ApplicationLayerTest):
 
 		# ... and can be fetched directly
 		oid = notable_res.json_body['Items'][0]['OID']
-		
+
 		from nti.ntiids import ntiids
-		
+
 		ntiid = ntiids.make_ntiid(provider='ignored',
 								  specific=oid,
 								  nttype=ntiids.TYPE_OID)
@@ -741,7 +741,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		# XXX: Dirty registration of an autograde policy
 		from nti.app.products.gradebook.autograde_policies import TrivialFixedScaleAutoGradePolicy
-		component.provideUtility(TrivialFixedScaleAutoGradePolicy(), 
+		component.provideUtility(TrivialFixedScaleAutoGradePolicy(),
 								name="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice")
 
 		assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
