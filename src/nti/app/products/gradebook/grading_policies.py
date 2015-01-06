@@ -12,12 +12,11 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
 
-from .interfaces import ICurrentGradeCalculationPolicy
-
-def find_current_grade_policy_for_course(course):
+def find_grading_policy_for_course(course):
 	# We need to actually be registering these as annotations
-	policy = ICurrentGradeCalculationPolicy(course, None)
+	policy = ICourseGradingPolicy(course, None)
 	if policy is not None:
 		return policy
 
@@ -37,7 +36,7 @@ def find_current_grade_policy_for_course(course):
 
 	for name in names:
 		try:
-			return registry.getUtility(ICurrentGradeCalculationPolicy, name=name)
+			return registry.getUtility(ICourseGradingPolicy, name=name)
 		except LookupError:
 			pass
 	return None

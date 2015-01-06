@@ -318,16 +318,7 @@ class IUsernameSortSubstitutionPolicy(interface.Interface):
 
 	def replace(username):
 		pass
-	
-class ICurrentGradeCalculationPolicy(interface.Interface):
-	"""
-	Marker interface to register an utility that allows to calculate the current
-	of a user in a course .
-	"""
 
-	def grade(username):
-		pass
-	
 class IGradebookSettings(interface.Interface):
 	"""
 	The root of the settings tree for gradebook
