@@ -44,8 +44,8 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import LocatedExternalDict
 
-from ..interfaces import IGradeBookEntry
 from ..interfaces import ACT_VIEW_GRADES
+from ..interfaces import IGradeBookEntry
 from ..interfaces import ISubmittedAssignmentHistoryBase
 from ..interfaces import IUsernameSortSubstitutionPolicy
 
@@ -238,10 +238,10 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 								  key=_key,
 								  reverse=sort_reverse)
 
+		place_holder = self._make_force_placeholder_usernames(filter_usernames, sort_reverse)
 		items_iter = self.context.items(usernames=filter_usernames,
 										placeholder=None,
-										forced_placeholder_usernames=self._make_force_placeholder_usernames(filter_usernames,
-																											sort_reverse))
+										forced_placeholder_usernames=place_holder)
 		return items_iter
 
 	def __sort_usernames_by_submission(self, filter_usernames, sort_reverse=False, key=None):
@@ -260,9 +260,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# (if we just use column.items(), we always get ascending)
 		grade_column = self.grade_column
 		in_gradebook = [k for k in sorted_usernames if k in grade_column ]
+		
 		sorted_items_by_grade_attribute = sorted( ( (k, grade_column[k]) for k in in_gradebook),
 													key=key,
 													reverse=sort_reverse )
+		
 		sorted_usernames_by_grade_attribute = map(operator.itemgetter(0),
 												  sorted_items_by_grade_attribute)
 		# Now everyone that has no grade is always at the end, sorted by username.
@@ -409,11 +411,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 								  reverse=sort_reverse)
 		kwargs = {}
 		if placeholder:
+			holder = self._make_force_placeholder_usernames(filter_usernames, sort_reverse)
 			kwargs['placeholder'] = None
-			kwargs['forced_placeholder_usernames'] = self._make_force_placeholder_usernames(filter_usernames,
-																							sort_reverse)
-		items_iter = self.context.items(usernames=filter_usernames,
-										**kwargs)
+			kwargs['forced_placeholder_usernames'] = holder
+
+		items_iter = self.context.items(usernames=filter_usernames, **kwargs)
 		return items_iter
 
 	def __call__(self):
@@ -460,7 +462,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		filter_usernames = student_usernames
 		filtered = False
 		if filter_names:
-			if 'LegacyEnrollmentStatusForCredit' in filter_names or 'LegacyEnrollmentStatusOpen' in filter_names:
+			if 	'LegacyEnrollmentStatusForCredit' in filter_names or \
+				'LegacyEnrollmentStatusOpen' in filter_names:
 				filtered = True
 
 				restricted_usernames = ({x.Principal.username.lower()
