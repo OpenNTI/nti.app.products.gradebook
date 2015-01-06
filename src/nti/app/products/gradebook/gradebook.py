@@ -103,13 +103,13 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
 	_ntiid_type = NTIID_TYPE_GRADE_BOOK
 
-	def getColumnForAssignmentId(self, assignmentId):
+	def getColumnForAssignmentId(self, assignmentId, check_name=False):
 		for part in self.values():
-			entry = part.get_entry_by_assignment(assignmentId)
+			entry = part.get_entry_by_assignment(assignmentId, check_name=check_name)
 			if entry is not None:
 				return entry
 		return None
-	get_entry_by_assignment = getColumnForAssignmentId
+	get_entry_by_assignment = getEntryByAssignment = getColumnForAssignmentId
 
 	def getEntryByNTIID(self, ntiid):
 		result = None
@@ -262,9 +262,10 @@ class GradeBookPart(SchemaConfigured,
 	def validateAssignment(self, assignment):
 		return True
 
-	def getEntryByAssignment(self, assignmentId):
+	def getEntryByAssignment(self, assignmentId, check_name=False):
 		for entry in self.values():
-			if entry.assignmentId == assignmentId:
+			if 	entry.assignmentId == assignmentId or \
+				(check_name and entry.__name__ == assignmentId):
 				return entry
 		return None
 	get_entry_by_assignment = getEntryByAssignment
