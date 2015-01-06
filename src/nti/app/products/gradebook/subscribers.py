@@ -31,9 +31,13 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
+
 from nti.dataserver.activitystream_change import Change
+
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
@@ -232,8 +236,8 @@ def delete_user_data(user):
 			if book is not None:
 				book.removeUser(username)
 
-@component.adapter(IUser, IObjectRemovedEvent)
-def _on_user_removed(user, event):
+@component.adapter(IUser, IWillDeleteEntityEvent)
+def _on_user_will_be_removed(user, event):
 	logger.info("Removing gradebook data for user %s", user)
 	func = partial(delete_user_data, user=user)
 	run_job_in_all_host_sites(func)
