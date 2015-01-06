@@ -17,7 +17,6 @@ from zope import interface
 from zope import component
 from zope.interface import Invalid
 
-from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentPolicies
 
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -81,26 +80,7 @@ class PointBasedAutoGradePolicy(object):
 	def __init__(self, auto_grade, assignmentId):
 		self.assignmentId = assignmentId
 		self.auto_grade = copy.copy(auto_grade)
-		self.validate()
 	
-	def validate(self):
-		"""
-		simple policy validation. This should be done at sync or rendering time
-		"""
-		assignment =  component.getUtility(IQAssignment, name=self.assignmentId)
-		total_points = self.auto_grade.get('total_points')
-		if not total_points or int(total_points) <= 0:
-			msg = "Invalid total-points for policy in assignment %s" % self.assignmentId
-			raise Invalid(msg)
-	
-		for part in assignment.parts:
-			for question in part.question_set.questions:
-				ntiid = question.ntiid
-				points = self.question_points(ntiid)
-				if not points or int(points) <= 0:
-					msg = "Invalid points in policy for question %s" % ntiid
-					raise Invalid(msg)
-
 	def question_points(self, ntiid):
 		question_map = self.auto_grade.get('questions') or self.auto_grade
 		points = question_map.get(ntiid) or question_map.get('default')
