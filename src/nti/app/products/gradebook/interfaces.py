@@ -120,7 +120,8 @@ class IGradeBookEntry(IContainer,
 #	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 #						  min=0.0,
 #						  max=1.0,
-#						  default=1.0)
+#						  default=1.0,
+#						  required=False)
 
 	order = Int(title="The entry order", min=1)
 
@@ -205,7 +206,7 @@ class IGradeBookPart(IContainer,
 #						  min=0.0,
 #						  max=1.0,
 #						  default=1.0,
-#						  required=True)
+#						  required=False)
 	order = Int(title="The part order", min=1)
 
 	#TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)

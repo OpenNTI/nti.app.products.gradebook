@@ -13,10 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
+
 from zope.annotation import factory as an_factory
-from zope.container import contained as zcontained
-from zope.annotation import interfaces as an_interfaces
-from zope.mimetype import interfaces as zmime_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.container.contained import Contained
+
+from zope.mimetype.interfaces import IContentTypeAware
 
 from pyramid.traversal import lineage
 
@@ -27,7 +30,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users import User
 from nti.dataserver.traversal import find_interface
-from nti.dataserver import containers as nti_containers
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization.representation import WithRepr
 
@@ -91,10 +94,10 @@ class _NTIIDMixin(object):
 
 @component.adapter(ICourseInstance)
 @interface.implementer(IGradeBook,
-					   an_interfaces.IAttributeAnnotatable,
-					   zmime_interfaces.IContentTypeAware)
-class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
-				zcontained.Contained,
+					   IAttributeAnnotatable,
+					   IContentTypeAware)
+class GradeBook(CheckingLastModifiedBTreeContainer,
+				Contained,
 				_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
@@ -133,8 +136,8 @@ class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer,
 _GradeBookFactory= an_factory(GradeBook, 'GradeBook')
 
 @interface.implementer(IGradeBookEntry,
-					   an_interfaces.IAttributeAnnotatable,
-					   zmime_interfaces.IContentTypeAware)
+					   IAttributeAnnotatable,
+					   IContentTypeAware)
 @WithRepr
 @EqHash('NTIID',)
 class GradeBookEntry(SchemaConfigured,
@@ -144,8 +147,8 @@ class GradeBookEntry(SchemaConfigured,
 					 # own comparisons. Until we do a database migration we partially
 					 # ameliorate this for __contains__ (at the cost of a performance penalty),
 					 # but we can't completely
-					 nti_containers.CheckingLastModifiedBTreeContainer,
-					 zcontained.Contained,
+					 CheckingLastModifiedBTreeContainer,
+					 Contained,
 					 _NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookentry'
@@ -162,9 +165,11 @@ class GradeBookEntry(SchemaConfigured,
 
 	assignmentId = alias('AssignmentId')
 
+	weight = 1.0
+
 	def __init__(self, **kwargs):
 		# SchemaConfigured is not cooperative
-		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+		CheckingLastModifiedBTreeContainer.__init__(self)
 		SchemaConfigured.__init__(self, **kwargs)
 
 	def __setstate__(self, state):
@@ -228,12 +233,12 @@ class GradeBookEntry(SchemaConfigured,
 		return self.displayName
 
 @interface.implementer(IGradeBookPart,
-					   an_interfaces.IAttributeAnnotatable,
-					   zmime_interfaces.IContentTypeAware)
+					   IAttributeAnnotatable,
+					   IContentTypeAware)
 @WithRepr
 class GradeBookPart(SchemaConfigured,
-					nti_containers.CheckingLastModifiedBTreeContainer,
-					zcontained.Contained,
+					CheckingLastModifiedBTreeContainer,
+					Contained,
 					_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebookpart'
@@ -246,10 +251,12 @@ class GradeBookPart(SchemaConfigured,
 	__name__ = alias('Name')
 
 	entryFactory = GradeBookEntry
-
+	
+	weight = 1.0
+	
 	def __init__(self, **kwargs):
 		# SchemaConfigured is not cooperative
-		nti_containers.CheckingLastModifiedBTreeContainer.__init__(self)
+		CheckingLastModifiedBTreeContainer.__init__(self)
 		SchemaConfigured.__init__(self, **kwargs)
 
 	def validateAssignment(self, assignment):
@@ -373,6 +380,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 		return True
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
+
 # By directly using this API and (not the adapter interface) and
 # setting create to False, in a large course with many users but few
 # submissions, we gain a significant performance improvement if we
@@ -390,9 +398,10 @@ from nti.app.assessment.adapters import _history_for_user_in_course
 _NotGiven = object()
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
-class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
+class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 
 	__name__ = 'SubmittedAssignmentHistory'
+
 	# We don't externalize this item, but we do create links to it,
 	# and they want a mimeType
 	mimeType = 'application/json'
@@ -438,9 +447,7 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 		for history in histories.values():
 			if assignment_id in history:
 				count += 1
-
 		return count
-
 
 	def __iter__(self,
 				 usernames=_NotGiven,
@@ -453,10 +460,10 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 			usernames = column
 		if not forced_placeholder_usernames:
 			forced_placeholder_usernames = ()
+
 		# ensure we have a set (for speed) that we can be case-insensitive on
 		# (for correctness)
 		forced_placeholder_usernames = {x.lower() for x in forced_placeholder_usernames}
-
 
 		for username_that_submitted in usernames:
 			username_that_submitted = username_that_submitted.lower()
@@ -524,7 +531,9 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(zcontained.Contained):
 							 forced_placeholder_usernames=forced_placeholder_usernames)
 
 	def __getitem__(self, username):
-		"We are traversable to users"
+		"""
+		We are traversable to users
+		"""
 		(username, item), = self.items(usernames=(username,), placeholder=None)
 		if item is not None:
 			return item
