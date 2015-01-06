@@ -202,5 +202,10 @@
 		title="Gradebook Settings"
 		schema=".interfaces.IGradebookSettings"
 		category="true" />
-	
+		
+	<!-- Grading -->
+	<ext:registerAutoPackageIO
+		root_interfaces=".grading_policies.IAssigmentGradeScheme
+						 .grading_policies.IDefaultCourseGradingPolicy"
+		modules=".grading_policies" />
 </configure>

@@ -124,6 +124,8 @@ class NumericGradeScheme(SchemaConfigured):
 	_type = numbers.Number
 
 	def fromUnicode(self, value):
+		if value and value.endswith('-'):
+			value = value[:-1].strip()
 		value = float(value)
 		self.validate(value)
 		return value
@@ -150,6 +152,8 @@ class IntegerGradeScheme(NumericGradeScheme):
 	_type = (int, long)
 
 	def fromUnicode(self, value):
+		if value and value.endswith('-'):
+			value = value[:-1].strip()
 		value = int(value)
 		self.validate(value)
 		return value
