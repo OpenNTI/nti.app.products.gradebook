@@ -396,6 +396,7 @@ from nti.app.assessment.adapters import _histories_for_course
 from nti.app.assessment.adapters import _history_for_user_in_course
 
 _NotGiven = object()
+
 @interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
 class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
