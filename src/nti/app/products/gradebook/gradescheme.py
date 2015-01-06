@@ -5,6 +5,7 @@ Grade schemes
 
 .. $Id$
 """
+
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,25 +19,27 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.externalization.representation import WithRepr
 
-from nti.mimetype import mimetype
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.schema.schema import EqHash
-
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import interfaces as grades_interfaces
+from .interfaces import ILetterGradeScheme
+from .interfaces import IBooleanGradeScheme
+from .interfaces import IIntegerGradeScheme
+from .interfaces import INumericGradeScheme
 
-@interface.implementer(grades_interfaces.ILetterGradeScheme)
+@interface.implementer(ILetterGradeScheme)
 @WithRepr
 @EqHash('grades', 'ranges')
 class LetterGradeScheme(SchemaConfigured):
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
 	_type = six.string_types
 
-	grades = FP(grades_interfaces.ILetterGradeScheme['grades'])
-	ranges = FP(grades_interfaces.ILetterGradeScheme['ranges'])
+	grades = FP(ILetterGradeScheme['grades'])
+	ranges = FP(ILetterGradeScheme['ranges'])
 
 	default_grades = ('A', 'B', 'C', 'D', 'F')
 	default_ranges = ((90, 100), (80, 89), (70, 79), (60, 69), (0, 59))
@@ -99,7 +102,7 @@ class LetterGradeScheme(SchemaConfigured):
 			raise ValueError("Invalid grade value")
 
 class ExtendedLetterGradeScheme(LetterGradeScheme):
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
 	default_grades = ('A+', 'A', 'A-',
 					  'B+', 'B', 'B-',
@@ -111,12 +114,12 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 					  (67, 69),  (63, 66), (60, 62),
 					  (57, 59),  (50, 56), (0, 49))
 
-@interface.implementer(grades_interfaces.INumericGradeScheme)
+@interface.implementer(INumericGradeScheme)
 @WithRepr
 @EqHash('min', 'max')
 class NumericGradeScheme(SchemaConfigured):
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(grades_interfaces.INumericGradeScheme)
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	createDirectFieldProperties(INumericGradeScheme)
 
 	_type = numbers.Number
 
@@ -139,10 +142,10 @@ class NumericGradeScheme(SchemaConfigured):
 		result = value * (self.max - self.min) + self.min
 		return result
 
-@interface.implementer(grades_interfaces.IIntegerGradeScheme)
+@interface.implementer(IIntegerGradeScheme)
 class IntegerGradeScheme(NumericGradeScheme):
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(grades_interfaces.IIntegerGradeScheme)
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	createDirectFieldProperties(IIntegerGradeScheme)
 
 	_type = (int, long)
 
@@ -151,11 +154,11 @@ class IntegerGradeScheme(NumericGradeScheme):
 		self.validate(value)
 		return value
 
-@interface.implementer(grades_interfaces.IBooleanGradeScheme)
+@interface.implementer(IBooleanGradeScheme)
 @WithRepr
 class BooleanGradeScheme(SchemaConfigured):
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(grades_interfaces.IBooleanGradeScheme)
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	createDirectFieldProperties(IBooleanGradeScheme)
 
 	_type  = bool
 
@@ -185,7 +188,7 @@ class BooleanGradeScheme(SchemaConfigured):
 		return result
 
 	def __eq__(self, other):
-		return self is other or grades_interfaces.IBooleanGradeScheme.providedBy(other)
+		return self is other or IBooleanGradeScheme.providedBy(other)
 
 	def __hash__(self):
 		xhash = 47
