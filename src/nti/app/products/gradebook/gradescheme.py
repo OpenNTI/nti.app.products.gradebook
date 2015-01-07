@@ -15,6 +15,7 @@ import six
 import numbers
 
 from zope import interface
+from zope.mimetype.interfaces import IContentTypeAware
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.externalization.representation import WithRepr
@@ -30,7 +31,7 @@ from .interfaces import INumericGradeScheme
 
 from .utils import MetaGradeBookObject
 
-@interface.implementer(ILetterGradeScheme)
+@interface.implementer(ILetterGradeScheme, IContentTypeAware)
 @WithRepr
 @EqHash('grades', 'ranges')
 class LetterGradeScheme(SchemaConfigured):
@@ -114,7 +115,7 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 					  (67, 69),  (63, 66), (60, 62),
 					  (57, 59),  (50, 56), (0, 49))
 
-@interface.implementer(INumericGradeScheme)
+@interface.implementer(INumericGradeScheme, IContentTypeAware)
 @WithRepr
 @EqHash('min', 'max')
 class NumericGradeScheme(SchemaConfigured):
@@ -144,7 +145,7 @@ class NumericGradeScheme(SchemaConfigured):
 		result = value * (self.max - self.min) + self.min
 		return result
 
-@interface.implementer(IIntegerGradeScheme)
+@interface.implementer(IIntegerGradeScheme, IContentTypeAware)
 class IntegerGradeScheme(NumericGradeScheme):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IIntegerGradeScheme)
@@ -158,7 +159,7 @@ class IntegerGradeScheme(NumericGradeScheme):
 		self.validate(value)
 		return value
 
-@interface.implementer(IBooleanGradeScheme)
+@interface.implementer(IBooleanGradeScheme, IContentTypeAware)
 @WithRepr
 class BooleanGradeScheme(SchemaConfigured):
 	__metaclass__ = MetaGradeBookObject

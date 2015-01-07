@@ -15,8 +15,6 @@ from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
 from zope.container.constraints import containers
 
-from zope.mimetype.interfaces import IContentTypeAware
-
 from zope.security.permission import Permission
 
 from nti.app.client_preferences.interfaces import TAG_EXTERNAL_PREFERENCE_GROUP
@@ -45,7 +43,7 @@ NTIID_TYPE_GRADE_BOOK = 'gradebook'
 NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
-class IGradeScheme(IContentTypeAware):
+class IGradeScheme(interface.Interface):
 
 	def fromUnicode(value):
 		pass
