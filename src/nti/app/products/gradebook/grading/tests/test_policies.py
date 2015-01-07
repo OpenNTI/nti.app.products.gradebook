@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from hamcrest.library.object.hasproperty import has_property
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -14,15 +13,16 @@ from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
 
 import unittest
 
-# from nti.app.products.gradebook.grades import Grade
-# from nti.app.products.gradebook.gradebook import GradeBook
-# from nti.app.products.gradebook.gradebook import GradeBookPart
-# from nti.app.products.gradebook.gradebook import GradeBookEntry
+from nti.app.products.gradebook.grades import Grade
+from nti.app.products.gradebook.gradebook import GradeBook
+from nti.app.products.gradebook.gradebook import GradeBookPart
+from nti.app.products.gradebook.gradebook import GradeBookEntry
 from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
 from nti.app.products.gradebook.grading.policies import AssigmentGradeScheme
 from nti.app.products.gradebook.grading.policies import IAssigmentGradeScheme
@@ -87,3 +87,49 @@ class TestGradePolicies(unittest.TestCase):
 		assert_that(obj, has_property('DefaultGradeScheme', is_(policy.DefaultGradeScheme)))
 		assert_that(obj, has_property('AssigmentGradeSchemes', is_(policy.AssigmentGradeSchemes)))
 		
+	def test_validate(self):
+		policy = DefaultCourseGradingPolicy()
+		items = policy.items = {}
+		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=50)
+		for x in range(5):
+			age = AssigmentGradeScheme()
+			age.Weight = 0.20
+			age.GradeScheme = IntegerGradeScheme(min=0, max=10)
+			items['assigment_%s' % (x+1)] = age
+			
+		book = GradeBook()
+		part = GradeBookPart()
+		book['part'] = part
+		for x in range(5):
+			name = 'assigment_%s' % (x+1)
+			entry = GradeBookEntry()
+			entry.assignmentId = name
+			part[name] = entry
+		
+		policy.__dict__['_book'] = book
+		policy.validate()
+		
+	def test_grade(self):
+		policy = DefaultCourseGradingPolicy()
+		items = policy.items = {}
+		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=10)
+		for x in range(5):
+			age = AssigmentGradeScheme(Weight=0.2)
+			items['assigment_%s' % (x+1)] = age
+			
+		book = GradeBook()
+		part = GradeBookPart()
+		book['part'] = part
+		for x in range(5):
+			name = 'assigment_%s' % (x+1)
+			entry = GradeBookEntry()
+			entry.assignmentId = name
+			part[name] = entry
+			grade = Grade()
+			grade.value = 5
+			grade.username = 'cald3307'
+			entry['cald3307'] = grade
+		
+		policy.__dict__['_book'] = book
+		grade = policy.grade('cald3307')
+		assert_that(grade, is_(0.5))
