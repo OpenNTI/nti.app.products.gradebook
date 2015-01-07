@@ -90,7 +90,7 @@ class AssigmentGradeScheme(Persistent, SchemaConfigured):
 	
 	def __init__(self, *args, **kwargs):
 		# SchemaConfigured is not cooperative
-		Persistent.__init__()
+		Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 	
 @interface.implementer(IDefaultCourseGradingPolicy)
@@ -102,7 +102,7 @@ class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
 
 	def __init__(self, *args, **kwargs):
 		# SchemaConfigured is not cooperative
-		Persistent.__init__()
+		Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
 	def validate(self):
