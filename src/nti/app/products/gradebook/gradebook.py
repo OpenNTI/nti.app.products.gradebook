@@ -132,6 +132,11 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 	@property
 	def Items(self):
 		return dict(self)
+	
+	def iter_grades(self, username):
+		for part in self.values():
+			for grade in part.iter_grades(username):
+				yield grade
 
 _GradeBookFactory= an_factory(GradeBook, 'GradeBook')
 
@@ -164,8 +169,6 @@ class GradeBookEntry(SchemaConfigured,
 	gradeScheme = alias('GradeScheme')
 
 	assignmentId = alias('AssignmentId')
-
-	weight = 1.0
 
 	def __init__(self, **kwargs):
 		# SchemaConfigured is not cooperative
@@ -251,9 +254,7 @@ class GradeBookPart(SchemaConfigured,
 	__name__ = alias('Name')
 
 	entryFactory = GradeBookEntry
-	
-	weight = 1.0
-	
+
 	def __init__(self, **kwargs):
 		# SchemaConfigured is not cooperative
 		CheckingLastModifiedBTreeContainer.__init__(self)
@@ -283,6 +284,11 @@ class GradeBookPart(SchemaConfigured,
 	@property
 	def Items(self):
 		return dict(self)
+
+	def iter_grades(self, username):
+		for entry in self.values():
+			if username in entry:
+				yield entry[username]
 
 	def __str__(self):
 		return self.displayName

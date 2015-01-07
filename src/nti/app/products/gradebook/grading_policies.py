@@ -9,8 +9,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import component
 from zope import interface
+from zope.interface import Invalid
+from zope.container.contained import Contained
 
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
@@ -42,6 +46,12 @@ def find_grading_policy_for_course(course):
 			pass
 	return None
 
+from zope.security.interfaces import IPrincipal
+
+from persistent import Persistent
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
 from nti.externalization.representation import WithRepr
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
@@ -54,8 +64,9 @@ from nti.schema.field import ValidTextLine
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.utils.property import alias
+from nti.utils.property import alias, Lazy
 
+from .interfaces import IGradeBook
 from .interfaces import IGradeScheme
 
 class IAssigmentGradeScheme(interface.Interface):
@@ -70,22 +81,85 @@ class IDefaultCourseGradingPolicy(ICourseGradingPolicy):
 @interface.implementer(IAssigmentGradeScheme)
 @WithRepr
 @EqHash('GradeScheme', 'Weight')
-class AssigmentGradeScheme(SchemaConfigured):
+class AssigmentGradeScheme(Persistent, SchemaConfigured):
 	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(IAssigmentGradeScheme)
 
 	weight = alias('Weight')
 	scheme = alias('GradeScheme')
 	
+	def __init__(self, *args, **kwargs):
+		# SchemaConfigured is not cooperative
+		Persistent.__init__()
+		SchemaConfigured.__init__(self, *args, **kwargs)
+	
 @interface.implementer(IDefaultCourseGradingPolicy)
-class DefaultCourseGradingPolicy(SchemaConfigured):
+class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
 	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(IAssigmentGradeScheme)
 	
-	Items = items = alias('AssigmentGradeSchemes')
+	items = alias('AssigmentGradeSchemes')
 
-	def validate(self, context):
-		pass
+	def __init__(self, *args, **kwargs):
+		# SchemaConfigured is not cooperative
+		Persistent.__init__()
+		SchemaConfigured.__init__(self, *args, **kwargs)
+
+	def validate(self):
+		book = self._book
+		sum_weight = 0.0
+		for name, value in self.items.items():
+			entry = book.getEntryByAssignment(name, check_name=True)
+			if entry is None:
+				raise Invalid("Could not find GradeBook Entry for %s", name)
+			scheme = value.scheme if value.scheme else self.DefaultGradeScheme
+			if scheme is None:
+				raise Invalid("Could not find grade scheme for %s", name)
+			sum_weight +=  value.weight if value is not None else 0.0
+			
+		if round(sum_weight, 2) != 1:
+			raise Invalid("Weight in policy do not equal to one")
+
+	@Lazy
+	def _book(self):
+		context = self.__parent__
+		book = IGradeBook(ICourseInstance(context))
+		return book
+	
+	@Lazy
+	def _schemes(self):
+		result = {}
+		book = self._book
+		for name, value in self.items.items():
+			entry = book.getEntryByAssignment(name, check_name=True)
+			scheme = value.scheme if value.scheme else self.DefaultGradeScheme
+			result[entry.assignmentId] = scheme
+		return result
+
+	@Lazy
+	def _weights(self):
+		result = {}
+		book = self._book
+		for name, value in self.items.items():
+			entry = book.getEntryByAssignment(name, check_name=True)
+			result[entry.assignmentId] = value.weight
+		return result
+	
+	def _to_correctness(self, value, scheme):
+		value = scheme.fromUnicode(value) \
+				if isinstance(value, six.string_types) else value
+		scheme.validate(value)
+		result = scheme.toCorrectness(value)
+		return result
 	
 	def grade(self, principal):
-		pass
+		result = 0
+		book = self._book
+		username = IPrincipal(principal).id		
+		for grade in book.iter_grades(username):
+			value = grade.value
+			weight = self._weights.get(grade.AssignmentId)
+			scheme = self._schemes.get(grade.AssignmentId)
+			correctness = self._to_correctness(value, scheme)
+			result += correctness * weight
+		return result
