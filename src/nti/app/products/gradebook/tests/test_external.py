@@ -122,7 +122,6 @@ class TestExternal(unittest.TestCase):
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebookentry'))
 		assert_that(ext, has_entry(u'NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebookentry-quizzes.quiz1'))
 
-
 	@WithMockDSTrans
 	def test_gradescheme(self):
 		s = gradescheme.BooleanGradeScheme()

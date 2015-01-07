@@ -19,4 +19,9 @@
 						 .interfaces.IDefaultCourseGradingPolicy"
 		modules=".policies" />
 
+	<!-- Internalization -->
+	<adapter factory=".internalization._DefaultCourseGradingPolicytUpdater"
+			 for=".interfaces.IDefaultCourseGradingPolicy"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+	
 </configure>

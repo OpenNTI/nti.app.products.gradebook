@@ -52,10 +52,13 @@
 	<!-- ... to containing course -->
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGrade" />
+			 
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBook" />
+			 
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBookPart" />
+			 
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBookEntry" />
 
@@ -64,12 +67,13 @@
 	<adapter factory=".adapters.grade_for_history_item"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGrade" />
+			 
 	<adapter factory=".adapters.grade_for_history_item"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
 			 provides=".interfaces.IGrade" />
 
-	<adapter factory=".adapters.history_item_for_grade" />
 	<adapter factory=".adapters.grade_to_user" />
+	<adapter factory=".adapters.history_item_for_grade" />
 
 	<!-- Traversal -->
 	<adapter name="GradeBook"
@@ -118,7 +122,6 @@
 						 .interfaces.INumericGradeScheme
 						 .interfaces.IIntegerGradeScheme"
 		modules=".gradebook .grades .gradescheme" />
-
 
 	<!-- Internalization -->
 	<adapter factory=".internalization._GradeObjectUpdater"
