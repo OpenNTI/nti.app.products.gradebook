@@ -13,12 +13,17 @@ does_not = is_not
 
 import unittest
 
-#from nti.app.products.gradebook.gradescheme import LetterGradeScheme
+# from nti.app.products.gradebook.grades import Grade
+# from nti.app.products.gradebook.gradebook import GradeBook
+# from nti.app.products.gradebook.gradebook import GradeBookPart
+# from nti.app.products.gradebook.gradebook import GradeBookEntry
 from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
-from nti.app.products.gradebook.grading_policies import AssigmentGradeScheme
-from nti.app.products.gradebook.grading_policies import IAssigmentGradeScheme
-from nti.app.products.gradebook.grading_policies import DefaultCourseGradingPolicy
-from nti.app.products.gradebook.grading_policies import IDefaultCourseGradingPolicy
+from nti.app.products.gradebook.grading.policies import AssigmentGradeScheme
+from nti.app.products.gradebook.grading.policies import IAssigmentGradeScheme
+from nti.app.products.gradebook.grading.policies import DefaultCourseGradingPolicy
+from nti.app.products.gradebook.grading.policies import IDefaultCourseGradingPolicy
+
+from nti.externalization.externalization import to_external_object
 
 from nti.testing.matchers import verifiably_provides, validly_provides
 
@@ -28,7 +33,7 @@ class TestGradePolicies(unittest.TestCase):
 	
 	layer = SharedConfiguringTestLayer
 	
-	def test_validate(self):
+	def test_verifiably_provides(self):
 		age = AssigmentGradeScheme()
 		age.weight = 1.0
 		age.GradeScheme = IntegerGradeScheme(min=0, max=1)
@@ -40,3 +45,17 @@ class TestGradePolicies(unittest.TestCase):
 		policy.items = {'assigment': age}
 		assert_that(policy, validly_provides(IDefaultCourseGradingPolicy))
 		assert_that(policy, verifiably_provides(IDefaultCourseGradingPolicy))
+		
+	def test_externalization(self):
+		policy = DefaultCourseGradingPolicy()
+		items = policy.items = {}
+		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=50)
+		for x in range(5):
+			age = AssigmentGradeScheme()
+			age.weight = 0.20
+			age.GradeScheme = IntegerGradeScheme(min=0, max=10)
+			items['assigment_%s' % x] = age
+		
+		to_external_object(policy)
+		#print(ext)
+		

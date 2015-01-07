@@ -2,10 +2,30 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+## META classes
+
+from nti.mimetype.mimetype import MIME_BASE
+
+GRADEBOOK_MIME_BASE = MIME_BASE + b'.gradebook'
+
+class MetaGradeBookObject(type):
+
+    def __new__(cls, name, bases, dct):
+        t = type.__new__(cls, name, bases, dct)
+        if not hasattr(cls, 'mimeType'):
+            clazzname = getattr(cls, '__external_class_name__', name)
+            clazzname = b'.' + clazzname.encode('ascii').lower()
+            t.mime_type = t.mimeType = GRADEBOOK_MIME_BASE + clazzname
+        t.parameters = dict()
+        return t
+
+## JSON Errors
 
 import sys
 import simplejson as json

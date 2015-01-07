@@ -19,8 +19,6 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.externalization.representation import WithRepr
 
-from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
-
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -30,11 +28,13 @@ from .interfaces import IBooleanGradeScheme
 from .interfaces import IIntegerGradeScheme
 from .interfaces import INumericGradeScheme
 
+from .utils import MetaGradeBookObject
+
 @interface.implementer(ILetterGradeScheme)
 @WithRepr
 @EqHash('grades', 'ranges')
 class LetterGradeScheme(SchemaConfigured):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 
 	_type = six.string_types
 
@@ -102,7 +102,7 @@ class LetterGradeScheme(SchemaConfigured):
 			raise ValueError("Invalid grade value")
 
 class ExtendedLetterGradeScheme(LetterGradeScheme):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 
 	default_grades = ('A+', 'A', 'A-',
 					  'B+', 'B', 'B-',
@@ -118,7 +118,7 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 @WithRepr
 @EqHash('min', 'max')
 class NumericGradeScheme(SchemaConfigured):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(INumericGradeScheme)
 
 	_type = numbers.Number
@@ -146,7 +146,7 @@ class NumericGradeScheme(SchemaConfigured):
 
 @interface.implementer(IIntegerGradeScheme)
 class IntegerGradeScheme(NumericGradeScheme):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IIntegerGradeScheme)
 
 	_type = (int, long)
@@ -161,7 +161,7 @@ class IntegerGradeScheme(NumericGradeScheme):
 @interface.implementer(IBooleanGradeScheme)
 @WithRepr
 class BooleanGradeScheme(SchemaConfigured):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IBooleanGradeScheme)
 
 	_type  = bool

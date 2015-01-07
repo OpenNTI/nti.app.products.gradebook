@@ -14,6 +14,8 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
 
+import unittest
+
 from nti.dataserver.users import User
 
 from nti.externalization import externalization
@@ -26,9 +28,9 @@ from .. import gradescheme
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import SharedConfiguringTestLayer
-import unittest
 
 class TestExternal(unittest.TestCase):
+
 	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
@@ -126,19 +128,19 @@ class TestExternal(unittest.TestCase):
 		s = gradescheme.BooleanGradeScheme()
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'BooleanGradeScheme'))
-		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.booleangradescheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.booleangradescheme'))
 
 		s = gradescheme.IntegerGradeScheme()
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'IntegerGradeScheme'))
-		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.integergradescheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.integergradescheme'))
 		assert_that(ext, has_entry(u'min', 0))
 		assert_that(ext, has_entry(u'max', 100))
 
 		s = gradescheme.NumericGradeScheme(min=10.0, max=15.0)
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'NumericGradeScheme'))
-		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.numericgradescheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.numericgradescheme'))
 		assert_that(ext, has_entry(u'min', 10.0))
 		assert_that(ext, has_entry(u'max', 15.0))
 
@@ -149,7 +151,7 @@ class TestExternal(unittest.TestCase):
 		s = gradescheme.LetterGradeScheme()
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'LetterGradeScheme'))
-		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.lettergradescheme'))
+		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.lettergradescheme'))
 		assert_that(ext, has_entry(u'grades', is_([u'A', u'B', u'C', u'D', u'F'])))
 		assert_that(ext, has_entry(u'ranges', is_([[90, 100], [80, 89], [70, 79], [60, 69], [0, 59]])))
 

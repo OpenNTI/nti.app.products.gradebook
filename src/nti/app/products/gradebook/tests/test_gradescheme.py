@@ -51,4 +51,3 @@ class TestGradeScheme(unittest.TestCase):
 			self.fail()
 		except:
 			pass
-

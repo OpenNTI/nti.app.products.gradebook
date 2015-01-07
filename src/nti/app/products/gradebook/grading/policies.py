@@ -11,41 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
-from zope import component
 from zope import interface
 from zope.interface import Invalid
 from zope.container.contained import Contained
-
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
-
-def find_grading_policy_for_course(course):
-	# We need to actually be registering these as annotations
-	policy = ICourseGradingPolicy(course, None)
-	if policy is not None:
-		return policy
-
-	registry = component
-	try:
-		# Courses may be ISites 
-		registry = course.getSiteManager()
-		names = ('',)
-	except LookupError:
-		# try content pacakges
-		names = [x.ntiid for x in course.ContentPackageBundle.ContentPackages]
-		# try catalog entry
-		cat_entry = ICourseCatalogEntry(course, None)
-		if cat_entry:
-			names.append(cat_entry.ntiid)
-			names.append(cat_entry.ProviderUniqueID)
-
-	for name in names:
-		try:
-			return registry.getUtility(ICourseGradingPolicy, name=name)
-		except LookupError:
-			pass
-	return None
-
 from zope.security.interfaces import IPrincipal
 
 from persistent import Persistent
@@ -54,35 +22,24 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.externalization.representation import WithRepr
 
-from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
-
-from nti.schema.field import Dict
-from nti.schema.field import Number
-from nti.schema.field import Object
 from nti.schema.schema import EqHash
-from nti.schema.field import ValidTextLine
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.utils.property import alias, Lazy
+from nti.utils.property import Lazy
+from nti.utils.property import alias
 
-from .interfaces import IGradeBook
-from .interfaces import IGradeScheme
+from ..interfaces import IGradeBook
+from ..utils import MetaGradeBookObject
 
-class IAssigmentGradeScheme(interface.Interface):
-	GradeScheme = Object(IGradeScheme, required=False, title="Grade scheme")
-	Weight = Number(title="Grade weight", default=0.0, min=0.0, max=1.0)
-	
-class IDefaultCourseGradingPolicy(ICourseGradingPolicy):
-	DefaultGradeScheme = Object(IGradeScheme, required=False)
-	AssigmentGradeSchemes = Dict(key_type=ValidTextLine(title="Assigment ID/Name"),
-								 value_type=Object(IAssigmentGradeScheme))
-	
+from .interfaces import IAssigmentGradeScheme
+from .interfaces import IDefaultCourseGradingPolicy
+
 @interface.implementer(IAssigmentGradeScheme)
 @WithRepr
 @EqHash('GradeScheme', 'Weight')
 class AssigmentGradeScheme(Persistent, SchemaConfigured):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IAssigmentGradeScheme)
 
 	weight = alias('Weight')
@@ -95,7 +52,7 @@ class AssigmentGradeScheme(Persistent, SchemaConfigured):
 	
 @interface.implementer(IDefaultCourseGradingPolicy)
 class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IAssigmentGradeScheme)
 	
 	items = alias('AssigmentGradeSchemes')
@@ -163,3 +120,17 @@ class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
 			correctness = self._to_correctness(value, scheme)
 			result += correctness * weight
 		return result
+
+from nti.externalization.interfaces import IInternalObjectIO
+from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
+
+@interface.implementer(IInternalObjectIO)
+class _GradingPolicyInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
+
+	@classmethod
+	def _ap_enumerate_externalizable_root_interfaces(cls,  grading_interfaces):
+		return (IDefaultCourseGradingPolicy, IAssigmentGradeScheme)
+
+	@classmethod
+	def _ap_enumerate_module_names(cls):
+		return ('grading_policies',)

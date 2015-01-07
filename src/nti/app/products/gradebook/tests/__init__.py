@@ -4,22 +4,29 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import component
-from nti.contentlibrary.interfaces import IContentPackageLibrary
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-from nti.app.testing.application_webtest import ApplicationTestLayer
 import os
 import os.path
 
+from zope import component
+from zope.component.interfaces import IComponents
+
 import ZODB
-from nti.dataserver.tests.mock_dataserver import WithMockDS
-from nti.dataserver.tests.mock_dataserver import mock_db_trans
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.contenttypes.courses.interfaces import ICourseCatalog
 
 from nti.dataserver import users
-from zope.component.interfaces import IComponents
-from nti.app.products.courseware.interfaces import ICourseCatalog
 
 from nti.app.products.courseware.tests import publish_ou_course_entries
+
+from nti.app.testing.application_webtest import ApplicationTestLayer
+
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
 
 class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 
@@ -65,16 +72,15 @@ class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 
 	# TODO: May need to recreate the application with this library?
 
-
+from nti.testing.layers import find_test
 
 from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
-from nti.testing.layers import find_test
 
 from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
-import zope.testing.cleanup
 
+import zope.testing.cleanup
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,
 								 GCLayerMixin,
@@ -89,7 +95,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def tearDown(cls):
 		cls.tearDownPackages()
-
 
 	@classmethod
 	def testSetUp(cls, test=None):

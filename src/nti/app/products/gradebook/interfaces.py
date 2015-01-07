@@ -4,6 +4,7 @@
 .. $Id$
 """
 from __future__ import unicode_literals, print_function, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 from zope import interface
@@ -13,6 +14,8 @@ from zope.container.constraints import contains
 from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
 from zope.container.constraints import containers
+
+from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.security.permission import Permission
 
@@ -42,7 +45,7 @@ NTIID_TYPE_GRADE_BOOK = 'gradebook'
 NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
-class IGradeScheme(interface.Interface):
+class IGradeScheme(IContentTypeAware):
 
 	def fromUnicode(value):
 		pass

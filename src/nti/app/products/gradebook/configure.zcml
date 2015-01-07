@@ -204,8 +204,5 @@
 		category="true" />
 		
 	<!-- Grading -->
-	<ext:registerAutoPackageIO
-		root_interfaces=".grading_policies.IAssigmentGradeScheme
-						 .grading_policies.IDefaultCourseGradingPolicy"
-		modules=".grading_policies" />
+	<include package=".grading" />
 </configure>
