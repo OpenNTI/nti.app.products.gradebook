@@ -30,6 +30,8 @@ from nti.utils.property import Lazy
 from nti.utils.property import alias
 
 from ..interfaces import IGradeBook
+from ..interfaces import IExcusedGrade
+
 from ..utils import MetaGradeBookObject
 
 from .interfaces import IAssigmentGradeScheme
@@ -114,23 +116,12 @@ class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
 		book = self._book
 		username = IPrincipal(principal).id		
 		for grade in book.iter_grades(username):
-			value = grade.value
 			weight = self._weights.get(grade.AssignmentId)
+			if IExcusedGrade.providedBy(grade):
+				result += weight
+				continue
+			value = grade.value
 			scheme = self._schemes.get(grade.AssignmentId)
 			correctness = self._to_correctness(value, scheme)
 			result += correctness * weight
 		return result
-
-from nti.externalization.interfaces import IInternalObjectIO
-from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
-
-@interface.implementer(IInternalObjectIO)
-class _GradingPolicyInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
-
-	@classmethod
-	def _ap_enumerate_externalizable_root_interfaces(cls,  grading_interfaces):
-		return (IDefaultCourseGradingPolicy, IAssigmentGradeScheme)
-
-	@classmethod
-	def _ap_enumerate_module_names(cls):
-		return ('grading_policies',)
