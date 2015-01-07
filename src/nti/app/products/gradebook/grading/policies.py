@@ -20,6 +20,8 @@ from persistent import Persistent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.dataserver.datastructures import CreatedAndModifiedTimeMixin
+
 from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import EqHash
@@ -28,6 +30,8 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.utils.property import Lazy
 from nti.utils.property import alias
+
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
@@ -53,7 +57,10 @@ class AssigmentGradeScheme(Persistent, SchemaConfigured):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 	
 @interface.implementer(IDefaultCourseGradingPolicy)
-class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
+class DefaultCourseGradingPolicy(CreatedAndModifiedTimeMixin,
+								 PersistentPropertyHolder, 
+								 SchemaConfigured, 
+								 Contained):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IAssigmentGradeScheme)
 	
@@ -61,7 +68,7 @@ class DefaultCourseGradingPolicy(Persistent, SchemaConfigured, Contained):
 
 	def __init__(self, *args, **kwargs):
 		# SchemaConfigured is not cooperative
-		Persistent.__init__(self)
+		CreatedAndModifiedTimeMixin.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
 	def validate(self):
