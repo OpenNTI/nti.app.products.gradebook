@@ -28,6 +28,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
@@ -143,6 +144,9 @@ def _assignment_history_item_removed(item, event):
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
 	synchronize_gradebook(course)
+	policy = ICourseGradingPolicy(course, None)
+	if policy is not None:
+		policy.validate()
 
 ###
 # Storing notable items.
