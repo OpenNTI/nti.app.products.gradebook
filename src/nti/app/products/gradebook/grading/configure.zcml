@@ -15,13 +15,23 @@
 	<include package="nti.externalization" />
 
 	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.IAssigmentGradeScheme
+		root_interfaces=".interfaces.ICategoryGradeScheme
+						 .interfaces.IAssigmentGradeScheme
+						 .interfaces.ICS1323CourseGradingPolicy
 						 .interfaces.IDefaultCourseGradingPolicy"
 		modules=".policies" />
 
 	<!-- Internalization -->
-	<adapter factory=".internalization._DefaultCourseGradingPolicytUpdater"
+	<adapter factory=".internalization._DefaultCourseGradingPolicyUpdater"
 			 for=".interfaces.IDefaultCourseGradingPolicy"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+			
+	<adapter factory=".internalization._CategoryGradeSchemesUpdater"
+			 for=".interfaces.ICategoryGradeScheme"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+	 
+	<adapter factory=".internalization._CS1323CourseGradingPolicyUpdater"
+			 for=".interfaces.ICS1323CourseGradingPolicy"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 	
 </configure>

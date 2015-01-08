@@ -22,9 +22,23 @@ from ..interfaces import IGradeScheme
 
 class IAssigmentGradeScheme(interface.Interface):
 	GradeScheme = Object(IGradeScheme, required=False, title="Grade scheme")
-	Weight = Number(title="Grade weight", default=0.0, min=0.0, max=1.0)
+	Weight = Number(title="Grade weight", default=0.0, min=0.0, max=1.0, required=True)
 	
 class IDefaultCourseGradingPolicy(ICourseGradingPolicy):
 	DefaultGradeScheme = Object(IGradeScheme, required=False)
 	AssigmentGradeSchemes = Dict(key_type=ValidTextLine(title="Assigment ID/Name"),
-								 value_type=Object(IAssigmentGradeScheme))
+								 value_type=Object(IAssigmentGradeScheme),
+								 min_length=1)
+
+class ICategoryGradeScheme(interface.Interface):
+	GradeScheme = Object(IGradeScheme, required=False)
+	Weight = Number(title="Category weight", default=0.0, min=0.0, max=1.0, required=True)
+	AssigmentGradeSchemes = Dict(key_type=ValidTextLine(title="Assigment ID/Name"),
+								 value_type=Object(IAssigmentGradeScheme),
+								 min_length=1)
+	
+class ICS1323CourseGradingPolicy(ICourseGradingPolicy):
+	DefaultGradeScheme = Object(IGradeScheme, required=False)
+	CategoryGradeSchemes = Dict(key_type=ValidTextLine(title="Category Name"),
+					  			value_type=Object(ICategoryGradeScheme),
+					  			min_length=1)
