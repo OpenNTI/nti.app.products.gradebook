@@ -38,7 +38,6 @@ from nti.testing.matchers import verifiably_provides, validly_provides
 
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
-@unittest.SkipTest
 class TestDefaultGradePolicy(unittest.TestCase):
 	
 	layer = SharedConfiguringTestLayer
@@ -207,15 +206,20 @@ class TestCS1323GradePolicy(unittest.TestCase):
 		assert_that(obj, has_property('CategoryGradeSchemes', is_(policy.CategoryGradeSchemes)))
 		
 	def test_validate(self):
-		policy = DefaultCourseGradingPolicy()
 		items = {}
-		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=50)
+		cat = CategoryGradeScheme()
+		cat.Weight = 1.0
+		cat.GradeScheme = IntegerGradeScheme(min=0, max=1)		
 		for x in range(5):
 			age = AssigmentGradeScheme()
 			age.Weight = 0.20
 			age.GradeScheme = IntegerGradeScheme(min=0, max=10)
 			items['assigment_%s' % (x+1)] = age
-		policy.items = items
+		cat.AssigmentGradeSchemes = items
+		
+		policy = CS1323CourseGradingPolicy()
+		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=50)
+		policy.CategoryGradeSchemes = {'category': cat}
 		
 		book = GradeBook()
 		part = GradeBookPart()
@@ -230,13 +234,20 @@ class TestCS1323GradePolicy(unittest.TestCase):
 		policy.validate()
 		
 	def test_grade(self):
-		policy = DefaultCourseGradingPolicy()
 		items = {}
-		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=10)
+		cat = CategoryGradeScheme()
+		cat.Weight = 1.0
+		cat.GradeScheme = IntegerGradeScheme(min=0, max=1)		
 		for x in range(5):
-			age = AssigmentGradeScheme(Weight=0.2)
+			age = AssigmentGradeScheme()
+			age.Weight = 0.20
+			age.GradeScheme = IntegerGradeScheme(min=0, max=10)
 			items['assigment_%s' % (x+1)] = age
-		policy.items = items
+		cat.AssigmentGradeSchemes = items
+		
+		policy = CS1323CourseGradingPolicy()
+		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=50)
+		policy.CategoryGradeSchemes = {'category': cat}
 		
 		book = GradeBook()
 		part = GradeBookPart()
@@ -254,4 +265,3 @@ class TestCS1323GradePolicy(unittest.TestCase):
 		policy.__dict__['book'] = book
 		grade = policy.grade('cald3307')
 		assert_that(grade, is_(0.5))
-

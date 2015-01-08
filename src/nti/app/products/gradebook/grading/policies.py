@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
+from six import string_types
 
 from zope import interface
 from zope.interface import Invalid
@@ -56,7 +56,13 @@ class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
 		context = self.__parent__
 		book = IGradeBook(ICourseInstance(context))
 		return book
-
+	
+	def to_correctness(self, value, scheme):
+		value = scheme.fromUnicode(value) if isinstance(value, string_types) else value
+		scheme.validate(value)
+		result = scheme.toCorrectness(value)
+		return result
+	
 def validate_assigment_grade_schemes(book, items, default_scheme=None, category=None):
 	names = set()
 	sum_weight = 0.0
@@ -129,13 +135,6 @@ class DefaultCourseGradingPolicy(BaseGradingPolicy):
 			result[entry.assignmentId] = value.weight
 		return result
 	
-	def _to_correctness(self, value, scheme):
-		value = scheme.fromUnicode(value) \
-				if isinstance(value, six.string_types) else value
-		scheme.validate(value)
-		result = scheme.toCorrectness(value)
-		return result
-	
 	def grade(self, principal):
 		result = 0
 		book = self.book
@@ -147,7 +146,7 @@ class DefaultCourseGradingPolicy(BaseGradingPolicy):
 				continue
 			value = grade.value
 			scheme = self._schemes.get(grade.AssignmentId)
-			correctness = self._to_correctness(value, scheme)
+			correctness = self.to_correctness(value, scheme)
 			result += correctness * weight
 		return result
 
@@ -205,5 +204,38 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		if len(self._rev_categories) != len(assigments):
 			raise Invalid("There are assigments assigned to multiple categories")
 		
+	@Lazy
+	def _weights(self):
+		result = {}
+		book = self.book
+		for category in self.categories.values():
+			for name, value in category.items.items():
+				entry = book.getEntryByAssignment(name, check_name=True)
+				result[entry.assignmentId] = value.weight * category.weight
+		return result
+
+	@Lazy
+	def _schemes(self):
+		result = {}
+		book = self.book
+		for category in self.categories.values():
+			for name, value in category.items.items():
+				entry = book.getEntryByAssignment(name, check_name=True)
+				scheme = value.scheme or category.scheme or self.scheme
+				result[entry.assignmentId] = scheme
+		return result
+
 	def grade(self, principal):
-		return None
+		result = 0
+		book = self.book
+		username = IPrincipal(principal).id
+		for grade in book.iter_grades(username):
+			weight = self._weights.get(grade.AssignmentId)
+			if IExcusedGrade.providedBy(grade):
+				result += weight
+				continue
+			value = grade.value
+			scheme = self._schemes.get(grade.AssignmentId)
+			correctness = self.to_correctness(value, scheme)
+			result += correctness * weight
+		return result
