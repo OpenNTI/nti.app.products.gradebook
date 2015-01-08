@@ -28,7 +28,6 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
@@ -49,6 +48,8 @@ from .interfaces import IGrade
 from .interfaces import IGradeBook
 
 from .assignments import synchronize_gradebook
+
+from .grading import find_grading_policy_for_course
 
 from .autograde_policies import find_autograde_policy_for_assignment_in_course
 
@@ -144,7 +145,7 @@ def _assignment_history_item_removed(item, event):
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
 	synchronize_gradebook(course)
-	policy = ICourseGradingPolicy(course, None)
+	policy = find_grading_policy_for_course(course)
 	if policy is not None:
 		policy.validate()
 
