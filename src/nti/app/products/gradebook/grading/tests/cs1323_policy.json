@@ -1,0 +1,502 @@
+{
+    "MimeType": "application/vnd.nextthought.gradebook.cs1323coursegradingpolicy",
+    "CategoryGradeSchemes": {
+        "turingscraft": {
+            "MimeType": "application/vnd.nextthought.gradebook.categorygradescheme",
+            "AssigmentGradeSchemes": {
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Arrays_of_Primitive_Data_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Arrays of Primitive Data (26 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 26,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Modify_Objects_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Accessing and Changing Objects (45 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 45,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Changing_Primitive_Data_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Changing Primitive Data (59 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 59,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_While_Loops_and_Relational_Operators_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: While Loops (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Classes_with_Generics_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Classes with Generics (17 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 17,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Methods_and_References_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Methods and References (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Methods_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Methods (22 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 22,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Classes_as_State_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Classes as State (13 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 13,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Storing_Primitive_Data_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Storing Primitive Data (15 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 15,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Encapsulation_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Encapsulation (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Logical_Operators_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Logical Operators (27 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 27,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_For_Loops_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: For Loops (12 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 12,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Command_Line_Interactions_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Command Line Interactions (18 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 18,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Class_Methods_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Class Methods (9 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 9,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Nested_Loops_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Nested Loops (3 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 3,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Construct_Objects_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Construct Objects (27 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 27,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Conditional_Statements_and_Relational_Operators_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Turingscraft: Conditional Statements (29 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.0588,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 29,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                }
+            },
+            "Class": "CategoryGradeScheme",
+            "Weight": 0.25,
+            "GradeScheme": {
+                "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                "max": 10,
+                "Class": "IntegerGradeScheme",
+                "min": 0
+            }
+        },
+        "iclicker": {
+            "MimeType": "application/vnd.nextthought.gradebook.categorygradescheme",
+            "AssigmentGradeSchemes": {
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_23": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.23",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_28": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.28",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_14": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.14",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_16": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.16",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_12": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.12",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_21": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.21",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_30": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.30",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_19": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.19",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_26": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "iClicker 1.26",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1111
+                }
+            },
+            "Class": "CategoryGradeScheme",
+            "Weight": 0.25,
+            "GradeScheme": {
+                "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                "max": 10,
+                "Class": "IntegerGradeScheme",
+                "min": 0
+            }
+        },
+        "javabat": {
+            "MimeType": "application/vnd.nextthought.gradebook.categorygradescheme",
+            "AssigmentGradeSchemes": {
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:JavaBat_Arrays_of_Primitive_Data": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "JavaBat: Arrays of Primitive Data (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.2,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:JavaBat_Accessing_and_Changing_Objects": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Javabat: Accessing and Changing Objects (6 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.2,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 6,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:JavaBat_Class_Methods": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Javabat: Class Methods (4 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.2,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 4,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:JavaBat_Methods_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "JavaBat: Methods (16 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.2,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 16,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:JavaBat_Nesting_Loops": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "JavaBat: Nesting Loops (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.2,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                }
+            },
+            "Class": "CategoryGradeScheme",
+            "Weight": 0.25,
+            "GradeScheme": {
+                "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                "max": 10,
+                "Class": "IntegerGradeScheme",
+                "min": 0
+            }
+        },
+        "problets": {
+            "MimeType": "application/vnd.nextthought.gradebook.categorygradescheme",
+            "AssigmentGradeSchemes": {
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Access_Concepts_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Access Concepts (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Nested_Loops_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Nested Loops (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_For_Loops_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: For Loops (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:1Dimensional_Arrays_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: 1-Dimensional Arrays (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_While_Loops_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: While Loops (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Arithmetic_Tutor_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Arithmetic Tutor (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Logical_Operators_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Logical Operators (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Debugging_Functions_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Debugging Functions (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Relational_Operators_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Relational Operators (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                },
+                "tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Behavior_of_Functions_010": {
+                    "MimeType": "application/vnd.nextthought.gradebook.assigmentgradescheme",
+                    "Name": "Problets: Behavior of Functions (10 points)",
+                    "Class": "AssigmentGradeScheme",
+                    "Weight": 0.1,
+                    "GradeScheme": {
+                        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                        "max": 10,
+                        "Class": "IntegerGradeScheme",
+                        "min": 0
+                    }
+                }
+            },
+            "Class": "CategoryGradeScheme",
+            "Weight": 0.25,
+            "GradeScheme": {
+                "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+                "max": 10,
+                "Class": "IntegerGradeScheme",
+                "min": 0
+            }
+        }
+    },
+    "DefaultGradeScheme": {
+        "MimeType": "application/vnd.nextthought.gradebook.integergradescheme",
+        "max": 10,
+        "Class": "IntegerGradeScheme",
+        "min": 0
+    },
+    "Class": "CS1323CourseGradingPolicy"
+}

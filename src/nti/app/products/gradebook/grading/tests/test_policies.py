@@ -18,7 +18,10 @@ from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
 
+import os
+import codecs
 import unittest
+import simplejson
 
 from nti.app.products.gradebook.grades import Grade
 from nti.app.products.gradebook.gradebook import GradeBook
@@ -204,6 +207,14 @@ class TestCS1323GradePolicy(unittest.TestCase):
 
 		assert_that(obj, has_property('DefaultGradeScheme', is_(policy.DefaultGradeScheme)))
 		assert_that(obj, has_property('CategoryGradeSchemes', is_(policy.CategoryGradeSchemes)))
+		
+	def test_internalization(self):
+		path = os.path.join( os.path.dirname(__file__), 'cs1323_policy.json')
+		with codecs.open(path, "r", encoding="UTF-8") as fp:
+			ext = simplejson.load(fp)
+		factory = find_factory_for(ext)
+		obj = factory()
+		update_from_external_object(obj, ext)
 		
 	def test_validate(self):
 		items = {}
