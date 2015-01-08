@@ -145,6 +145,8 @@ def _assignment_history_item_removed(item, event):
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
 	synchronize_gradebook(course)
+	## CS: We validate the grading policy to make sure 
+	## the gradebook has been synchronized
 	policy = find_grading_policy_for_course(course)
 	if policy is not None:
 		policy.validate()
