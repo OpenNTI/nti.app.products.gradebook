@@ -44,7 +44,7 @@ class LetterGradeScheme(SchemaConfigured):
 	ranges = FP(ILetterGradeScheme['ranges'])
 
 	default_grades = ('A', 'B', 'C', 'D', 'F')
-	default_ranges = ((90, 100), (80, 89), (70, 79), (60, 69), (0, 59))
+	default_ranges = ((90, 100), (80, 89), (70, 79), (40, 69), (0, 68))
 
 	def __init__(self, grades=None, ranges=None):
 		super(LetterGradeScheme, self).__init__()
