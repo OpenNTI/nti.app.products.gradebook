@@ -39,34 +39,13 @@ from ..interfaces import IUsernameSortSubstitutionPolicy
 
 from ..grades import Grade
 
+from ..utils import mark_btree_bucket_as_changed as _mark_btree_bucket_as_changed
+
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
 def GradeBookPathAdapter(context, request):
 	result = IGradeBook(context)
 	return result
-
-def _mark_btree_bucket_as_changed(grade):
-	# Now, because grades are not persistent objects,
-	# the btree bucket containing this grade has to be
-	# manually told that its contents have changed.
-	# XXX: Note that this is very expensive,
-	# waking up each bucket of the tree.
-	column = grade.__parent__
-	btree = column._SampleContainer__data
-	bucket = btree._firstbucket
-	found = False
-	while bucket is not None:
-		if bucket.has_key(grade.__name__):
-			bucket._p_changed = True
-			if bucket._p_jar is None: # The first bucket is stored special
-				btree._p_changed = True
-			found = True
-			break
-		bucket = bucket._next
-	if not found:
-		# before there are buckets, it might be inline data?
-		btree._p_changed = True
-	return found
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,

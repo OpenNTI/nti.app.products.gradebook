@@ -10,9 +10,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.security.interfaces import IPrincipal
+from zope.container.interfaces import INameChooser
 
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
+
+from ..grades import Grade
+from ..interfaces import NO_SUBMIT_PART_NAME
+from ..assignments import create_assignment_part
 
 def find_grading_policy_for_course(course):
     # We need to actually be registering these as annotations
@@ -40,3 +47,31 @@ def find_grading_policy_for_course(course):
         except LookupError:
             pass
     return None
+
+def calculate_grades(course, grade_scheme, entry_name='Current_Grade'):
+    result = {}
+    
+    policy = find_grading_policy_for_course(course)
+    if policy is None:
+        raise ValueError("Course does not have grading policy")
+       
+    part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
+    entry = part.getEntryByAssignment(entry_name)
+    if entry is None:
+        order = len(part) + 1
+        entry = part.entryFactory(displayName=entry_name, 
+                                  order=order,
+                                  AssignmentId=entry_name)
+        part[INameChooser(part).chooseName(entry_name, entry)] = entry
+        
+    for record in ICourseEnrollments(course).iter_enrollments():
+        principal = record.principal
+        username = IPrincipal(principal).id
+        
+        correctness = policy.grade(principal)
+        value = grade_scheme.fromCorrectness(correctness)
+        
+        grade = Grade(value=value)
+        entry[username] = grade
+        result[username] = grade
+    return result

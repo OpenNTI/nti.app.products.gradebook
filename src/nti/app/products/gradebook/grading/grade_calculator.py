@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from zope.security.interfaces import IPrincipal
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -23,14 +22,12 @@ from zope.configuration import xmlconfig, config
 from zope.dottedname import resolve as dottedname
 
 from zope.container.contained import Contained
-from zope.container.interfaces import INameChooser
 
 import zope.browserpage
 
 from z3c.autoinclude.zcml import includePluginsDirective
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver.utils import run_with_dataserver
 
@@ -39,10 +36,8 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.site.site import get_site_for_site_names
 
 from ..interfaces import IGradeScheme
-from ..interfaces import NO_SUBMIT_PART_NAME
-from ..assignments import create_assignment_part
 
-from . import find_grading_policy_for_course
+from . import calculate_grades
 
 class PluginPoint(Contained):
 
@@ -84,8 +79,7 @@ def create_context(env_dir=None, with_library=True):
 	
 	return context
 
-def calculate_grades(ntiid, scheme, entry_name='Current_Grade', site=None):
-
+def _process_args(ntiid, scheme, entry_name='Current_Grade', site=None):
 	module_name, class_name = scheme.rsplit(".", 1)
 	module = importlib.import_module(module_name)
 	clazz = getattr(module, class_name)
@@ -105,22 +99,8 @@ def calculate_grades(ntiid, scheme, entry_name='Current_Grade', site=None):
 	if course is None:
 		raise ValueError("Unknown course", ntiid)
 
-	policy = find_grading_policy_for_course(course)
-	if policy is None:
-		raise ValueError("Course does not have grading policy")
-	
-	part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
-	entry = part.getEntryByAssignment(entry_name)
-	if entry is None:
-		order = len(part) + 1
-		entry = part.entryFactory(displayName=entry_name, order=order, AssignmentId=entry_name)
-		part[INameChooser(part).chooseName(entry_name, entry)] = entry
-		
-	for record in ICourseEnrollments(course).iter_enrollments():
-		principal = record.principal
-		grade = policy.grade(principal)
-		grade = grade_scheme.fromCorrectness(grade)
-		entry[IPrincipal(principal).id] = grade
+	result = calculate_grades(course, grade_scheme, entry_name=entry_name)
+	return result
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Grade calculator")
@@ -152,10 +132,10 @@ def main():
 						context=context,
 						minimal_ds=True,
 						xmlconfig_packages=conf_packages,
-						function=lambda: calculate_grades(site=site,
-														  entry=args.entry,
-														  ntiid=args.course,
-														  scheme=args.scheme))
+						function=lambda: _process_args(	site=site,
+														entry=args.entry,
+														ntiid=args.course,
+														scheme=args.scheme))
 
 if __name__ == '__main__':
 	main()

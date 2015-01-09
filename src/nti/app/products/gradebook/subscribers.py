@@ -121,7 +121,8 @@ def _assignment_history_item_added(item, event):
 		# then let it convert the auto-assessed part of the submission
 		# into the initial grade value
 		course = ICourseInstance(item)
-		policy = find_autograde_policy_for_assignment_in_course(course, item.Submission.assignmentId)
+		assignmentId = item.Submission.assignmentId
+		policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
 		if policy is not None:
 			autograde = policy.autograde(item.pendingAssessment)
 			if autograde is not None:
