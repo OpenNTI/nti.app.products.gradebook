@@ -12,7 +12,7 @@ from hamcrest import assert_that
 
 import unittest
 
-from .. import gradescheme
+from nti.app.products.gradebook import gradescheme
 
 class TestGradeScheme(unittest.TestCase):
 	
@@ -23,19 +23,20 @@ class TestGradeScheme(unittest.TestCase):
 		assert_that(lgs.toLetter(91), is_('A'))
 		assert_that(lgs.toLetter(90), is_('A'))
 		assert_that(lgs.toLetter(68), is_('D'))
-		assert_that(lgs.toLetter(51), is_('F'))
+		assert_that(lgs.toLetter(51), is_('D'))
+		assert_that(lgs.toLetter(20), is_('F'))
 
 		assert_that(lgs.toNumber('A'), is_(100))
 		assert_that(lgs.toNumber('B'), is_(89))
 		assert_that(lgs.toNumber('C'), is_(79))
 		assert_that(lgs.toNumber('D'), is_(69))
-		assert_that(lgs.toNumber('F'), is_(59))
+		assert_that(lgs.toNumber('F'), is_(39))
 
 		assert_that(lgs.toCorrectness('A'), is_(1.0))
 		assert_that(lgs.toCorrectness('B'), is_(0.89))
 		assert_that(lgs.toCorrectness('C'), is_(0.79))
 		assert_that(lgs.toCorrectness('D'), is_(0.69))
-		assert_that(lgs.toCorrectness('F'), is_(0.59))
+		assert_that(lgs.toCorrectness('F'), is_(0.39))
 
 		assert_that(lgs.fromCorrectness(1.0), is_('A'))
 		assert_that(lgs.fromCorrectness(0.99), is_('A'))

@@ -152,10 +152,10 @@ class TestExternal(unittest.TestCase):
 		assert_that(ext, has_entry(u'Class', 'LetterGradeScheme'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.lettergradescheme'))
 		assert_that(ext, has_entry(u'grades', is_([u'A', u'B', u'C', u'D', u'F'])))
-		assert_that(ext, has_entry(u'ranges', is_([[90, 100], [80, 89], [70, 79], [60, 69], [0, 59]])))
+		assert_that(ext, has_entry(u'ranges', is_([[90, 100], [80, 89], [70, 79], [40, 69], [0, 39]])))
 
 		scheme = internalization.find_factory_for(ext)()
 		internalization.update_from_external_object(scheme, ext)
 		assert_that(s, is_(scheme))
 		assert_that(s, has_property(u'grades', is_((u'A', u'B', u'C', u'D', u'F'))))
-		assert_that(s, has_property(u'ranges', is_(((90, 100), (80, 89), (70, 79), (60, 69), (0, 59)))))
+		assert_that(s, has_property(u'ranges', is_(((90, 100), (80, 89), (70, 79), (40, 69), (0, 39)))))
