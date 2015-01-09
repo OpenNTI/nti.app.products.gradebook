@@ -35,7 +35,7 @@ from . import find_grading_policy_for_course
 @view_config(context=ICourseInstanceEnrollment)
 @view_defaults(route_name='objects.generic.traversal',
                permission=nauth.ACT_READ,
-               name="current_grade",
+               name="CurrentGrade",
                renderer='rest',
                request_method='GET')
 class CurrentGradeView(AbstractAuthenticatedView):

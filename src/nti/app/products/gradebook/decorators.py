@@ -8,8 +8,8 @@ Decorators for providing access to the various grades pieces.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,6 +29,7 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 from nti.contentlibrary.interfaces import IContentPackage
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.links import Link
 from nti.dataserver.users import User 
@@ -43,6 +44,7 @@ from nti.externalization.externalization import to_external_object
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
+from .interfaces import IExcusedGrade
 from .interfaces import ACT_VIEW_GRADES
 
 LINKS = StandardExternalFields.LINKS
@@ -51,15 +53,20 @@ def _grades_readable(grades):
 	# We use check permission here specifically to avoid the ACLs
 	# which could get in our way if we climebed the parent tree
 	# up through legacy courses. We want this all to come from the gradebook
+	grades = ICourseInstance(grades) if ICourseCatalogEntry.providedBy(grades) else grades
 	try:
 		return checkPermission(ACT_VIEW_GRADES.id, IGradeBook(grades))
 	except NoInteraction:
 		return False
+grades_readable = _grades_readable
 
 def _find_course_for_user(data, user):
 	if user is None:
 		return None
 
+	if ICourseCatalogEntry.providedBy(data):
+		data = ICourseInstance(data)
+		
 	if ICourseInstance.providedBy(data):
 		# Yay, they gave us one directly!
 		course = data
@@ -77,8 +84,8 @@ def _find_course_for_user(data, user):
 			# Hmm, maybe we have an assignment-like object and we can
 			# try to find the content package it came from and from there
 			# go to the one-to-one mapping to courses we used to have
-			course = ICourseInstance( find_interface(data, IContentPackage, strict=False),
-									  None)
+			course = ICourseInstance(find_interface(data, IContentPackage, strict=False),
+									 None)
 		if course is not None:
 			# Snap. Well, we found a course (good!), but not by taking
 			# the user into account (bad!)
@@ -87,6 +94,8 @@ def _find_course_for_user(data, user):
 						 user, course, data)
 
 	return course
+
+find_course_for_user=_find_course_for_user
 
 @interface.implementer(IExternalMappingDecorator)
 class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
