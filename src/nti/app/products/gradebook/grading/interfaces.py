@@ -13,6 +13,7 @@ from zope import interface
 
 from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
 
+from nti.schema.field import Bool
 from nti.schema.field import Dict
 from nti.schema.field import Number
 from nti.schema.field import Object
@@ -36,6 +37,7 @@ class ICategoryGradeScheme(interface.Interface):
 	AssigmentGradeSchemes = Dict(key_type=ValidTextLine(title="Assigment ID/Name"),
 								 value_type=Object(IAssigmentGradeScheme),
 								 min_length=1)
+	DropLowest = Bool(title="Drop lowest grade in category", required=False, default=False)
 	
 class ICS1323CourseGradingPolicy(ICourseGradingPolicy):
 	DefaultGradeScheme = Object(IGradeScheme, required=False)
