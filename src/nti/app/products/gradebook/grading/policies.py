@@ -216,7 +216,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		book = self.book
 		sum_weight = 0.0
 		assigments = set()
-		from IPython.core.debugger import Tracer; Tracer()()
+
 		# validate categories
 		for name, category in self.categories.items():
 			items = category.AssigmentGradeSchemes
