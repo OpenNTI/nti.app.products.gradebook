@@ -281,8 +281,10 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		for name, grades in grade_map.items():
 			category = self.categories[name]
 			if category.DropLowest:
+				grade = grades[0]
 				grades = grades[1:]
-			for grade in grades:
+				result += grade.weight
+			for grade in grades or ():
 				weight = grade.weight
 				if IExcusedGrade.providedBy(grade):
 					result += weight
