@@ -1,18 +1,20 @@
-from setuptools import setup, find_packages
 import codecs
+import platform
+from setuptools import setup, find_packages
 
 VERSION = '0.0.0'
 
+py_impl = getattr(platform, 'python_implementation', lambda: None)
+IS_PYPY = py_impl() == 'PyPy'
+
 entry_points = {
+    'console_scripts': [
+        "nti_course_grade_calculator = nti.app.products.gradebook.grading.grade_calculator:main",
+    ],
     "z3c.autoinclude.plugin": [
 		'target = nti.app.products',
 	],
 }
-
-import platform
-py_impl = getattr(platform, 'python_implementation', lambda: None)
-IS_PYPY = py_impl() == 'PyPy'
-
 
 setup(
 	name='nti.app.products.gradebook',
