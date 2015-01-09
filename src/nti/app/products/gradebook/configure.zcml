@@ -213,4 +213,16 @@
 		
 	<!-- Grading -->
 	<include package=".grading" />
+	
+	<utility factory=".gradescheme.LetterGradeScheme" 
+			 provides=".interfaces.ILetterGradeScheme" />
+			 
+	<utility factory=".gradescheme.LetterGradeScheme" 
+			 provides=".interfaces.ILetterGradeScheme" 
+			 name="letter" />
+	
+	<utility factory=".gradescheme.LetterGradeScheme" 
+			 provides=".interfaces.ILetterGradeScheme"
+			 name="letter_grade" />
+	
 </configure>

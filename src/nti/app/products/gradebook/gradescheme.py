@@ -35,6 +35,7 @@ from .utils import MetaGradeBookObject
 @WithRepr
 @EqHash('grades', 'ranges')
 class LetterGradeScheme(SchemaConfigured):
+	
 	__metaclass__ = MetaGradeBookObject
 
 	_type = six.string_types

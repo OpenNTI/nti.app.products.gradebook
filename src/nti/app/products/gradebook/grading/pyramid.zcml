@@ -7,7 +7,4 @@
 	<include package="pyramid_zcml" />
 
 	<pyramid:scan package='.views' />
-	<!--
-	<include package=".grading" file="pyramid.zcml" />
-	-->
 </configure>
