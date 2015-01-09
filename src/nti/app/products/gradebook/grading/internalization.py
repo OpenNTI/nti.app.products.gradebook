@@ -3,7 +3,7 @@
 """
 gradebook internalization
 
-.. $Id: internalization.py 49381 2014-09-15 21:03:16Z carlos.sanchez $
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
