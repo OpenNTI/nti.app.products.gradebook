@@ -48,7 +48,6 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from .interfaces import IGradeBook
 from .interfaces import IGradeBookPart
 from .interfaces import IGradeBookEntry
-from .interfaces import NO_SUBMIT_PART_NAME
 from .interfaces import NTIID_TYPE_GRADE_BOOK
 from .interfaces import NTIID_TYPE_GRADE_BOOK_PART
 from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
@@ -380,7 +379,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 	entryFactory = GradeBookEntryWithoutSubmission
 
 	def validateAssignment(self, assignment):
-		if assignment.category_name != NO_SUBMIT_PART_NAME:
+		if not assignment.no_submit:
 			raise ValueError(assignment.category_name)
 		if len(assignment.parts) != 0:
 			raise ValueError("Too many parts")
