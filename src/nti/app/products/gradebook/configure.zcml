@@ -10,6 +10,11 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<!-- Generations -->
+	<utility factory=".generations.install._GradeBookSchemaManager"
+			 name="nti.dataserver-products-gradebook"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+			 
 	<!-- I18N -->
 	<i18n:registerTranslations directory="locales" />
 
