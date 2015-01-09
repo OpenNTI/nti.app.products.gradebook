@@ -10,15 +10,20 @@ __docformat__ = "restructuredtext en"
 from hamcrest import has_key
 from hamcrest import assert_that
 
+import unittest
+
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-class TestFunctionalInstall(DataserverLayerTest):
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
+
+class TestFunctionalInstall(unittest.TestCase):
+	
+	layer = SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_installed(self):
 		conn = mock_dataserver.current_transaction
 		root = conn.root()
 		generations = root['zope.generations']
-		assert_that( generations, has_key('nti.dataserver-products-gradebooks'))
+		assert_that( generations, has_key('nti.dataserver-products-gradebook'))
