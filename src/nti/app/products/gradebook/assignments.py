@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -32,8 +33,7 @@ def _assignment_comparator(a, b):
 	return 0
 
 def get_course_assignments(course, sort=True, reverse=False):
-	# Filter out excluded assignments so they don't show in the gradebook
-	# either
+	# Filter out excluded assignments so they don't show in the gradebook either
 	policy_filter = AssignmentPolicyExclusionFilter(course=course)
 	assignment_catalog = ICourseAssignmentCatalog(course)
 	assignments = \
@@ -57,8 +57,7 @@ def create_assignment_part(course, part_name, _book=None):
 
 		book[INameChooser(book).chooseName(part_name, part)] = part
 	return book[part_name]
-
-get_create_assignment_part = create_assignment_part
+get_or_create_assignment_part = create_assignment_part
 
 def create_assignment_entry(course, assignment, displayName, order=1, _book=None):
 	book = _book if _book is not None else IGradeBook(course)
@@ -67,7 +66,7 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 
 	entry = book.getColumnForAssignmentId(assignmentId)
 	if entry is None:
-		part = get_create_assignment_part(course, assignment.category_name)
+		part = get_or_create_assignment_part(course, assignment.category_name)
 		# Hmm, maybe we should just ask it to create the entry
 		part.validateAssignment(assignment) 
 		entry = part.entryFactory(
@@ -79,7 +78,7 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 		entry.displayName = displayName
 
 	return entry
-get_create_assignment_entry = create_assignment_entry
+get_or_create_assignment_entry = create_assignment_entry
 
 def synchronize_gradebook(course):
 	"""
@@ -91,22 +90,27 @@ def synchronize_gradebook(course):
 	"""
 	if course is None:
 		return
-
-	assignments = get_course_assignments(course)
-	book = IGradeBook(course)
-
+			
 	assignment_ids = set()
-
+	book = IGradeBook(course)
+	assignments = get_course_assignments(course)
+	
+	category_map = {}
+	for part in book.values():
+		for entry in part.values():
+			category_map[entry.assignmentId] = part.__name__
+	
 	# FIXME: What if an assignment changes parts (category_name)?
 	# We'll need to move them
 	for idx, assignment in enumerate(assignments):
 		ordinal = idx + 1
+		assignment_ids.add( assignment.__name__ )
 		if assignment.title:
 			displayName = assignment.title
 		else:
 			displayName = 'Assignment %s' % ordinal
 		create_assignment_entry(course, assignment, displayName, ordinal, book)
-		assignment_ids.add( assignment.__name__ )
+		
 
 	# Now drop entries that don't correspond to existing assignments
 	# and that don't have grades
@@ -131,4 +135,5 @@ def synchronize_gradebook(course):
 				# use svn history to figure out what it used to be and change it back
 			entry_aids.add(entry.AssignmentId)
 
-	return len(assignments)
+	result = len(assignments)
+	return result
