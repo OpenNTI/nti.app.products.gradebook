@@ -104,11 +104,11 @@ def validate_assigment_grade_schemes(book, items, default_scheme=None, category=
 			msg = "Duplicate entries in policy"
 		raise Invalid(msg)
 	
-	if round(sum_weight, 2) != 1:
+	if round(sum_weight, 2) > 1:
 		if category:
-			msg = "Total weight for category %s is not equal to one" % category
+			msg = "Total weight for category %s is greater than to one" % category
 		else:
-			msg = "Total weight in policy is not equal to one"
+			msg = "Total weight in policy is greater than one"
 		raise Invalid(msg)
 	return names
 		
@@ -236,10 +236,10 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			scheme = category.GradeScheme or self.DefaultGradeScheme
 			in_category = validate_assigment_grade_schemes(book, items, scheme, name)
 			assigments.update(in_category)
-			sum_weight = category.Weight
+			sum_weight += category.Weight
 		
-		if round(sum_weight, 2) != 1:
-			msg = "Total category weight in policy do not equal to one"
+		if round(sum_weight, 2) > 1:
+			msg = "Total category weight in policy is greater than one"
 			raise Invalid(msg)
 		
 		if len(self._rev_categories) != len(assigments):
