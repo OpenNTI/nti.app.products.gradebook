@@ -292,7 +292,7 @@ class IExcusedGrade(IGrade):
 	"""
 	Marker interface for an Excused grade
 	"""
-	pass
+IExcusedGrade.setTaggedValue('_ext_is_marker_interface', True)
 
 class IPendingAssessmentAutoGradePolicy(interface.Interface):
 	"""
