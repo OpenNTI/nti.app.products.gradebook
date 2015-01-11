@@ -31,7 +31,7 @@ from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.utils.property import Lazy
+from nti.utils.property import Lazy, readproperty
 from nti.utils.property import alias
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
@@ -50,6 +50,19 @@ def to_correctness(value, scheme):
 	result = scheme.toCorrectness(value)
 	return result
 	
+class GradeProxy(object):
+	
+	def __init__(self, value, weight, scheme, excused=False):
+		self.value = value
+		self.weight = weight
+		self.scheme = scheme
+		self.excused = excused
+
+	@readproperty
+	def correctness(self):
+		result = to_correctness(self.value, self.scheme)
+		return result
+
 class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
 						PersistentPropertyHolder, 
 						SchemaConfigured, 
@@ -140,24 +153,47 @@ class DefaultCourseGradingPolicy(BaseGradingPolicy):
 			result[name] = value.weight
 		return result
 	
+	def _grades(self, username):
+		result = []
+		entered = set()	
+	
+		# parse all grades
+		for grade in self.book.iter_grades(username):
+			# save grade info
+			value = grade.value 
+			assignmentId = grade.AssignmentId
+			weight = self._weights[assignmentId]
+			scheme = self._schemes[assignmentId]
+			excused = IExcusedGrade.providedBy(grade)
+			# record grade
+			entered.add(assignmentId)
+			result.append(GradeProxy(value, weight, scheme, excused))
+		
+		# now create proxy grades with 0 correctes for missing ones
+		for assignmentId in self.items.keys():
+			if assignmentId not in entered:
+				weight = self._weights[assignmentId]
+				scheme = self._schemes[assignmentId]
+				proxy = GradeProxy(0, weight, scheme)
+				proxy.correctness = 0.0
+				result.append(proxy)
+
+		# return
+		return result
+	
 	def grade(self, principal):
 		result = 0
-		book = self.book
 		username = IPrincipal(principal).id		
-		for grade in book.iter_grades(username):
-			weight = self._weights.get(grade.AssignmentId)
-			if IExcusedGrade.providedBy(grade):
+		for grade in self._grades(username):
+			weight = grade.weight
+			if grade.excused:
 				result += weight
 				continue
-			value = grade.value
-			scheme = self._schemes.get(grade.AssignmentId)
-			correctness = self.to_correctness(value, scheme)
+			correctness = grade.correctness
 			result += correctness * weight
 		return result
 
 ## CS1323
-
-from zope.proxy import ProxyBase
 
 from .interfaces import ICategoryGradeScheme
 from .interfaces import ICS1323CourseGradingPolicy
@@ -179,30 +215,7 @@ class CategoryGradeScheme(Persistent, SchemaConfigured):
 		# SchemaConfigured is not cooperative
 		Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
-	
-class GradeProxy(ProxyBase):
-	
-	scheme = property(
-			lambda s: s.__dict__.get('_v_grade_scheme'),
-			lambda s, v: s.__dict__.__setitem__('_v_grade_scheme', v))
-	
-	weight = property(
-			lambda s: s.__dict__.get('_v_grade_weight'),
-			lambda s, v: s.__dict__.__setitem__('_v_grade_weight', v))
-			
-	def __new__(cls, base, *args, **kwargs):
-		return ProxyBase.__new__(cls, base)
-
-	def __init__(self, base, weight, scheme):
-		ProxyBase.__init__(self, base)
-		self.weight = weight
-		self.scheme = scheme
-
-	@property
-	def correctness(self):
-		result = to_correctness(self.value, self.scheme)
-		return result
-	
+		
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(BaseGradingPolicy):
 	
@@ -258,15 +271,32 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 
 	def _grade_map(self, username):
 		result = defaultdict(list)
-		
+		entered = defaultdict(set)	
+	
 		# parse all grades and bucket them by category
 		for grade in self.book.iter_grades(username):
+			# save grade info
+			value = grade.value 
 			assignmentId = grade.AssignmentId
 			weight = self._weights[assignmentId]
 			scheme = self._schemes[assignmentId]
+			excused = IExcusedGrade.providedBy(grade)
+			# record grade
 			cat_name = self._rev_categories[assignmentId]
-			result[cat_name].append(GradeProxy(grade, weight, scheme))
+			result[cat_name].append(GradeProxy(value, weight, scheme, excused))
+			entered[cat_name].add(assignmentId)
 		
+		# now create proxy grades with 0 correctes for missing ones
+		for cat_name, category in self.categories.items():
+			inputed = entered[cat_name]
+			assignments = set(category.items.keys())
+			for assignmentId in assignments.difference(inputed):
+				weight = self._weights[assignmentId]
+				scheme = self._schemes[assignmentId]
+				proxy = GradeProxy(0, weight, scheme)
+				proxy.correctness = 0.0
+				result[cat_name].append(proxy)
+			
 		# sort by correctness
 		for name in result.keys():
 			result[name].sort(key=lambda g: g.correctness)
@@ -280,13 +310,24 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		grade_map = self._grade_map(username)
 		for name, grades in grade_map.items():
 			category = self.categories[name]
+			
+			# drop lowest grades in the category
+			# make sure we don't drop excused grades
 			if category.DropLowest:
-				grade = grades[0]
-				grades = grades[1:]
-				result += grade.weight
+				idx = count = 0
+				while count < category.DropLowest and idx < len(grades):
+					grade = grades[idx]
+					if not grade.excused:
+						result += grade.weight
+						grades.pop(idx)
+						count += 1
+					else:
+						idx += 1		
+						
+			# go through remaining grades
 			for grade in grades or ():
 				weight = grade.weight
-				if IExcusedGrade.providedBy(grade):
+				if grade.excused:
 					result += weight
 					continue
 				correctness = grade.correctness

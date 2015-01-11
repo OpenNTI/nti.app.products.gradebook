@@ -59,6 +59,9 @@ class _CategoryGradeSchemesUpdater(InterfaceObjectIO):
 	
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		self.parseAssigmentGradeSchemes(parsed)
+		dropLowest = parsed.get('DropLowest')
+		if dropLowest is not None and dropLowest < 0:
+			raise ValueError('Invalid DropLowest value', dropLowest)
 		result = super(_CategoryGradeSchemesUpdater,self).updateFromExternalObject(parsed, *args, **kwargs)
 		return result
 	
