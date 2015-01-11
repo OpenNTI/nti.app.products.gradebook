@@ -11,8 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.container.interfaces import INameChooser
 
-from nti.app.assessment.interfaces import ICourseAssignmentCatalog
-from nti.app.assessment.assignment_filters import AssignmentPolicyExclusionFilter
+from nti.app.assessment.common import assignment_comparator
+from nti.app.assessment.common import get_course_assignments
 
 from .interfaces import IGradeBook
 from .interfaces import NO_SUBMIT_PART_NAME
@@ -20,29 +20,7 @@ from .interfaces import NO_SUBMIT_PART_NAME
 from .gradebook import GradeBookPart
 from .gradebook import NoSubmitGradeBookPart
 
-def _assignment_comparator(a, b):
-	a_end = a.available_for_submission_ending
-	b_end = b.available_for_submission_ending
-	if a_end and b_end:
-		return -1 if a_end < b_end else 1
-
-	a_begin = a.available_for_submission_beginning
-	b_begin = b.available_for_submission_beginning
-	if a_begin and b_begin:
-		return -1 if a_begin < b_begin else 1
-	return 0
-
-def get_course_assignments(course, sort=True, reverse=False):
-	# Filter out excluded assignments so they don't show in the gradebook either
-	policy_filter = AssignmentPolicyExclusionFilter(course=course)
-	assignment_catalog = ICourseAssignmentCatalog(course)
-	assignments = \
-			[x for x in assignment_catalog.iter_assignments()
-			 if policy_filter.allow_assignment_for_user_in_course(x, None, course)]
-
-	if sort:
-		assignments = sorted(assignments, cmp=_assignment_comparator, reverse=reverse)
-	return assignments
+_assignment_comparator = assignment_comparator #BWC
 
 def create_assignment_part(course, part_name, _book=None):
 	book = _book if _book is not None else IGradeBook(course)
