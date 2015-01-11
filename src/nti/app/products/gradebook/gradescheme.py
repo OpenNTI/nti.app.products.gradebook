@@ -98,6 +98,8 @@ class LetterGradeScheme(SchemaConfigured):
 		return value
 
 	def validate(self, value):
+		if value and value.endswith('-'):
+			value = value[:-1].strip()
 		if not isinstance(value, self._type):
 			raise TypeError('wrong type')
 		elif not value.upper() in self.grades:
@@ -120,6 +122,7 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 @WithRepr
 @EqHash('min', 'max')
 class NumericGradeScheme(SchemaConfigured):
+	
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(INumericGradeScheme)
 
@@ -148,6 +151,7 @@ class NumericGradeScheme(SchemaConfigured):
 
 @interface.implementer(IIntegerGradeScheme, IContentTypeAware)
 class IntegerGradeScheme(NumericGradeScheme):
+	
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IIntegerGradeScheme)
 
@@ -163,16 +167,19 @@ class IntegerGradeScheme(NumericGradeScheme):
 @interface.implementer(IBooleanGradeScheme, IContentTypeAware)
 @WithRepr
 class BooleanGradeScheme(SchemaConfigured):
+	
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IBooleanGradeScheme)
 
 	_type  = bool
 
-	true_values = ('1', 'y', 't', 'yes', 'true')
+	true_values = ('1', 'y', 't', 'v', 'yes', 'true')
 	false_values = ('0', 'n', 'f', 'no', 'false')
 
 	@classmethod
 	def fromUnicode(cls, value):
+		if value and value.endswith('-'):
+			value = value[:-1].strip()
 		if value.lower() in cls.true_values:
 			value = True
 		elif value.lower() in cls.false_values:
