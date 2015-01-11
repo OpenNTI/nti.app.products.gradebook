@@ -60,7 +60,11 @@ class GradeProxy(object):
 
 	@readproperty
 	def correctness(self):
-		result = to_correctness(self.value, self.scheme)
+		try:
+			result = to_correctness(self.value, self.scheme)
+		except (ValueError, TypeError):
+			logger.error("Invalid value %s for grade scheme %s", self.value, self.scheme)
+			result = 0
 		return result
 
 class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
