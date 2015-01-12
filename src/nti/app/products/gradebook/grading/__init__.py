@@ -53,7 +53,7 @@ def find_grading_policy_for_course(context):
             pass
     return None
 
-def calculate_grades(context, grade_scheme, entry_name='Current_Grade'):
+def calculate_grades(context, grade_scheme, entry_name=None):
     result = {}
     
     course = ICourseInstance(context)
@@ -61,14 +61,17 @@ def calculate_grades(context, grade_scheme, entry_name='Current_Grade'):
     if policy is None:
         raise ValueError("Course does not have grading policy")
        
-    part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
-    entry = part.getEntryByAssignment(entry_name)
-    if entry is None:
-        order = len(part) + 1
-        entry = part.entryFactory(displayName=entry_name, 
-                                  order=order,
-                                  AssignmentId=entry_name)
-        part[INameChooser(part).chooseName(entry_name, entry)] = entry
+    if entry_name:
+        part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
+        entry = part.getEntryByAssignment(entry_name)
+        if entry is None:
+            order = len(part) + 1
+            entry = part.entryFactory(displayName=entry_name, 
+                                      order=order,
+                                      AssignmentId=entry_name)
+            part[INameChooser(part).chooseName(entry_name, entry)] = entry
+    else:
+        entry = None
         
     for record in ICourseEnrollments(course).iter_enrollments():
         principal = record.principal
@@ -78,6 +81,7 @@ def calculate_grades(context, grade_scheme, entry_name='Current_Grade'):
         value = grade_scheme.fromCorrectness(correctness)
         
         grade = Grade(value=value)
-        entry[username] = grade
         result[username] = grade
+        if entry is not None:
+            entry[username] = grade
     return result
