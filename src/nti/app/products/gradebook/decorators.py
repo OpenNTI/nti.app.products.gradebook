@@ -49,15 +49,19 @@ from .interfaces import ACT_VIEW_GRADES
 
 LINKS = StandardExternalFields.LINKS
 
-def _grades_readable(grades):
+def gradebook_readable(context, interaction=None):
+	book = IGradeBook(context)
+	try:
+		return checkPermission(ACT_VIEW_GRADES.id, book, interaction=interaction)
+	except NoInteraction:
+		return False
+
+def _grades_readable(grades, interaction=None):
 	# We use check permission here specifically to avoid the ACLs
 	# which could get in our way if we climebed the parent tree
 	# up through legacy courses. We want this all to come from the gradebook
 	grades = ICourseInstance(grades) if ICourseCatalogEntry.providedBy(grades) else grades
-	try:
-		return checkPermission(ACT_VIEW_GRADES.id, IGradeBook(grades))
-	except NoInteraction:
-		return False
+	return gradebook_readable(grades)
 grades_readable = _grades_readable
 
 def _find_course_for_user(data, user):

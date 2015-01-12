@@ -35,8 +35,8 @@
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 	
 	<!-- Decorators -->
-	<subscriber factory=".decorators._CourseInstanceCurrentGradeLinkDecorator"
+	<subscriber factory=".decorators._CurrentGradeLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.contenttypes.courses.interfaces.ICourseInstance
+				for="..interfaces.IGradeBook
 					 pyramid.interfaces.IRequest"/>			 
 </configure>

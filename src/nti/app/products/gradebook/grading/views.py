@@ -20,19 +20,19 @@ from pyramid import httpexceptions as hexec
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.utils import is_enrolled
-from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
 from ..grades import Grade
+
+from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
 
 from . import find_grading_policy_for_course
 
-@view_config(context=ICourseInstance)
-@view_config(context=ICourseInstanceEnrollment)
+@view_config(context=IGradeBook)
 @view_defaults(route_name='objects.generic.traversal',
                permission=nauth.ACT_READ,
                name="CurrentGrade",

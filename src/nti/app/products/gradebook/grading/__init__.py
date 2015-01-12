@@ -13,6 +13,7 @@ from zope import component
 from zope.security.interfaces import IPrincipal
 from zope.container.interfaces import INameChooser
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
@@ -21,7 +22,8 @@ from ..grades import Grade
 from ..interfaces import NO_SUBMIT_PART_NAME
 from ..assignments import create_assignment_part
 
-def find_grading_policy_for_course(course):
+def find_grading_policy_for_course(context):
+    course = ICourseInstance(context, None)
     # We need to actually be registering these as annotations
     policy = ICourseGradingPolicy(course, None)
     if policy is not None:
@@ -48,9 +50,10 @@ def find_grading_policy_for_course(course):
             pass
     return None
 
-def calculate_grades(course, grade_scheme, entry_name='Current_Grade'):
+def calculate_grades(context, grade_scheme, entry_name='Current_Grade'):
     result = {}
     
+    course = ICourseInstance(context)
     policy = find_grading_policy_for_course(course)
     if policy is None:
         raise ValueError("Course does not have grading policy")
