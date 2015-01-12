@@ -24,6 +24,9 @@ from ..assignments import create_assignment_part
 
 def find_grading_policy_for_course(context):
     course = ICourseInstance(context, None)
+    if course is None:
+        return None
+
     # We need to actually be registering these as annotations
     policy = ICourseGradingPolicy(course, None)
     if policy is not None:
