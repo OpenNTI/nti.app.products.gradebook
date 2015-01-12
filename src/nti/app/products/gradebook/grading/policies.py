@@ -83,6 +83,9 @@ class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
 		book = IGradeBook(ICourseInstance(context))
 		return book
 	
+	def synchronize(self):
+		pass
+
 	def to_correctness(self, value, scheme):
 		result = to_correctness(value, scheme)
 		return result
