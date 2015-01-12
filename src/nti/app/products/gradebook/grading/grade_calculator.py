@@ -79,7 +79,7 @@ def create_context(env_dir=None, with_library=True):
 	
 	return context
 
-def _process_args(ntiid, scheme, entry_name='Current_Grade', site=None):
+def _process_args(ntiid, scheme, entry_name=None, site=None):
 	module_name, class_name = scheme.rsplit(".", 1)
 	module = importlib.import_module(module_name)
 	clazz = getattr(module, class_name)
@@ -106,17 +106,11 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Grade calculator")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							 dest='verbose')
-	
-	arg_parser.add_argument('course', help="Course NTIID")
-	
+	arg_parser.add_argument('ntiid', help="Course NTIID")
 	arg_parser.add_argument('-s', '--site', dest='site', help="Request site")
-	
 	arg_parser.add_argument('-g', '--grade', dest='scheme', help="Grade scheme class name",
 							default='nti.app.products.gradebook.gradescheme.LetterGradeScheme')
-	
-	arg_parser.add_argument('-e', '--entry', dest='entry', help="Grade entry name",
-							default='Current_Grade')
-	
+	arg_parser.add_argument('-e', '--entry', dest='entry', help="Grade entry name")
 	args = arg_parser.parse_args()
 	verbose = args.verbose
 	
@@ -134,9 +128,8 @@ def main():
 						xmlconfig_packages=conf_packages,
 						function=lambda: _process_args(	site=site,
 														entry=args.entry,
-														ntiid=args.course,
+														ntiid=args.ntiid,
 														scheme=args.scheme))
 
 if __name__ == '__main__':
 	main()
-	
