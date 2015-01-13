@@ -99,9 +99,14 @@ def validate_assigment_grade_schemes(book, items, default_scheme=None, category=
 			entry = book.getEntryByAssignment(name)
 			if entry is None:
 				raise Invalid("Could not find GradeBook Entry for %s", name)
+		
+		if value is None:
+			raise Invalid("No AssigmentGradeScheme object defined for %s", name)
+		
 		scheme = value.scheme if value.scheme else default_scheme
 		if scheme is None:
 			raise Invalid("Could not find grade scheme for %s", name)
+	
 		sum_weight += value.weight if value is not None else 0.0
 		
 	if len(names) != len(items):

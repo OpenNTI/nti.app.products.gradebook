@@ -35,7 +35,7 @@ class ICategoryGradeScheme(interface.Interface):
 	GradeScheme = Object(IGradeScheme, required=False)
 	Weight = Number(title="Category weight", default=0.0, min=0.0, max=1.0, required=True)
 	AssigmentGradeSchemes = Dict(key_type=ValidTextLine(title="Assigment ID/Name"),
-								 value_type=Object(IAssigmentGradeScheme),
+								 value_type=Object(IAssigmentGradeScheme, required=False),
 								 min_length=1)
 	DropLowest = Int(title="Drop lowest grade in category", required=False)
 	
