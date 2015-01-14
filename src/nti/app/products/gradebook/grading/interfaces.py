@@ -41,6 +41,7 @@ class ICategoryGradeScheme(interface.Interface):
 	
 class ICS1323CourseGradingPolicy(ICourseGradingPolicy):
 	DefaultGradeScheme = Object(IGradeScheme, required=False)
+	PresentationGradeScheme = Object(IGradeScheme, required=False)
 	CategoryGradeSchemes = Dict(key_type=ValidTextLine(title="Category Name"),
 					  			value_type=Object(ICategoryGradeScheme),
 					  			min_length=1)

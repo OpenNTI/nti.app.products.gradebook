@@ -234,8 +234,11 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICS1323CourseGradingPolicy)
 	
+	PresentationGradeScheme = None
+	
 	scheme = alias('DefaultGradeScheme')
 	categories = alias('CategoryGradeSchemes')
+	presentation = alias('PresentationGradeScheme')
 
 	def validate(self):
 		book = self.book

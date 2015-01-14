@@ -36,27 +36,31 @@ from . import find_grading_policy_for_course
 @view_config(context=ICourseInstance)
 @view_config(context=ICourseInstanceEnrollment)
 @view_defaults(route_name='objects.generic.traversal',
-               permission=nauth.ACT_READ,
-               name=VIEW_CURRENT_GRADE,
-               renderer='rest',
-               request_method='GET')
+			   permission=nauth.ACT_READ,
+			   name=VIEW_CURRENT_GRADE,
+			   renderer='rest',
+			   request_method='GET')
 class CurrentGradeView(AbstractAuthenticatedView):
-    
-    def __call__(self):
-        course = ICourseInstance(self.request.context)
-        if not is_enrolled(course, self.remoteUser):
-            raise hexec.HTTPForbidden(_("must be enrolled in course."))
-        
-        policy = find_grading_policy_for_course(course)
-        if policy is None:
-            raise hexec.HTTPUnprocessableEntity(_("Course does not define a grading policy."))
+	
+	def __call__(self):
+		course = ICourseInstance(self.request.context)
+		if not is_enrolled(course, self.remoteUser):
+			raise hexec.HTTPForbidden(_("must be enrolled in course."))
+		
+		policy = find_grading_policy_for_course(course)
+		if policy is None:
+			raise hexec.HTTPUnprocessableEntity(_("Course does not define a grading policy."))
+		
+		presentation = policy.presentation
+		scheme = self.request.params.get('scheme')
+		if scheme:
+			presentation = component.getUtility(IGradeScheme, name=scheme)
+		if presentation is None:
+			# use default
+			presentation = component.getUtility(IGradeScheme)
 
-        scheme = self.request.params.get('scheme') or u''
-        scheme = component.getUtility(IGradeScheme, name=scheme)
-        
-        correctness = policy.grade(self.remoteUser)
-
-        value  = scheme.fromCorrectness(correctness)
-        result = Grade(value=value)
-        result.username = self.remoteUser.username
-        return result
+		correctness = policy.grade(self.remoteUser)
+		value  = presentation.fromCorrectness(correctness)
+		result = Grade(value=value)
+		result.username = self.remoteUser.username
+		return result
