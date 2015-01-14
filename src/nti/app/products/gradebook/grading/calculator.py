@@ -84,7 +84,7 @@ def _process_args(ntiid, scheme, entry_name=None, site=None):
 	module = importlib.import_module(module_name)
 	clazz = getattr(module, class_name)
 	grade_scheme = clazz()
-	if IGradeScheme.providedBy(grade_scheme):
+	if not IGradeScheme.providedBy(grade_scheme):
 		raise ValueError("Invalid grade scheme class")
 
 	if site:
@@ -127,9 +127,9 @@ def main():
 						minimal_ds=True,
 						xmlconfig_packages=conf_packages,
 						function=lambda: _process_args(	site=site,
-														entry=args.entry,
 														ntiid=args.ntiid,
-														scheme=args.scheme))
+														scheme=args.scheme,
+														entry_name=args.entry))
 
 if __name__ == '__main__':
 	main()

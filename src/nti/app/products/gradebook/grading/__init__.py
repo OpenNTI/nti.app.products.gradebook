@@ -53,9 +53,8 @@ def find_grading_policy_for_course(context):
     policy = ICourseGradingPolicy(course, None)
     return policy
 
-def calculate_grades(context, grade_scheme, entry_name=None):
+def calculate_grades(context, grade_scheme=None, entry_name=None):
     result = {}
-    
     course = ICourseInstance(context)
     policy = find_grading_policy_for_course(course)
     if policy is None:
@@ -74,14 +73,24 @@ def calculate_grades(context, grade_scheme, entry_name=None):
         entry = None
         
     for record in ICourseEnrollments(course).iter_enrollments():
-        principal = record.principal
+        principal = IPrincipal(record.Principal, None)
+        if principal is None:
+            # ignore dup enrollment
+            continue
         username = IPrincipal(principal).id
         
-        correctness = policy.grade(principal)
-        value = grade_scheme.fromCorrectness(correctness)
+        # grade correctness
+        value = correctness = policy.grade(principal)
+        
+        # if there is a grade scheme convert value
+        if grade_scheme is not None:
+            value = grade_scheme.fromCorrectness(correctness)
         
         grade = Grade(value=value)
+        grade.username = username
         result[username] = grade
+        
+        # if entry is available save it
         if entry is not None:
             entry[username] = grade
     return result

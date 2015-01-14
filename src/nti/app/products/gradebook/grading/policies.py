@@ -279,6 +279,13 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			raise Invalid("There are assigments assigned to multiple categories")
 
 	@Lazy
+	def _total_weight(self):
+		result = 0
+		for category in self.categories.values():
+			result += category.Weight
+		return result
+
+	@Lazy
 	def _rev_categories(self):
 		result = {}
 		for name, category in self.categories.items():
@@ -320,10 +327,14 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		
 		# parse all grades and bucket them by category
 		for grade in self.book.iter_grades(username):
+			assignmentId = grade.AssignmentId
+				
 			# save grade info
 			value = grade.value 
-			assignmentId = grade.AssignmentId
-			
+			if value is None:
+				logger.info("No grade entered for %s", assignmentId)
+				continue
+
 			weight = self._weights.get(assignmentId)
 			if not weight:
 				logger.error("Incomplete policy, no weight found for %s", assignmentId)
