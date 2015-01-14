@@ -290,9 +290,20 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			# save grade info
 			value = grade.value 
 			assignmentId = grade.AssignmentId
-			weight = self._weights[assignmentId]
-			scheme = self._schemes[assignmentId]
+			
+			weight = self._weights.get(assignmentId)
+			if not weight:
+				logger.error("Incomplete policy, no weight found for %s", assignmentId)
+				continue
+			
+			scheme = self._schemes.get(assignmentId)
+			if not scheme:
+				logger.error("Incomplete policy, no grading scheme found for %s",
+							 assignmentId)
+				continue
+			
 			excused = IExcusedGrade.providedBy(grade)
+			
 			# record grade
 			cat_name = self._rev_categories[assignmentId]
 			result[cat_name].append(GradeProxy(value, weight, scheme, excused))
