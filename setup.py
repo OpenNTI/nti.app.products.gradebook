@@ -9,7 +9,7 @@ IS_PYPY = py_impl() == 'PyPy'
 
 entry_points = {
     'console_scripts': [
-        "nti_course_grade_calculator = nti.app.products.gradebook.grading.grade_calculator:main",
+        "nti_grade_calculator = nti.app.products.gradebook.grading.calculator:main",
     ],
     "z3c.autoinclude.plugin": [
 		'target = nti.app.products',
