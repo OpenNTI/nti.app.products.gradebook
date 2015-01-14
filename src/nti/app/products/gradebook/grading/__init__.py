@@ -29,11 +29,6 @@ def find_grading_policy_for_course(context):
     if course is None:
         return None
 
-    # We need to actually be registering these as annotations
-    policy = ICourseGradingPolicy(course, None)
-    if policy is not None:
-        return policy
-
     registry = component
     try:
         # Courses may be ISites 
@@ -53,7 +48,10 @@ def find_grading_policy_for_course(context):
             return registry.getUtility(ICourseGradingPolicy, name=name)
         except LookupError:
             pass
-    return None
+        
+    # We need to actually be registering these as annotations
+    policy = ICourseGradingPolicy(course, None)
+    return policy
 
 def calculate_grades(context, grade_scheme, entry_name=None):
     result = {}
