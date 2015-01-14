@@ -35,5 +35,5 @@ class _CurrentGradeLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel=VIEW_CURRENT_GRADE, elements=VIEW_CURRENT_GRADE)
+		link = Link(context, rel=VIEW_CURRENT_GRADE, elements=(VIEW_CURRENT_GRADE,))
 		_links.append(link)
