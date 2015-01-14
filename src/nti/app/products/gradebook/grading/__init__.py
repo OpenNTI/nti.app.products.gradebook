@@ -22,6 +22,8 @@ from ..grades import Grade
 from ..interfaces import NO_SUBMIT_PART_NAME
 from ..assignments import create_assignment_part
 
+VIEW_CURRENT_GRADE = 'CurrentGrade'
+
 def find_grading_policy_for_course(context):
     course = ICourseInstance(context, None)
     if course is None:

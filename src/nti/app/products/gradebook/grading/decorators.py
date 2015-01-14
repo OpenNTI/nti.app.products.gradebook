@@ -20,6 +20,7 @@ from nti.dataserver.links import Link
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
+from . import VIEW_CURRENT_GRADE
 from . import find_grading_policy_for_course
 
 LINKS = StandardExternalFields.LINKS
@@ -34,5 +35,5 @@ class _CurrentGradeLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel="CurrentGrade")
+		link = Link(context, rel=VIEW_CURRENT_GRADE, elements=VIEW_CURRENT_GRADE)
 		_links.append(link)
