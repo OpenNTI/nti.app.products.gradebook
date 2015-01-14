@@ -10,14 +10,19 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from six import string_types
+from datetime import datetime
 from collections import defaultdict
 
+from zope import component
 from zope import interface
 from zope.interface import Invalid
 from zope.container.contained import Contained
 from zope.security.interfaces import IPrincipal
 
 from persistent import Persistent
+
+from nti.assessment.interfaces import IQAssignment
+from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -52,16 +57,18 @@ def to_correctness(value, scheme):
 	
 class GradeProxy(object):
 	
-	def __init__(self, value, weight, scheme, excused=False):
+	def __init__(self, value, weight, scheme, excused=False, penalty=0.0):
 		self.value = value
 		self.weight = weight
 		self.scheme = scheme
 		self.excused = excused
+		self.penalty = penalty
 
 	@readproperty
 	def correctness(self):
 		try:
 			result = to_correctness(self.value, self.scheme)
+			result = result * (1 - self.penalty)
 		except (ValueError, TypeError):
 			logger.error("Invalid value %s for grade scheme %s", self.value, self.scheme)
 			result = 0
@@ -82,7 +89,12 @@ class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
 		context = self.__parent__
 		book = IGradeBook(ICourseInstance(context))
 		return book
-	
+	@Lazy
+	def _dateContext(self):
+		context = self.__parent__
+		result = IQAssignmentDateContext(ICourseInstance(context, None), None)
+		return result
+		
 	def synchronize(self):
 		pass
 
@@ -131,9 +143,12 @@ class AssigmentGradeScheme(Persistent, SchemaConfigured):
 	
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IAssigmentGradeScheme)
-
+	
+	LatePenalty = 1
+	
 	weight = alias('Weight')
 	scheme = alias('GradeScheme')
+	penalty = alias('LatePenalty')
 	
 	def __init__(self, *args, **kwargs):
 		# SchemaConfigured is not cooperative
@@ -218,8 +233,11 @@ class CategoryGradeScheme(Persistent, SchemaConfigured):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICategoryGradeScheme)
 
+	LatePenalty = 1
+		
 	weight = alias('Weight')
 	scheme = alias('GradeScheme')
+	penalty = alias('LatePenalty')
 	dropLowest = alias('DropLowest')
 	assigments = items = alias('AssigmentGradeSchemes')
 	
@@ -284,10 +302,22 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				result[name] = scheme
 		return result
 
+	@Lazy
+	def _penalties(self):
+		result = {}
+		for category in self.categories.values():
+			for name, value in category.items.items():
+				penalty = value.penalty if value.penalty is not None else category.penalty
+				result[name] = 0 if penalty is None else penalty
+		return result
+	
 	def _grade_map(self, username):
+		now = datetime.utcnow() 
+		dates = self._dateContext
+		
 		result = defaultdict(list)
 		entered = defaultdict(set)	
-	
+		
 		# parse all grades and bucket them by category
 		for grade in self.book.iter_grades(username):
 			# save grade info
@@ -313,14 +343,28 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			entered[cat_name].add(assignmentId)
 		
 		# now create proxy grades with 0 correctes for missing ones
+		# that we know about in the policy
 		for cat_name, category in self.categories.items():
 			inputed = entered[cat_name]
 			assignments = set(category.items.keys())
 			for assignmentId in assignments.difference(inputed):
-				weight = self._weights[assignmentId]
-				scheme = self._schemes[assignmentId]
+				
+				# we assume the assigment is correct
+				correctness = 1
+				weight = self._weights.get(assignmentId)
+				scheme = self._schemes.get(assignmentId)
+				
+				# check if the assigment is late
+				assignment = component.queryUtility(IQAssignment, name=assignmentId)
+				if assignment is not None and dates is not None:
+					_ending = dates.of(assignment).available_for_submission_ending
+					if _ending and now > _ending:
+						penalty = self._penalties.get(assignmentId, 0)
+						correctness = 1 - penalty
+						
+				# create proxy grade
 				proxy = GradeProxy(0, weight, scheme)
-				proxy.correctness = 0.0
+				proxy.correctness = correctness
 				result[cat_name].append(proxy)
 			
 		# sort by correctness

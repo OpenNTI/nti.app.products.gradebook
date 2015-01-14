@@ -24,6 +24,7 @@ from ..interfaces import IGradeScheme
 class IAssigmentGradeScheme(interface.Interface):
 	GradeScheme = Object(IGradeScheme, required=False, title="Grade scheme")
 	Weight = Number(title="Grade weight", default=0.0, min=0.0, max=1.0, required=True)
+	LatePenalty = Number(title="Late penalty", default=1, min=0.0, max=1.0, required=True)
 	
 class IDefaultCourseGradingPolicy(ICourseGradingPolicy):
 	DefaultGradeScheme = Object(IGradeScheme, required=False)
@@ -38,6 +39,7 @@ class ICategoryGradeScheme(interface.Interface):
 								 value_type=Object(IAssigmentGradeScheme, required=False),
 								 min_length=1)
 	DropLowest = Int(title="Drop lowest grade in category", required=False)
+	LatePenalty = Number(title="Late penalty", default=1, min=0.0, max=1.0, required=True)
 	
 class ICS1323CourseGradingPolicy(ICourseGradingPolicy):
 	DefaultGradeScheme = Object(IGradeScheme, required=False)
