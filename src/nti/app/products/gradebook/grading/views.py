@@ -58,4 +58,5 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
         value  = scheme.fromCorrectness(correctness)
         result = Grade(value=value)
+        result.username = self.remoteUser.username
         return result
