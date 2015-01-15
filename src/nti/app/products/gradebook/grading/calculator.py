@@ -79,7 +79,7 @@ def create_context(env_dir=None, with_library=True):
 	
 	return context
 
-def _process_args(ntiid, scheme, entry_name=None, site=None):
+def _process_args(ntiid, scheme, site=None, entry_name=None, verbose=False):
 	module_name, class_name = scheme.rsplit(".", 1)
 	module = importlib.import_module(module_name)
 	clazz = getattr(module, class_name)
@@ -100,6 +100,10 @@ def _process_args(ntiid, scheme, entry_name=None, site=None):
 		raise ValueError("Unknown course", ntiid)
 
 	result = calculate_grades(course, grade_scheme, entry_name=entry_name)
+	if not entry_name or verbose:
+		print("\nGrades...")
+		for name, grade in result.items():
+			print("\t", name, grade.value)
 	return result
 
 def main():
@@ -127,6 +131,7 @@ def main():
 						minimal_ds=True,
 						xmlconfig_packages=conf_packages,
 						function=lambda: _process_args(	site=site,
+														verbose=verbose,
 														ntiid=args.ntiid,
 														scheme=args.scheme,
 														entry_name=args.entry))

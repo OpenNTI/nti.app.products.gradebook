@@ -413,4 +413,8 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 					continue
 				correctness = grade.correctness
 				result += correctness * weight
-		return result
+		
+		# divide over the total weight in case the policy
+		# is not complete
+		result = result / self._total_weight
+		return round(result, 2)
