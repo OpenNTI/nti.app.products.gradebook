@@ -120,17 +120,23 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 		return result
 	get_entry_by_ntiid = getEntryByNTIID
 	
-	def removeUser(self, username):
+	def remove_user(self, username):
 		result = 0
 		for part in self.values():
-			if part.removeUser(username):
+			if part.remove_user(username):
 				result +=1
 		return result
-	remove_user = removeUser
+	removeUser = remove_user
 	
 	@property
 	def Items(self):
 		return dict(self)
+	
+	def has_grades(self, username):
+		for part in self.values():
+			if part.has_grades(username):
+				return True
+		return False
 	
 	def iter_grades(self, username):
 		for part in self.values():
@@ -270,7 +276,7 @@ class GradeBookPart(SchemaConfigured,
 		return None
 	get_entry_by_assignment = getEntryByAssignment
 	
-	def removeUser(self, username):
+	def remove_user(self, username):
 		result = 0
 		username = username.lower()
 		for entry in self.values():
@@ -278,12 +284,18 @@ class GradeBookPart(SchemaConfigured,
 				del entry[username]
 				result += 1
 		return result
-	remove_user = removeUser
+	removeUser = remove_user
 	
 	@property
 	def Items(self):
 		return dict(self)
 
+	def has_grades(self, username):
+		for entry in self.values():
+			if username in entry:
+				return True
+		return False
+	
 	def iter_grades(self, username):
 		for entry in self.values():
 			if username in entry:

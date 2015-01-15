@@ -203,11 +203,6 @@ class IGradeBookPart(IContainer,
 	gradeScheme = Object(IGradeScheme, description="A :class:`.IGradeScheme`",
 						 title="The grade scheme for this part", required=False)
 
-#	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
-#						  min=0.0,
-#						  max=1.0,
-#						  default=1.0,
-#						  required=False)
 	order = Int(title="The part order", min=1)
 
 	#TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
@@ -219,6 +214,21 @@ class IGradeBookPart(IContainer,
 	def get_entry_by_assignment(assignmentId):
 		"""
 		return the :IGradeBookEntry associated with the specified assignmentId
+		"""
+
+	def remove_user(username):
+		"""
+		remove the grades for the specififed user from this part
+		"""
+	
+	def has_grades(username):
+		"""
+		returns true if there are grades for the specififed user in this part
+		"""
+	
+	def iter_grades(username):
+		"""
+		returns an iterator for the specififed user's grades
 		"""
 
 #: This is a special category name for assignments that are
@@ -248,6 +258,21 @@ class IGradeBook(IContainer,
 		return the :IGradeBookEntry associated with the specified ntiid
 		"""
 
+	def remove_user(username):
+		"""
+		remove the grades for the specififed user from this grade book
+		"""
+	
+	def has_grades(username):
+		"""
+		returns true if there are grades for the specififed user in this grade book
+		"""
+	
+	def iter_grades(username):
+		"""
+		returns an iterator for the specififed user's grades
+		"""
+		
 	Items = Dict(title="For externalization only, a copy of the {category name: GradeBookPart} contents}",
 				 description="For expedience and while while we expect these to be relatively small, we inline them",
 				 readonly=True)

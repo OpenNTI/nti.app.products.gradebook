@@ -318,10 +318,17 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				result[name] = 0 if penalty is None else penalty
 		return result
 	
+	def _is_late(self, assignmentId, now=None):
+		dates = self._dateContext
+		now = now or datetime.utcnow() 
+		assignment = component.queryUtility(IQAssignment, name=assignmentId)
+		if assignment is not None and dates is not None:
+			_ending = dates.of(assignment).available_for_submission_ending
+			return bool (_ending and now > _ending)
+		return False
+	
 	def _grade_map(self, username):
 		now = datetime.utcnow() 
-		dates = self._dateContext
-		
 		result = defaultdict(list)
 		entered = defaultdict(set)	
 		
@@ -347,10 +354,12 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				continue
 			
 			excused = IExcusedGrade.providedBy(grade)
-			
+			penalty = self._penalties.get(assignmentId, 0) \
+					  if self._is_late(assignmentId, now) else 0
+		
 			# record grade
 			cat_name = self._rev_categories[assignmentId]
-			result[cat_name].append(GradeProxy(value, weight, scheme, excused))
+			result[cat_name].append(GradeProxy(value, weight, scheme, excused, penalty))
 			entered[cat_name].add(assignmentId)
 		
 		# now create proxy grades with 0 correctes for missing ones
@@ -366,12 +375,9 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				scheme = self._schemes.get(assignmentId)
 				
 				# check if the assigment is late
-				assignment = component.queryUtility(IQAssignment, name=assignmentId)
-				if assignment is not None and dates is not None:
-					_ending = dates.of(assignment).available_for_submission_ending
-					if _ending and now > _ending:
-						penalty = self._penalties.get(assignmentId, 0)
-						correctness = 1 - penalty
+				if self._is_late(assignmentId, now):
+					penalty = self._penalties.get(assignmentId, 0)
+					correctness = 1 - penalty
 						
 				# create proxy grade
 				proxy = GradeProxy(0, weight, scheme)

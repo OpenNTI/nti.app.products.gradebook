@@ -28,6 +28,7 @@ from nti.dataserver import authorization as nauth
 
 from ..grades import Grade
 
+from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
 
 from . import VIEW_CURRENT_GRADE
@@ -50,6 +51,11 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		policy = find_grading_policy_for_course(course)
 		if policy is None:
 			raise hexec.HTTPUnprocessableEntity(_("Course does not define a grading policy."))
+		
+		course = ICourseInstance(self.context)
+		book = IGradeBook(course)
+		if not book.has_grades(self.remoteUser.username):
+			raise hexec.HTTPNotFound()
 		
 		presentation = policy.presentation
 		scheme = self.request.params.get('scheme')
