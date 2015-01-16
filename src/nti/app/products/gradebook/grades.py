@@ -13,8 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-
-from zope.container import contained as zcontained
+from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
@@ -30,7 +29,7 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
-from nti.mimetype import mimetype
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
@@ -46,11 +45,11 @@ from .interfaces import IGrade
 @interface.implementer(IGrade, IContentTypeAware)
 @WithRepr
 @EqHash('username', 'assignmentId', 'value')
-class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
+class Grade(CreatedModDateTrackingObject,
 			SchemaConfigured,
-			zcontained.Contained):
+			Contained):
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
 	createDirectFieldProperties(IGrade)
 
@@ -66,7 +65,7 @@ class Grade(CreatedModDateTrackingObject, # NOTE: This is *not* persistent
 	# ignores it
 	creator = None
 
-	def __init__(self, **kwargs):
+	def __init__(self, *args, **kwargs):
 		if 'grade' in kwargs and 'value' not in kwargs:
 			kwargs['value'] = kwargs['grade']
 			del kwargs['grade']
@@ -147,4 +146,9 @@ from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 @interface.implementer(IAttributeAnnotatable)
 class PersistentGrade(Grade, PersistentPropertyHolder):
-	pass
+	# order of inheritance matters; if Persistent is first, 
+	# we can't have our own __setstate__; only subclasses can
+	
+	def __init__(self, *args, **kwargs):
+		Grade.__init__(self, *args, **kwargs)
+		PersistentPropertyHolder.__init__(self)
