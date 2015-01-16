@@ -11,20 +11,22 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import assert_that
 
-from nti.contenttypes.courses import courses
+import unittest
+
+from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from .. import interfaces as grades_interfaces
+from nti.app.products.gradebook.interfaces import IGradeBook
 
-from . import SharedConfiguringTestLayer
-import unittest
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
 class TestAdapters(unittest.TestCase):
+	
 	layer = SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_course_instance(self):
-		ci = courses.CourseInstance()
-		gb = grades_interfaces.IGradeBook(ci, None)
+		ci = CourseInstance()
+		gb = IGradeBook(ci, None)
 		assert_that(gb, is_not(none()))
