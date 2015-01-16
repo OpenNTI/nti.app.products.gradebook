@@ -27,8 +27,15 @@ from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
 from ..interfaces import IGradeBook
 from ..grades import PersistentGrade
-
+		
 def evolve_book(book, intids, instructor=None, ntiid=None):
+	
+	try:
+		from nti.metadata import metadata_queue
+		queue = metadata_queue()
+	except ImportError:
+		queue = None
+	
 	count = 0
 	connection = IConnection(book)
 	for part in book.values():
@@ -53,6 +60,14 @@ def evolve_book(book, intids, instructor=None, ntiid=None):
 				entry._setitemf(username, new_grade)
 				locate(new_grade, entry, name=username)
 				intids.register(new_grade)
+				
+				# register in metadata catalog
+				uid = intids.getId(new_grade)
+				if queue is not None:
+					try:
+						queue.add(uid)
+					except TypeError:
+						pass
 				count += 1
 	return count
 		
@@ -63,7 +78,6 @@ def do_evolve(context, generation=generation):
 	
 	lsm = dataserver_folder.getSiteManager()
 	intids = lsm.getUtility(zope.intid.IIntIds)
-	
 	total = 0
 	sites = dataserver_folder['++etc++hostsites']
 	for site in sites.values():
@@ -73,7 +87,6 @@ def do_evolve(context, generation=generation):
 				course = ICourseInstance(entry, None)
 				if not course:
 					continue
-				
 				# pick an instructor
 				instructor = None
 				instructors = list(course.instructors or ()) + [SYSTEM_USER_NAME]
@@ -82,10 +95,10 @@ def do_evolve(context, generation=generation):
 					if instructor is not None:
 						instructor = instructor.id
 						break
-				
 				book = IGradeBook(course)
 				count = evolve_book(book, intids, instructor, entry.ntiid)
-				
+				total += count
+
 				logger.info('%s grades(s) for course %s were updated',
 							entry.ntiid, count)
 

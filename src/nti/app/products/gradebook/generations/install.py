@@ -23,7 +23,7 @@ class _GradeBookSchemaManager(SchemaManager):
 	def __init__( self ):
 		super(_GradeBookSchemaManager, self).__init__(generation=generation,
 													  minimum_generation=generation,
-													  package_name='nti.app.products.gradebook')
+													  package_name='nti.app.products.gradebook.generations')
 
 def evolve( context ):
 	return context
