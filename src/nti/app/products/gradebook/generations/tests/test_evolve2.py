@@ -8,14 +8,19 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
-from hamcrest import has_key
+from hamcrest import none
+from hamcrest import is_not
 from hamcrest import assert_that
+from hamcrest import has_property
+
+import zope.intid
 
 from zope import component
 
 from nti.app.products.gradebook.grades import Grade
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.assignments import synchronize_gradebook
+from nti.app.products.gradebook.utils import record_grade_without_submission
 
 from nti.app.products.gradebook.generations.evolve2 import evolve_book
 
@@ -31,18 +36,13 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLayer
 
-class TestAssignments(ApplicationLayerTest):
+class TestEvolution2(ApplicationLayerTest):
 	
 	layer = InstructedCourseApplicationTestLayer
 	
 	@WithSharedApplicationMockDS(testapp=True,
 								 default_authenticate=True)
-	def test_evolution(self):
-		conn = mock_dataserver.current_transaction
-		root = conn.root()
-		generations = root['zope.generations']
-		assert_that( generations, has_key('nti.dataserver-products-gradebook'))
-
+	def test_evolve_book(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user("ichigo")
 			self._create_user("aizen")
@@ -50,17 +50,33 @@ class TestAssignments(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
 
 			lib = component.getUtility(IContentPackageLibrary)
-
+			intids = component.getUtility(zope.intid.IIntIds)
+			
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)
 				if course.__name__ != 'CLC3403':
 					continue
-
+				
 				synchronize_gradebook(course)
 				book = IGradeBook(course)
-				entry = book['quizzes']['Main Title']
-				entry['ichigo'] = Grade(value=100)
-				entry['aizen'] = Grade(value=90)
 				
-				count = evolve_book(book)
+				assignmentId = 'Main Title'
+				entry = book['quizzes'][assignmentId]
+				
+				for username, value in (('ichigo', 100), ('aizen', 90)):			
+					user = self._get_user(username)
+					record_grade_without_submission(entry, user, 
+													assignmentId, 
+													clazz=Grade)
+					grade = entry[username]
+					grade.value = value
+
+				count = evolve_book(book, intids)
 				assert_that(count, is_(2))
+				
+				for username, value in (('ichigo', 100), ('aizen', 90)):	
+					grade = entry[username]
+					assert_that(grade, has_property('value', is_(value)))
+					assert_that(grade, has_property(intids.attribute, is_not(none())))
+				
+				return

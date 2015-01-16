@@ -118,14 +118,9 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 			_mark_btree_bucket_as_changed(theObject)
 		return theObject
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-
-from nti.app.products.courseware.interfaces import ICourseInstanceActivity
-
-from nti.assessment.submission import AssignmentSubmission
-from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
-
 from nti.dataserver.users import User
+
+from ..utils import record_grade_without_submission
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
@@ -143,43 +138,13 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		entry = self.request.context.__parent__
 		username = self.request.context.__name__
 		user = User.get_user(username)
-		# canonicalize the username in the event case got mangled
-		username = user.username
 		assignmentId = entry.AssignmentId
-
-		# We insert the history item, which the user himself
-		# normally does but cannot in this case. This implicitly
-		# creates the grade
-		# TODO: This is very similar to what nti.app.assessment.adapters
-		# does for the student, just with fewer constraints...
-		# TODO: The handling for a previously deleted grade is
-		# what the subscriber does...this whole thing should be simplified
-		submission = AssignmentSubmission()
-		submission.assignmentId = assignmentId
-		submission.creator = user
-
-		course = ICourseInstance(entry)
-		pending_assessment = QAssignmentSubmissionPendingAssessment(
-													assignmentId=submission.assignmentId,
-													parts=[] )
-
-		assignment_history = component.getMultiAdapter( (course, submission.creator),
-														IUsersCourseAssignmentHistory )
-
-		try:
-			assignment_history.recordSubmission( submission, pending_assessment )
-		except KeyError:
-			# In case there is already a submission (but no grade)
-			# we need to deal with creating the grade object ourself.
-			# This code path hits if a grade is deleted
-			grade = self.request.context = Grade()
-			entry[username] = grade
+		
+		grade = record_grade_without_submission(entry, user, assignmentId)
+		if grade is not None:
+			## place holder grade was inserted
+			self.request.context = grade
 		else:
-			# We don't want this phony-submission showing up as course activity
-			# See nti.app.assessment.subscribers
-			activity = ICourseInstanceActivity(course)
-			activity.remove(submission)
-
 			# This inserted the 'real' grade. To actually
 			# updated it with the given values, let the super
 			# class do the work
@@ -319,7 +284,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				for username, grade in entry.items():
 					user_dict = usernames_to_assignment_dict[username]
 					if name in user_dict:
-						raise ValueError("Two entries in different part with same name, yikes")
+						raise ValueError("Two entries in different part with same name")
 					user_dict[name] = grade
 
 		# Now, sort the *display* names, maintaining the
@@ -382,7 +347,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				firstname = ''
 				lastname = ''
 
-			row = [_tx_string(x) for x in (username, external_id, firstname, lastname, realname)]
+			data = (username, external_id, firstname, lastname, realname)
+			row = [_tx_string(x) for x in data]
 			for _, assignment in sorted_asg_names:
 				grade = user_dict[assignment].value if assignment in user_dict else ""
 				row.append(_tx_grade(grade))
@@ -406,8 +372,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		writer.writerows(rows)
 
 		filename = course.__name__ + '-grades.csv'
+		content_disposition = str( 'attachment; filename="%s"' % filename )
 		self.request.response.body = buf.getvalue()
-		self.request.response.content_disposition = str( 'attachment; filename="%s"' % filename )
+		self.request.response.content_disposition = content_disposition
 		self.request.response.content_type = str( 'application/octet-stream' )
-
 		return self.request.response

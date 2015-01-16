@@ -14,8 +14,11 @@ generation = 2
 import zope.intid
 
 from zope import component
+from zope.location.location import locate
 from zope.security.interfaces import IPrincipal
 from zope.component.hooks import site as current_site
+
+from ZODB.interfaces import IConnection
 
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -25,31 +28,34 @@ from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from ..interfaces import IGradeBook
 from ..grades import PersistentGrade
 
-def evolve_book(book, intids=None, instructor=None, ntiid=None):
+def evolve_book(book, intids, instructor=None, ntiid=None):
 	count = 0
-	intids = component.getUtility(zope.intid.IIntIds) if intids is None else intids
+	connection = IConnection(book)
 	for part in book.values():
 		for entry in part.values():
-			for username, grade in list(entry.items()):
+			for username, grade in list(entry.items()):								
 				# create new grade
 				new_grade = PersistentGrade()
 				new_grade.value = grade.value
 				new_grade.creator = instructor
+				new_grade.username = username
 				new_grade.AutoGrade = grade.AutoGrade
 				new_grade.createdTime = grade.createdTime
 				new_grade.lastModified = grade.lastModified
-				new_grade.AutoGradeMax = grade.AutoGradeMax
 				
-				# remove old grade
-				del entry[username]
+				# add to connection
+				connection.add(new_grade)
 				
-				# register new and assert
-				entry[username] = new_grade
-				uid = intids.queryId(new_grade)
-				assert uid is not None
+				# remove old entry (no event)
+				entry._delitemf(username, event=False)
+				
+				# add persistent entry (no event)
+				entry._setitemf(username, new_grade)
+				locate(new_grade, entry, name=username)
+				intids.register(new_grade)
 				count += 1
 	return count
-
+		
 def do_evolve(context, generation=generation):
 
 	conn = context.connection
