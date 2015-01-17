@@ -93,7 +93,7 @@ def do_evolve(context, generation=generation):
 				for instructor in instructors:
 					instructor = IPrincipal(instructor, None)
 					if instructor is not None:
-						instructor = instructor.id
+						instructor = instructor.id.lower()
 						break
 				book = IGradeBook(course)
 				count = evolve_book(book, intids, instructor, entry.ntiid)

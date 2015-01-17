@@ -142,9 +142,11 @@ class GradeWeakRef(object):
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
+from nti.dataserver.interfaces import ICreated
+
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
-@interface.implementer(IAttributeAnnotatable)
+@interface.implementer(ICreated, IAttributeAnnotatable)
 class PersistentGrade(Grade, PersistentPropertyHolder):
 	# order of inheritance matters; if Persistent is first, 
 	# we can't have our own __setstate__; only subclasses can
@@ -157,4 +159,3 @@ class PersistentGrade(Grade, PersistentPropertyHolder):
 	def containerId(self):
 		if self.__parent__ is not None:
 			return self.__parent__.NTIID
-
