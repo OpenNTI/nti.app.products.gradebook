@@ -152,3 +152,9 @@ class PersistentGrade(Grade, PersistentPropertyHolder):
 	def __init__(self, *args, **kwargs):
 		Grade.__init__(self, *args, **kwargs)
 		PersistentPropertyHolder.__init__(self)
+		
+	@property
+	def containerId(self):
+		if self.__parent__ is not None:
+			return self.__parent__.NTIID
+
