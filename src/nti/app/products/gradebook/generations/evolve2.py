@@ -15,15 +15,18 @@ import zope.intid
 
 from zope import component
 from zope.location.location import locate
-from zope.security.interfaces import IPrincipal
 from zope.component.hooks import site as current_site
+
+from zope.securitypolicy.interfaces import Allow
+from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
 from ZODB.interfaces import IConnection
 
+from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.dataserver.interfaces import SYSTEM_USER_NAME
+from nti.dataserver.interfaces import IUser
 
 from ..interfaces import IGradeBook
 from ..grades import PersistentGrade
@@ -85,16 +88,21 @@ def do_evolve(context, generation=generation):
 			catalog = component.getUtility(ICourseCatalog)
 			for entry in catalog.iterCatalogEntries():
 				course = ICourseInstance(entry, None)
-				if not course:
+				if course is None:
 					continue
+				
 				# pick an instructor
 				instructor = None
-				instructors = list(course.instructors or ()) + [SYSTEM_USER_NAME]
-				for instructor in instructors:
-					instructor = IPrincipal(instructor, None)
-					if instructor is not None:
-						instructor = instructor.id.lower()
-						break
+				roles = IPrincipalRoleMap(course, None)
+				for principal in course.instructors or ():
+					try:
+						if 	roles is None or \
+							roles.getSetting(RID_INSTRUCTOR, principal.id) is Allow:
+							instructor = IUser(principal)
+							break
+					except (TypeError,IndexError,AttributeError):
+						instructor = None
+		
 				book = IGradeBook(course)
 				count = evolve_book(book, intids, instructor, entry.ntiid)
 				total += count
@@ -104,6 +112,8 @@ def do_evolve(context, generation=generation):
 
 	logger.info('Gradebook evolution %s done; %s grades(s) updated',
 				generation, total)
+	
+	return total
 			
 def evolve(context):
 	do_evolve(context, generation)

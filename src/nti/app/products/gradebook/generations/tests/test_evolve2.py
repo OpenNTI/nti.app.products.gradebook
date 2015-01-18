@@ -22,6 +22,7 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 from nti.app.products.gradebook.utils import record_grade_without_submission
 
+from nti.app.products.gradebook.generations.evolve2 import do_evolve
 from nti.app.products.gradebook.generations.evolve2 import evolve_book
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -80,3 +81,16 @@ class TestEvolution2(ApplicationLayerTest):
 					assert_that(grade, has_property(intids.attribute, is_not(none())))
 				
 				return
+			
+	@WithSharedApplicationMockDS(testapp=True,
+								 default_authenticate=True)
+	def test_do_evolve(self):
+			
+		with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
+
+			class _context(object): pass
+			context = _context()
+			context.connection = mock_dataserver.current_transaction
+					
+			total = do_evolve(context)
+			assert_that(total, is_(0))
