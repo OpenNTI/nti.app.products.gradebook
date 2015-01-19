@@ -66,6 +66,18 @@ def _tx_string(s):
         s = s.encode('utf-8')
     return s
 
+def _tx_grade(value):
+    if not isinstance(value, basestring):
+        return value
+    if value.endswith('-'):
+        value = value[:-1].strip()
+        for func in (int, float):
+            try:
+                return func(value)
+            except ValueError:
+                pass
+        return _tx_string(value)
+                    
 def _replace(username):
     substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
     if substituter is None:
@@ -113,8 +125,8 @@ class CourseGradesView(AbstractAuthenticatedView):
             for name, entry in list(part.items()):
                 for username, grade in list(entry.items()):
                     name = grade.assignmentId
-                    value = _tx_string(grade.value)
-                    value = str(value) if value is not None else ''
+                    value = _tx_grade(grade.value)
+                    value = value if value is not None else ''
                     row_data = [part_name, _replace(username), name, value]
                     csv_writer.writerow([_tx_string(x) for x in row_data])
 
