@@ -112,11 +112,16 @@ class CourseGradesView(AbstractAuthenticatedView):
             except KeyError:
                 raise hexc.HTTPUnprocessableEntity(detail=_('Course not found'))
 
+        usernames = params.get('usernames') or params.get('username')
+        if usernames:
+            usernames = usernames.split(',')
+            usernames = {x.lower() for x in usernames}
+
         bio = BytesIO()
         csv_writer = csv.writer(bio)
         
         # header
-        header = ['part', 'username', 'name', 'value'] 
+        header = ['username', 'part', 'entry', 'assignment', 'grade'] 
         csv_writer.writerow(header)
         
         course = ICourseInstance(entry)
@@ -124,10 +129,13 @@ class CourseGradesView(AbstractAuthenticatedView):
         for part_name, part in list(book.items()):
             for name, entry in list(part.items()):
                 for username, grade in list(entry.items()):
-                    name = grade.assignmentId
+                    username = username.lower()
+                    if usernames and username not in usernames:
+                        continue
+                    assignmentId = grade.assignmentId
                     value = _tx_grade(grade.value)
                     value = value if value is not None else ''
-                    row_data = [part_name, _replace(username), name, value]
+                    row_data = [_replace(username), part_name, name, assignmentId, value]
                     csv_writer.writerow([_tx_string(x) for x in row_data])
 
         response = self.request.response
