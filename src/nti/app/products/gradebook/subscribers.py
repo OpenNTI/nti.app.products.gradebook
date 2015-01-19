@@ -47,6 +47,9 @@ from .grades import PersistentGrade
 from .interfaces import IGrade
 from .interfaces import IGradeBook
 
+from .utils import save_in_container
+from .utils import remove_from_container
+
 from .assignments import synchronize_gradebook
 
 from .grading import find_grading_policy_for_course
@@ -131,7 +134,7 @@ def _assignment_history_item_added(item, event):
 			if grade.value is None:
 				grade.value = grade.AutoGrade
 		# Finally after we finish filling it in, publish it
-		entry[user.username] = grade
+		save_in_container(entry, user.username, grade)
 		
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
@@ -139,7 +142,7 @@ def _assignment_history_item_removed(item, event):
 	if entry is not None:
 		user = IUser(item)
 		try:
-			del entry[user.username]
+			remove_from_container(entry, user.username, event=True)
 		except KeyError:
 			# Hmm...
 			pass

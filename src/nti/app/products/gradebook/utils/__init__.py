@@ -30,5 +30,7 @@ from .errors import _json_error_map
 from .errors import raise_json_error
 from .errors import raise_field_error
 
+from .gradebook import save_in_container
+from .gradebook import remove_from_container
 from .gradebook import mark_btree_bucket_as_changed
 from .gradebook import record_grade_without_submission

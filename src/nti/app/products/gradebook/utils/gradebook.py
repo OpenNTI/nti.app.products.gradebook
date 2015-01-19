@@ -9,6 +9,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import lifecycleevent
+from zope.location.location import locate
+
+from ZODB.interfaces import IConnection
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
@@ -19,7 +23,7 @@ from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from ..grades import Grade
+from ..grades import PersistentGrade
 
 def mark_btree_bucket_as_changed(grade):
     # Now, because grades are not persistent objects,
@@ -44,7 +48,36 @@ def mark_btree_bucket_as_changed(grade):
         btree._p_changed = True
     return found
 
-def record_grade_without_submission(entry, user, assignmentId, clazz=Grade):
+def save_in_container(container, key, value, event=False):
+    if event:
+        container[key] = value
+    else:
+        container._setitemf(key, value)
+        locate(value, parent=container, name=key)
+        if getattr(value, '_p_jar', None) is None:
+            IConnection(container).add(value)
+        lifecycleevent.added(value, container, key)
+        try:
+            container.updateLastMod()
+        except AttributeError:
+            pass
+        container._p_changed = True
+
+def remove_from_container(container, key, event=False):
+    if event:
+        del container[key]
+    else:
+        item = container[key]
+        container._delitemf(key)
+        lifecycleevent.removed(item, container, key)
+        locate(item, parent=None, name=None)
+        try:
+            container.updateLastMod()
+        except AttributeError:
+            pass
+        container._p_changed = True
+        
+def record_grade_without_submission(entry, user, assignmentId, clazz=PersistentGrade):
     # canonicalize the username in the event case got mangled
     username = user.username
     assignmentId = entry.AssignmentId
@@ -79,7 +112,7 @@ def record_grade_without_submission(entry, user, assignmentId, clazz=Grade):
         # we need to deal with creating the grade object ourself.
         # This code path hits if a grade is deleted
         grade = clazz()
-        entry[username] = grade
+        save_in_container(entry, username, grade)
     else:
         # We don't want this phony-submission showing up as course activity
         # See nti.app.assessment.subscribers
