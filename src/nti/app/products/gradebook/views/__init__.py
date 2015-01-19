@@ -160,7 +160,7 @@ from zope.annotation import IAnnotations
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
-from ._submitted_assignment_history_views import SubmittedAssignmentHistoryGetView
+from .submitted_assignment_history_views import SubmittedAssignmentHistoryGetView
 SubmittedAssignmentHistoryGetView = SubmittedAssignmentHistoryGetView # Export
 
 @view_config(route_name='objects.generic.traversal',
