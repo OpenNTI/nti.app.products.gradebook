@@ -81,6 +81,8 @@ def evolve_book(book, intids, instructor=None, grade_index=None):
 	return count
 		
 def do_evolve(context, generation=generation):
+	logger.info("Gradebook evolution %s started", generation);
+	
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
 	lsm = dataserver_folder.getSiteManager()
@@ -116,8 +118,8 @@ def do_evolve(context, generation=generation):
 				count = evolve_book(book, intids, instructor, grade_index)
 				total += count
 
-				logger.info('%s grades(s) for course %s were updated',
-							entry.ntiid, count)
+				logger.info('%s grades(s) updated for course %s',
+							count, entry.ntiid)
 
 	logger.info('Gradebook evolution %s done; %s grades(s) updated',
 				generation, total)

@@ -37,9 +37,7 @@ from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
 from ..interfaces import IUsernameSortSubstitutionPolicy
 
-from ..grades import Grade
-
-from ..utils import mark_btree_bucket_as_changed as _mark_btree_bucket_as_changed
+from ..grades import PersistentGrade as Grade
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
@@ -69,7 +67,6 @@ class GradePutView(AbstractAuthenticatedView,
 		self.updateContentObject(theObject, externalValue)
 		theObject.updateLastMod()
 
-		_mark_btree_bucket_as_changed(theObject)
 		return theObject
 
 @view_config(route_name='objects.generic.traversal',
@@ -92,7 +89,6 @@ class ExcuseGradeView(AbstractAuthenticatedView,
 		if not IExcusedGrade.providedBy(theObject):
 			interface.alsoProvides(theObject, IExcusedGrade)
 			theObject.updateLastMod()
-			_mark_btree_bucket_as_changed(theObject)
 		return theObject
 
 @view_config(route_name='objects.generic.traversal',
@@ -115,7 +111,6 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 		if IExcusedGrade.providedBy(theObject):
 			interface.noLongerProvides(theObject, IExcusedGrade)
 			theObject.updateLastMod()
-			_mark_btree_bucket_as_changed(theObject)
 		return theObject
 
 from nti.dataserver.users import User

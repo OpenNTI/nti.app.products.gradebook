@@ -29,8 +29,6 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
-from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
-
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -42,14 +40,12 @@ from nti.wref.interfaces import IWeakRef
 
 from .interfaces import IGrade
 
-@interface.implementer(IGrade, IContentTypeAware)
+@interface.implementer(IGrade)
 @WithRepr
 @EqHash('username', 'assignmentId', 'value')
 class Grade(CreatedModDateTrackingObject,
 			SchemaConfigured,
 			Contained):
-
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
 	createDirectFieldProperties(IGrade)
 
@@ -146,11 +142,16 @@ from nti.dataserver.interfaces import ICreated
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
-@interface.implementer(ICreated, IAttributeAnnotatable)
+@interface.implementer(ICreated, IAttributeAnnotatable, IContentTypeAware)
 class PersistentGrade(Grade, PersistentPropertyHolder):
 	# order of inheritance matters; if Persistent is first, 
 	# we can't have our own __setstate__; only subclasses can
+
+	__external_class_name__ = "Grade"
 	
+	parameters = {}
+	mimeType = mime_type = 'application/vnd.nextthought.grade'
+
 	def __init__(self, *args, **kwargs):
 		Grade.__init__(self, *args, **kwargs)
 		PersistentPropertyHolder.__init__(self)

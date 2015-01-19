@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 from functools import partial
 
 from zope import component
-
 from zope.annotation.interfaces import IAnnotations
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
@@ -42,7 +42,7 @@ from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
-from .grades import Grade
+from .grades import PersistentGrade
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
@@ -115,8 +115,9 @@ def _assignment_history_item_added(item, event):
 	entry = _find_entry_for_item(item)
 	if entry is not None:
 		user = IUser(item)
-		grade = Grade()
-
+		grade = PersistentGrade()
+		grade.username = user.username
+		
 		# If there is an auto-grading policy for the course instance,
 		# then let it convert the auto-assessed part of the submission
 		# into the initial grade value
@@ -131,7 +132,7 @@ def _assignment_history_item_added(item, event):
 				grade.value = grade.AutoGrade
 		# Finally after we finish filling it in, publish it
 		entry[user.username] = grade
-
+		
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
 	entry = _find_entry_for_item(item)
@@ -242,7 +243,7 @@ def delete_user_data(user):
 			course = ICourseInstance(enrollment, None)
 			book = IGradeBook(course, None)
 			if book is not None:
-				book.removeUser(username)
+				book.remove_user(username)
 
 @component.adapter(IUser, IWillDeleteEntityEvent)
 def _on_user_will_be_removed(user, event):

@@ -33,11 +33,11 @@ from .interfaces import IGrade
 
 CATALOG_NAME = 'nti.dataserver.++etc++gradebook-catalog'
 
-IX_USERNAME = 'username'
 IX_GRADE_TYPE = 'gradeType'
 IX_GRADE_VALUE = 'gradeValue'
 IX_GRADE_COURSE = 'gradeCourse'
 IX_ASSIGNMENT_ID = 'assignmentId'
+IX_STUDENT = IX_USERNAME = 'username'
 IX_CREATOR = IX_INSTRUCTOR = 'creator'
 
 class AssignmentIdIndex(ValueIndex):
@@ -127,9 +127,9 @@ def install_grade_catalog(site_manager_container, intids=None):
 	for name, clazz in ( (IX_CREATOR, CreatorIndex),
 						 (IX_USERNAME, UsernameIndex),
 						 (IX_GRADE_VALUE, GradeValueIndex),
-						 (IX_GRADE_TYPE, GradeValueTypeIndex), 
-						 (IX_GRADE_COURSE, CatalogEntryIDIndex),
-						 (IX_ASSIGNMENT_ID, AssignmentIdIndex)):
+						 (IX_GRADE_TYPE, GradeValueTypeIndex),
+						 (IX_ASSIGNMENT_ID, AssignmentIdIndex), 
+						 (IX_GRADE_COURSE, CatalogEntryIDIndex) ):
 		index = clazz( family=intids.family )
 		assert ICatalogIndex.providedBy(index)
 		intids.register( index )

@@ -45,6 +45,7 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import LocatedExternalDict
 
 from ..interfaces import ACT_VIEW_GRADES
+
 from ..interfaces import IGradeBookEntry
 from ..interfaces import ISubmittedAssignmentHistoryBase
 from ..interfaces import IUsernameSortSubstitutionPolicy
@@ -478,7 +479,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 				# (shouldn't be needed to do that on new courses, but necessary
 				# for legacy courses)
 				if 'LegacyEnrollmentStatusForCredit' in filter_names:
-					filter_usernames = restricted_usernames - {x.id.lower() for x in course.instructors}
+					instructors_ids = {x.id.lower() for x in course.instructors}
+					filter_usernames = restricted_usernames - instructors_ids
 				elif 'LegacyEnrollmentStatusOpen' in filter_names:
 					filter_usernames = student_usernames - restricted_usernames
 
@@ -514,7 +516,9 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			result['FilteredTotalItemCount'] = len(filter_usernames)
 
 		result['TotalNonNullItemCount'] = len(context)
-		result['FilteredTotalNonNullItemCount'] = len( {x.lower() for x in grade_column} & set(filter_usernames) )
+		
+		grade_column_set = {x.lower() for x in grade_column}
+		result['FilteredTotalNonNullItemCount'] = len( grade_column_set & set(filter_usernames) )
 
 		if sort_name:
 			items_factory = list
@@ -551,7 +555,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			if batchAroundTest:
 				items_iter = self._batch_around(items_iter, batchAroundTest)
 				batch_size, batch_start = self._get_batch_size_start()
-
 
 		if (batch_size is not None and batch_start is not None) or items_factory is list:
 			self._batch_tuple_iterable(result, items_iter,
