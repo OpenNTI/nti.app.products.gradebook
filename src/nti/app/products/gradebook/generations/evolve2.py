@@ -32,7 +32,7 @@ from ..interfaces import IGradeBook
 from ..grades import PersistentGrade
 from ..index import install_grade_catalog
 
-def evolve_book(book, intids, instructor=None, ntiid=None):
+def evolve_book(book, intids, instructor=None, grade_index=None):
 	
 	try:
 		from nti.metadata import metadata_queue
@@ -65,8 +65,13 @@ def evolve_book(book, intids, instructor=None, ntiid=None):
 				locate(new_grade, entry, name=username)
 				intids.register(new_grade)
 				
-				# register in metadata catalog
 				uid = intids.getId(new_grade)
+				
+				# register in grade catalog
+				if grade_index is not None:
+					grade_index.index_doc(uid, new_grade)
+				
+				# register in metadata catalog
 				if queue is not None:
 					try:
 						queue.add(uid)
@@ -82,7 +87,7 @@ def do_evolve(context, generation=generation):
 	intids = lsm.getUtility(zope.intid.IIntIds)
 	
 	# install grade catalog
-	install_grade_catalog(dataserver_folder, intids)
+	grade_index = install_grade_catalog(dataserver_folder, intids)
 	
 	# make grades persistent in all sites	
 	total = 0
@@ -108,7 +113,7 @@ def do_evolve(context, generation=generation):
 						instructor = None
 		
 				book = IGradeBook(course)
-				count = evolve_book(book, intids, instructor, entry.ntiid)
+				count = evolve_book(book, intids, instructor, grade_index)
 				total += count
 
 				logger.info('%s grades(s) for course %s were updated',
