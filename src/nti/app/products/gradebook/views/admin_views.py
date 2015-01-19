@@ -109,9 +109,9 @@ class CourseGradesView(AbstractAuthenticatedView):
         
         course = ICourseInstance(entry)
         book  = IGradeBook(course)
-        for part_name, part in book.items():
-            for name, entry in part.items():
-                for username, grade in entry.items():
+        for part_name, part in list(book.items()):
+            for name, entry in list(part.items()):
+                for username, grade in list(entry.items()):
                     name = grade.assignmentId
                     value = _tx_string(grade.value)
                     value = str(value) if value is not None else ''
