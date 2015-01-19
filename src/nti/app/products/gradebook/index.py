@@ -9,13 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zc.intid import IIntIds
+
 from zope import interface
 from zope.location import locate
-from zc.intid import IIntIds
 
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.interfaces import ICatalogIndex
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+	
 from nti.dataserver.interfaces import ICreatedUsername
 
 from nti.zope_catalog.catalog import Catalog
@@ -33,6 +37,8 @@ IX_CREATOR = 'creator'
 IX_USERNAME = 'username'
 IX_GRADE_TYPE = 'gradeType'
 IX_GRADE_VALUE = 'gradeValue'
+IX_GRADE_COURSE = 'gradeCourse'
+IX_ASSIGNMENT_ID = 'assignmentId'
 
 class AssignmentIdIndex(ValueIndex):
 	default_field_name = 'AssignmentId'
@@ -72,8 +78,6 @@ class ValidatingGradeValueType(object):
 		value = getattr(grade, 'value', None)
 		if value is not None:
 			self.type = unicode(value.__class__.__name__)
-		else:
-			self.type = None
 
 	def __reduce__(self):
 		raise TypeError()
@@ -82,6 +86,26 @@ class GradeValueTypeIndex(ValueIndex):
 	default_field_name = 'type'
 	default_interface = ValidatingGradeValueType
 
+class ValidatingGradeCatalogEntryID(object):
+	"""
+	The "interface" we adapt to to find the grade value course.
+	"""
+
+	__slots__ = (b'ntiid',)
+
+	def __init__(self, obj, default=None):
+		grade = IGrade(obj, default)
+		entry = ICourseCatalogEntry(ICourseInstance(grade, None), None)
+		if entry is not None:
+			self.ntiid = unicode(entry.ntiid)
+
+	def __reduce__(self):
+		raise TypeError()
+
+class CatalogEntryIDIndex(ValueIndex):
+	default_field_name = 'ntiid'
+	default_interface = ValidatingGradeCatalogEntryID
+	
 @interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
 	pass
@@ -92,15 +116,16 @@ def install_grade_catalog( site_manager_container, intids=None ):
 		intids = lsm.getUtility(IIntIds)
 
 	catalog = GradeCatalog(family=intids.family)
-	catalog.__name__ = CATALOG_NAME
-	catalog.__parent__ = site_manager_container
+	locate(catalog, site_manager_container. CATALOG_NAME)
 	intids.register( catalog )
 	lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_NAME )
 
 	for name, clazz in ( (IX_CREATOR, CreatorIndex),
 						 (IX_USERNAME, UsernameIndex),
 						 (IX_GRADE_VALUE, GradeValueIndex),
-						 (IX_GRADE_TYPE, GradeValueTypeIndex) ):
+						 (IX_GRADE_TYPE, GradeValueTypeIndex), 
+						 (IX_GRADE_COURSE, CatalogEntryIDIndex)
+						 (IX_ASSIGNMENT_ID, AssignmentIdIndex)):
 		index = clazz( family=intids.family )
 		assert ICatalogIndex.providedBy(index)
 		intids.register( index )
