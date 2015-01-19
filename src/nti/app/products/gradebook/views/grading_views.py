@@ -31,8 +31,8 @@ from ..grades import Grade
 from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
 
-from . import VIEW_CURRENT_GRADE
-from . import find_grading_policy_for_course
+from ..grading import VIEW_CURRENT_GRADE
+from ..grading import find_grading_policy_for_course
 
 @view_config(context=ICourseInstance)
 @view_config(context=ICourseInstanceEnrollment)
