@@ -142,7 +142,7 @@ def _assignment_history_item_removed(item, event):
 	if entry is not None:
 		user = IUser(item)
 		try:
-			remove_from_container(entry, user.username, event=True)
+			remove_from_container(entry, user.username)
 		except KeyError:
 			# Hmm...
 			pass

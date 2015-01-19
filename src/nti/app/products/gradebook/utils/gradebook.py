@@ -9,7 +9,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
-from zope import lifecycleevent
+from zope.lifecycleevent import added
+from zope.lifecycleevent import removed
 from zope.location.location import locate
 
 from ZODB.interfaces import IConnection
@@ -54,9 +55,8 @@ def save_in_container(container, key, value, event=False):
     else:
         container._setitemf(key, value)
         locate(value, parent=container, name=key)
-        if getattr(value, '_p_jar', None) is None:
-            IConnection(container).add(value)
-        lifecycleevent.added(value, container, key)
+        IConnection(container).add(value)            
+        added(value, container, key)
         try:
             container.updateLastMod()
         except AttributeError:
@@ -69,7 +69,7 @@ def remove_from_container(container, key, event=False):
     else:
         item = container[key]
         container._delitemf(key)
-        lifecycleevent.removed(item, container, key)
+        removed(item, container, key)
         locate(item, parent=None, name=None)
         try:
             container.updateLastMod()

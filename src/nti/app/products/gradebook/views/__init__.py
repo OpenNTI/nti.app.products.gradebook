@@ -37,6 +37,8 @@ from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
 from ..interfaces import IUsernameSortSubstitutionPolicy
 
+from ..utils import remove_from_container
+
 from ..grades import PersistentGrade as Grade
 
 @interface.implementer(IPathAdapter)
@@ -196,7 +198,7 @@ class GradeDeleteView(UGDDeleteView):
 		# dummies up a grade for anyone that asks. So if we can't find
 		# it, follow the contract and let a 404 error be raised
 		try:
-			del context.__parent__[context.__name__]
+			remove_from_container(context.__parent__, context.__name__)
 		except KeyError:
 			return None
 		else:
