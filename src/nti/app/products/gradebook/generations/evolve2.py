@@ -88,6 +88,8 @@ def do_evolve(context, generation=generation):
 	lsm = dataserver_folder.getSiteManager()
 	intids = lsm.getUtility(zope.intid.IIntIds)
 	
+	seen = set()
+	
 	# install grade catalog
 	grade_index = install_grade_catalog(dataserver_folder, intids)
 	
@@ -101,6 +103,9 @@ def do_evolve(context, generation=generation):
 				course = ICourseInstance(entry, None)
 				if course is None:
 					continue
+				if entry.ntiid in seen:
+					continue
+				seen.add(entry.ntiid)
 				
 				# pick an instructor
 				instructor = None
