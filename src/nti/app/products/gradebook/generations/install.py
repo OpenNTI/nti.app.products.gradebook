@@ -13,7 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 1
 
+import zope.intid
+
 from zope.generations.generations import SchemaManager
+
+from ..index import install_grade_catalog
 
 class _GradeBookSchemaManager(SchemaManager):
 	"""
@@ -26,4 +30,9 @@ class _GradeBookSchemaManager(SchemaManager):
 													  package_name='nti.app.products.gradebook.generations')
 
 def evolve( context ):
+	conn = context.connection
+	dataserver_folder = conn.root()['nti.dataserver']
+	lsm = dataserver_folder.getSiteManager()
+	intids = lsm.getUtility(zope.intid.IIntIds)	
+	install_grade_catalog(dataserver_folder, intids)
 	return context
