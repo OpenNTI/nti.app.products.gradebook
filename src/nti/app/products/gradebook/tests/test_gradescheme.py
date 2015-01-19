@@ -47,8 +47,5 @@ class TestGradeScheme(unittest.TestCase):
 
 		lgs.validate('A')
 		lgs.validate('B')
-		try:
+		with self.assertRaises(ValueError):
 			lgs.validate('X')
-			self.fail()
-		except:
-			pass

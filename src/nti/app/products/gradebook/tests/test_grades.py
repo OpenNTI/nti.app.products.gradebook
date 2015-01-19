@@ -24,8 +24,11 @@ import cPickle as pickle
 from nti.wref.interfaces import IWeakRef
 
 from nti.app.products.gradebook.grades import Grade
-from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.grades import GradeWeakRef
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.interfaces import IGrade
+
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.testing.matchers import validly_provides
@@ -35,9 +38,8 @@ class TestGrades(unittest.TestCase):
 	def test_implements(self):
 		now = time.time()
 
-		grade = Grade()
+		grade = PersistentGrade()
 		grade.__name__ = 'foo@bar'
-
 
 		assert_that( grade, validly_provides(IGrade) )
 
@@ -49,19 +51,19 @@ class TestGrades(unittest.TestCase):
 
 	def test_unpickle_old_state(self):
 
-		grade = Grade()
-		grade.__name__ = 'foo@bar'
-
-		state = grade.__dict__.copy()
-		del state['createdTime']
-
-		grade = Grade.__new__(Grade)
-		grade.__setstate__(state)
-
-		assert_that( grade, has_property( 'createdTime', grade.lastModified ))
+		for clazz in (Grade, PersistentGrade):
+			grade = clazz()
+			grade.__name__ = 'foo@bar'
+	
+			state = grade.__dict__.copy()
+			del state['createdTime']
+	
+			grade = Grade.__new__(Grade)
+			grade.__setstate__(state)
+	
+			assert_that( grade, has_property( 'createdTime', grade.lastModified ))
 
 	def test_wref(self):
-
 		assert_that( calling(GradeWeakRef).with_args(Grade()),
 					 raises(TypeError))
 
@@ -95,6 +97,7 @@ from zope import interface
 
 @interface.implementer(IWeakRef)
 class _CheapWref(object):
+	
 	def __init__( self, gbe ):
 		self.gbe = gbe
 

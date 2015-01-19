@@ -16,9 +16,15 @@ does_not = is_not
 
 import unittest
 
-from nti.app.products.gradebook import grades
-from nti.app.products.gradebook import gradebook
-from nti.app.products.gradebook import interfaces as grades_interfaces
+from nti.app.products.gradebook.gradebook import GradeBook
+from nti.app.products.gradebook.gradebook import GradeBookPart
+from nti.app.products.gradebook.gradebook import GradeBookEntry
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeBookPart
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+
+from nti.app.products.gradebook.grades import PersistentGrade as Grade
 
 from nti.testing.matchers import verifiably_provides, validly_provides
 
@@ -29,30 +35,30 @@ class TestGradebook(unittest.TestCase):
 	layer = SharedConfiguringTestLayer
 
 	def test_interfaces(self):
-		gb = gradebook.GradeBook()
-		assert_that(gb, validly_provides(grades_interfaces.IGradeBook))
-		assert_that(gb, verifiably_provides(grades_interfaces.IGradeBook))
+		gb = GradeBook()
+		assert_that(gb, validly_provides(IGradeBook))
+		assert_that(gb, verifiably_provides(IGradeBook))
 
-		gbp = gradebook.GradeBookPart()
+		gbp = GradeBookPart()
 		gbp.order = 1
 		gbp.__parent__ = gb
 		gbp.__name__ = gbp.displayName = 'part'
-		assert_that(gbp, validly_provides(grades_interfaces.IGradeBookPart))
-		assert_that(gbp, verifiably_provides(grades_interfaces.IGradeBookPart))
+		assert_that(gbp, validly_provides(IGradeBookPart))
+		assert_that(gbp, verifiably_provides(IGradeBookPart))
 
-		gbe = gradebook.GradeBookEntry()
+		gbe = GradeBookEntry()
 		gbe.order = 1
 		gbe.__parent__ = gbp
 		gbe.assignmentId = 'xzy'
 		gbe.__name__ = gbe.displayName = 'entry'
-		assert_that(gbe, validly_provides(grades_interfaces.IGradeBookEntry))
-		assert_that(gbe, verifiably_provides(grades_interfaces.IGradeBookEntry))
+		assert_that(gbe, validly_provides(IGradeBookEntry))
+		assert_that(gbe, verifiably_provides(IGradeBookEntry))
 
 	def test_gradebook_entry_case_insensitive_for_contains(self):
 		# Because it should be case insensitive for everything,
 		# but we have existing objects that aren't. Sigh.
-		gbe = gradebook.GradeBookEntry()
-		grade = grades.Grade()
+		gbe = GradeBookEntry()
+		grade = Grade()
 
 		gbe['key'] = grade
 		assert_that( 'KEY', is_in(gbe) )
@@ -61,20 +67,20 @@ class TestGradebook(unittest.TestCase):
 		assert_that( gbe.__getitem__('KEY'), is_( grade ))
 		
 	def test_gradebook_delete(self):
-		book = gradebook.GradeBook()
+		book = GradeBook()
 		
-		part = gradebook.GradeBookPart()
+		part = GradeBookPart()
 		part.order = 1
 		part.displayName = 'part'
 		book['part'] = part
 		
-		entry = gradebook.GradeBookEntry()
+		entry = GradeBookEntry()
 		entry.order = 1
 		entry.assignmentId = 'xzy'
 		entry.displayName = 'entry'
 		part['entry'] = entry
 		
-		grade = grades.Grade()
+		grade = Grade()
 		entry['ichigo'] = grade
 		
 		assert_that(entry, has_key('ichigo'))

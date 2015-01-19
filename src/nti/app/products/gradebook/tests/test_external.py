@@ -21,13 +21,20 @@ from nti.dataserver.users import User
 from nti.externalization import externalization
 from nti.externalization import internalization
 
-from .. import grades
-from .. import gradebook
-from .. import gradescheme
+from nti.app.products.gradebook.gradebook import GradeBook
+from nti.app.products.gradebook.gradebook import GradeBookPart
+from nti.app.products.gradebook.gradebook import GradeBookEntry
+
+from nti.app.products.gradebook.grades import PersistentGrade as Grade
+
+from nti.app.products.gradebook.gradescheme import LetterGradeScheme
+from nti.app.products.gradebook.gradescheme import BooleanGradeScheme
+from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
+from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import SharedConfiguringTestLayer
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
 class TestExternal(unittest.TestCase):
 
@@ -38,7 +45,7 @@ class TestExternal(unittest.TestCase):
 		return usr
 
 	def test_grade(self):
-		g = grades.Grade(username='nt@nti.com',  grade=85.0)
+		g = Grade(username='nt@nti.com',  grade=85.0)
 		ext = externalization.to_external_object(g)
 		assert_that(ext, has_entry('Class', 'Grade'))
 		assert_that(ext, has_entry('value', is_(85.0)))
@@ -48,7 +55,7 @@ class TestExternal(unittest.TestCase):
 
 		factory = internalization.find_factory_for(ext)
 		newgrade = factory()
-		newgrade.__parent__ = gradebook.GradeBookEntry()
+		newgrade.__parent__ = GradeBookEntry()
 
 		internalization.update_from_external_object(newgrade, ext)
 		assert_that(newgrade, has_property('value', is_(85.0)))
@@ -60,7 +67,7 @@ class TestExternal(unittest.TestCase):
 			__parent__ = None
 			__name__ = 'CS1330'
 
-		gb = gradebook.GradeBook()
+		gb = GradeBook()
 		gb.__parent__ = Parent()
 		gb.creator = self._create_user()
 
@@ -75,9 +82,9 @@ class TestExternal(unittest.TestCase):
 	@WithMockDSTrans
 	def test_gradebookpart(self):
 
-		gb = gradebook.GradeBook()
+		gb = GradeBook()
 
-		gbp = gradebook.GradeBookPart()
+		gbp = GradeBookPart()
 		gbp.__parent__ = gb
 		gbp.Name = 'quizzes'
 		gbp.order = 1
@@ -98,10 +105,10 @@ class TestExternal(unittest.TestCase):
 	@WithMockDSTrans
 	def test_gradebookentry(self):
 
-		gbp = gradebook.GradeBookPart()
+		gbp = GradeBookPart()
 		gbp.__name__ = 'quizzes'
 
-		gbe = gradebook.GradeBookEntry()
+		gbe = GradeBookEntry()
 		gbe.__parent__ = gbp
 		gbe.order = 2
 		gbe.Name = 'quiz1'
@@ -124,19 +131,19 @@ class TestExternal(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_gradescheme(self):
-		s = gradescheme.BooleanGradeScheme()
+		s = BooleanGradeScheme()
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'BooleanGradeScheme'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.booleangradescheme'))
 
-		s = gradescheme.IntegerGradeScheme()
+		s = IntegerGradeScheme()
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'IntegerGradeScheme'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.integergradescheme'))
 		assert_that(ext, has_entry(u'min', 0))
 		assert_that(ext, has_entry(u'max', 100))
 
-		s = gradescheme.NumericGradeScheme(min=10.0, max=15.0)
+		s = NumericGradeScheme(min=10.0, max=15.0)
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'NumericGradeScheme'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.numericgradescheme'))
@@ -147,7 +154,7 @@ class TestExternal(unittest.TestCase):
 		internalization.update_from_external_object(scheme, ext)
 		assert_that(s, is_(scheme))
 
-		s = gradescheme.LetterGradeScheme()
+		s = LetterGradeScheme()
 		ext = externalization.to_external_object(s)
 		assert_that(ext, has_entry(u'Class', 'LetterGradeScheme'))
 		assert_that(ext, has_entry(u'MimeType', 'application/vnd.nextthought.gradebook.lettergradescheme'))

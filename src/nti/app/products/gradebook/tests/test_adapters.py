@@ -15,9 +15,9 @@ import unittest
 
 from nti.contenttypes.courses.courses import CourseInstance
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
 from nti.app.products.gradebook.interfaces import IGradeBook
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
