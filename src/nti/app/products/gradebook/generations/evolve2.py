@@ -30,7 +30,8 @@ from nti.dataserver.interfaces import IUser
 
 from ..interfaces import IGradeBook
 from ..grades import PersistentGrade
-		
+from ..index import install_grade_catalog
+
 def evolve_book(book, intids, instructor=None, ntiid=None):
 	
 	try:
@@ -75,12 +76,15 @@ def evolve_book(book, intids, instructor=None, ntiid=None):
 	return count
 		
 def do_evolve(context, generation=generation):
-
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
-	
 	lsm = dataserver_folder.getSiteManager()
 	intids = lsm.getUtility(zope.intid.IIntIds)
+	
+	# install grade catalog
+	install_grade_catalog(dataserver_folder, intids)
+	
+	# make grades persistent in all sites	
 	total = 0
 	sites = dataserver_folder['++etc++hostsites']
 	for site in sites.values():
