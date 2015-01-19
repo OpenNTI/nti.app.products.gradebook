@@ -115,6 +115,10 @@ def install_grade_catalog(site_manager_container, intids=None):
 	if intids is None:
 		intids = lsm.getUtility(IIntIds)
 
+	catalog = lsm.queryUtility(ICatalog, name=CATALOG_NAME)
+	if catalog is not None:
+		return catalog
+
 	catalog = GradeCatalog(family=intids.family)
 	locate(catalog, site_manager_container, CATALOG_NAME)
 	intids.register( catalog )
