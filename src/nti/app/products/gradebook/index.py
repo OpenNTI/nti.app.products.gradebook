@@ -33,12 +33,12 @@ from .interfaces import IGrade
 
 CATALOG_NAME = 'nti.dataserver.++etc++gradebook-catalog'
 
-IX_CREATOR = 'creator'
 IX_USERNAME = 'username'
 IX_GRADE_TYPE = 'gradeType'
 IX_GRADE_VALUE = 'gradeValue'
 IX_GRADE_COURSE = 'gradeCourse'
 IX_ASSIGNMENT_ID = 'assignmentId'
+IX_CREATOR = IX_INSTRUCTOR = 'creator'
 
 class AssignmentIdIndex(ValueIndex):
 	default_field_name = 'AssignmentId'
@@ -110,13 +110,13 @@ class CatalogEntryIDIndex(ValueIndex):
 class GradeCatalog(Catalog):
 	pass
 
-def install_grade_catalog( site_manager_container, intids=None ):
+def install_grade_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	if intids is None:
 		intids = lsm.getUtility(IIntIds)
 
 	catalog = GradeCatalog(family=intids.family)
-	locate(catalog, site_manager_container. CATALOG_NAME)
+	locate(catalog, site_manager_container, CATALOG_NAME)
 	intids.register( catalog )
 	lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_NAME )
 
@@ -124,7 +124,7 @@ def install_grade_catalog( site_manager_container, intids=None ):
 						 (IX_USERNAME, UsernameIndex),
 						 (IX_GRADE_VALUE, GradeValueIndex),
 						 (IX_GRADE_TYPE, GradeValueTypeIndex), 
-						 (IX_GRADE_COURSE, CatalogEntryIDIndex)
+						 (IX_GRADE_COURSE, CatalogEntryIDIndex),
 						 (IX_ASSIGNMENT_ID, AssignmentIdIndex)):
 		index = clazz( family=intids.family )
 		assert ICatalogIndex.providedBy(index)
