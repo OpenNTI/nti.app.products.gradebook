@@ -110,26 +110,39 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		sorted_usernames_by_grade = (x[0] for x in sorted_grades)
 		self._batch_items_iterable( result_dict, sorted_usernames_by_grade )
 
-	def _get_result_set(self, result_dict, gradebook, final_grade_entry):
-		"Do the sorting of users to return in the summary."
+	def _get_sorted_by_alias( self, result_dict, gradebook, sort_desc=False ):
+		"Get the batched/sorted result set by user alias."
+		gradebook_students = []
+		for part in gradebook.values():
+			for entry in part.values():
+				for username in entry.keys():
+					user = User.get_user( username )
+					user = IFriendlyNamed( user )
+					gradebook_students.append( (user.username, user.alias))
+
+		gradebook_students = sorted( gradebook_students, key=lambda x: x[1], reverse=sort_desc )
+		gradebook_students = (x[0] for x in gradebook_students)
+		self._batch_items_iterable( result_dict, gradebook_students )
+
+	def _get_username_result_set(self, result_dict, gradebook, final_grade_entry):
+		"Return a sorted collection of usernames that we will build our summary for."
 		sort_on = self.request.params.get('sortOn')
+		sort_on = sort_on and sort_on.lower()
 
 		# Ascending is default
 		sort_order = self.request.params.get('sortOrder')
 		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
-		# Username
 		if sort_on and sort_on == 'FinalGrade':
 			self._get_sorted_by_final_grades( result_dict, final_grade_entry, sort_descending )
 		elif sort_on and sort_on == 'Alias':
-			# TODO Alias
-			pass
+			self._get_sorted_by_alias( result_dict, gradebook, sort_descending )
 		else:
-			# Default by username
+			# Sorting by username is default
 			self._get_sorted_by_usernames( result_dict, gradebook, sort_descending )
 
 		# Pop our items that we want to return.
-		# We get our batch links for free.
+		# We have our batch links for free at this point.
 		return result_dict.pop( ITEMS )
 
 	def _get_assignment_for_course( self, course ):
@@ -210,7 +223,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		result_dict = LocatedExternalDict()
 		final_grade_entry = self._get_final_grade_entry( gradebook )
 		# We should have links here after batching.
-		usernames = self._get_result_set( result_dict, gradebook, final_grade_entry )
+		usernames = self._get_username_result_set( result_dict, gradebook, final_grade_entry )
 
 		result_dict[ ITEMS ] = items = []
 		result_dict['Class'] = 'GradeBookSummary'
