@@ -89,6 +89,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	Accepts the usual batch params as well as a sorting param.
 	"""
 
+	_DEFAULT_BATCH_SIZE = 50
+	_DEFAULT_BATCH_START = 0
+
 	def _get_sorted_usernames(self, result_dict, gradebook):
 		"Get the batched/sorted usernames."
 		gradebook_students = set()
@@ -179,7 +182,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		#		-overdue
 		# TODO Sorting
 		# TODO User links to assignment summaries
-		# TODO Use index?
+		# TODO Use assignment index?
 		gradebook = self.request.context.context
 		course = self.context.__parent__
 
