@@ -66,6 +66,7 @@ def remove_from_container(container, key, event=False):
     if event:
         del container[key]
     else:
+        # _delitemf calls ObjectEventRemoved
         container._delitemf(key)
         try:
             container.updateLastMod()

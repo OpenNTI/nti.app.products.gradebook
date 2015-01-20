@@ -54,11 +54,11 @@ def evolve_book(book, intids, instructor=None, grade_index=None):
 				new_grade.createdTime = grade.createdTime
 				new_grade.lastModified = grade.lastModified
 				
-				# add to connection
-				connection.add(new_grade)
-				
 				# remove old entry (no event)
 				entry._delitemf(username, event=False)
+				
+				# add to connection
+				connection.add(new_grade)
 				
 				# add persistent entry (no event)
 				entry._setitemf(username, new_grade)
