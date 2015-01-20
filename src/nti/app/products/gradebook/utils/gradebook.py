@@ -10,7 +10,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope.lifecycleevent import added
-from zope.lifecycleevent import removed
 from zope.location.location import locate
 
 from ZODB.interfaces import IConnection
@@ -67,10 +66,7 @@ def remove_from_container(container, key, event=False):
     if event:
         del container[key]
     else:
-        item = container[key]
         container._delitemf(key)
-        removed(item, container, key)
-        locate(item, parent=None, name=None)
         try:
             container.updateLastMod()
         except AttributeError:
