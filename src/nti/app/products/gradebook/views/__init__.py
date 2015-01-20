@@ -92,28 +92,45 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
 
-	def _get_sorted_usernames(self, result_dict, gradebook):
-		"Get the batched/sorted usernames."
+	def _get_sorted_by_usernames( self, result_dict, gradebook, sort_desc=False ):
+		"Get the batched/sorted result set by usernames."
 		gradebook_students = set()
 		for part in gradebook.values():
 			for entry in part.values():
 				gradebook_students.update( entry.keys() )
 
-		gradebook_students = sorted( gradebook_students )
+		gradebook_students = sorted( gradebook_students, reverse=sort_desc )
 		self._batch_items_iterable( result_dict, gradebook_students )
 
-	def _get_result_set(self, result_dict, gradebook):
-		"Do the sorting batching of usernames to return in the summary."
+	def _get_sorted_by_final_grades( self, result_dict, final_grade_entry, sort_desc=False ):
+		"Get the batched/sorted result set by final grade."
+		sorted_grades = sorted( final_grade_entry.items(),
+								key=lambda(_,v): v.value,
+								reverse=sort_desc )
+		sorted_usernames_by_grade = (x[0] for x in sorted_grades)
+		self._batch_items_iterable( result_dict, sorted_usernames_by_grade )
+
+	def _get_result_set(self, result_dict, gradebook, final_grade_entry):
+		"Do the sorting of users to return in the summary."
 		sort_on = self.request.params.get('sortOn')
 
+		# Ascending is default
+		sort_order = self.request.params.get('sortOrder')
+		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
+
 		# Username
-		if sort_on is None or sort_on == 'username':
-			self._get_sorted_usernames( result_dict, gradebook )
+		if sort_on and sort_on == 'FinalGrade':
+			self._get_sorted_by_final_grades( result_dict, final_grade_entry, sort_descending )
+		elif sort_on and sort_on == 'Alias':
+			# TODO Alias
+			pass
 		else:
-			# Default
-			self._get_sorted_usernames( result_dict, gradebook )
-		# TODO Alias
-		# TODO Final grade
+			# Default by username
+			self._get_sorted_by_usernames( result_dict, gradebook, sort_descending )
+
+		# Pop our items that we want to return.
+		# We get our batch links for free.
+		return result_dict.pop( ITEMS )
 
 	def _get_assignment_for_course( self, course ):
 		assignment_catalog = ICourseAssignmentCatalog( course )
@@ -183,20 +200,22 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# TODO Sorting
 		# TODO User links to assignment summaries
 		# TODO Use assignment index?
+		# TODO We could cache on the gradebook, but the
+		# overdue/ungraded counts could change.
 		gradebook = self.request.context.context
 		course = self.context.__parent__
 
-		# Get our result username set
+		# Get the usernames we want to return results for.
 		# We want to do our batching first for speed.
 		result_dict = LocatedExternalDict()
-		self._get_result_set( result_dict, gradebook )
-		usernames = result_dict.pop( ITEMS )
+		final_grade_entry = self._get_final_grade_entry( gradebook )
+		# We should have links here after batching.
+		usernames = self._get_result_set( result_dict, gradebook, final_grade_entry )
 
 		result_dict[ ITEMS ] = items = []
 		result_dict['Class'] = 'GradeBookSummary'
 
 		assignments = self._get_assignment_for_course( course )
-		final_grade_entry = self._get_final_grade_entry( gradebook )
 
 		# Now build our data for each user
 		for username in usernames:
