@@ -14,6 +14,8 @@ from functools import partial
 from zope import component
 from zope.annotation.interfaces import IAnnotations
 
+from zope.catalog.interfaces import ICatalog
+
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -41,6 +43,9 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
+
+from .index import IX_STUDENT
+from .index import CATALOG_NAME
 
 from .grades import PersistentGrade
 
@@ -240,6 +245,23 @@ def _remove_grade_created_event(grade, event):
 		# hmm...
 		pass
 
+def unindex_grade_data(username):
+	result = 0
+	catalog = component.queryUtility(ICatalog, name=CATALOG_NAME)
+	if catalog is not None:
+		index = catalog[IX_STUDENT]
+		# normalize
+		if isinstance(username, bytes):
+			username = username.decode('utf-8')
+		username = username.lower().strip()
+		# get all doc ids (it's a wrapper)
+		values_to_documents = index.index.values_to_documents
+		docs = values_to_documents.get(username) or ()
+		for uid in list(docs):
+			catalog.unindex_doc(uid)
+			result +=1
+	return result
+
 def delete_user_data(user):
 	username = user.username
 	for enrollments in component.subscribers( (user,), IPrincipalEnrollments):
@@ -252,5 +274,6 @@ def delete_user_data(user):
 @component.adapter(IUser, IWillDeleteEntityEvent)
 def _on_user_will_be_removed(user, event):
 	logger.info("Removing gradebook data for user %s", user)
+	unindex_grade_data(user.username)
 	func = partial(delete_user_data, user=user)
 	run_job_in_all_host_sites(func)
