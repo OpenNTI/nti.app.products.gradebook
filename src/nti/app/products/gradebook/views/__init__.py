@@ -134,6 +134,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		#		-overdue
 		# TODO Sorting
 		# TODO User links to assignment summaries
+		# TODO Use index?
 		gradebook = self.request.context.context
 
 		# Get our result username set
@@ -154,9 +155,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			final_grade = self._get_user_final_grade( final_grade_entry, username )
 			user_dict = {}
 			user_dict['class'] = 'UserGradeBookSummary'
-			user_dict['username'] = username
-			user_dict['alias'] = user.alias
-			user_dict['Final Grade'] = final_grade
+			user_dict['Username'] = username
+			user_dict['Alias'] = user.alias
+			user_dict['FinalGrade'] = final_grade
 			user_dict['OverdueAssignmentCount'] = None
 			user_dict['UngradedAssignmentCount'] = None
 			items.append( user_dict )
@@ -177,18 +178,18 @@ class GradePutView(AbstractAuthenticatedView,
 	def _do_call(self):
 		theObject = self.request.context
 		theObject.creator = self.getRemoteUser()
-		
+
 		# perform checks
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-		
+
 		# update from external
 		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)
-		
+
 		# update last modified
 		theObject.updateLastMod()
-		
+
 		logger.info("'%s' updated grade '%s' for user '%s'",
 					self.getRemoteUser(),
 					theObject.AssignmentId,

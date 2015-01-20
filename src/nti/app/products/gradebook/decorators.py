@@ -118,7 +118,7 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		gradebook_shell['Class'] = "GradeBook"
 		_links = gradebook_shell.setdefault(LINKS, [])
 		book = IGradeBook( course )
-		for name in ('GradeBookSummary','GradebookByAssignment','GradebookByUser'):
+		for name in ('GradeBookSummary','GradeBookByAssignment','GradeBookByUser'):
 			link = Link(book, rel=name, elements=(name,))
 			_links.append(link)
 
