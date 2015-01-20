@@ -61,14 +61,18 @@ class GradePutView(AbstractAuthenticatedView,
 	def _do_call(self):
 		theObject = self.request.context
 		theObject.creator = self.getRemoteUser()
-
+		
+		# perform checks
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-
+		
+		# update from external
 		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)
+		
+		# update last modified
 		theObject.updateLastMod()
-
+		
 		logger.info("'%s' updated grade '%s' for user '%s'",
 					self.getRemoteUser(),
 					theObject.AssignmentId,
