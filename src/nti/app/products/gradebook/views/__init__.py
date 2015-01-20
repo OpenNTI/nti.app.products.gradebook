@@ -69,6 +69,11 @@ class GradePutView(AbstractAuthenticatedView,
 		self.updateContentObject(theObject, externalValue)
 		theObject.updateLastMod()
 
+		logger.info("'%s' updated grade '%s' for user '%s'",
+					self.getRemoteUser(),
+					theObject.AssignmentId,
+					theObject.Username)
+
 		return theObject
 
 @view_config(route_name='objects.generic.traversal',
@@ -149,7 +154,6 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
 		result = super(GradeWithoutSubmissionPutView,self)._do_call()
 		return result
-
 
 from zope import lifecycleevent
 
