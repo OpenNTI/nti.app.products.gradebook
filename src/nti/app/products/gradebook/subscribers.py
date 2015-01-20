@@ -234,7 +234,8 @@ def _store_grade_created_event(grade, event):
 @component.adapter(IGrade, IObjectRemovedEvent)
 def _remove_grade_created_event(grade, event):
 	try:
-		del _get_entry_change_storage(grade.__parent__)[grade.Username]
+		storage = _get_entry_change_storage(grade.__parent__)
+		del storage[grade.Username]
 	except KeyError:
 		# hmm...
 		pass
