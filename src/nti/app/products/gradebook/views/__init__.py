@@ -16,6 +16,8 @@ from .. import MessageFactory
 import nameparser
 from collections import OrderedDict
 
+from datetime import datetime
+
 from zope import component
 from zope import interface
 from zope.container.contained import Contained
@@ -24,6 +26,9 @@ from zope.traversing.interfaces import IPathAdapter
 
 from pyramid.view import view_config
 from pyramid.interfaces import IRequest
+
+from nti.app.assessment.interfaces import ICourseAssignmentCatalog
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -73,7 +78,7 @@ class GradeBookPathAdapter(Contained):
 			 name='GradeBookSummary',
 			 request_method='GET')
 class GradeBookSummaryView(AbstractAuthenticatedView,
-				  	 BatchingUtilsMixin):
+				  			BatchingUtilsMixin):
 	"""
 	Return the gradebook summary
 
@@ -85,10 +90,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	"""
 
 	def _get_sorted_usernames(self, result_dict, gradebook):
+		"Get the batched/sorted usernames."
 		gradebook_students = set()
 		for part in gradebook.values():
 			for entry in part.values():
-				gradebook_students.update(entry.keys())
+				gradebook_students.update( entry.keys() )
 
 		gradebook_students = sorted( gradebook_students )
 		self._batch_items_iterable( result_dict, gradebook_students )
@@ -106,7 +112,12 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# TODO Alias
 		# TODO Final grade
 
-	def _get_final_grade_entry(self, gradebook):
+	def _get_assignment_for_course( self, course ):
+		assignment_catalog = ICourseAssignmentCatalog( course )
+		assignments = [asg for asg in assignment_catalog.iter_assignments()]
+		return assignments
+
+	def _get_final_grade_entry( self, gradebook ):
 		for part in gradebook.values():
 			for part_name, entry in part.items():
 				if 		part.__name__ == NO_SUBMIT_PART_NAME \
@@ -114,9 +125,30 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 					return entry
 		return None
 
-	def _get_user_stats(self, gradebook, username):
+	def _get_user_stats( self, gradebook, user, assignments, course ):
 		"Return overdue/ungraded stats for user."
-		pass
+		overdue_count = 0
+		ungraded_count = 0
+		today = datetime.utcnow()
+		user_histories = component.getMultiAdapter( ( course, user ),
+												IUsersCourseAssignmentHistory )
+
+		for assignment in assignments:
+			grade = gradebook.getColumnForAssignmentId( assignment.ntiid )
+			user_grade = grade.get( user.username )
+			history_item = user_histories.get( assignment.ntiid )
+
+			# Submission but no grade
+			if history_item and user_grade is None:
+				ungraded_count += 1
+
+			# No submission and past due
+			if 		history_item is None \
+				and assignment.available_for_submission_ending \
+				and today > assignment.available_for_submission_ending:
+				overdue_count += 1
+
+		return overdue_count, ungraded_count
 
 	def _get_user_final_grade(self, entry, username):
 		final_grade = entry.get( username )
@@ -124,6 +156,22 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		if final_grade is not None:
 			result = final_grade.value
 		return result
+
+	def _get_user_dict( self, username, gradebook, final_grade_entry, assignments, course ):
+		"Returns a user's gradebook summary."
+		user = User.get_user( username )
+		final_grade = self._get_user_final_grade( final_grade_entry, username )
+		overdue, ungraded = self._get_user_stats( gradebook, user, assignments, course )
+
+		user = IFriendlyNamed( user )
+		user_dict = {}
+		user_dict['Class'] = 'UserGradeBookSummary'
+		user_dict['Username'] = username
+		user_dict['Alias'] = user.alias
+		user_dict['FinalGrade'] = final_grade
+		user_dict['OverdueAssignmentCount'] = overdue
+		user_dict['UngradedAssignmentCount'] = ungraded
+		return user_dict
 
 	def __call__(self):
 		# TODO Filtering
@@ -133,6 +181,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# TODO User links to assignment summaries
 		# TODO Use index?
 		gradebook = self.request.context.context
+		course = self.context.__parent__
 
 		# Get our result username set
 		# We want to do our batching first for speed.
@@ -141,24 +190,16 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		usernames = result_dict.pop( ITEMS )
 
 		result_dict[ ITEMS ] = items = []
-		result_dict['class'] = 'GradeBookSummary'
+		result_dict['Class'] = 'GradeBookSummary'
 
-		# Final grade
+		assignments = self._get_assignment_for_course( course )
 		final_grade_entry = self._get_final_grade_entry( gradebook )
 
+		# Now build our data for each user
 		for username in usernames:
-			user = User.get_user( username )
-			user = IFriendlyNamed( user )
-			final_grade = self._get_user_final_grade( final_grade_entry, username )
-			user_dict = {}
-			user_dict['Class'] = 'UserGradeBookSummary'
-			user_dict['Username'] = username
-			user_dict['Alias'] = user.alias
-			user_dict['FinalGrade'] = final_grade
-			user_dict['OverdueAssignmentCount'] = None
-			user_dict['UngradedAssignmentCount'] = None
+			user_dict = self._get_user_dict( username, gradebook, final_grade_entry, assignments, course )
 			items.append( user_dict )
-		# Now populate with the data we need
+
 		return result_dict
 
 @view_config(route_name='objects.generic.traversal',
@@ -251,7 +292,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 	"""
 	Called to put to a grade that doesn't yet exist.
 	"""
-	
+
 	#: We don't want extra catching of key errors
 	_EXTRA_INPUT_ERRORS = ()
 
