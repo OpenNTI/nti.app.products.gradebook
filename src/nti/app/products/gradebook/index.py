@@ -21,6 +21,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 	
 from nti.dataserver.interfaces import ICreatedUsername
+from nti.dataserver.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.catalog import Catalog
 from nti.zope_catalog.index import NormalizationWrapper
@@ -105,24 +106,31 @@ class ValidatingGradeCatalogEntryID(object):
 class CatalogEntryIDIndex(ValueIndex):
 	default_field_name = 'ntiid'
 	default_interface = ValidatingGradeCatalogEntryID
+
+@interface.implementer(IMetadataCatalog)
+class MetadataGradeCatalog(Catalog):
 	
-@interface.implementer(ICatalog)
-class GradeCatalog(Catalog):
-	pass
+	super_index_doc = Catalog.index_doc
+
+	def index_doc(self, docid, ob):
+		pass
+
+	def force_index_doc(self, docid, ob):
+		self.super_index_doc( docid, ob)
 
 def install_grade_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	if intids is None:
 		intids = lsm.getUtility(IIntIds)
 
-	catalog = lsm.queryUtility(ICatalog, name=CATALOG_NAME)
+	catalog = lsm.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
 	if catalog is not None:
 		return catalog
 
-	catalog = GradeCatalog(family=intids.family)
+	catalog = MetadataGradeCatalog(family=intids.family)
 	locate(catalog, site_manager_container, CATALOG_NAME)
 	intids.register( catalog )
-	lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_NAME )
+	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME )
 
 	for name, clazz in ( (IX_CREATOR, CreatorIndex),
 						 (IX_USERNAME, UsernameIndex),
@@ -137,3 +145,11 @@ def install_grade_catalog(site_manager_container, intids=None):
 		catalog[name] = index
 
 	return catalog
+
+# deprecated 
+from zope.deprecation import deprecated
+
+deprecated("GradeCatalog", "use MetadataGradeCatalog")
+@interface.implementer(ICatalog)
+class GradeCatalog(Catalog):
+	pass
