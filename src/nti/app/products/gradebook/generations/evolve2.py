@@ -32,6 +32,29 @@ from ..interfaces import IGradeBook
 from ..grades import PersistentGrade
 from ..index import install_grade_catalog
 
+def copy_grade(grade, instructor, username):
+	new_grade = PersistentGrade()
+	new_grade.value = grade.value
+	new_grade.creator = instructor
+	new_grade.username = username
+	new_grade.AutoGrade = grade.AutoGrade
+	new_grade.createdTime = grade.createdTime
+	new_grade.lastModified = grade.lastModified
+	return new_grade
+		
+def pick_course_instructor(course):
+	instructor = None
+	roles = IPrincipalRoleMap(course, None)
+	for principal in course.instructors or ():
+		try:
+			if 	roles is None or \
+				roles.getSetting(RID_INSTRUCTOR, principal.id) is Allow:
+				instructor = IUser(principal)
+				break
+		except (TypeError,IndexError,AttributeError):
+			instructor = None
+	return instructor
+
 def evolve_book(book, intids, instructor=None, grade_index=None):
 	
 	try:
@@ -46,13 +69,7 @@ def evolve_book(book, intids, instructor=None, grade_index=None):
 		for entry in part.values():
 			for username, grade in list(entry.items()):								
 				# create new grade
-				new_grade = PersistentGrade()
-				new_grade.value = grade.value
-				new_grade.creator = instructor
-				new_grade.username = username
-				new_grade.AutoGrade = grade.AutoGrade
-				new_grade.createdTime = grade.createdTime
-				new_grade.lastModified = grade.lastModified
+				new_grade = copy_grade(grade, instructor, username)
 				
 				# remove old entry (no event)
 				entry._delitemf(username, event=False)
@@ -108,28 +125,22 @@ def do_evolve(context, generation=generation):
 				seen.add(entry.ntiid)
 				
 				# pick an instructor
-				instructor = None
-				roles = IPrincipalRoleMap(course, None)
-				for principal in course.instructors or ():
-					try:
-						if 	roles is None or \
-							roles.getSetting(RID_INSTRUCTOR, principal.id) is Allow:
-							instructor = IUser(principal)
-							break
-					except (TypeError,IndexError,AttributeError):
-						instructor = None
-		
+				instructor = pick_course_instructor(course)
+			
 				book = IGradeBook(course)
 				count = evolve_book(book, intids, instructor, grade_index)
 				total += count
 
-				logger.info('%s grades(s) updated for course %s',
+				logger.info('%s grade(s) updated for course %s',
 							count, entry.ntiid)
 
-	logger.info('Gradebook evolution %s done; %s grades(s) updated',
+	logger.info('Gradebook evolution %s done; %s grade(s) updated',
 				generation, total)
 	
 	return total
 			
 def evolve(context):
+	"""
+	Evolve to generation 2 by making all grades persisent
+	"""
 	do_evolve(context, generation)
