@@ -7,7 +7,6 @@ Views and other functions related to grades and gradebook.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from collections import OrderedDict
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,9 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from .. import MessageFactory
 
 import nameparser
+from collections import OrderedDict
 
 from zope import component
 from zope import interface
+from zope.container.contained import Contained
+
 from zope.traversing.interfaces import IPathAdapter
 
 from pyramid.view import view_config
@@ -42,9 +44,9 @@ from nti.externalization.externalization import StandardExternalFields
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
-from ..interfaces import IUsernameSortSubstitutionPolicy
 from ..interfaces import ACT_VIEW_GRADES
 from ..interfaces import NO_SUBMIT_PART_NAME
+from ..interfaces import IUsernameSortSubstitutionPolicy
 
 from ..utils import remove_from_container
 
@@ -52,7 +54,6 @@ from ..grades import PersistentGrade as Grade
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
-from zope.container.contained import Contained
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
@@ -85,14 +86,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_sorted_usernames(self, result_dict, gradebook):
 		gradebook_students = set()
-
 		for part in gradebook.values():
 			for entry in part.values():
-				for username in entry.keys():
-					gradebook_students.add( username )
+				gradebook_students.update(entry.keys())
 
 		gradebook_students = sorted( gradebook_students )
-
 		self._batch_items_iterable( result_dict, gradebook_students )
 
 	def _get_result_set(self, result_dict, gradebook):
@@ -107,7 +105,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			self._get_sorted_usernames( result_dict, gradebook )
 		# TODO Alias
 		# TODO Final grade
-
 
 	def _get_final_grade_entry(self, gradebook):
 		for part in gradebook.values():
@@ -154,7 +151,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			user = IFriendlyNamed( user )
 			final_grade = self._get_user_final_grade( final_grade_entry, username )
 			user_dict = {}
-			user_dict['class'] = 'UserGradeBookSummary'
+			user_dict['Class'] = 'UserGradeBookSummary'
 			user_dict['Username'] = username
 			user_dict['Alias'] = user.alias
 			user_dict['FinalGrade'] = final_grade
@@ -251,8 +248,10 @@ from ..utils import record_grade_without_submission
 			 context='nti.app.products.gradebook.gradebook.GradeWithoutSubmission',
 			 request_method='PUT')
 class GradeWithoutSubmissionPutView(GradePutView):
-	"Called to put to a grade that doesn't yet exist."
-
+	"""
+	Called to put to a grade that doesn't yet exist.
+	"""
+	
 	#: We don't want extra catching of key errors
 	_EXTRA_INPUT_ERRORS = ()
 
@@ -334,10 +333,6 @@ import collections
 from cStringIO import StringIO
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
-
-from nti.externalization.interfaces import LocatedExternalList
-
-from ..interfaces import NO_SUBMIT_PART_NAME
 
 def _replace(username):
 	substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
