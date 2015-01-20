@@ -93,8 +93,9 @@ def do_evolve(context, generation=generation):
 				count = check_book(book, intids, instructor, grade_index)
 				total += count
 
-				logger.info('%s grade(s) updated for course %s',
-							count, entry.ntiid)
+				if count:
+					logger.info('%s grade(s) updated for course %s',
+								count, entry.ntiid)
 
 	logger.info('Gradebook evolution %s done; %s grade(s) updated',
 				generation, total)
