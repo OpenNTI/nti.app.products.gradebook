@@ -32,7 +32,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.links import Link
-from nti.dataserver.users import User 
+from nti.dataserver.users import User
 from nti.dataserver.traversal import find_interface
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -41,6 +41,7 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
+from nti.externalization.externalization import LocatedExternalDict
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
@@ -70,7 +71,7 @@ def _find_course_for_user(data, user):
 
 	if ICourseCatalogEntry.providedBy(data):
 		data = ICourseInstance(data)
-		
+
 	if ICourseInstance.providedBy(data):
 		# Yay, they gave us one directly!
 		course = data
@@ -111,11 +112,17 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		return self.course is not None and _grades_readable(self.course)
 
 	def _do_decorate_external(self, course, result):
+		gradebook_shell = LocatedExternalDict()
 		course = self.course
-		_links = result.setdefault(LINKS, [])
-		book = IGradeBook(course)
-		link = Link(book, rel="GradeBook")
-		_links.append(link)
+		result['GradeBook'] = gradebook_shell
+		gradebook_shell['Class'] = "GradeBook"
+		_links = gradebook_shell.setdefault(LINKS, [])
+		book = IGradeBook( course )
+		for name in ('GradeBookSummary','GradebookByAssignment','GradebookByUser'):
+			link = Link(book, rel=name, elements=(name,))
+			_links.append(link)
+
+		return result
 
 @interface.implementer(IExternalMappingDecorator)
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -150,19 +157,19 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
 	def _do_decorate_external(self, context, result):
 		user = User.get_user(context.Username) if context.Username else None
 		course = find_interface(context, ICourseInstance, strict=False)
-		user_history = component.queryMultiAdapter(	(course, user), 
+		user_history = component.queryMultiAdapter(	(course, user),
 													IUsersCourseAssignmentHistory )
-		
+
 		if not user_history:
 			return
-		
+
 		for item in user_history.values():
 			if item.assignmentId == context.AssignmentId:
 				links = result.setdefault(LINKS, [])
 				link = Link(item, rel='AssignmentHistoryItem')
 				links.append(link)
 				return
-		
+
 @component.adapter(IGrade)
 @interface.implementer(IExternalMappingDecorator)
 class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -179,7 +186,7 @@ class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			rel = 'excuse' if not IExcusedGrade.providedBy(context) else 'unexcuse'
 			link = Link(context, elements=(rel,), rel=rel, method='POST')
 			links.append(link)
-			
+
 from .interfaces import ISubmittedAssignmentHistory
 from .interfaces import ISubmittedAssignmentHistorySummaries
 
@@ -212,7 +219,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		self.course = find_interface(self.request.context, ICourseInstance,
 									 strict=False)
 		if self.course is not None:
-			logger.log(loglevels.TRACE, 
+			logger.log(loglevels.TRACE,
 					   "Using course instance from request %r for context %s",
 					   self.request.context, context)
 		if self.course is None:

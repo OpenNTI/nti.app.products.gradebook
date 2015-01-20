@@ -7,6 +7,7 @@ Views and other functions related to grades and gradebook.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from collections import OrderedDict
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,22 +31,137 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
+from nti.dataserver.links import Link
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.externalization.interfaces import LocatedExternalList
+from nti.externalization.externalization import LocatedExternalDict
+from nti.externalization.externalization import StandardExternalFields
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
 from ..interfaces import IUsernameSortSubstitutionPolicy
+from ..interfaces import ACT_VIEW_GRADES
+from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..utils import remove_from_container
 
 from ..grades import PersistentGrade as Grade
 
+LINKS = StandardExternalFields.LINKS
+ITEMS = StandardExternalFields.ITEMS
+from zope.container.contained import Contained
+
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
-def GradeBookPathAdapter(context, request):
-	result = IGradeBook(context)
-	return result
+class GradeBookPathAdapter(Contained):
+
+	__name__ = 'GradeBook'
+
+	def __init__(self, context, request):
+		self.context = IGradeBook(context)
+		self.request = request
+		self.__parent__ = context
+
+@view_config(route_name='objects.generic.traversal',
+			 permission=ACT_VIEW_GRADES,
+			 renderer='rest',
+			 context=GradeBookPathAdapter,
+			 name='GradeBookSummary',
+			 request_method='GET')
+class GradeBookSummaryView(AbstractAuthenticatedView,
+				  	 BatchingUtilsMixin):
+	"""
+	Return the gradebook summary
+
+	--overdue, assessments, etc
+
+	--batch first before we do work
+
+	Accepts the usual batch params as well as a sorting param.
+	"""
+
+	def _get_sorted_usernames(self, result_dict, gradebook):
+		gradebook_students = set()
+
+		for part in gradebook.values():
+			for entry in part.values():
+				for username in entry.keys():
+					gradebook_students.add( username )
+
+		gradebook_students = sorted( gradebook_students )
+
+		self._batch_items_iterable( result_dict, gradebook_students )
+
+	def _get_result_set(self, result_dict, gradebook):
+		"Do the sorting batching of usernames to return in the summary."
+		sort_on = self.request.params.get('sortOn')
+
+		# Username
+		if sort_on is None or sort_on == 'username':
+			self._get_sorted_usernames( result_dict, gradebook )
+		else:
+			# Default
+			self._get_sorted_usernames( result_dict, gradebook )
+		# TODO Alias
+		# TODO Final grade
+
+
+	def _get_final_grade_entry(self, gradebook):
+		for part in gradebook.values():
+			for part_name, entry in part.items():
+				if 		part.__name__ == NO_SUBMIT_PART_NAME \
+					and part_name == 'Final Grade':
+					return entry
+		return None
+
+	def _get_user_stats(self, gradebook, username):
+		"Return overdue/ungraded stats for user."
+		pass
+
+	def _get_user_final_grade(self, entry, username):
+		final_grade = entry.get( username )
+		result = None
+		if final_grade is not None:
+			result = final_grade.value
+		return result
+
+	def __call__(self):
+		# TODO Filtering
+		#		-incomplete
+		#		-overdue
+		# TODO Sorting
+		# TODO User links to assignment summaries
+		gradebook = self.request.context.context
+
+		# Get our result username set
+		# We want to do our batching first for speed.
+		result_dict = LocatedExternalDict()
+		self._get_result_set( result_dict, gradebook )
+		usernames = result_dict.pop( ITEMS )
+
+		result_dict[ ITEMS ] = items = []
+		result_dict['class'] = 'GradeBookSummary'
+
+		# Final grade
+		final_grade_entry = self._get_final_grade_entry( gradebook )
+
+		for username in usernames:
+			user = User.get_user( username )
+			user = IFriendlyNamed( user )
+			final_grade = self._get_user_final_grade( final_grade_entry, username )
+			user_dict = {}
+			user_dict['class'] = 'UserGradeBookSummary'
+			user_dict['username'] = username
+			user_dict['alias'] = user.alias
+			user_dict['Final Grade'] = final_grade
+			user_dict['OverdueAssignmentCount'] = None
+			user_dict['UngradedAssignmentCount'] = None
+			items.append( user_dict )
+		# Now populate with the data we need
+		return result_dict
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
@@ -145,7 +261,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		username = self.request.context.__name__
 		user = User.get_user(username)
 		assignmentId = entry.AssignmentId
-		
+
 		grade = record_grade_without_submission(entry, user, assignmentId)
 		if grade is not None:
 			## place holder grade was inserted
@@ -315,7 +431,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.append( ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
 					 # Assignment names could theoretically have non-ascii chars
 					 + [_tx_string(x[0]) + ' Points Grade' for x in sorted_asg_names]
-					 + ['Adjusted Final Grade Numerator', 
+					 + ['Adjusted Final Grade Numerator',
 					 	'Adjusted Final Grade Denominator']
 					 + ['End-of-Line Indicator'] )
 

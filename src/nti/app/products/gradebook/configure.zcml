@@ -14,7 +14,7 @@
 	<utility factory=".generations.install._GradeBookSchemaManager"
 			 name="nti.dataserver-products-gradebook"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
-			 
+
 	<!-- I18N -->
 	<i18n:registerTranslations directory="locales" />
 
@@ -57,13 +57,13 @@
 	<!-- ... to containing course -->
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGrade" />
-			 
+
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBook" />
-			 
+
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBookPart" />
-			 
+
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBookEntry" />
 
@@ -72,7 +72,7 @@
 	<adapter factory=".adapters.grade_for_history_item"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGrade" />
-			 
+
 	<adapter factory=".adapters.grade_for_history_item"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemSummary"
 			 provides=".interfaces.IGrade" />
@@ -210,19 +210,19 @@
 		title="Gradebook Settings"
 		schema=".interfaces.IGradebookSettings"
 		category="true" />
-		
+
 	<!-- Grading -->
 	<include package=".grading" />
-	
-	<utility factory=".gradescheme.LetterGradeScheme" 
+
+	<utility factory=".gradescheme.LetterGradeScheme"
 			 provides=".interfaces.ILetterGradeScheme" />
-			 
-	<utility factory=".gradescheme.LetterGradeScheme" 
-			 provides=".interfaces.ILetterGradeScheme" 
+
+	<utility factory=".gradescheme.LetterGradeScheme"
+			 provides=".interfaces.ILetterGradeScheme"
 			 name="letter" />
-	
-	<utility factory=".gradescheme.LetterGradeScheme" 
+
+	<utility factory=".gradescheme.LetterGradeScheme"
 			 provides=".interfaces.ILetterGradeScheme"
 			 name="letter_grade" />
-	
+
 </configure>
