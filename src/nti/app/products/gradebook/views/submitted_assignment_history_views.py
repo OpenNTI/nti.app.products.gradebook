@@ -261,11 +261,11 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# (if we just use column.items(), we always get ascending)
 		grade_column = self.grade_column
 		in_gradebook = [k for k in sorted_usernames if k in grade_column ]
-		
+
 		sorted_items_by_grade_attribute = sorted( ( (k, grade_column[k]) for k in in_gradebook),
 													key=key,
 													reverse=sort_reverse )
-		
+
 		sorted_usernames_by_grade_attribute = map(operator.itemgetter(0),
 												  sorted_items_by_grade_attribute)
 		# Now everyone that has no grade is always at the end, sorted by username.
@@ -399,7 +399,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 												  key=grade_key )
 
 	def _do_sort_username(self, filter_usernames, sort_reverse, placeholder=True):
-		
+
 		substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
 		def _key(username):
 			if substituter is None:
@@ -516,7 +516,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 			result['FilteredTotalItemCount'] = len(filter_usernames)
 
 		result['TotalNonNullItemCount'] = len(context)
-		
+
 		grade_column_set = {x.lower() for x in grade_column}
 		result['FilteredTotalNonNullItemCount'] = len( grade_column_set & set(filter_usernames) )
 

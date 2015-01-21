@@ -62,19 +62,14 @@ ITEMS = StandardExternalFields.ITEMS
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
-class GradeBookPathAdapter(Contained):
-
-	__name__ = 'GradeBook'
-
-	def __init__(self, context, request):
-		self.context = IGradeBook(context)
-		self.request = request
-		self.__parent__ = context
+def GradeBookPathAdapter( context, request ):
+	result = IGradeBook(context)
+	return result
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=ACT_VIEW_GRADES,
 			 renderer='rest',
-			 context=GradeBookPathAdapter,
+			 context=IGradeBook,
 			 name='GradeBookSummary',
 			 request_method='GET')
 class GradeBookSummaryView(AbstractAuthenticatedView,
@@ -118,7 +113,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 				for username in entry.keys():
 					user = User.get_user( username )
 					user = IFriendlyNamed( user )
-					gradebook_students.append( (user.username, user.alias))
+					gradebook_students.append( (user.username, user.alias) )
 
 		gradebook_students = sorted( gradebook_students, key=lambda x: x[1], reverse=sort_desc )
 		gradebook_students = (x[0] for x in gradebook_students)
@@ -210,12 +205,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# TODO Filtering
 		#		-incomplete
 		#		-overdue
-		# TODO Sorting
 		# TODO User links to assignment summaries
 		# TODO Use assignment index?
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
-		gradebook = self.request.context.context
+		gradebook = self.request.context
 		course = self.context.__parent__
 
 		# Get the usernames we want to return results for.
