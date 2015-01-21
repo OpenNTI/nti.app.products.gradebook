@@ -112,15 +112,24 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 
 	def _do_decorate_external(self, course, result):
 		course = self.course
+		# For backwards compatibility
+		_links = result.setdefault(LINKS, [])
+		link = Link( IGradeBook( course ), rel="GradeBook" )
+		_links.append( link )
+
 		gradebook_shell = {}
 		result['GradeBook'] = gradebook_shell
 		gradebook_shell['Class'] = "GradeBook"
 		_links = gradebook_shell.setdefault(LINKS, [])
-		book = IGradeBook( course )
-		for name in ('GradeBookSummary','GradeBookByAssignment','GradeBookByUser'):
-			link = Link(book, rel=name, elements=(name,))
-			_links.append(link)
+		gradebook = IGradeBook( course )
 
+		rel_map = {	'ExportContents': 'contents.csv',
+					'GradeBookByUser': 'GradeBookByUser',
+					'GradeBookSummary': 'GradeBookSummary',
+					'GradeBookByAssignment': 'GradeBookByAssignment'}
+		for rel, element in rel_map.items():
+			link = Link( gradebook, rel=rel, elements=(element,) )
+			_links.append( link )
 		return result
 
 @interface.implementer(IExternalMappingDecorator)
@@ -130,6 +139,7 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return self._is_authenticated and _grades_readable(context)
 
 	def _do_decorate_external(self, book, result):
+		# FIXME This can go away soon.
 		rel_map = {	'ExportContents': 'contents.csv',
 					'GradeBookByUser': 'GradeBookByUser',
 					'GradeBookSummary': 'GradeBookSummary',
