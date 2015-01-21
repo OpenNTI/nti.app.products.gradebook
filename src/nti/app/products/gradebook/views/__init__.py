@@ -205,17 +205,10 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['UngradedAssignmentCount'] = ungraded
 
 		# Link to user's assignment histories
-		enrollment = component.queryMultiAdapter((course, user),
-												 ICourseInstanceEnrollment )
-		# TODO Need a way to get user's grades even
-		# when they are no longer enrolled.
-		if enrollment is not None:
-			# TODO Shouldnt this occur when we adapt?
-			enrollment.xxx_fill_in_parent()
-			links = user_dict.setdefault( LINKS, [] )
-			links.append( Link( enrollment,
-								rel='AssignmentHistory',
-								elements=('AssignmentHistories', user.username)) )
+		links = user_dict.setdefault( LINKS, [] )
+		links.append( Link( course,
+							rel='AssignmentHistory',
+							elements=('AssignmentHistories', user.username)) )
 		return user_dict
 
 	def __call__(self):
