@@ -41,7 +41,6 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
-from nti.externalization.externalization import LocatedExternalDict
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
@@ -112,17 +111,9 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		return self.course is not None and _grades_readable(self.course)
 
 	def _do_decorate_external(self, course, result):
-		gradebook_shell = LocatedExternalDict()
-		course = self.course
-		result['GradeBook'] = gradebook_shell
-		gradebook_shell['Class'] = "GradeBook"
-		_links = gradebook_shell.setdefault(LINKS, [])
-		book = IGradeBook( course )
-		for name in ('GradeBookSummary','GradeBookByAssignment','GradeBookByUser'):
-			link = Link(book, rel=name, elements=(name,))
-			_links.append(link)
-
-		return result
+		_links = result.setdefault(LINKS, [])
+		link = Link(IGradeBook(self.course), rel="GradeBook")
+		_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -131,9 +122,14 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return self._is_authenticated and _grades_readable(context)
 
 	def _do_decorate_external(self, book, result):
+		rel_map = {	'ExportContents': 'contents.csv',
+					'GradeBookByUser': 'GradeBookByUser',
+					'GradeBookSummary': 'GradeBookSummary',
+					'GradeBookByAssignment': 'GradeBookByAssignment'}
 		_links = result.setdefault(LINKS, [])
-		link = Link(book, rel='ExportContents', elements=('contents.csv',))
-		_links.append(link)
+		for rel, element in rel_map.items():
+			link = Link(book, rel=rel, elements=(element,))
+			_links.append(link)
 
 @interface.implementer(IExternalObjectDecorator)
 class _UsersCourseAssignmentHistoryItemDecorator(object):
