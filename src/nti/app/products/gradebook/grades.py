@@ -136,13 +136,11 @@ class GradeWeakRef(object):
 	def __setstate__(self, state):
 		self._part_wref, self._username = state
 
-from zope.annotation.interfaces import IAttributeAnnotatable
-
 from nti.dataserver.interfaces import ICreated
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
-@interface.implementer(ICreated, IAttributeAnnotatable, IContentTypeAware)
+@interface.implementer(ICreated, IContentTypeAware)
 class PersistentGrade(Grade, PersistentPropertyHolder):
 	# order of inheritance matters; if Persistent is first, 
 	# we can't have our own __setstate__; only subclasses can
