@@ -7,9 +7,9 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import MessageFactory as _
-
 logger = __import__('logging').getLogger(__name__)
+
+from .. import MessageFactory as _
 
 import time
 import operator

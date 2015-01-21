@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from .. import MessageFactory
+
 import nameparser
 from collections import OrderedDict
 
@@ -355,6 +357,9 @@ from zope import lifecycleevent
 from zope.annotation import IAnnotations
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
+
+from .submitted_assignment_history_views import SubmittedAssignmentHistoryGetView
+SubmittedAssignmentHistoryGetView = SubmittedAssignmentHistoryGetView # Export
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
