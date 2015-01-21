@@ -35,10 +35,13 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -129,7 +132,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
 		if sort_on and sort_on == 'FinalGrade':
-			self._get_sorted_by_final_grades( result_dict, final_grade_entry, 
+			self._get_sorted_by_final_grades( result_dict, final_grade_entry,
 											  sort_descending )
 		elif sort_on and sort_on == 'Alias':
 			self._get_sorted_by_alias( result_dict, gradebook, sort_descending )
@@ -192,21 +195,33 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		final_grade = self._get_user_final_grade( final_grade_entry, username )
 		overdue, ungraded = self._get_user_stats( gradebook, user, assignments, course )
 
-		user = IFriendlyNamed( user )
+		named_user = IFriendlyNamed( user )
 		user_dict = {}
 		user_dict['Class'] = 'UserGradeBookSummary'
 		user_dict['Username'] = username
-		user_dict['Alias'] = user.alias
+		user_dict['Alias'] = named_user.alias
 		user_dict['FinalGrade'] = final_grade
 		user_dict['OverdueAssignmentCount'] = overdue
 		user_dict['UngradedAssignmentCount'] = ungraded
+
+		# Link to user's assignment histories
+		enrollment = component.queryMultiAdapter((course, user),
+												 ICourseInstanceEnrollment )
+		# TODO Need a way to get user's grades even
+		# when they are no longer enrolled.
+		if enrollment is not None:
+			# TODO Shouldnt this occur when we adapt?
+			enrollment.xxx_fill_in_parent()
+			links = user_dict.setdefault( LINKS, [] )
+			links.append( Link( enrollment,
+								rel='AssignmentHistory',
+								elements=('AssignmentHistories', user.username)) )
 		return user_dict
 
 	def __call__(self):
 		# TODO Filtering
 		#		-incomplete
 		#		-overdue
-		# TODO User links to assignment summaries
 		# TODO Use assignment index?
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
