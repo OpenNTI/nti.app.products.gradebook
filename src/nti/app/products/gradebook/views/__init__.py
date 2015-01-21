@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .. import MessageFactory
-
 import nameparser
 from collections import OrderedDict
 
@@ -223,7 +221,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		result_dict = LocatedExternalDict()
 		final_grade_entry = self._get_final_grade_entry( gradebook )
 		# We should have links here after batching.
-		usernames = self._get_username_result_set( result_dict, gradebook, final_grade_entry )
+		usernames = self._get_username_result_set( result_dict, gradebook,
+												   final_grade_entry )
 
 		result_dict[ ITEMS ] = items = []
 		result_dict['Class'] = 'GradeBookSummary'
@@ -232,7 +231,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		# Now build our data for each user
 		for username in usernames:
-			user_dict = self._get_user_dict( username, gradebook, final_grade_entry, assignments, course )
+			user_dict = self._get_user_dict( username, gradebook, final_grade_entry,
+											 assignments, course )
 			items.append( user_dict )
 
 		return result_dict
@@ -352,13 +352,9 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		return result
 
 from zope import lifecycleevent
-
 from zope.annotation import IAnnotations
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
-
-from .submitted_assignment_history_views import SubmittedAssignmentHistoryGetView
-SubmittedAssignmentHistoryGetView = SubmittedAssignmentHistoryGetView # Export
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
