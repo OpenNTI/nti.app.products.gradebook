@@ -44,11 +44,12 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import LocatedExternalDict
 
+from ..utils import replace_username
+
 from ..interfaces import ACT_VIEW_GRADES
 
 from ..interfaces import IGradeBookEntry
 from ..interfaces import ISubmittedAssignmentHistoryBase
-from ..interfaces import IUsernameSortSubstitutionPolicy
 
 # Due to heavy use of interfaces, disable warning about
 # "too many positional arguments" (because of self),
@@ -400,11 +401,8 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 
 	def _do_sort_username(self, filter_usernames, sort_reverse, placeholder=True):
 
-		substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
 		def _key(username):
-			if substituter is None:
-				return username
-			result = substituter.replace(username) or username
+			result = replace_username(username)
 			return result
 
 		filter_usernames = sorted(filter_usernames,

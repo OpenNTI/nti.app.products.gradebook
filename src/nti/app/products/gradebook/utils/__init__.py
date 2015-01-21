@@ -24,6 +24,17 @@ class MetaGradeBookObject(type):
         t.parameters = dict()
         return t
 
+from zope import component
+
+from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
+
+def replace_username(username):
+    substituter = component.queryUtility(IUsernameSubstitutionPolicy)
+    if substituter is None:
+        return username
+    result = substituter.replace(username) or username
+    return result
+
 ## rexport for BWC
 
 from .errors import _json_error_map

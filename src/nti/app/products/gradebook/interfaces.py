@@ -3,8 +3,8 @@
 """
 .. $Id$
 """
-from __future__ import unicode_literals, print_function, absolute_import, division
 
+from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
@@ -21,6 +21,7 @@ from nti.app.client_preferences.interfaces import TAG_EXTERNAL_PREFERENCE_GROUP
 
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
+from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
 from nti.ntiids.schema import ValidNTIID
 
@@ -335,15 +336,7 @@ class IPendingAssessmentAutoGradePolicy(interface.Interface):
 		Return None if no autograding is possible.
 		"""
 
-class IUsernameSortSubstitutionPolicy(interface.Interface):
-	"""
-	Marker interface to register an utility that replaces
-	the username value for another one whenever in the gradebook we want to sort
-	by username.
-	"""
-
-	def replace(username):
-		pass
+IUsernameSortSubstitutionPolicy = IUsernameSubstitutionPolicy # alias
 
 class IGradebookSettings(interface.Interface):
 	"""

@@ -30,16 +30,10 @@ from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.interfaces import LocatedExternalList
 
+from ..utils import replace_username
+
 from ..interfaces import IGradeBook
 from ..interfaces import NO_SUBMIT_PART_NAME
-from ..interfaces import IUsernameSortSubstitutionPolicy
-
-def _replace(username):
-	substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
-	if substituter is None:
-		return username
-	result = substituter.replace(username) or username
-	return result
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -153,7 +147,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				continue
 
 			profile = IUserProfile(user)
-			external_id = _replace(username)
+			external_id = replace_username(username)
 
 			realname = profile.realname or ''
 			if realname and '@' not in realname and realname != username:

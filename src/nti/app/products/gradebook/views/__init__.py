@@ -37,8 +37,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.dataserver import authorization as nauth
 from nti.dataserver.links import Link
+from nti.dataserver import authorization as nauth
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -51,8 +51,8 @@ from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
 from ..interfaces import ACT_VIEW_GRADES
 from ..interfaces import NO_SUBMIT_PART_NAME
-from ..interfaces import IUsernameSortSubstitutionPolicy
 
+from ..utils import replace_username
 from ..utils import remove_from_container
 
 from ..grades import PersistentGrade as Grade
@@ -129,7 +129,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
 		if sort_on and sort_on == 'FinalGrade':
-			self._get_sorted_by_final_grades( result_dict, final_grade_entry, sort_descending )
+			self._get_sorted_by_final_grades( result_dict, final_grade_entry, 
+											  sort_descending )
 		elif sort_on and sort_on == 'Alias':
 			self._get_sorted_by_alias( result_dict, gradebook, sort_descending )
 		else:

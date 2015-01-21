@@ -18,10 +18,11 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.dataserver import authorization as nauth
 
+from ..utils import replace_username
+
 from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
 from ..interfaces import IGradeBookEntry
-from ..interfaces import IUsernameSortSubstitutionPolicy
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
@@ -78,13 +79,6 @@ def _tx_grade(value):
                 pass
         return _tx_string(value)
                     
-def _replace(username):
-    substituter = component.queryUtility(IUsernameSortSubstitutionPolicy)
-    if substituter is None:
-        return username
-    result = substituter.replace(username) or username
-    return result
-
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IDataserverFolder,
@@ -135,7 +129,8 @@ class CourseGradesView(AbstractAuthenticatedView):
                     assignmentId = grade.assignmentId
                     value = _tx_grade(grade.value)
                     value = value if value is not None else ''
-                    row_data = [_replace(username), part_name, name, assignmentId, value]
+                    row_data = [replace_username(username), part_name, name,
+                                assignmentId, value]
                     csv_writer.writerow([_tx_string(x) for x in row_data])
 
         response = self.request.response
