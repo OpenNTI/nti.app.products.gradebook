@@ -105,10 +105,9 @@ def iter_courses(dataserver_folder):
 			catalog = component.getUtility(ICourseCatalog)
 			for entry in catalog.iterCatalogEntries():
 				course = ICourseInstance(entry, None)
-				if course is None or entry.ntiid in seen:
-					continue
-				seen.add(entry.ntiid)
-				yield entry, course
+				if course is not None and entry.ntiid not in seen:
+					seen.add(entry.ntiid)
+					yield entry, course
 
 def do_evolve(context, generation=generation):
 	logger.info("Gradebook evolution %s started", generation);
