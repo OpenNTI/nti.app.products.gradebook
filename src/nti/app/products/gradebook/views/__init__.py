@@ -257,9 +257,6 @@ class GradePutView(AbstractAuthenticatedView,
 		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)
 
-		# update last modified
-		theObject.updateLastMod()
-
 		logger.info("'%s' updated grade '%s' for user '%s'",
 					self.getRemoteUser(),
 					theObject.AssignmentId,
