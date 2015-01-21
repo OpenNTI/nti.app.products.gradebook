@@ -97,6 +97,19 @@ def evolve_book(book, intids, instructor=None, grade_index=None):
 				count += 1
 	return count
 		
+def iter_courses(dataserver_folder):
+	seen = set()
+	sites = dataserver_folder['++etc++hostsites']
+	for site in sites.values():
+		with current_site(site):
+			catalog = component.getUtility(ICourseCatalog)
+			for entry in catalog.iterCatalogEntries():
+				course = ICourseInstance(entry, None)
+				if course is None or entry.ntiid in seen:
+					continue
+				seen.add(entry.ntiid)
+				yield entry, course
+
 def do_evolve(context, generation=generation):
 	logger.info("Gradebook evolution %s started", generation);
 	
@@ -105,34 +118,18 @@ def do_evolve(context, generation=generation):
 	lsm = dataserver_folder.getSiteManager()
 	intids = lsm.getUtility(zope.intid.IIntIds)
 	
-	seen = set()
-	
 	# install grade catalog
 	grade_index = install_grade_catalog(dataserver_folder, intids)
 	
 	# make grades persistent in all sites	
 	total = 0
-	sites = dataserver_folder['++etc++hostsites']
-	for site in sites.values():
-		with current_site(site):
-			catalog = component.getUtility(ICourseCatalog)
-			for entry in catalog.iterCatalogEntries():
-				course = ICourseInstance(entry, None)
-				if course is None:
-					continue
-				if entry.ntiid in seen:
-					continue
-				seen.add(entry.ntiid)
-				
-				# pick an instructor
-				instructor = pick_course_instructor(course)
-			
-				book = IGradeBook(course)
-				count = evolve_book(book, intids, instructor, grade_index)
-				total += count
-
-				logger.info('%s grade(s) updated for course %s',
-							count, entry.ntiid)
+	for entry, course in iter_courses(dataserver_folder):
+		book = IGradeBook(course)
+		instructor = pick_course_instructor(course)
+		count = evolve_book(book, intids, instructor, grade_index)
+		total += count
+		if count > 0:
+			logger.info('%s grade(s) updated for course %s', count, entry.ntiid)
 
 	logger.info('Gradebook evolution %s done; %s grade(s) updated',
 				generation, total)

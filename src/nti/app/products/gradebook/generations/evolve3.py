@@ -13,22 +13,18 @@ generation = 3
 
 import zope.intid
 
-from zope import component
 from zope.location.location import locate
-from zope.component.hooks import site as current_site
 
 from zope.catalog.interfaces import ICatalog
 
 from ZODB.interfaces import IConnection
-
-from nti.contenttypes.courses.interfaces import ICourseCatalog
-from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from ..grades import Grade
 from ..index import CATALOG_NAME
 from ..interfaces import IGradeBook
 
 from .evolve2 import copy_grade
+from .evolve2 import iter_courses
 from .evolve2 import pick_course_instructor
 
 def check_book(book, intids, instructor, grade_index):
@@ -72,30 +68,16 @@ def do_evolve(context, generation=generation):
 	dataserver_folder = conn.root()['nti.dataserver']
 	lsm = dataserver_folder.getSiteManager()
 	intids = lsm.getUtility(zope.intid.IIntIds)
-	grade_index = catalog = lsm.getUtility(ICatalog, name=CATALOG_NAME)
+	grade_index = lsm.getUtility(ICatalog, name=CATALOG_NAME)
 	
-	seen = set()
 	total = 0
-	sites = dataserver_folder['++etc++hostsites']
-	for site in sites.values():
-		with current_site(site):
-			catalog = component.getUtility(ICourseCatalog)
-			for entry in catalog.iterCatalogEntries():
-				course = ICourseInstance(entry, None)
-				if course is None:
-					continue
-				if entry.ntiid in seen:
-					continue
-				seen.add(entry.ntiid)
-				instructor = pick_course_instructor(course)
-			
-				book = IGradeBook(course)
-				count = check_book(book, intids, instructor, grade_index)
-				total += count
-
-				if count:
-					logger.info('%s grade(s) updated for course %s',
-								count, entry.ntiid)
+	for entry, course in iter_courses(dataserver_folder):
+		book = IGradeBook(course)
+		instructor = pick_course_instructor(course)			
+		count = check_book(book, intids, instructor, grade_index)
+		total += count
+		if count > 0:
+			logger.info('%s grade(s) updated for course %s', count, entry.ntiid)
 
 	logger.info('Gradebook evolution %s done; %s grade(s) updated',
 				generation, total)
