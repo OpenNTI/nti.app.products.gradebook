@@ -111,9 +111,17 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		return self.course is not None and _grades_readable(self.course)
 
 	def _do_decorate_external(self, course, result):
-		_links = result.setdefault(LINKS, [])
-		link = Link(IGradeBook(self.course), rel="GradeBook")
-		_links.append(link)
+		course = self.course
+		gradebook_shell = {}
+		result['GradeBook'] = gradebook_shell
+		gradebook_shell['Class'] = "GradeBook"
+		_links = gradebook_shell.setdefault(LINKS, [])
+		book = IGradeBook( course )
+		for name in ('GradeBookSummary','GradeBookByAssignment','GradeBookByUser'):
+			link = Link(book, rel=name, elements=(name,))
+			_links.append(link)
+
+		return result
 
 @interface.implementer(IExternalMappingDecorator)
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
