@@ -90,13 +90,16 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
 
-	def _get_sorted_by_usernames( self, result_dict, gradebook, sort_desc=False ):
-		"Get the batched/sorted result set by usernames."
+	def _get_gradebook_students( self, gradebook ):
 		gradebook_students = set()
 		for part in gradebook.values():
 			for entry in part.values():
 				gradebook_students.update( entry.keys() )
+		return gradebook_students
 
+	def _get_sorted_by_usernames( self, result_dict, gradebook, sort_desc=False ):
+		"Get the batched/sorted result set by usernames."
+		gradebook_students = self._get_gradebook_students( gradebook )
 		gradebook_students = sorted( gradebook_students, reverse=sort_desc )
 		self._batch_items_iterable( result_dict, gradebook_students )
 
@@ -162,38 +165,47 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		overdue_count = 0
 		ungraded_count = 0
 		today = datetime.utcnow()
-		user_histories = component.getMultiAdapter( ( course, user ),
+		user_histories = component.queryMultiAdapter( ( course, user ),
 												IUsersCourseAssignmentHistory )
 
-		for assignment in assignments:
-			grade = gradebook.getColumnForAssignmentId( assignment.ntiid )
-			user_grade = grade.get( user.username )
-			history_item = user_histories.get( assignment.ntiid )
+		if user_histories is not None:
+			for assignment in assignments:
+				grade = gradebook.getColumnForAssignmentId( assignment.ntiid )
+				user_grade = grade.get( user.username )
+				history_item = user_histories.get( assignment.ntiid )
 
-			# Submission but no grade
-			if history_item and user_grade is None:
-				ungraded_count += 1
+				# Submission but no grade
+				if history_item and user_grade is None:
+					ungraded_count += 1
 
-			# No submission and past due
-			if 		history_item is None \
-				and assignment.available_for_submission_ending \
-				and today > assignment.available_for_submission_ending:
-				overdue_count += 1
+				# No submission and past due
+				if 		history_item is None \
+					and assignment.available_for_submission_ending \
+					and today > assignment.available_for_submission_ending:
+					overdue_count += 1
 
 		return overdue_count, ungraded_count
 
 	def _get_user_final_grade(self, entry, username):
-		final_grade = entry.get( username )
+		# Not sure why a course would not have a final grade entry.
 		result = None
-		if final_grade is not None:
-			result = final_grade.value
+		if entry is not None:
+			final_grade = entry.get( username )
+
+			if final_grade is not None:
+				result = final_grade.value
 		return result
 
-	def _get_user_dict( self, username, gradebook, final_grade_entry, assignments, course ):
+	def _get_user_dict( self, username, gradebook, final_grade_entry, assignments, course, overdue=None, ungraded=None ):
 		"Returns a user's gradebook summary."
 		user = User.get_user( username )
+		if user is None:
+			return None
+
 		final_grade = self._get_user_final_grade( final_grade_entry, username )
-		overdue, ungraded = self._get_user_stats( gradebook, user, assignments, course )
+
+		if not overdue and not ungraded:
+			overdue, ungraded = self._get_user_stats( gradebook, user, assignments, course )
 
 		named_user = IFriendlyNamed( user )
 		user_dict = {}
@@ -238,9 +250,108 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		for username in usernames:
 			user_dict = self._get_user_dict( username, gradebook, final_grade_entry,
 											 assignments, course )
+			if user_dict is not None:
+				items.append( user_dict )
+
+		return result_dict
+
+@view_config(route_name='objects.generic.traversal',
+			 permission=ACT_VIEW_GRADES,
+			 renderer='rest',
+			 context=IGradeBook,
+			 name='GradeBookUngradedSummary',
+			 request_method='GET')
+class GradeBookUngradedSummaryView( GradeBookSummaryView ):
+	"""
+	A gradebook summary view that only returns gradebook
+	summaries for students that have ungraded assignments.
+	"""
+
+	def _get_ungraded_users(self, result_dict, usernames, gradebook, assignments, course, sort_desc=False):
+		user_stats = []
+		for username in usernames:
+			user = User.get_user( username )
+			_, ungraded_count = self._get_user_stats( gradebook, user, assignments, course )
+			user_stats.append( (username, ungraded_count) )
+
+		sorted_usernames = sorted( user_stats, key=lambda x: x[1], reverse=sort_desc )
+		sorted_usernames = (x[0] for x in sorted_usernames)
+		self._batch_items_iterable( result_dict, sorted_usernames )
+		return result_dict.pop( ITEMS )
+
+	def __call__(self):
+		# TODO Cleanup
+		# TODO Sorting
+		# TODO Caching
+		gradebook = self.request.context
+		course = self.context.__parent__
+		assignments = self._get_assignment_for_course( course )
+		usernames = self._get_gradebook_students( gradebook )
+
+		result_dict = LocatedExternalDict()
+		usernames = self._get_ungraded_users( result_dict, usernames, gradebook,
+											assignments, course, sort_desc=False )
+
+		final_grade_entry = self._get_final_grade_entry( gradebook )
+
+		result_dict[ ITEMS ] = items = []
+		result_dict['Class'] = 'GradeBookUngradedSummary'
+
+		# Now build our data for each user
+		for username in usernames:
+			user_dict = self._get_user_dict( username, gradebook, final_grade_entry,
+											 assignments, course )
 			items.append( user_dict )
 
 		return result_dict
+
+@view_config(route_name='objects.generic.traversal',
+			 permission=ACT_VIEW_GRADES,
+			 renderer='rest',
+			 context=IGradeBook,
+			 name='GradeBookOverdueSummary',
+			 request_method='GET')
+class GradeBookOverdueSummaryView( GradeBookSummaryView ):
+	"""
+	A gradebook summary view that only returns gradebook
+	summaries for students that have overdue assignments.
+	"""
+
+	def _get_overdue_users(self, result_dict, usernames, gradebook, assignments, course, sort_desc=False):
+		user_stats = []
+		for username in usernames:
+			user = User.get_user( username )
+			overdue_count, _ = self._get_user_stats( gradebook, user, assignments, course )
+			user_stats.append( (username, overdue_count) )
+
+		sorted_usernames = sorted( user_stats, key=lambda x: x[1], reverse=sort_desc )
+		sorted_usernames = (x[0] for x in sorted_usernames)
+		self._batch_items_iterable( result_dict, sorted_usernames )
+		return result_dict.pop( ITEMS )
+
+	def __call__(self):
+		gradebook = self.request.context
+		course = self.context.__parent__
+		assignments = self._get_assignment_for_course( course )
+		usernames = self._get_gradebook_students( gradebook )
+
+		result_dict = LocatedExternalDict()
+		usernames = self._get_ungraded_users( result_dict, usernames, gradebook,
+											assignments, course, sort_desc=False )
+
+		final_grade_entry = self._get_final_grade_entry( gradebook )
+
+		result_dict[ ITEMS ] = items = []
+		result_dict['Class'] = 'GradeBookOverdueSummary'
+
+		# Now build our data for each user
+		for username in usernames:
+			user_dict = self._get_user_dict( username, gradebook, final_grade_entry,
+											 assignments, course )
+			items.append( user_dict )
+
+		return result_dict
+
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
