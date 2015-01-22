@@ -142,9 +142,7 @@ class UserGradeBookSummary( object ):
 		# Not sure why we would not have final grade entry
 		result = None
 		if self.final_grade_entry is not None:
-			final_grade = self.final_grade_entry.get( self.username )
-			if final_grade is not None:
-				result = final_grade.value
+			result = self.final_grade_entry.get( self.username )
 		return result
 
 @view_config(route_name='objects.generic.traversal',

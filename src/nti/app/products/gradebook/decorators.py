@@ -10,6 +10,7 @@ Decorators for providing access to the various grades pieces.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -41,6 +42,8 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
+
+from nti.deprecated import deprecated
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
@@ -132,6 +135,9 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 			_links.append( link )
 		return result
 
+# TODO These links off of the IGradeBook can disappear in favor
+# of the ICourseInstance links we are now using.
+@deprecated()
 @interface.implementer(IExternalMappingDecorator)
 class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
@@ -139,7 +145,6 @@ class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return self._is_authenticated and _grades_readable(context)
 
 	def _do_decorate_external(self, book, result):
-		# FIXME This can go away soon.
 		rel_map = {	'ExportContents': 'contents.csv',
 					'GradeBookByUser': 'GradeBookByUser',
 					'GradeBookSummary': 'GradeBookSummary',
