@@ -124,7 +124,7 @@ class UserGradeBookSummary( object ):
 				if history_item is None:
 
 					due_date = IQAssignmentDateContext(course).of( assignment ).available_for_submission_ending
-					if today > due_date:
+					if due_date and today > due_date:
 						overdue_count += 1
 
 		return overdue_count, ungraded_count
