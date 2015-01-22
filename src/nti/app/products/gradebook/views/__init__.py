@@ -16,7 +16,6 @@ from .. import MessageFactory
 import nameparser
 
 from collections import OrderedDict
-from collections import namedtuple
 
 from datetime import datetime
 
@@ -38,6 +37,8 @@ from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMi
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
+from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
@@ -117,10 +118,11 @@ class UserGradeBookSummary( object ):
 					ungraded_count += 1
 
 				# No submission and past due
-				if 		history_item is None \
-					and assignment.available_for_submission_ending \
-					and today > assignment.available_for_submission_ending:
-					overdue_count += 1
+				if history_item is None:
+
+					due_date = IQAssignmentDateContext(course).of( assignment ).available_for_submission_ending
+					if today > due_date:
+						overdue_count += 1
 
 		return overdue_count, ungraded_count
 
@@ -254,10 +256,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return user_dict
 
 	def __call__(self):
-		# TODO Filtering
-		#		-incomplete
-		#		-overdue
-		# FIXME Get usernames enrolled, union with gradebook?
 		# TODO Use assignment index?
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
