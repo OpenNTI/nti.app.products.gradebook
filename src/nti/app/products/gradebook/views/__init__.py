@@ -246,7 +246,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		"Returns a user's gradebook summary."
 		user_dict = {}
 		user_dict['Class'] = user_summary.__class_name__
-		user_dict['Username'] = user_summary.username
+		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
 		user_dict['FinalGrade'] = user_summary.final_grade
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
