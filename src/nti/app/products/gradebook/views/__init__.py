@@ -40,6 +40,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
@@ -163,12 +164,17 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_START = 0
 
 	def _get_students( self, course, assignments, gradebook, final_grade_entry ):
-		# FIXME use roster
-		# FIXME filter out non-existant users
+		# Let's union with gradebook entries, for students that dropped.
 		gradebook_students = set()
 		for part in gradebook.values():
 			for entry in part.values():
 				gradebook_students.update( entry.keys() )
+
+		# TODO This is expensive. 30s locally on beer with empty cache.
+		enrollments_iter = ICourseEnrollments( course ).iter_enrollments()
+		enrollment_usernames = ( IUser(x).username for x in enrollments_iter )
+		gradebook_students.update( enrollment_usernames )
+
 		return (UserGradeBookSummary( x, course, assignments, gradebook, final_grade_entry )
 				for x in gradebook_students
 				if User.get_user(x) is not None)
@@ -260,11 +266,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		final_grade_entry = self._get_final_grade_entry( gradebook )
 		assignments = self._get_assignment_for_course( course )
 
-		result_dict = LocatedExternalDict()
-		# We should have links here after batching.
 		# Get our intermediate set
 		user_summaries = self._get_user_summaries( course, assignments, gradebook, final_grade_entry )
 		# Now our batched set
+		# We should have links here after batching.
+		result_dict = LocatedExternalDict()
 		user_summaries = self._get_user_result_set( result_dict, user_summaries )
 
 		result_dict[ ITEMS ] = items = []
@@ -273,9 +279,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# Now build our data for each user
 		for user_summary in user_summaries:
 			user_dict = self._get_user_dict( user_summary, course )
-
-			if user_dict is not None:
-				items.append( user_dict )
+			items.append( user_dict )
 
 		return result_dict
 
