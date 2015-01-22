@@ -70,6 +70,7 @@ from ..grades import PersistentGrade as Grade
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
+CLASS = StandardExternalFields.CLASS
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
@@ -213,13 +214,13 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		sort_order = self.request.params.get('sortOrder')
 		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
-		if sort_on and sort_on == 'FinalGrade':
+		if sort_on and sort_on == 'finalgrade':
 			sort_key = lambda x: x.final_grade
-		elif sort_on and sort_on == 'Alias':
-			sort_key = lambda x: x.alias
+		elif sort_on and sort_on == 'alias':
+			sort_key = lambda x: x.alias.lower() if x.alias else ''
 		else:
 			# Sorting by username is default
-			sort_key = lambda x: x.username
+			sort_key = lambda x: x.username.lower() if x.username else ''
 
 
 		result_set = self._get_sorted_result_set( user_summaries, sort_key, sort_descending )
@@ -245,7 +246,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def _get_user_dict( self, user_summary, course ):
 		"Returns a user's gradebook summary."
 		user_dict = {}
-		user_dict['Class'] = user_summary.__class_name__
+		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
 		user_dict['FinalGrade'] = user_summary.final_grade
@@ -275,8 +276,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		result_dict = LocatedExternalDict()
 		user_summaries = self._get_user_result_set( result_dict, user_summaries )
 
-		result_dict[ ITEMS ] = items = []
-		result_dict['Class'] = 'GradeBookSummary'
+		result_dict[ITEMS] = items = []
+		result_dict[CLASS] = 'GradeBookSummary'
+		result_dict['TotalItemCount'] = len( user_summaries ) if user_summaries is not None else 0
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
