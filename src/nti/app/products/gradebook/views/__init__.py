@@ -45,6 +45,7 @@ from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IEnumerableEntityContainer
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -175,8 +176,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 				gradebook_students.update( entry.keys() )
 
 		# TODO This is expensive. 30s locally on beer with empty cache.
-		enrollments_iter = ICourseEnrollments( course ).iter_enrollments()
-		enrollment_usernames = ( IUser(x).username for x in enrollments_iter )
+		everyone = course.SharingScopes['Public']
+		enrollment_usernames = {x for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 		gradebook_students.update( enrollment_usernames )
 
 		return (UserGradeBookSummary( x, course, assignments, gradebook, final_grade_entry )
