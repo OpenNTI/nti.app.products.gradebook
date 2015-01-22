@@ -175,7 +175,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_user_summaries(self, course, assignments, gradebook, final_grade_entry):
 		"Get the filtered user summaries of users we may want to return."
-		filter_by = self.request.params.get('filterBy')
+		filter_by = self.request.params.get('filter')
 		filter_by = filter_by and filter_by.lower()
 
 		user_summaries = self._get_students( course, assignments, gradebook, final_grade_entry )
