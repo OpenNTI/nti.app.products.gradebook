@@ -194,6 +194,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
 		elif filter_by and filter_by == 'overdue':
 			user_summaries = ( x for x in user_summaries if x.overdue_count > 0 )
+		elif filter_by and filter_by == 'actionable':
+			user_summaries = ( x for x in user_summaries
+								if x.overdue_count > 0 or x.ungraded_count > 0 )
 
 		return user_summaries
 
