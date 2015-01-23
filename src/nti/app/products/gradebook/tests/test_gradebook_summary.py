@@ -12,11 +12,14 @@ import fudge
 
 from unittest import TestCase
 
+from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import contains
+from hamcrest import contains_inanyorder
 
 from nti.app.products.gradebook.views import GradeBookSummaryView
+from nti.app.products.gradebook.gradebook import GradeBook
 
 from nti.app.testing.request_response import DummyRequest
 
@@ -33,22 +36,26 @@ class MockSummary( object ):
 	"By default, every field is non-null at the start of ascending order."
 
 	def __init__( self, alias='a', last_name='a', username='a',
-					overdue_count=0, upgraded_count=0, final_grade=MockGrade() ):
+					overdue_count=0, ungraded_count=0, final_grade=MockGrade() ):
 		self.alias = alias
 		self.last_name = last_name
 		self.username = username
 		self.overdue_count = overdue_count
-		self.upgraded_count = upgraded_count
+		self.ungraded_count = ungraded_count
 		self.final_grade = final_grade
 
 class TestGradeBookSummary( TestCase ):
 
 	@fudge.patch( 'pyramid.url.URLMethodsMixin.current_route_path' )
-	def test_sorting( self, mock_url ):
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_final_grade_entry' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_assignment_for_course' )
+	def test_sorting( self, mock_url, mock_final_grade, mock_assignments ):
 		"Test sorting/batching params of gradebook summary."
 		mock_url.is_callable().returns( '/path/' )
+		mock_final_grade.is_callable()
+		mock_assignments.is_callable()
 		request = DummyRequest( params={} )
-		view = GradeBookSummaryView( request )
+		view = GradeBookSummaryView( GradeBook(), request )
 		do_sort = view._get_user_result_set
 
 		# Empty
@@ -63,14 +70,12 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, has_length( 1 ))
 
 		# Single sort by alias
-		summaries = ( summary, )
 		request.params={ 'sortOn' : 'aliaS' }
 		result = do_sort( {}, summaries )
 		assert_that( result, has_length( 1 ))
 		assert_that( result, contains( summary ))
 
 		# Single sort by something else, which defaults to last_name
-		summaries = ( summary, )
 		request.params={ 'sortOn' : 'XXX', 'sortOrder': 'ascending' }
 		result = do_sort( {}, summaries )
 		assert_that( result, has_length( 1 ))
@@ -123,3 +128,88 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, has_length( 1 ))
 		assert_that( result, contains( summary4 ))
 
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_students' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_final_grade_entry' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_assignment_for_course' )
+	def test_filtering( self, mock_get_students, mock_final_grade, mock_assignments ):
+		"Test sorting/batching params of gradebook summary."
+		mock_final_grade.is_callable()
+		mock_assignments.is_callable()
+		request = DummyRequest( params={} )
+		view = GradeBookSummaryView( GradeBook(), request )
+		do_filter = view._do_get_user_summaries
+
+		# Empty
+		mock_get_students.is_callable().returns( ( (),0 ) )
+		result, count = do_filter()
+		assert_that( result, has_length( 0 ))
+		assert_that( count, is_( 0 ))
+
+		# Single with no filter
+		summary = MockSummary()
+		summaries = ( summary, )
+		mock_get_students.is_callable().returns( ( summaries, 50 ) )
+		result, count = do_filter()
+		assert_that( list( result ), has_length( 1 ))
+		assert_that( count, is_( 50 ))
+
+		# Single filter ungraded
+		request.params={ 'filter' : 'UnGRADED' }
+		result, count = do_filter()
+		assert_that( list( result ), has_length( 0 ))
+
+		# Single filter overdue
+		request.params={ 'filter' : 'overDUE' }
+		result, count = do_filter()
+		assert_that( list( result ), has_length( 0 ))
+
+		# actionable
+		request.params={ 'filter' : 'actionablE' }
+		result, count = do_filter()
+		assert_that( list( result ), has_length( 0 ))
+
+		# Multiple filters
+		request.params={ 'filter' : 'actionablE,open' }
+		result, count = do_filter()
+		assert_that( list( result ), has_length( 0 ))
+
+		# Multiple summaries/ filter ungraded
+		summary2 = MockSummary()
+		summary2.ungraded_count = 9
+		summary3 = MockSummary()
+		summary3.ungraded_count = 10
+		summary4 = MockSummary()
+		summary4.ungraded_count = 99
+
+		summaries = [ summary4, summary3, summary2, summary ]
+		mock_get_students.is_callable().returns( ( summaries, 50 ) )
+
+		request.params={ 'filter' : 'ungraded,open' }
+		result, count = do_filter()
+		result = list( result )
+		assert_that( result, has_length( 3 ))
+		assert_that( result, contains_inanyorder( summary2, summary3, summary4 ))
+		assert_that( count, is_( 50 ))
+
+		# Filter overdue
+		summary2.overdue_count = 9
+		summary3.overdue_count = 10
+		summary4.overdue_count = 99
+		request.params={ 'filter' : 'OVerDUE,open' }
+
+		result, count = do_filter()
+		result = list( result )
+		assert_that( result, has_length( 3 ))
+		assert_that( result, contains_inanyorder( summary2, summary3, summary4 ))
+		assert_that( count, is_( 50 ))
+
+		# Actionable
+		summary4.overdue_count = 0
+		summary4.ungraded_count = 0
+		request.params={ 'filter' : 'ACTIONAble,open' }
+
+		result, count = do_filter()
+		result = list( result )
+		assert_that( result, has_length( 2 ))
+		assert_that( result, contains_inanyorder( summary2, summary3 ))
+		assert_that( count, is_( 50 ))

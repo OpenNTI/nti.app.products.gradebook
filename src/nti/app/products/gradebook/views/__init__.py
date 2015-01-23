@@ -217,7 +217,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		super( GradeBookSummaryView, self ).__init__( request )
 		self.request = request
 		self.gradebook = context
-		self.course = self.context.__parent__
+		self.course = context.__parent__
 		self.final_grade_entry = self._get_final_grade_entry( self.gradebook )
 		self.assignments = self._get_assignment_for_course( self.course )
 
@@ -256,7 +256,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _do_get_user_summaries( self ):
 		"Get the filtered user summaries of users we may want to return."
-		# We expect a list of filters
+		# We expect a list of filters.
 		# They can filter by counts or by enrollment scope (or both).
 		filter_by = self.request.params.get('filter')
 		filter_by = filter_by.split( ',' ) if filter_by else ()
