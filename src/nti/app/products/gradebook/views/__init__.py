@@ -217,6 +217,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return UserGradeBookSummary( username, course, assignments, gradebook, final_grade_entry )
 
 	def _get_students( self, course, assignments, gradebook, final_grade_entry, scope_name ):
+		"Return the set of student names we want results for, along with the total count of students."
 		# We default to ForCredit. If we want public, subtract out the for credit students.
 		for_credit_scope = course.SharingScopes[ ES_CREDIT ]
 		student_names = {x.lower() for x in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
@@ -226,9 +227,10 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 			student_names = enrollment_usernames - student_names
 
-		return (self._get_summary_for_student( username, course, assignments, gradebook, final_grade_entry )
-				for username in student_names
-				if User.get_user( username ) is not None)
+		students_iter = (self._get_summary_for_student( username, course, assignments, gradebook, final_grade_entry )
+						for username in student_names
+						if User.get_user( username ) is not None)
+		return students_iter, len( student_names )
 
 	def _do_get_user_summaries(self, course, assignments, gradebook, final_grade_entry):
 		"Get the filtered user summaries of users we may want to return."
@@ -243,7 +245,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		if 'open' in filter_by:
 			scope_name = 'Public'
 
-		user_summaries = self._get_students( course, assignments, gradebook, final_grade_entry, scope_name )
+		user_summaries, total_possible_count = self._get_students( course, assignments, gradebook,
+																final_grade_entry, scope_name )
 
 		if 'ungraded' in filter_by:
 			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
@@ -253,7 +256,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			user_summaries = ( x for x in user_summaries
 								if x.overdue_count > 0 or x.ungraded_count > 0 )
 
-		return user_summaries
+		return user_summaries, total_possible_count
 
 	def _get_sorted_result_set( self, user_summaries, sort_key, sort_desc=False ):
 		"Get the batched/sorted result set."
@@ -329,7 +332,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 				results = ()
 		else:
 			# Get our intermediate set
-			user_summaries = self._do_get_user_summaries( course, assignments, gradebook, final_grade_entry )
+			user_summaries, student_count = self._do_get_user_summaries( course, assignments,
+																		gradebook, final_grade_entry )
+			result_dict['TotalItemCount'] = student_count
 			# Now our batched set
 			# We should have links here after batching.
 			results = self._get_user_result_set( result_dict, user_summaries )
@@ -349,7 +354,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
-		result_dict['TotalItemCount'] = len( user_summaries ) if user_summaries is not None else 0
+		result_dict['ItemCount'] = len( user_summaries ) if user_summaries is not None else 0
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
