@@ -213,26 +213,48 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
 
-	def _get_summary_for_student( self, username, course, assignments, gradebook, final_grade_entry ):
-		return UserGradeBookSummary( username, course, assignments, gradebook, final_grade_entry )
+	def __init__(self, context, request):
+		super( GradeBookSummaryView, self ).__init__( request )
+		self.request = request
+		self.gradebook = context
+		self.course = self.context.__parent__
+		self.final_grade_entry = self._get_final_grade_entry( self.gradebook )
+		self.assignments = self._get_assignment_for_course( self.course )
 
-	def _get_students( self, course, assignments, gradebook, final_grade_entry, scope_name ):
+	def _get_assignment_for_course( self, course ):
+		assignment_catalog = ICourseAssignmentCatalog( course )
+		assignments = [asg for asg in assignment_catalog.iter_assignments()]
+		return assignments
+
+	def _get_final_grade_entry( self, gradebook ):
+		for part in gradebook.values():
+			for part_name, entry in part.items():
+				if 		part.__name__ == NO_SUBMIT_PART_NAME \
+					and part_name == 'Final Grade':
+					return entry
+		return None
+
+	def _get_summary_for_student( self, username ):
+		return UserGradeBookSummary( username, self.course, self.assignments,
+									self.gradebook, self.final_grade_entry )
+
+	def _get_students( self, scope_name ):
 		"Return the set of student names we want results for, along with the total count of students."
 		# We default to ForCredit. If we want public, subtract out the for credit students.
-		for_credit_scope = course.SharingScopes[ ES_CREDIT ]
+		for_credit_scope = self.course.SharingScopes[ ES_CREDIT ]
 		student_names = {x.lower() for x in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
 
 		if scope_name == 'Public':
-			everyone = course.SharingScopes['Public']
+			everyone = self.course.SharingScopes['Public']
 			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 			student_names = enrollment_usernames - student_names
 
-		students_iter = (self._get_summary_for_student( username, course, assignments, gradebook, final_grade_entry )
+		students_iter = (self._get_summary_for_student( username )
 						for username in student_names
 						if User.get_user( username ) is not None)
 		return students_iter, len( student_names )
 
-	def _do_get_user_summaries(self, course, assignments, gradebook, final_grade_entry):
+	def _do_get_user_summaries( self ):
 		"Get the filtered user summaries of users we may want to return."
 		# We expect a list of filters
 		# They can filter by counts or by enrollment scope (or both).
@@ -245,8 +267,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		if 'open' in filter_by:
 			scope_name = 'Public'
 
-		user_summaries, total_possible_count = self._get_students( course, assignments, gradebook,
-																final_grade_entry, scope_name )
+		user_summaries, total_possible_count = self._get_students( scope_name )
 
 		if 'ungraded' in filter_by:
 			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
@@ -289,20 +310,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# We have our batch links for free at this point.
 		return result_dict.pop( ITEMS )
 
-	def _get_assignment_for_course( self, course ):
-		assignment_catalog = ICourseAssignmentCatalog( course )
-		assignments = [asg for asg in assignment_catalog.iter_assignments()]
-		return assignments
-
-	def _get_final_grade_entry( self, gradebook ):
-		for part in gradebook.values():
-			for part_name, entry in part.items():
-				if 		part.__name__ == NO_SUBMIT_PART_NAME \
-					and part_name == 'Final Grade':
-					return entry
-		return None
-
-	def _get_user_dict( self, user_summary, course ):
+	def _get_user_dict( self, user_summary ):
 		"Returns a user's gradebook summary."
 		user_dict = {}
 		user_dict[CLASS] = user_summary.__class_name__
@@ -314,26 +322,25 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		# Link to user's assignment histories
 		links = user_dict.setdefault( LINKS, [] )
-		links.append( Link( course,
+		links.append( Link( self.course,
 							rel='AssignmentHistory',
 							elements=('AssignmentHistories', user_summary.username)) )
 		return user_dict
 
-	def _get_user_summaries( self, result_dict, course, assignments, gradebook, final_grade_entry ):
+	def _get_user_summaries( self, result_dict ):
 		"Returns a list of user summaries.  Search supercedes all filters/sorting params."
 		search = self.request.params.get('search')
 		username = search and search.lower()
 
 		if username:
 			if User.get_user( username ) is not None:
-				summary = self._get_summary_for_student( username, course, assignments, gradebook, final_grade_entry )
+				summary = self._get_summary_for_student( username )
 				results = (summary,)
 			else:
 				results = ()
 		else:
 			# Get our intermediate set
-			user_summaries, student_count = self._do_get_user_summaries( course, assignments,
-																		gradebook, final_grade_entry )
+			user_summaries, student_count = self._do_get_user_summaries()
 			result_dict['TotalItemCount'] = student_count
 			# Now our batched set
 			# We should have links here after batching.
@@ -344,13 +351,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# TODO Use assignment grade index?
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
-		gradebook = self.request.context
-		course = self.context.__parent__
-		final_grade_entry = self._get_final_grade_entry( gradebook )
-		assignments = self._get_assignment_for_course( course )
-
 		result_dict = LocatedExternalDict()
-		user_summaries = self._get_user_summaries( result_dict, course, assignments, gradebook, final_grade_entry )
+		user_summaries = self._get_user_summaries( result_dict )
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
@@ -358,7 +360,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
-			user_dict = self._get_user_dict( user_summary, course )
+			user_dict = self._get_user_dict( user_summary )
 			items.append( user_dict )
 
 		return result_dict
