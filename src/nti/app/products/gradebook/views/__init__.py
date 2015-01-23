@@ -173,13 +173,36 @@ class UserGradeBookSummary( object ):
 class GradeBookSummaryView(AbstractAuthenticatedView,
 				  			BatchingUtilsMixin):
 	"""
-	Return the gradebook summary
+	Return the gradebook summary for students in the given course.
 
-	--overdue, assessments, etc
+	batchSize
+		The size of the batch.  Defaults to 50.
 
-	--batch first before we do work
+	batchStart
+		The starting batch index.  Defaults to 0.
 
-	Accepts the usual batch params as well as a sorting param.
+	sortOn
+		The case insensitive field to sort on. Options are ``LastName``,
+		``Alias``, ``FinalGrade``, and ``Username``.  The default is by
+		username.
+
+	sortOrder
+		The sort direction. Options are ``ascending`` and
+		``descending``. If you do not specify, a value that makes
+		the most sense for the ``sortOn`` parameter will be used
+		by default.
+
+	filter
+		The case insensitive filter list.  This is a two part filter.
+		Options are ``Ungraded``, ``Overdue``, and ``Actionable``.
+		Actionable is a combination of the other two. The other filter
+		occurs on the enrollment scope.  Options are ``Open`` and
+		``ForCredit``.  ForCredit is the default enrollment scope.
+
+	search
+		The username to search on, regardless of enrollment scope. If
+		not found, an empty set is returned.
+
 	"""
 
 	_DEFAULT_BATCH_SIZE = 50
@@ -189,7 +212,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return UserGradeBookSummary( username, course, assignments, gradebook, final_grade_entry )
 
 	def _get_students( self, course, assignments, gradebook, final_grade_entry, scope_name ):
-		# TODO Fetching everyone is expensive. 30s locally on beer with empty cache.
 		# We default to ForCredit. If we want public, subtract out the for credit students.
 		for_credit_scope = course.SharingScopes[ ES_CREDIT ]
 		student_names = {x.lower() for x in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
@@ -311,7 +333,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return results
 
 	def __call__(self):
-		# TODO Use assignment index?
+		# TODO Use assignment grade index?
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
 		gradebook = self.request.context
