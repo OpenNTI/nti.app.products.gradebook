@@ -80,6 +80,11 @@ def GradeBookPathAdapter( context, request ):
 	return result
 
 class UserGradeBookSummary( object ):
+	"""
+	A container for user grade summary info.  Most of these fields
+	are lazy loaded so that these objects can be used in sorting, so
+	that we intialize only the fields we need.
+	"""
 
 	__class_name__ = 'UserGradeBookSummary'
 
@@ -184,7 +189,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
 		``Alias``, ``FinalGrade``, and ``Username``.  The default is by
-		username.
+		LastName.
 
 	sortOrder
 		The sort direction. Options are ``ascending`` and
@@ -268,13 +273,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			sort_key = lambda x: x.final_grade
 		elif sort_on and sort_on == 'alias':
 			sort_key = lambda x: x.alias.lower() if x.alias else ''
-		elif sort_on and sort_on == 'lastname':
-			# TODO Should this be default?
-			sort_key = lambda x: x.last_name.lower() if x.last_name else ''
-		else:
-			# Sorting by username is default
+		elif sort_on and sort_on == 'username':
 			sort_key = lambda x: x.username.lower() if x.username else ''
-
+		else:
+			# Sorting by last_name is default
+			sort_key = lambda x: x.last_name.lower() if x.last_name else ''
 
 		result_set = self._get_sorted_result_set( user_summaries, sort_key, sort_descending )
 		self._batch_items_iterable( result_dict, result_set )
