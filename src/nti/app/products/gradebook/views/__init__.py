@@ -84,7 +84,6 @@ class UserGradeBookSummary( object ):
 	__class_name__ = 'UserGradeBookSummary'
 
 	def __init__( self, username, course, assignments, gradebook, final_grade_entry ):
-		self.username = username
 		self.user = User.get_user( username )
 		self.course = course
 		self.assignments = assignments
@@ -95,6 +94,11 @@ class UserGradeBookSummary( object ):
 	def alias(self):
 		named_user = IFriendlyNamed( self.user )
 		return named_user.alias
+
+	@Lazy
+	def username(self):
+		username = self.user.username
+		return replace_username( username )
 
 	@Lazy
 	def _user_stats( self ):
