@@ -96,6 +96,19 @@ class UserGradeBookSummary( object ):
 		return named_user.alias
 
 	@Lazy
+	def last_name(self):
+		username = self.user.username
+		profile = IUserProfile( self.user )
+
+		lastname = ''
+		realname = profile.realname or ''
+		if realname and '@' not in realname and realname != username:
+			human_name = nameparser.HumanName( realname )
+			lastname = human_name.last or ''
+
+		return lastname
+
+	@Lazy
 	def username(self):
 		username = self.user.username
 		return replace_username( username )
@@ -230,6 +243,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			sort_key = lambda x: x.final_grade
 		elif sort_on and sort_on == 'alias':
 			sort_key = lambda x: x.alias.lower() if x.alias else ''
+		elif sort_on and sort_on == 'lastname':
+			# TODO Should this be default?
+			sort_key = lambda x: x.last_name.lower() if x.last_name else ''
 		else:
 			# Sorting by username is default
 			sort_key = lambda x: x.username.lower() if x.username else ''
