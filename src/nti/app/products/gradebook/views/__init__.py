@@ -312,7 +312,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_user_dict( self, user_summary ):
 		"Returns a user's gradebook summary."
-		user_dict = {}
+		user_dict = LocatedExternalDict()
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
@@ -438,8 +438,6 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 			interface.noLongerProvides(theObject, IExcusedGrade)
 			theObject.updateLastMod()
 		return theObject
-
-from nti.dataserver.users import User
 
 from ..utils import record_grade_without_submission
 
