@@ -42,6 +42,7 @@ from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
+from nti.contenttypes.courses.interfaces import ES_CREDIT
 
 from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
@@ -167,34 +168,41 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
 
-	def _get_students( self, course, assignments, gradebook, final_grade_entry ):
-		# Let's union with gradebook entries, for students that dropped.
-		gradebook_students = set()
-		for part in gradebook.values():
-			for entry in part.values():
-				gradebook_students.update( entry.keys() )
+	def _get_students( self, course, assignments, gradebook, final_grade_entry, scope_name ):
+		# TODO Fetching everyone is expensive. 30s locally on beer with empty cache.
+		# We default to ForCredit. If we want public, subtract out the for credit students.
+		for_credit_scope = course.SharingScopes[ ES_CREDIT ]
+		student_names = {x.lower() for x in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
 
-		# TODO This is expensive. 30s locally on beer with empty cache.
-		everyone = course.SharingScopes['Public']
-		enrollment_usernames = {x for x in IEnumerableEntityContainer(everyone).iter_usernames()}
-		gradebook_students.update( enrollment_usernames )
+		if scope_name == 'Public':
+			everyone = course.SharingScopes['Public']
+			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
+			student_names = enrollment_usernames - student_names
 
 		return (UserGradeBookSummary( x, course, assignments, gradebook, final_grade_entry )
-				for x in gradebook_students
+				for x in student_names
 				if User.get_user(x) is not None)
 
 	def _get_user_summaries(self, course, assignments, gradebook, final_grade_entry):
 		"Get the filtered user summaries of users we may want to return."
+		# We expect a list of filters
+		# They can filter by counts or by enrollment scope (or both).
 		filter_by = self.request.params.get('filter')
-		filter_by = filter_by and filter_by.lower()
+		filter_by = filter_by.split( ',' ) if filter_by else ()
+		filter_by = [x.lower() for x in filter_by]
 
-		user_summaries = self._get_students( course, assignments, gradebook, final_grade_entry )
+		# ForCredit is default.
+		scope_name = 'ForCredit'
+		if 'open' in filter_by:
+			scope_name = 'Public'
 
-		if filter_by and filter_by == 'ungraded':
+		user_summaries = self._get_students( course, assignments, gradebook, final_grade_entry, scope_name )
+
+		if 'ungraded' in filter_by:
 			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
-		elif filter_by and filter_by == 'overdue':
+		elif 'overdue' in filter_by:
 			user_summaries = ( x for x in user_summaries if x.overdue_count > 0 )
-		elif filter_by and filter_by == 'actionable':
+		elif 'actionable' in filter_by:
 			user_summaries = ( x for x in user_summaries
 								if x.overdue_count > 0 or x.ungraded_count > 0 )
 
