@@ -185,6 +185,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
 
+	def _get_summary_for_student( self, username, course, assignments, gradebook, final_grade_entry ):
+		return UserGradeBookSummary( username, course, assignments, gradebook, final_grade_entry )
+
 	def _get_students( self, course, assignments, gradebook, final_grade_entry, scope_name ):
 		# TODO Fetching everyone is expensive. 30s locally on beer with empty cache.
 		# We default to ForCredit. If we want public, subtract out the for credit students.
@@ -196,11 +199,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 			student_names = enrollment_usernames - student_names
 
-		return (UserGradeBookSummary( x, course, assignments, gradebook, final_grade_entry )
-				for x in student_names
-				if User.get_user(x) is not None)
+		return (self._get_summary_for_student( username, course, assignments, gradebook, final_grade_entry )
+				for username in student_names
+				if User.get_user( username ) is not None)
 
-	def _get_user_summaries(self, course, assignments, gradebook, final_grade_entry):
+	def _do_get_user_summaries(self, course, assignments, gradebook, final_grade_entry):
 		"Get the filtered user summaries of users we may want to return."
 		# We expect a list of filters
 		# They can filter by counts or by enrollment scope (or both).
@@ -288,6 +291,25 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 							elements=('AssignmentHistories', user_summary.username)) )
 		return user_dict
 
+	def _get_user_summaries( self, result_dict, course, assignments, gradebook, final_grade_entry ):
+		"Returns a list of user summaries.  Search supercedes all filters/sorting params."
+		search = self.request.params.get('search')
+		username = search and search.lower()
+
+		if username:
+			if User.get_user( username ) is not None:
+				summary = self._get_summary_for_student( username, course, assignments, gradebook, final_grade_entry )
+				results = (summary,)
+			else:
+				results = ()
+		else:
+			# Get our intermediate set
+			user_summaries = self._do_get_user_summaries( course, assignments, gradebook, final_grade_entry )
+			# Now our batched set
+			# We should have links here after batching.
+			results = self._get_user_result_set( result_dict, user_summaries )
+		return results
+
 	def __call__(self):
 		# TODO Use assignment index?
 		# TODO We could cache on the gradebook, but the
@@ -297,12 +319,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		final_grade_entry = self._get_final_grade_entry( gradebook )
 		assignments = self._get_assignment_for_course( course )
 
-		# Get our intermediate set
-		user_summaries = self._get_user_summaries( course, assignments, gradebook, final_grade_entry )
-		# Now our batched set
-		# We should have links here after batching.
 		result_dict = LocatedExternalDict()
-		user_summaries = self._get_user_result_set( result_dict, user_summaries )
+		user_summaries = self._get_user_summaries( result_dict, course, assignments, gradebook, final_grade_entry )
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
