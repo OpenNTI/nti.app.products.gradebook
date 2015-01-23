@@ -270,7 +270,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
 		if sort_on and sort_on == 'finalgrade':
-			sort_key = lambda x: x.final_grade
+			sort_key = lambda x: x.final_grade.value if x.final_grade else ''
 		elif sort_on and sort_on == 'alias':
 			sort_key = lambda x: x.alias.lower() if x.alias else ''
 		elif sort_on and sort_on == 'username':
