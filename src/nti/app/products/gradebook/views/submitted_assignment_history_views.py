@@ -43,6 +43,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import StandardExternalFields
 
 from ..utils import replace_username
 
@@ -50,6 +51,8 @@ from ..interfaces import ACT_VIEW_GRADES
 
 from ..interfaces import IGradeBookEntry
 from ..interfaces import ISubmittedAssignmentHistoryBase
+
+ITEMS = StandardExternalFields.ITEMS
 
 # Due to heavy use of interfaces, disable warning about
 # "too many positional arguments" (because of self),
@@ -560,6 +563,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 									   batch_start=batch_start,
 									   selector=lambda x: x)
 		else:
-			result['Items'] = items_factory(items_iter)
+			result[ITEMS] = items_factory(items_iter)
 
 		return result
