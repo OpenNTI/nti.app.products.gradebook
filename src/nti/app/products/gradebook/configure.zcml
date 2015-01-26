@@ -224,5 +224,13 @@
 	<utility factory=".gradescheme.LetterGradeScheme"
 			 provides=".interfaces.ILetterGradeScheme"
 			 name="letter_grade" />
+			 
+	<utility factory=".gradescheme._default_integer_grade_scheme"
+			 provides=".interfaces.IIntegerGradeScheme"
+			 name="integer" />
+			 
+	<utility factory=".gradescheme._default_numeric_grade_scheme"
+			 provides=".interfaces.INumericGradeScheme"
+			 name="float" />
 
 </configure>

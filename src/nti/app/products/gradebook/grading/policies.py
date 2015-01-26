@@ -246,6 +246,15 @@ class CategoryGradeScheme(Persistent, SchemaConfigured):
 		Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		
+	def __len__(self):
+		return len(self.assigments)
+	
+	def __getitem__(self, key):
+		return self.assigments[key]
+
+	def __iter__(self):
+		return iter(self.assigments)
+	
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(BaseGradingPolicy):
 	
@@ -424,3 +433,12 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		# is not complete
 		result = result / self._total_weight
 		return round(result, 2)
+
+	def __len__(self):
+		return len(self.categories)
+	
+	def __getitem__(self, key):
+		return self.categories[key]
+	
+	def __iter__(self):
+		return iter(self.categories)

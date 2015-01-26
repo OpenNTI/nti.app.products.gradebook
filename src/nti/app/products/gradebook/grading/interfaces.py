@@ -38,7 +38,7 @@ class ICategoryGradeScheme(interface.Interface):
 	AssigmentGradeSchemes = Dict(key_type=ValidTextLine(title="Assigment ID/Name"),
 								 value_type=Object(IAssigmentGradeScheme, required=False),
 								 min_length=1)
-	DropLowest = Int(title="Drop lowest grade in category", required=False)
+	DropLowest = Int(title="Drop lowest grade in category", min=0, required=False)
 	LatePenalty = Number(title="Late penalty", default=1, min=0.0, max=1.0, required=True)
 	
 class ICS1323CourseGradingPolicy(ICourseGradingPolicy):

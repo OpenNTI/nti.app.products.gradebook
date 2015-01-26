@@ -149,6 +149,11 @@ class NumericGradeScheme(SchemaConfigured):
 		result = value * (self.max - self.min) + self.min
 		return result
 
+@interface.implementer(INumericGradeScheme)
+def _default_numeric_grade_scheme():
+	result= NumericGradeScheme(min=0.0, max=100.0)
+	return result
+
 @interface.implementer(IIntegerGradeScheme, IContentTypeAware)
 class IntegerGradeScheme(NumericGradeScheme):
 	
@@ -163,6 +168,11 @@ class IntegerGradeScheme(NumericGradeScheme):
 		value = int(value)
 		self.validate(value)
 		return value
+
+@interface.implementer(IIntegerGradeScheme)
+def _default_integer_grade_scheme():
+	result= IntegerGradeScheme(min=0, max=100)
+	return result
 
 @interface.implementer(IBooleanGradeScheme, IContentTypeAware)
 @WithRepr
