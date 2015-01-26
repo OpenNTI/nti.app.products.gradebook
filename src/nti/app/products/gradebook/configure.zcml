@@ -67,6 +67,9 @@
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBookEntry" />
 
+	<adapter factory=".adapters._as_catalog_entry"
+			 for=".interfaces.IGrade" />
+			 
 	<adapter factory=".grades.GradeWeakRef" />
 
 	<adapter factory=".adapters.grade_for_history_item"
@@ -176,6 +179,11 @@
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest"/>
 
+	<subscriber factory=".decorators._GradeCatalogEntryDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for=".interfaces.IGrade
+					 pyramid.interfaces.IRequest"/>
+					 
 	<!-- Events -->
 	<subscriber handler=".subscribers._on_user_will_be_removed" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />

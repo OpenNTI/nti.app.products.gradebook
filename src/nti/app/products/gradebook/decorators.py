@@ -206,6 +206,18 @@ class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			link = Link(context, elements=(rel,), rel=rel, method='POST')
 			links.append(link)
 
+@component.adapter(IGrade)
+@interface.implementer(IExternalMappingDecorator)
+class _GradeCatalogEntryDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _predicate(self, context, result):
+		return bool(self._is_authenticated)
+
+	def _do_decorate_external(self, context, result):
+		entry = ICourseCatalogEntry(context, None)
+		if entry is not None:
+			result['CatalogEntryNTIID'] = entry.ntiid
+
 from .interfaces import ISubmittedAssignmentHistory
 from .interfaces import ISubmittedAssignmentHistorySummaries
 

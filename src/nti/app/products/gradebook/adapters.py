@@ -17,6 +17,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
@@ -51,6 +52,12 @@ def _as_course(context):
 						  # if some parent object has already had its
 						  # __parent__ set to None, as during object removal
 						  strict=False)
+
+@interface.implementer(ICourseCatalogEntry)
+def _as_catalog_entry(context):
+	course = ICourseInstance(context)
+	result = ICourseCatalogEntry(course)
+	return result
 
 def _no_pickle(*args):
 	raise TypeError("This object cannot be pickled")
