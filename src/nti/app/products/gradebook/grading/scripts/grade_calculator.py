@@ -37,7 +37,7 @@ from nti.site.site import get_site_for_site_names
 
 from ..interfaces import IGradeScheme
 
-from . import calculate_grades
+from .. import calculate_grades
 
 class PluginPoint(Contained):
 

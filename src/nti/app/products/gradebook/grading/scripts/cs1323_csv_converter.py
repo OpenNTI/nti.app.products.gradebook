@@ -19,10 +19,9 @@ from collections import defaultdict
 
 from zope import component
 from zope.configuration import xmlconfig, config
+from zope.dottedname import resolve as dottedname
 
 from nti.externalization.externalization import to_external_object
-
-import nti.app.products.gradebook
 
 from ...interfaces import IGradeScheme
 from ...interfaces import IIntegerGradeScheme
@@ -184,12 +183,29 @@ def externalize(policy, output):
 	with open(output, "wb") as fp:
 		simplejson.dump(external, fp, indent=4)
 
-def main():
 
-	context = config.ConfigurationMachine()
-	xmlconfig.registerCommonDirectives(context)
-	xmlconfig.file("configure.zcml", nti.app.products.gradebook, context=context)
+def _configure(set_up_packages=(), context=None, execute=True):
+
+	if context is None:
+		context = config.ConfigurationMachine()
+		xmlconfig.registerCommonDirectives( context )
+
+	for i in set_up_packages:
+		__traceback_info__ = (i, set_up_packages)
+		if isinstance( i, tuple ):
+			filename = i[0]
+			package = i[1]
+		else:
+			filename = 'configure.zcml'
+			package = i
+
+		if isinstance( package, basestring ):
+			package = dottedname.resolve( package )
+		context = xmlconfig.file(filename, package=package,
+								 context=context, execute=execute )
+	return context
 	
+def main():
 	# parse arguments
 	arg_parser = argparse.ArgumentParser(description="CS1323 policy CSV converter")
 	arg_parser.add_argument('source', help="Source CSV file")
@@ -206,14 +222,21 @@ def main():
 	
 	output = args.output
 	output = os.path.expanduser(output) if output else None
-	if output and os.path.exists(output) and os.path.isdir(output):
+	if not output:
+		output = os.path.split(source)[0]
+	if os.path.exists(output) and os.path.isdir(output):
 		name = os.path.splitext(os.path.basename(source))[0]
 		output = os.path.join(output, '%s.json' % name)
 		
+	ei = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
 	if verbose:
-		ei = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
 		logging.basicConfig(level=logging.DEBUG, format=ei)
+	else:
+		logging.basicConfig(level=logging.INFO, format=ei)
 
+	set_up_packages = ("nti.dataserver", "nti.app.products.gradebook")
+	_configure(set_up_packages)
+	
 	policy = process(source)
 	if policy is not None and output:
 		externalize(policy, output)
