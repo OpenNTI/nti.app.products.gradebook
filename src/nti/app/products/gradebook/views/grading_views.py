@@ -26,7 +26,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
-from ..grades import Grade
+from ..grades import PersistentGrade
 
 from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
@@ -67,6 +67,6 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
 		correctness = policy.grade(self.remoteUser)
 		value  = presentation.fromCorrectness(correctness)
-		result = Grade(value=value)
+		result = PersistentGrade(value=value)
 		result.username = self.remoteUser.username
 		return result
