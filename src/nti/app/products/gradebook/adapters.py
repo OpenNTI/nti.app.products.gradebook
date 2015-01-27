@@ -56,8 +56,8 @@ def _as_course(context):
 
 @interface.implementer(ICourseCatalogEntry)
 def _as_catalog_entry(context):
-	course = ICourseInstance(context)
-	result = ICourseCatalogEntry(course)
+	course = ICourseInstance(context, None)
+	result = ICourseCatalogEntry(course, None)
 	return result
 
 def _no_pickle(*args):
