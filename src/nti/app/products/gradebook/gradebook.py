@@ -309,21 +309,12 @@ from .grades import PersistentGrade
 class GradeWithoutSubmission(PersistentGrade):
 	"""
 	A dummy grade we temporarily create before
-	a submission comes in. These are never persistent.
+	a submission comes in.
 	"""
 	__external_class_name__ = 'Grade'
 	__external_can_create__ = False
 	
-	def __reduce__(self):
-		raise TypeError('Temporary grade only')
-	__reduce_ex__ = __reduce__
-
-NoSubmitGradeBookEntryGrade = GradeWithoutSubmission
-
-class PersistentGradeWithoutSubmission(GradeWithoutSubmission, PersistentGrade):
-	pass
-
-PersistentNoSubmitGradeBookEntryGrade = PersistentGradeWithoutSubmission
+PersistentGradeWithoutSubmission = NoSubmitGradeBookEntryGrade = GradeWithoutSubmission
 
 class GradeBookEntryWithoutSubmission(GradeBookEntry):
 	"""
