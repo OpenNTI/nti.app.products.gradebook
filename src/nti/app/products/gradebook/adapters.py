@@ -5,6 +5,7 @@ gradebook adapters
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -23,7 +24,7 @@ from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.traversal import find_interface
 
-from .grades import Grade
+from .grades import PersistentGrade
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
@@ -69,7 +70,6 @@ def grade_for_history_item(item):
 	user = IUser(item) # Can we do this with just the item? item.creator?
 	book = IGradeBook(course)
 	assignmentId = item.Submission.assignmentId
-
 	entry = book.getColumnForAssignmentId(assignmentId)
 	if entry is not None:
 		grade = entry.get(user.username)
@@ -77,10 +77,9 @@ def grade_for_history_item(item):
 			# Always dummy up a grade (at the right location in
 			# the hierarchy) so that we have an 'edit' link if
 			# necessary
-			grade = Grade()
+			grade = PersistentGrade()
 			grade.createdTime = 0
 			grade.lastModified = 0
-			grade.__getstate__ = _no_pickle
 			grade.__parent__ = entry
 			grade.__name__ = user.username
 		return grade
