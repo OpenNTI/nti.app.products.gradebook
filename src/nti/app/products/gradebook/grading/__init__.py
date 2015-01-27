@@ -18,7 +18,7 @@ from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
 
-from ..grades import Grade
+from ..grades import PersistentGrade
 from ..interfaces import NO_SUBMIT_PART_NAME
 from ..assignments import create_assignment_part
 
@@ -86,7 +86,7 @@ def calculate_grades(context, grade_scheme=None, entry_name=None):
         if grade_scheme is not None:
             value = grade_scheme.fromCorrectness(correctness)
         
-        grade = Grade(value=value)
+        grade = PersistentGrade(value=value)
         grade.username = username
         result[username] = grade
         
