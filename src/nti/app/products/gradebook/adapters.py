@@ -41,9 +41,10 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 	assignmentId = item.__name__  # by definition
 	course = ICourseInstance(item, None)
 	# get gradebook entry definition
-	gradebook = IGradeBook(course)
-	entry = gradebook.getColumnForAssignmentId(assignmentId)
-	return entry
+	gradebook = IGradeBook(course, None)
+	if gradebook is not None:
+		entry = gradebook.getColumnForAssignmentId(assignmentId)
+		return entry
 
 @interface.implementer(ICourseInstance)
 def _as_course(context):
