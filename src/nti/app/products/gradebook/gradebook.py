@@ -304,17 +304,16 @@ class GradeBookPart(SchemaConfigured,
 	def __str__(self):
 		return self.displayName
 
-from .grades import Grade
 from .grades import PersistentGrade
 
-class GradeWithoutSubmission(Grade):
+class GradeWithoutSubmission(PersistentGrade):
 	"""
 	A dummy grade we temporarily create before
 	a submission comes in. These are never persistent.
 	"""
 	__external_class_name__ = 'Grade'
 	__external_can_create__ = False
-
+	
 	def __reduce__(self):
 		raise TypeError('Temporary grade only')
 	__reduce_ex__ = __reduce__
