@@ -243,8 +243,8 @@
 
 	<!-- Metadata -->
 	<configure zcml:condition="installed nti.metadata">
-		<subscriber	factory=".metadata_index._GradePrincipalObjectsIntIds"
-					provides="nti.dataserver.interfaces.IPrincipalMetadataObjectsIntIds" />
+		<subscriber	factory=".metadata_predicates._GradePrincipalObjects"
+					provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
 	</configure>
 		 
 </configure>
