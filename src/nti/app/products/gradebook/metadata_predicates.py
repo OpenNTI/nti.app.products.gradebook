@@ -15,6 +15,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISystemUserPrincipal
 
 from nti.metadata.predicates import BasePrincipalObjects
 
@@ -22,25 +23,38 @@ from nti.site.hostpolicy import run_job_in_all_host_sites
 
 from .interfaces import IGradeBook
 
+def gradebook_collector(self):
+	for enrollments in component.subscribers( (self.user,), IPrincipalEnrollments):
+		for enrollment in enrollments.iter_enrollments():
+			course = ICourseInstance(enrollment, None)
+			book = IGradeBook(course, None)
+			if book is not None:
+				yield book
+					
 @component.adapter(IUser)
 class _GradePrincipalObjects(BasePrincipalObjects):
 
-	def course_collector(self):
-		for enrollments in component.subscribers( (self.user,), IPrincipalEnrollments):
-			for enrollment in enrollments.iter_enrollments():
-				course = ICourseInstance(enrollment, None)
-				if course is not None:
-					yield course
-			
 	def iter_objects(self):
 		result = []
 		def _collector():
-			for course in self.course_collector():
-				book = IGradeBook(course, None)
-				if book is None:
-					continue
+			for book in gradebook_collector():
 				for grade in book.iter_grades(self.user.username):
 					result.append(grade)
+		run_job_in_all_host_sites(_collector)
+		for obj in result:
+			yield obj
+
+@component.adapter(ISystemUserPrincipal)
+class _GradeBookPrincipalObjects(BasePrincipalObjects):
+
+	def iter_objects(self):
+		result = []
+		def _collector():
+			for book in gradebook_collector():
+				for part in book.values():
+					result.append(part)
+					for entry in part.values():
+						result.append(entry)
 		run_job_in_all_host_sites(_collector)
 		for obj in result:
 			yield obj
