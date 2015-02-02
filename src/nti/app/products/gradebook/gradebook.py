@@ -321,6 +321,8 @@ class GradeBookEntryWithoutSubmission(GradeBookEntry):
 	"""
 	__external_class_name__ = 'GradeBookEntry'
 	__external_can_create__ = False
+	
+	mimeType = mime_type = MIME_BASE + u'.gradebook.gradebookentry'
 
 NoSubmitGradeBookEntry = GradeBookEntryWithoutSubmission
 
@@ -375,7 +377,8 @@ class NoSubmitGradeBookPart(GradeBookPart):
 	"""
 
 	__external_class_name__ = 'GradeBookPart'
-
+	mimeType = mime_type = MIME_BASE + u'.gradebook.gradebookpart'
+	
 	entryFactory = GradeBookEntryWithoutSubmission
 
 	def validateAssignment(self, assignment):
