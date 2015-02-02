@@ -243,10 +243,10 @@
 
 	<!-- Metadata -->
 	<configure zcml:condition="installed nti.metadata">
-		<subscriber	factory=".metadata_predicates._GradePrincipalObjects"
+		<subscriber	factory=".predicates._GradePrincipalObjects"
 					provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
 					
-		<subscriber	factory=".metadata_predicates._GradeBookPrincipalObjects"
+		<subscriber	factory=".predicates._GradeBookPrincipalObjects"
 					provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
 	</configure>
 		 

@@ -54,8 +54,11 @@ from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
 from .interfaces import ISubmittedAssignmentHistory
 from .interfaces import ISubmittedAssignmentHistorySummaries
 
+@interface.implementer(IContentTypeAware)
 class _NTIIDMixin(object):
 
+	parameters = {}
+	
 	_ntiid_type = None
 	_ntiid_include_self_name = False
 	_ntiid_default_provider = 'NextThought'
@@ -92,16 +95,15 @@ class _NTIIDMixin(object):
 									 specific=self._ntiid_specific_part)
 
 @component.adapter(ICourseInstance)
-@interface.implementer(IGradeBook,
-					   IAttributeAnnotatable,
-					   IContentTypeAware)
+@interface.implementer(IGradeBook, IAttributeAnnotatable)
 class GradeBook(CheckingLastModifiedBTreeContainer,
 				Contained,
 				_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
+	
 	_ntiid_type = NTIID_TYPE_GRADE_BOOK
-
+		
 	def getColumnForAssignmentId(self, assignmentId, check_name=False):
 		for part in self.values():
 			entry = part.get_entry_by_assignment(assignmentId, check_name=check_name)
@@ -145,9 +147,7 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 
 _GradeBookFactory= an_factory(GradeBook, 'GradeBook')
 
-@interface.implementer(IGradeBookEntry,
-					   IAttributeAnnotatable,
-					   IContentTypeAware)
+@interface.implementer(IGradeBookEntry, IAttributeAnnotatable)
 @WithRepr
 @EqHash('NTIID',)
 class GradeBookEntry(SchemaConfigured,
@@ -240,9 +240,7 @@ class GradeBookEntry(SchemaConfigured,
 	def __str__(self):
 		return self.displayName
 
-@interface.implementer(IGradeBookPart,
-					   IAttributeAnnotatable,
-					   IContentTypeAware)
+@interface.implementer(IGradeBookPart, IAttributeAnnotatable)
 @WithRepr
 class GradeBookPart(SchemaConfigured,
 					CheckingLastModifiedBTreeContainer,
