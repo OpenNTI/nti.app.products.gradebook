@@ -40,6 +40,8 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.common.property import Lazy
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ES_CREDIT
@@ -55,8 +57,6 @@ from nti.dataserver.users.users import User
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.externalization import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
-
-from nti.utils.property import Lazy
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook

@@ -24,6 +24,10 @@ from persistent import Persistent
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.common.property import Lazy
+from nti.common.property import alias
+from nti.common.property import readproperty
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.datastructures import CreatedAndModifiedTimeMixin
@@ -35,9 +39,6 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from nti.utils.property import Lazy, readproperty
-from nti.utils.property import alias
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 

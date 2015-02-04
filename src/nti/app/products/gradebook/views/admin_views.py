@@ -52,6 +52,8 @@ from io import BytesIO
 
 from zope import component
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -59,8 +61,6 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.utils.maps import CaseInsensitiveDict
 
 def _tx_string(s):
     if s is not None and isinstance(s, unicode):
