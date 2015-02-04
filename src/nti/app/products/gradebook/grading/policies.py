@@ -346,12 +346,6 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		for grade in self.book.iter_grades(username):
 			assignmentId = grade.AssignmentId
 				
-			# save grade info
-			value = grade.value 
-			if value is None:
-				logger.info("No grade entered for %s", assignmentId)
-				continue
-
 			weight = self._weights.get(assignmentId)
 			if not weight:
 				logger.error("Incomplete policy, no weight found for %s", assignmentId)
@@ -367,9 +361,19 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			penalty = self._penalties.get(assignmentId, 0) \
 					  if self._is_late(assignmentId, now) else 0
 		
+			correctness = None
+			value = grade.value 
+			if value is None: # not graded assume correct
+				value = 0
+				correctness = 1
+				
 			# record grade
+			proxy = GradeProxy(value, weight, scheme, excused, penalty)
+			if 	correctness is not None:
+				proxy.correctness = correctness
+				
 			cat_name = self._rev_categories[assignmentId]
-			result[cat_name].append(GradeProxy(value, weight, scheme, excused, penalty))
+			result[cat_name].append(proxy)
 			entered[cat_name].add(assignmentId)
 		
 		# now create proxy grades with 0 correctes for missing ones
