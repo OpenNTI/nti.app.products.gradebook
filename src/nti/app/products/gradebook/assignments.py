@@ -14,6 +14,8 @@ from zope.container.interfaces import INameChooser
 from nti.app.assessment.common import assignment_comparator
 from nti.app.assessment.common import get_course_assignments
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
 from .interfaces import IGradeBook
 from .interfaces import NO_SUBMIT_PART_NAME
 
@@ -58,7 +60,7 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 	return entry
 get_or_create_assignment_entry = create_assignment_entry
 
-def synchronize_gradebook(course):
+def synchronize_gradebook(context):
 	"""
 	Makes the gradebook for the course match the assignments for the course.
 
@@ -66,6 +68,7 @@ def synchronize_gradebook(course):
 	exists in the book but not the course assignments, and there are
 	no recorded grades, it is removed.
 	"""
+	course = ICourseInstance(context, None)
 	if course is None:
 		return
 			
@@ -88,7 +91,6 @@ def synchronize_gradebook(course):
 		else:
 			displayName = 'Assignment %s' % ordinal
 		create_assignment_entry(course, assignment, displayName, ordinal, book)
-		
 
 	# Now drop entries that don't correspond to existing assignments
 	# and that don't have grades

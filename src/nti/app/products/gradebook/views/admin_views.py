@@ -18,11 +18,15 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.interfaces import StandardExternalFields
+
 from ..utils import replace_username
 
 from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
 from ..interfaces import IGradeBookEntry
+
+ITEMS = StandardExternalFields.ITEMS
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
@@ -78,33 +82,39 @@ def _tx_grade(value):
             except ValueError:
                 pass
         return _tx_string(value)
-                    
+        
+def _catalog_entry(params):
+    ntiid = params.get('ntiid') or \
+            params.get('entry') or \
+            params.get('course')
+    if not ntiid:
+        raise hexc.HTTPUnprocessableEntity('No course entry identifier')
+
+    context = find_object_with_ntiid(ntiid)
+    entry = ICourseCatalogEntry(context, None)
+    if entry is None:
+        try:
+            catalog = component.getUtility(ICourseCatalog)
+            entry = catalog.getCatalogEntry(ntiid)
+        except LookupError:
+            raise hexc.HTTPUnprocessableEntity('Catalog not found')
+        except KeyError:
+            entry = None
+    return entry
+
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
+             request_method='GET',
              context=IDataserverFolder,
              permission=nauth.ACT_NTI_ADMIN,
              name='CourseGrades')
 class CourseGradesView(AbstractAuthenticatedView):
     
     def __call__(self):
-        params = CaseInsensitiveDict(self.request.params)
-        
-        ntiid = params.get('ntiid') or \
-                params.get('entry') or \
-                params.get('course')
-        if not ntiid:
-            raise hexc.HTTPUnprocessableEntity(detail=_('No course entry identifier'))
-
-        context = find_object_with_ntiid(ntiid)
-        entry = ICourseCatalogEntry(context, None)
+        params = CaseInsensitiveDict(self.request.params)  
+        entry = _catalog_entry(params)
         if entry is None:
-            try:
-                catalog = component.getUtility(ICourseCatalog)
-                entry = catalog.getCatalogEntry(ntiid)
-            except LookupError:
-                raise hexc.HTTPUnprocessableEntity(detail=_('Catalog not found'))
-            except KeyError:
-                raise hexc.HTTPUnprocessableEntity(detail=_('Course not found'))
+            raise hexc.HTTPUnprocessableEntity(detail=_('Course not found'))
 
         usernames = params.get('usernames') or params.get('username')
         if usernames:
@@ -137,3 +147,34 @@ class CourseGradesView(AbstractAuthenticatedView):
         response.body = bio.getvalue()
         response.content_disposition = b'attachment; filename="grades.csv"'
         return response
+
+from nti.externalization.interfaces import LocatedExternalDict
+
+from ..assignments import synchronize_gradebook
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST',
+             context=IDataserverFolder,
+             permission=nauth.ACT_NTI_ADMIN,
+             name='SynchronizeGradebook')
+class SynchronizeGradebookView(AbstractAuthenticatedView,
+                               ModeledContentUploadRequestUtilsMixin):
+    
+    def __call__(self):
+        params = CaseInsensitiveDict(self.readInput())
+        entry = _catalog_entry(params)
+        if entry is None:
+            raise hexc.HTTPUnprocessableEntity(detail='Course not found')
+        
+        synchronize_gradebook(entry)
+        
+        result = LocatedExternalDict()
+        items = result[ITEMS] = {}
+        book = IGradeBook(ICourseInstance(entry, None), None)
+        if book is not None:
+            for part_name, part in book.items():
+                items.setdefault(part_name, [])
+                for entry_name in part.keys():
+                    items[part_name].append(entry_name)            
+        return result

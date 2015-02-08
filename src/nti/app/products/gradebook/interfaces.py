@@ -253,7 +253,6 @@ class IGradeBook(IContainer,
 		return the :IGradeBookEntry associated with the specified assignmentId
 		"""
 
-
 	def get_entry_by_ntiid(ntiid):
 		"""
 		return the :IGradeBookEntry associated with the specified ntiid
