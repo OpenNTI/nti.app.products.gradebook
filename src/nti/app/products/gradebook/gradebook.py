@@ -26,6 +26,9 @@ from pyramid.traversal import lineage
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.common.property import alias
+from nti.common.property import CachedProperty
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users import User
@@ -37,9 +40,6 @@ from nti.externalization.representation import WithRepr
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids import ntiids
-
-from nti.utils.property import alias
-from nti.utils.property import CachedProperty
 
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
