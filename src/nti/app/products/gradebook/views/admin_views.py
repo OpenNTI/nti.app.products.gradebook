@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -102,12 +103,15 @@ def _catalog_entry(params):
             entry = None
     return entry
 
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             request_method='GET',
-             context=IDataserverFolder,
-             permission=nauth.ACT_NTI_ADMIN,
-             name='CourseGrades')
+from nti.app.products.courseware.views import CourseAdminPathAdapter
+
+@view_config(context=IDataserverFolder)
+@view_config(context=CourseAdminPathAdapter)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='GET',
+               permission=nauth.ACT_NTI_ADMIN,
+               name='CourseGrades')
 class CourseGradesView(AbstractAuthenticatedView):
     
     def __call__(self):
@@ -152,12 +156,13 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 from ..assignments import synchronize_gradebook
 
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             request_method='POST',
-             context=IDataserverFolder,
-             permission=nauth.ACT_NTI_ADMIN,
-             name='SynchronizeGradebook')
+@view_config(context=IDataserverFolder)
+@view_config(context=CourseAdminPathAdapter)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               permission=nauth.ACT_NTI_ADMIN,
+               name='SynchronizeGradebook')
 class SynchronizeGradebookView(AbstractAuthenticatedView,
                                ModeledContentUploadRequestUtilsMixin):
     
