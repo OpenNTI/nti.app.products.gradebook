@@ -41,6 +41,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
+from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.common.maps import CaseInsensitiveDict
@@ -61,8 +62,6 @@ from nti.dataserver.users.users import User
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.externalization import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
-
-from nti.ntiids.ntiids import find_object_with_ntiid
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
@@ -398,7 +397,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		if user is None:
 			raise hexec.HTTPNotFound( username )
 
-		assignment = find_object_with_ntiid( assignment_ntiid )
+		assignment = component.queryUtility( IQAssignment, name=assignment_ntiid )
 		if assignment is None:
 			raise hexec.HTTPNotFound( assignment_ntiid )
 
@@ -424,7 +423,6 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
 		grade.creator = self.getRemoteUser()
 
-		# TODO Validate username?
 		self.updateContentObject( grade, new_grade )
 
 		logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
