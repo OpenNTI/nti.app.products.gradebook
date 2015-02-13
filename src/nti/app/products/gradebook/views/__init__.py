@@ -7,6 +7,7 @@ Views and other functions related to grades and gradebook.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,9 +28,11 @@ from zope.traversing.interfaces import IPathAdapter
 
 from pyramid.view import view_config
 from pyramid.interfaces import IRequest
+from pyramid import httpexceptions as hexec
 
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -40,6 +43,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.common.maps import CaseInsensitiveDict
 from nti.common.property import Lazy
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -58,6 +62,8 @@ from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.externalization import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
@@ -66,6 +72,7 @@ from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..utils import replace_username
 from ..utils import remove_from_container
+from ..utils import record_grade_without_submission
 
 from ..grades import PersistentGrade as Grade
 
@@ -368,6 +375,70 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
 			 renderer='rest',
+			 context=IGradeBook,
+			 name='SetGrade',
+			 request_method='PUT')
+class GradeBookPutView(AbstractAuthenticatedView,
+				   ModeledContentUploadRequestUtilsMixin,
+				   ModeledContentEditRequestUtilsMixin):
+	"""
+	Allows end users to set arbitrary grades in the gradebook,
+	returning the assignment history item.
+	"""
+
+	def _do_call(self):
+		gradebook = self.context
+		params = CaseInsensitiveDict( self.readInput() )
+
+		username = params.get( 'User' )
+		new_grade = params.get( 'Grade' )
+		assignment_ntiid = params.get( 'AssignmentId' )
+
+		user = User.get_user( username )
+		if user is None:
+			raise hexec.HTTPNotFound( username )
+
+		assignment = find_object_with_ntiid( assignment_ntiid )
+		if assignment is None:
+			raise hexec.HTTPNotFound( assignment_ntiid )
+
+		assignment_type = assignment.category_name
+		assignment_title = assignment.title
+
+		# Navigate through the gradebook
+		gradebook_cat = gradebook.get( assignment_type )
+		if gradebook_cat is None:
+			raise hexec.HTTPNotFound( assignment_type )
+
+		gradebook_entry = gradebook_cat.get( assignment_title )
+		if gradebook_entry is None:
+			raise hexec.HTTPNotFound( assignment_title )
+
+		# This will create our grade and assignment history, if necessary.
+		grade = record_grade_without_submission( gradebook_entry,
+												user,
+												assignment_ntiid )
+
+		if grade is None:
+			grade = gradebook_entry.get( username )
+
+		grade.creator = self.getRemoteUser()
+
+		# TODO Validate username?
+		self.updateContentObject( grade, new_grade )
+
+		logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
+					self.getRemoteUser(),
+					assignment_ntiid,
+					username)
+
+		# Not ideal that we return this here.
+		history_item = IUsersCourseAssignmentHistoryItem( grade )
+		return history_item
+
+@view_config(route_name='objects.generic.traversal',
+			 permission=nauth.ACT_UPDATE,
+			 renderer='rest',
 			 context=IGrade,
 			 request_method='PUT')
 class GradePutView(AbstractAuthenticatedView,
@@ -438,8 +509,6 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 			interface.noLongerProvides(theObject, IExcusedGrade)
 			theObject.updateLastMod()
 		return theObject
-
-from ..utils import record_grade_without_submission
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,

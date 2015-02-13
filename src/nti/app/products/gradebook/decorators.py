@@ -129,7 +129,8 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		rel_map = {	'ExportContents': 'contents.csv',
 					'GradeBookByUser': 'GradeBookByUser',
 					'GradeBookSummary': 'GradeBookSummary',
-					'GradeBookByAssignment': 'GradeBookByAssignment'}
+					'GradeBookByAssignment': 'GradeBookByAssignment',
+					'SetGrade': 'SetGrade' }
 		for rel, element in rel_map.items():
 			link = Link( gradebook, rel=rel, elements=(element,) )
 			_links.append( link )
