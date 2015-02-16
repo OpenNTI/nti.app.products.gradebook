@@ -88,6 +88,7 @@ def main():
 						context=context,
 						minimal_ds=True,
 						xmlconfig_packages=conf_packages,
+						logging_verbose_level=logging.DEBUG,
 						function=lambda: _process_args(	site=site,
 														verbose=verbose,
 														ntiid=args.ntiid,
