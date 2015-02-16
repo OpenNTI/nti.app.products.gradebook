@@ -25,12 +25,15 @@ from ..interfaces import IGradeScheme
 
 from .. import calculate_grades
 
-def _process_args(ntiid, scheme, usernames=(), site=None, entry_name=None, verbose=False):
-	module_name, class_name = scheme.rsplit(".", 1)
-	module = importlib.import_module(module_name)
-	grade_scheme = getattr(module, class_name)()
-	if not IGradeScheme.providedBy(grade_scheme):
-		raise ValueError("Invalid grade scheme class")
+def _process_args(ntiid, scheme=None, usernames=(), site=None, entry_name=None, verbose=False):
+	if scheme:
+		module_name, class_name = scheme.rsplit(".", 1)
+		module = importlib.import_module(module_name)
+		grade_scheme = getattr(module, class_name)()
+		if not IGradeScheme.providedBy(grade_scheme):
+			raise ValueError("Invalid grade scheme class")
+	else:
+		grade_scheme = None
 
 	if site:
 		set_site(site)
@@ -55,8 +58,8 @@ def main():
 							 dest='verbose')
 	arg_parser.add_argument('ntiid', help="Course NTIID")
 	arg_parser.add_argument('-s', '--site', dest='site', help="Request site")
-	arg_parser.add_argument('-g', '--grade', dest='scheme', help="Grade scheme class name",
-							default='nti.app.products.gradebook.gradescheme.LetterGradeScheme')
+	arg_parser.add_argument('-g', '--grade', dest='scheme', 
+							help="Grade scheme class name (nti.app.products.gradebook.gradescheme.LetterGradeScheme)")
 	arg_parser.add_argument('-e', '--entry', dest='entry', help="Grade entry name")
 	arg_parser.add_argument('-u', '--users',
 							 dest='usernames',
