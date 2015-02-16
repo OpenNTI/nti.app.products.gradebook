@@ -283,9 +283,10 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			in_category = validate_assigment_grade_schemes(book, items, scheme, name)
 			assigments.update(in_category)
 			sum_weight += category.Weight
-		
+
 		if round(sum_weight, 2) > 1:
-			msg = "Total category weight in policy is greater than one"
+			msg = 	"Total category weight in policy is greater than one. (%s)" % \
+					round(sum_weight, 2)
 			raise Invalid(msg)
 		
 		if len(self._rev_categories) != len(assigments):
