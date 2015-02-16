@@ -57,6 +57,8 @@ def to_correctness(value, scheme):
 	result = scheme.toCorrectness(value)
 	return result
 	
+@WithRepr
+@EqHash('assignmentId')
 class GradeProxy(object):
 	
 	def __init__(self, assignmentId, value, weight, scheme, excused=False, penalty=0.0):
@@ -417,10 +419,14 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		return result
 		
 	def grade(self, principal):
+		logger.debug("Grading %s", principal)
+		
 		result = 0
 		username = IPrincipal(principal).id
 		grade_map = self._grade_map(username)
 		for name, grades in grade_map.items():
+			logger.debug("Grading category %s", name)
+			
 			category = self.categories[name]
 			
 			# drop lowest grades in the category
@@ -430,9 +436,10 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				while count < category.DropLowest and idx < len(grades):
 					grade = grades[idx]
 					if not grade.excused:
-						result += grade.weight
-						grades.pop(idx)
 						count += 1
+						grades.pop(idx)
+						result += grade.weight
+						logger.debug("%s has been dropped", grade)
 					else:
 						idx += 1		
 						
@@ -441,14 +448,21 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				weight = grade.weight
 				if grade.excused:
 					result += weight
+					logger.debug("%s is excused. Skipped", grade)
 					continue
 				correctness = grade.correctness
 				result += correctness * weight
+				logger.debug("Weighted correctness for grade %s is %s is",
+							 grade, result)
+		
+		logger.debug("Unjusted total grade percentage is %s. Adjust weight is %s",
+					  result, self._total_weight)
 		
 		# divide over the total weight in case the policy
 		# is not complete
 		result = result / self._total_weight
-		return round(result, 2)
+		result = round(result, 2)
+		return result
 
 	def __len__(self):
 		return len(self.categories)
