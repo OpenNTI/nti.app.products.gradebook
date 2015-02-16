@@ -69,13 +69,12 @@ class GradeProxy(object):
 		self.penalty = penalty
 		self.assignmentId = assignmentId
 
-	def __str__(self, *args, **kwargs):
-		return "GradeProxy(%s,%s,%s,%s)" % (self.assignmentId, 
-											self.value,
-											self.weight,
-											self.excused,
-											self.correctness)
-
+	def __str__(self):
+		return "GradeProxy(%s,%s,%s,%s,%s)" % (	self.assignmentId, 
+												self.value,
+												self.weight,
+												self.excused,
+												self.correctness)	
 	@readproperty
 	def correctness(self):
 		try:
