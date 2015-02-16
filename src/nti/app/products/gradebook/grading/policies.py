@@ -44,6 +44,7 @@ from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
+from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..utils import MetaGradeBookObject
 
@@ -58,12 +59,13 @@ def to_correctness(value, scheme):
 	
 class GradeProxy(object):
 	
-	def __init__(self, value, weight, scheme, excused=False, penalty=0.0):
+	def __init__(self, assignmentId, value, weight, scheme, excused=False, penalty=0.0):
 		self.value = value
 		self.weight = weight
 		self.scheme = scheme
 		self.excused = excused
 		self.penalty = penalty
+		self.assignmentId = assignmentId
 
 	@readproperty
 	def correctness(self):
@@ -71,7 +73,8 @@ class GradeProxy(object):
 			result = to_correctness(self.value, self.scheme)
 			result = result * (1 - self.penalty)
 		except (ValueError, TypeError):
-			logger.error("Invalid value %s for grade scheme %s", self.value, self.scheme)
+			logger.error("Invalid value %s for grade scheme %s in assignment %s", 
+						 self.value, self.scheme, self.assignmentId)
 			result = 0
 		return result
 
@@ -195,14 +198,14 @@ class DefaultCourseGradingPolicy(BaseGradingPolicy):
 			excused = IExcusedGrade.providedBy(grade)
 			# record grade
 			entered.add(assignmentId)
-			result.append(GradeProxy(value, weight, scheme, excused))
+			result.append(GradeProxy(assignmentId, value, weight, scheme, excused))
 		
 		# now create proxy grades with 0 correctes for missing ones
 		for assignmentId in self.items.keys():
 			if assignmentId not in entered:
 				weight = self._weights[assignmentId]
 				scheme = self._schemes[assignmentId]
-				proxy = GradeProxy(0, weight, scheme)
+				proxy = GradeProxy(assignmentId, 0, weight, scheme)
 				proxy.correctness = 0.0
 				result.append(proxy)
 
@@ -346,6 +349,13 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		for grade in self.book.iter_grades(username):
 			assignmentId = grade.AssignmentId
 				
+			entry = grade.__parent__
+			name = getattr(entry, 'Name', None)
+			part = getattr(entry, '__parent__', None)
+			if 	part is not None and part.__name__ == NO_SUBMIT_PART_NAME and \
+				name == 'Final Grade':
+				continue
+					
 			weight = self._weights.get(assignmentId)
 			if not weight:
 				logger.error("Incomplete policy, no weight found for %s", assignmentId)
@@ -368,7 +378,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				correctness = 1
 				
 			# record grade
-			proxy = GradeProxy(value, weight, scheme, excused, penalty)
+			proxy = GradeProxy(assignmentId, value, weight, scheme, excused, penalty)
 			if 	correctness is not None:
 				proxy.correctness = correctness
 				
@@ -394,7 +404,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 					correctness = 1 - penalty
 						
 				# create proxy grade
-				proxy = GradeProxy(0, weight, scheme)
+				proxy = GradeProxy(assignmentId, 0, weight, scheme)
 				proxy.correctness = correctness
 				result[cat_name].append(proxy)
 			
