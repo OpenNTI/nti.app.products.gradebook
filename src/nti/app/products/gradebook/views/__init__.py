@@ -376,7 +376,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			 renderer='rest',
 			 context=IGradeBook,
 			 name='SetGrade',
-			 request_method='PUT')
+			 request_method='POST')
 class GradeBookPutView(AbstractAuthenticatedView,
 				   ModeledContentUploadRequestUtilsMixin,
 				   ModeledContentEditRequestUtilsMixin):
