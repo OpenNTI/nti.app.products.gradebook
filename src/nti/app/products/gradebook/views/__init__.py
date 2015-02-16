@@ -90,7 +90,7 @@ class UserGradeBookSummary( object ):
 	"""
 	A container for user grade summary info.  Most of these fields
 	are lazy loaded so that these objects can be used in sorting, so
-	that we intialize only the fields we need.
+	that we initialize only the fields we need.
 	"""
 
 	__class_name__ = 'UserGradeBookSummary'

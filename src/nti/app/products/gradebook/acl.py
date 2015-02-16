@@ -19,6 +19,7 @@ from nti.common.property import Lazy
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization import ROLE_ADMIN
 
 from nti.dataserver.interfaces import IACLProvider
@@ -36,7 +37,8 @@ class _GradeBookACLProvider(object):
 	"""
 	Only instructors can see the gradebook and its parts,
 	but the parts cannot be changed (though individual grades
-	within can be changed).
+	within can be changed). The instructors are allowed to update
+	the grades within the gradebook.
 
 	Administrators have all access, but this is primarily for deletion/reset
 	purposes, so this might get knocked down later.
@@ -54,6 +56,7 @@ class _GradeBookACLProvider(object):
 			#TODO: Use roles
 			acl.extend( (ace_allowing(i, ACT_READ, type(self)) for i in course.instructors) )
 			acl.extend( (ace_allowing(i, ACT_VIEW_GRADES, type(self)) for i in course.instructors) )
+			acl.extend( (ace_allowing(i, ACT_UPDATE, type(self)) for i in course.instructors) )
 
 		acl.append( ace_allowing( ROLE_ADMIN, ALL_PERMISSIONS, type(self) ) )
 
