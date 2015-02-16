@@ -78,7 +78,7 @@ def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None):
             # ignore dup enrollment
             continue
 
-        username = IPrincipal(principal).id
+        username = principal.id
         if usernames and username not in usernames:
             continue
         

@@ -40,6 +40,7 @@ def _process_args(ntiid, scheme, usernames=(), site=None, entry_name=None, verbo
 	if course is None:
 		raise ValueError("Course not found", ntiid)
 
+	usernames = {x.lower() for x in usernames or ()}
 	result = calculate_grades(course, usernames=usernames, grade_scheme=grade_scheme, 
 							  entry_name=entry_name)
 	if not entry_name or verbose:
