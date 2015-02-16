@@ -33,6 +33,7 @@ from pyramid import httpexceptions as hexec
 from nti.app.assessment.interfaces import ICourseAssignmentCatalog
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -173,6 +174,16 @@ class UserGradeBookSummary( object ):
 		result = None
 		if self.final_grade_entry is not None:
 			result = self.final_grade_entry.get( self.username )
+		return result
+
+	@Lazy
+	def history_summary(self):
+		result = history_item = None
+		final_grade = self.final_grade
+		if final_grade is not None:
+			history_item = IUsersCourseAssignmentHistoryItem( final_grade, None )
+		if history_item is not None:
+			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
 		return result
 
 @view_config(route_name='objects.generic.traversal',
@@ -322,7 +333,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
-		user_dict['FinalGrade'] = user_summary.final_grade
+		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
 
