@@ -437,7 +437,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			
 			# drop lowest grades in the category
 			# make sure we don't drop excused grades
-			if category.DropLowest and category.DropLowest > len(grades):
+			if category.DropLowest and category.DropLowest < len(grades):
 				idx = count = 0
 				while count < category.DropLowest and idx < len(grades):
 					grade = grades[idx]
