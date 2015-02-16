@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import logging
 import argparse
 import importlib
 
@@ -25,7 +26,13 @@ from ..interfaces import IGradeScheme
 
 from .. import calculate_grades
 
-def _process_args(ntiid, scheme=None, usernames=(), site=None, entry_name=None, verbose=False):
+def _process_args(ntiid, scheme=None, usernames=(), site=None, 
+				  entry_name=None, verbose=False):
+	
+	format_s = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
+	if verbose:
+		logging.basicConfig(level=logging.DEBUG, format=format_s)
+		
 	if scheme:
 		module_name, class_name = scheme.rsplit(".", 1)
 		module = importlib.import_module(module_name)
