@@ -86,7 +86,7 @@ def GradeBookPathAdapter( context, request ):
 	result = IGradeBook(context)
 	return result
 
-class UserGradeBookSummary( object ):
+class UserGradeSummary( object ):
 	"""
 	A container for user grade summary info.  Most of these fields
 	are lazy loaded so that these objects can be used in sorting, so
@@ -95,12 +95,9 @@ class UserGradeBookSummary( object ):
 
 	__class_name__ = 'UserGradeBookSummary'
 
-	def __init__( self, username, course, assignments, gradebook, final_grade_entry ):
+	def __init__( self, username, grade_entry ):
 		self.user = User.get_user( username )
-		self.course = course
-		self.assignments = assignments
-		self.gradebook = gradebook
-		self.final_grade_entry = final_grade_entry
+		self.grade_entry = grade_entry
 
 	@Lazy
 	def alias(self):
@@ -124,6 +121,38 @@ class UserGradeBookSummary( object ):
 	def username(self):
 		username = self.user.username
 		return replace_username( username )
+
+	@Lazy
+	def user_grade_entry(self):
+		# Not sure why we would not have final grade entry
+		result = None
+		if self.grade_entry is not None:
+			result = self.grade_entry.get( self.username )
+		return result
+
+	@Lazy
+	def history_summary(self):
+		result = history_item = None
+		user_grade_entry = self.user_grade_entry
+		if user_grade_entry is not None:
+			history_item = IUsersCourseAssignmentHistoryItem( user_grade_entry, None )
+		if history_item is not None:
+			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
+		return result
+
+class UserGradeBookSummary( UserGradeSummary ):
+	"""
+	An overall gradebook summary for a user that includes
+	aggregate stats.
+	"""
+
+	__class_name__ = 'UserGradeBookSummary'
+
+	def __init__( self, username, course, assignments, gradebook, grade_entry ):
+		super( UserGradeBookSummary, self ).__init__( username, grade_entry )
+		self.course = course
+		self.assignments = assignments
+		self.gradebook = gradebook
 
 	@Lazy
 	def _user_stats( self ):
@@ -167,24 +196,6 @@ class UserGradeBookSummary( object ):
 	@Lazy
 	def ungraded_count(self):
 		return self._user_stats[1]
-
-	@Lazy
-	def final_grade(self):
-		# Not sure why we would not have final grade entry
-		result = None
-		if self.final_grade_entry is not None:
-			result = self.final_grade_entry.get( self.username )
-		return result
-
-	@Lazy
-	def history_summary(self):
-		result = history_item = None
-		final_grade = self.final_grade
-		if final_grade is not None:
-			history_item = IUsersCourseAssignmentHistoryItem( final_grade, None )
-		if history_item is not None:
-			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
-		return result
 
 @view_config(route_name='objects.generic.traversal',
 			 permission=ACT_VIEW_GRADES,
@@ -425,12 +436,13 @@ class GradeBookPutView(AbstractAuthenticatedView,
 			raise hexec.HTTPNotFound( assignment_title )
 
 		# This will create our grade and assignment history, if necessary.
-		grade = record_grade_without_submission( gradebook_entry,
-												user,
-												assignment_ntiid )
+		record_grade_without_submission( gradebook_entry,
+										user,
+										assignment_ntiid )
+		grade = gradebook_entry.get( username )
 
-		if grade is None:
-			grade = gradebook_entry.get( username )
+		# Check our if-modified-since header
+		self._check_object_unmodified_since( grade )
 
 		grade.creator = self.getRemoteUser()
 		grade.value = new_grade_value
