@@ -69,12 +69,6 @@ class GradeProxy(object):
 		self.penalty = penalty
 		self.assignmentId = assignmentId
 
-	def __str__(self):
-		return "GradeProxy(%s,%s,%s,%s,%s)" % (	self.assignmentId, 
-												self.value,
-												self.weight,
-												self.excused,
-												self.correctness)	
 	@readproperty
 	def correctness(self):
 		try:
@@ -457,9 +451,10 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 					logger.debug("%s is excused. Skipped", grade)
 					continue
 				correctness = grade.correctness
-				result += correctness * weight
-				logger.debug("Weighted correctness for grade %s is %s",
-							 grade, result)
+				weighted_correctness = correctness * weight
+				result += weighted_correctness
+				logger.debug("%s correctness and weighted correctness are %s, %s",
+							 grade, correctness, weighted_correctness)
 		
 		logger.debug("Unjusted total grade percentage is %s. Adjust weight is %s",
 					  result, self._total_weight)
