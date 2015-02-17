@@ -95,6 +95,7 @@ class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
 		context = self.__parent__
 		book = IGradeBook(ICourseInstance(context))
 		return book
+
 	@Lazy
 	def _dateContext(self):
 		context = self.__parent__
@@ -343,6 +344,10 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			return bool (_ending and now > _ending)
 		return False
 	
+	def _is_no_submit(self, assignmentId):
+		assignment = component.queryUtility(IQAssignment, name=assignmentId)
+		return bool(assignment is not None and assignment.no_submit)
+				
 	def _grade_map(self, username):
 		now = datetime.utcnow() 
 		result = defaultdict(list)
@@ -370,11 +375,11 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 							 assignmentId)
 				continue
 			
-			excused = IExcusedGrade.providedBy(grade)
-			penalty = self._penalties.get(assignmentId, 0) \
-					  if self._is_late(assignmentId, now) else 0
-		
 			correctness = None
+			excused = IExcusedGrade.providedBy(grade)
+			is_late = self._is_late(assignmentId, now)
+			penalty = self._penalties.get(assignmentId, 0) if is_late else 0
+		
 			value = grade.value 
 			if value is None: # not graded assume correct
 				value = 0
@@ -396,15 +401,21 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			assignments = set(category.items.keys())
 			for assignmentId in assignments.difference(inputed):
 				
+				is_late = self._is_late(assignmentId, now)
+				is_no_submit = self._is_no_submit(assignmentId)
+					
 				# we assume the assigment is correct
 				correctness = 1
 				weight = self._weights.get(assignmentId)
 				scheme = self._schemes.get(assignmentId)
 				
 				# check if the assigment is late
-				if self._is_late(assignmentId, now):
-					penalty = self._penalties.get(assignmentId, 0)
-					correctness = 1 - penalty
+				if is_late:
+					if not is_no_submit: # no no_submit
+						correctness = 0
+					else:
+						penalty = self._penalties.get(assignmentId, 0)
+						correctness = 1 - penalty
 						
 				# create proxy grade
 				proxy = GradeProxy(assignmentId, 0, weight, scheme)
