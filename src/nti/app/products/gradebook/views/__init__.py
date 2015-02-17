@@ -400,8 +400,8 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		gradebook = self.context
 		params = CaseInsensitiveDict( self.readInput() )
 
-		username = params.get( 'User' )
-		new_grade = params.get( 'Grade' )
+		username = params.get( 'Username' )
+		new_grade_value = params.get( 'Value' )
 		assignment_ntiid = params.get( 'AssignmentId' )
 
 		user = User.get_user( username )
@@ -433,8 +433,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 			grade = gradebook_entry.get( username )
 
 		grade.creator = self.getRemoteUser()
-
-		self.updateContentObject( grade, new_grade )
+		grade.value = new_grade_value
 
 		logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
 					self.getRemoteUser(),
