@@ -344,6 +344,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
+		user_dict['Grade'] = user_summary.user_grade_entry
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
