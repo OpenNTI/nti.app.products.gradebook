@@ -28,10 +28,9 @@ from .. import calculate_grades
 
 def _process_args(ntiid, scheme=None, usernames=(), site=None, 
 				  entry_name=None, verbose=False):
-	
-	format_s = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
+
 	if verbose:
-		logging.basicConfig(level=logging.DEBUG, format=format_s)
+		logger.setLevel(logging.DEBUG)
 		
 	if scheme:
 		module_name, class_name = scheme.rsplit(".", 1)
@@ -52,7 +51,7 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 
 	usernames = {x.lower() for x in usernames or ()}
 	result = calculate_grades(course, usernames=usernames, grade_scheme=grade_scheme, 
-							  entry_name=entry_name)
+							  entry_name=entry_name, verbose=verbose)
 	if not entry_name or verbose:
 		print("\nGrades...")
 		for name, grade in result.items():
@@ -88,7 +87,6 @@ def main():
 						context=context,
 						minimal_ds=True,
 						xmlconfig_packages=conf_packages,
-						logging_verbose_level=logging.DEBUG,
 						function=lambda: _process_args(	site=site,
 														verbose=verbose,
 														ntiid=args.ntiid,

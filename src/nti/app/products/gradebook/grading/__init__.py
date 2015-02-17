@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import logging
+
 from zope import component
 from zope.security.interfaces import IPrincipal
 from zope.container.interfaces import INameChooser
@@ -53,7 +55,12 @@ def find_grading_policy_for_course(context):
     policy = ICourseGradingPolicy(course, None)
     return policy
 
-def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None):
+def calculate_grades(context, usernames=(), grade_scheme=None, 
+                     entry_name=None, verbose=False):
+    
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+
     result = {}
     course = ICourseInstance(context)
     policy = find_grading_policy_for_course(course)
