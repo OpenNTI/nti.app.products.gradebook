@@ -26,6 +26,9 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import to_external_object
+
 from ..grades import PersistentGrade
 
 from ..interfaces import IGradeBook
@@ -61,12 +64,18 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		scheme = self.request.params.get('scheme')
 		if scheme:
 			presentation = component.getUtility(IGradeScheme, name=scheme)
+	
 		if presentation is None:
 			# use default
 			presentation = component.getUtility(IGradeScheme)
 
 		correctness = policy.grade(self.remoteUser)
-		value  = presentation.fromCorrectness(correctness)
-		result = PersistentGrade(value=value)
-		result.username = self.remoteUser.username
+		
+		grade = PersistentGrade()
+		grade.username = self.remoteUser.username
+		grade.value = presentation.fromCorrectness(correctness)
+
+		result = LocatedExternalDict()		
+		result.update(to_external_object(grade))
+		result['Correctness'] = correctness
 		return result
