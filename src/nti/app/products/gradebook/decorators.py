@@ -126,10 +126,9 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		_links = gradebook_shell.setdefault(LINKS, [])
 		gradebook = IGradeBook( course )
 
+		# SetGrade off of assignment?
 		rel_map = {	'ExportContents': 'contents.csv',
-					'GradeBookByUser': 'GradeBookByUser',
 					'GradeBookSummary': 'GradeBookSummary',
-					'GradeBookByAssignment': 'GradeBookByAssignment',
 					'SetGrade': 'SetGrade' }
 		for rel, element in rel_map.items():
 			link = Link( gradebook, rel=rel, elements=(element,) )
@@ -235,6 +234,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		(this is cheap).
 	* A link to a view that can access the submissions (history
 		items) in bulk.
+	* A link to the gradebook summary view for this assignment.
 	"""
 
 	course = None
@@ -276,7 +276,10 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 									rel='GradeSubmittedAssignmentHistory')
 		link_to_summ_history = Link(ISubmittedAssignmentHistorySummaries(column),
 									rel='GradeSubmittedAssignmentHistorySummaries')
+		gradebook_summary_link = Link( column,
+									rel='GradeBookByAssignment', elements=('Summary',))
 
 		ext_links = external.setdefault(LINKS, [])
 		ext_links.append(link_to_bulk_history)
 		ext_links.append(link_to_summ_history)
+		ext_links.append(gradebook_summary_link)

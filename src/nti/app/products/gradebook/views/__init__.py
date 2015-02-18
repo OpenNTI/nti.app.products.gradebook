@@ -65,6 +65,7 @@ from nti.externalization.externalization import StandardExternalFields
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
+from ..interfaces import IGradeBookEntry
 from ..interfaces import IExcusedGrade
 from ..interfaces import ACT_VIEW_GRADES
 from ..interfaces import NO_SUBMIT_PART_NAME
@@ -244,17 +245,17 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		super( GradeBookSummaryView, self ).__init__( request )
 		self.request = request
 		self.gradebook = context
-		self.course = context.__parent__
-		self.final_grade_entry = self._get_final_grade_entry( self.gradebook )
-		self.assignments = self._get_assignment_for_course( self.course )
+		self.course = ICourseInstance( context )
 
-	def _get_assignment_for_course( self, course ):
-		assignment_catalog = ICourseAssignmentCatalog( course )
+	@Lazy
+	def assignments( self ):
+		assignment_catalog = ICourseAssignmentCatalog( self.course )
 		assignments = [asg for asg in assignment_catalog.iter_assignments()]
 		return assignments
 
-	def _get_final_grade_entry( self, gradebook ):
-		for part in gradebook.values():
+	@Lazy
+	def final_grade_entry( self ):
+		for part in self.gradebook.values():
 			for part_name, entry in part.items():
 				if 		part.__name__ == NO_SUBMIT_PART_NAME \
 					and part_name == 'Final Grade':
@@ -394,6 +395,80 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return result_dict
 
 @view_config(route_name='objects.generic.traversal',
+			 permission=ACT_VIEW_GRADES,
+			 renderer='rest',
+			 context=IGradeBookEntry,
+			 name='Summary',
+			 request_method='GET')
+class AssignmentSummaryView( GradeBookSummaryView ):
+	"""
+	Return the assignment summary for students in the given assignment.
+
+	batchSize
+		The size of the batch.  Defaults to 50.
+
+	batchStart
+		The starting batch index.  Defaults to 0.
+
+	sortOn
+		The case insensitive field to sort on. Options are ``LastName``,
+		``Alias``, ``FinalGrade``, and ``Username``.  The default is by
+		LastName.
+
+	sortOrder
+		The sort direction. Options are ``ascending`` and
+		``descending``. If you do not specify, a value that makes
+		the most sense for the ``sortOn`` parameter will be used
+		by default.
+
+	filter
+		The case insensitive filter list.  This is a two part filter.
+		Options are ``Ungraded``, ``Overdue``, and ``Actionable``.
+		Actionable is a combination of the other two. The other filter
+		occurs on the enrollment scope.  Options are ``Open`` and
+		``ForCredit``.  ForCredit is the default enrollment scope.
+
+	search
+		The username to search on, regardless of enrollment scope. If
+		not found, an empty set is returned.
+
+	"""
+
+	def __init__(self, context, request):
+		super( AssignmentSummaryView, self ).__init__( context.__parent__, request )
+		self.request = request
+		self.grade_entry = context
+		self.course = ICourseInstance( context )
+
+	def _get_summary_for_student( self, username ):
+		return UserGradeSummary( username, self.grade_entry )
+
+	def _get_user_dict( self, user_summary ):
+		"Returns a user's assignment summary."
+		user_dict = LocatedExternalDict()
+		user_dict[CLASS] = user_summary.__class_name__
+		user_dict['User'] = user_summary.user
+		user_dict['Alias'] = user_summary.alias
+		user_dict['Grade'] = user_summary.user_grade_entry
+		user_dict['HistoryItemSummary'] = user_summary.history_summary
+		return user_dict
+
+	def __call__(self):
+		result_dict = LocatedExternalDict()
+		user_summaries = self._get_user_summaries( result_dict )
+
+		result_dict[ITEMS] = items = []
+		result_dict[CLASS] = 'GradeBookByAssignmentSummary'
+		result_dict['ItemCount'] = len( user_summaries ) if user_summaries is not None else 0
+
+		# Now build our data for each user
+		for user_summary in user_summaries:
+			user_dict = self._get_user_dict( user_summary )
+			items.append( user_dict )
+
+		return result_dict
+
+@view_config(route_name='objects.generic.traversal',
 			 permission=nauth.ACT_UPDATE,
 			 renderer='rest',
 			 context=IGradeBook,
@@ -423,17 +498,9 @@ class GradeBookPutView(	AbstractAuthenticatedView,
 		if assignment is None:
 			raise hexec.HTTPNotFound( assignment_ntiid )
 
-		assignment_type = assignment.category_name
-		assignment_title = assignment.title
-
-		# Navigate through the gradebook
-		gradebook_cat = gradebook.get( assignment_type )
-		if gradebook_cat is None:
-			raise hexec.HTTPNotFound( assignment_type )
-
-		gradebook_entry = gradebook_cat.get( assignment_title )
+		gradebook_entry = gradebook.getColumnForAssignmentId(assignment.__name__)
 		if gradebook_entry is None:
-			raise hexec.HTTPNotFound( assignment_title )
+			raise hexec.HTTPNotFound( assignment.__name__ )
 
 		# This will create our grade and assignment history, if necessary.
 		record_grade_without_submission(gradebook_entry,
