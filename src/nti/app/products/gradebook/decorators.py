@@ -126,7 +126,7 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		_links = gradebook_shell.setdefault(LINKS, [])
 		gradebook = IGradeBook( course )
 
-		# SetGrade off of assignment?
+		# TODO SetGrade off of assignment?
 		rel_map = {	'ExportContents': 'contents.csv',
 					'GradeBookSummary': 'GradeBookSummary',
 					'SetGrade': 'SetGrade' }

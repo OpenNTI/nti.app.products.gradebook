@@ -119,6 +119,7 @@ class UserGradeSummary( object ):
 
 	@Lazy
 	def username(self):
+		"The displayable, sortable username."
 		username = self.user.username
 		return replace_username( username )
 
@@ -127,7 +128,7 @@ class UserGradeSummary( object ):
 		# Not sure why we would not have final grade entry
 		result = None
 		if self.grade_entry is not None:
-			result = self.grade_entry.get( self.username )
+			result = self.grade_entry.get( self.user.username )
 		return result
 
 	@Lazy
@@ -350,7 +351,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
-		user_dict['Grade'] = user_summary.user_grade_entry
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
@@ -455,7 +455,6 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
-		user_dict['Grade'] = user_summary.user_grade_entry
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		return user_dict
 
