@@ -439,28 +439,29 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		for name, grades in grade_map.items():
 			logger.debug("Grading category %s", name)
 			
+			drop_count = 0
+			grade_count = len(grades)
 			category = self.categories[name]
+			
+			## drop excused grades
+			grades = [x for x in grades or () if not x.excused]
+			drop_count += (grade_count - len(grades))
+			grade_count = len(grades)
 			
 			## drop lowest grades in the category
 			## make sure we don't drop excused grades
-			if category.DropLowest and category.DropLowest < len(grades):
-				idx = count = 0
-				while count < category.DropLowest and idx < len(grades):
-					grade = grades[idx]
-					if not grade.excused:
-						count += 1
-						grades.pop(idx)
-						logger.debug("%s has been dropped", grade)
-					else:
-						idx += 1	
-				## if we drop any rebalance weights equally
-				if count and grades:
-					item_weight = round(1/float(len(category)-count), 3)
-					for grade in grades or ():	
-						grade.weight = item_weight * category.weight
+			if category.DropLowest and category.DropLowest < grade_count:
+				grades = grades[category.DropLowest:]
+				drop_count += (grade_count - len(grades))
+	
+			## if we drop any rebalance weights equally
+			if drop_count and grades:
+				item_weight = round(1/float(len(category)-drop_count), 3)
+				for grade in grades:	
+					grade.weight = item_weight * category.weight
 						
 			## go through remaining grades
-			for grade in grades or ():
+			for grade in grades:
 				weight = grade.weight
 				if grade.excused:
 					result += weight
