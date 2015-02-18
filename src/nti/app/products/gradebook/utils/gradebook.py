@@ -74,10 +74,10 @@ def remove_from_container(container, key, event=False):
             pass
         container._p_changed = True
         
-def record_grade_without_submission(entry, user, assignmentId, clazz=PersistentGrade):
+def record_grade_without_submission(entry, user, assignmentId=None, clazz=PersistentGrade):
     # canonicalize the username in the event case got mangled
     username = user.username
-    assignmentId = entry.AssignmentId
+    assignmentId = assignmentId or entry.AssignmentId
 
     # We insert the history item, which the user himself
     # normally does but cannot in this case. This implicitly
@@ -93,7 +93,7 @@ def record_grade_without_submission(entry, user, assignmentId, clazz=PersistentG
     grade = None
     course = ICourseInstance(entry)
     pending_assessment = QAssignmentSubmissionPendingAssessment(
-                                                assignmentId=submission.assignmentId,
+                                                assignmentId=assignmentId,
                                                 parts=[] )
 
     assignment_history = component.getMultiAdapter( (course, submission.creator),

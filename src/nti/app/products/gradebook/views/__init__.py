@@ -7,7 +7,6 @@ Views and other functions related to grades and gradebook.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,10 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from .. import MessageFactory
 
 import nameparser
-
-from collections import OrderedDict
-
 from datetime import datetime
+from collections import OrderedDict
 
 from zope import component
 from zope import interface
@@ -45,20 +42,22 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
-from nti.common.maps import CaseInsensitiveDict
 from nti.common.property import Lazy
+from nti.common.maps import CaseInsensitiveDict
 
+from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
-from nti.contenttypes.courses.interfaces import ES_CREDIT
 
 from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import IEnumerableEntityContainer
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEnumerableEntityContainer
+
+from nti.dataserver.users.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
-from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.externalization import LocatedExternalDict
@@ -400,9 +399,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			 context=IGradeBook,
 			 name='SetGrade',
 			 request_method='POST')
-class GradeBookPutView(AbstractAuthenticatedView,
-				   ModeledContentUploadRequestUtilsMixin,
-				   ModeledContentEditRequestUtilsMixin):
+class GradeBookPutView(	AbstractAuthenticatedView,
+				   		ModeledContentUploadRequestUtilsMixin,
+						ModeledContentEditRequestUtilsMixin):
 	"""
 	Allows end users to set arbitrary grades in the gradebook,
 	returning the assignment history item.
@@ -437,7 +436,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 			raise hexec.HTTPNotFound( assignment_title )
 
 		# This will create our grade and assignment history, if necessary.
-		record_grade_without_submission( gradebook_entry,
+		record_grade_without_submission(gradebook_entry,
 										user,
 										assignment_ntiid )
 		grade = gradebook_entry.get( username )
@@ -549,9 +548,8 @@ class GradeWithoutSubmissionPutView(GradePutView):
 		entry = self.request.context.__parent__
 		username = self.request.context.__name__
 		user = User.get_user(username)
-		assignmentId = entry.AssignmentId
 
-		grade = record_grade_without_submission(entry, user, assignmentId)
+		grade = record_grade_without_submission(entry, user)
 		if grade is not None:
 			## place holder grade was inserted
 			self.request.context = grade

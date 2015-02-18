@@ -60,15 +60,13 @@ class TestEvolution2(ApplicationLayerTest):
 				
 				synchronize_gradebook(course)
 				book = IGradeBook(course)
-				
-				assignmentId = 'Main Title'
-				entry = book['quizzes'][assignmentId]
+
+				assignment_name = 'Main Title'
+				entry = book['quizzes'][assignment_name]
 				
 				for username, value in (('ichigo', 100), ('aizen', 90)):			
 					user = self._get_user(username)
-					record_grade_without_submission(entry, user, 
-													assignmentId, 
-													clazz=Grade)
+					record_grade_without_submission(entry, user, clazz=Grade)
 					grade = entry[username]
 					grade.value = value
 
