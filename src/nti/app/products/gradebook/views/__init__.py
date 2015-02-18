@@ -277,9 +277,15 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 			student_names = enrollment_usernames - student_names
 
+		instructor_usernames = {x.username.lower() for x in self.course.instructors}
+
+		def _do_include( username ):
+			return 	User.get_user( username ) is not None \
+				and username not in instructor_usernames
+
 		students_iter = (self._get_summary_for_student( username )
 						for username in student_names
-						if User.get_user( username ) is not None)
+						if _do_include( username ) )
 		return students_iter, len( student_names )
 
 	def _do_get_user_summaries( self ):
