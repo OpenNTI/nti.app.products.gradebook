@@ -313,8 +313,9 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 	def _weights(self):
 		result = {}
 		for category in self.categories.values():
-			for name, value in category.items.items():
-				result[name] = value.weight * category.weight
+			item_weight = round(1/float(len(category)), 3)
+			for name in category.items.keys():
+				result[name] = item_weight * category.weight
 		return result
 
 	@Lazy
