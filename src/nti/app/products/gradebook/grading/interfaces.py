@@ -23,7 +23,7 @@ from ..interfaces import IGradeScheme
 
 class IAssigmentGradeScheme(interface.Interface):
 	GradeScheme = Object(IGradeScheme, required=False, title="Grade scheme")
-	Weight = Number(title="Grade weight", default=0.0, min=0.0, max=1.0, required=True)
+	Weight = Number(title="Grade weight", default=0.0, min=0.0, max=1.0, required=False)
 	LatePenalty = Number(title="Late penalty", default=1, min=0.0, max=1.0, required=True)
 	
 class IDefaultCourseGradingPolicy(ICourseGradingPolicy):

@@ -74,9 +74,12 @@ class _CS1323CourseGradingPolicyUpdater(InterfaceObjectIO):
 	def parseCatagoryGradeSchemes(self, parsed):
 		schemes = parsed.get('CategoryGradeSchemes', {})
 		for name, value in list(schemes.items()):
-			obj = find_factory_for(value)()
-			update_from_external_object(obj, value)
-			schemes[name] = obj
+			schemes[name] = scheme = find_factory_for(value)()
+			update_from_external_object(scheme, value)
+			## items in category are weighted equally
+			weight = round(1/float(len(scheme)), 3)
+			for item in scheme:
+				item.Weight = weight
 		return schemes
 	
 	def updateFromExternalObject(self, parsed, *args, **kwargs):

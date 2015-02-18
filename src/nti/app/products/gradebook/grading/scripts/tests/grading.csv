@@ -1,16 +1,16 @@
-# Category Name,Category Weigh %,Drop Lowest,Assignment Identifier,Assignment Weight %,Assignment Late Penalty %,Assignment Grading Scheme,Max Points*
-turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Changing_Primitive_Data_010",25,0,integer,59
-turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Methods_010",25,0,integer,22
-turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Storing_Primitive_Data_010",25,0,integer,15
-turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Command_Line_Interactions_010",25,0,integer,18
-#,,,,,,,
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_30",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_28",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_14",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_16",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_12",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_21",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_23",1.25,100,integer,1
-iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_26",1.25,100,integer,1
-#,,,,,,,
-problets,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Behavior_of_Functions_010",100,50,integer,10
+# Category Name,Category Weigh %,Drop Lowest,Assignment Identifier,Assignment Late Penalty %,Assignment Grading Scheme,Max Points*
+turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Changing_Primitive_Data_010",0,integer,59
+turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Methods_010",0,integer,22
+turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Storing_Primitive_Data_010",0,integer,15
+turingscraft,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Turingscraft_Command_Line_Interactions_010",0,integer,18
+#,,,,,,
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_30",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_28",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_14",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_16",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_12",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_21",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_23",100,integer,1
+iclicker,5,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:iClicker_1_26",100,integer,1
+#,,,,,,
+problets,3.75,0,"tag:nextthought.com,2011-10:OU-NAQ-CS1323_S_2015_Intro_to_Computer_Programming.naq.asg.assignment:Problets_Behavior_of_Functions_010",50,integer,10

@@ -65,10 +65,9 @@ def process(source):
 	2) Category Weigh%: Category percentage weight
 	3) Drop lowest: Drop the lowest assignments
 	4) Assignment Identifier: Assigment id/name
-	5) Assignment Weight %: Assignment percentage weight relative to category
-	6) Assignment Late Penalty %: Assignment late penalty  discount percentage
-	7) Assignment Grading Scheme: Assignment grading scheme
-	8) Max Points: Max points for assignemt if Scheme is integer
+	5) Assignment Late Penalty %: Assignment late penalty  discount percentage
+	6) Assignment Grading Scheme: Assignment grading scheme
+	7) Max Points: Max points for assignemt if Scheme is integer
 	"""
 
 	assignments = set()
@@ -115,27 +114,21 @@ def process(source):
 				logger.error("No assignment found in row %s,%s", count, row)
 				continue
 			assignmentId = unicode(assignmentId)
-
-			assignment_weight = _check_weight(row[4])
-			if not assignment_weight:
-				logger.error("Invalid assignment weight in row %s,%s", count, row)
-				continue
-			
 			if assignmentId in assignments:
 				logger.error("Duplicate assignment in row %s,%s", count, row)
 				continue
 			
 			assignments.add(assignmentId)
 			asg_scheme = AssigmentGradeScheme()
-			asg_scheme.weight = assignment_weight
+			asg_scheme.weight = 0
 			
-			assignment_penalty = _check_weight(row[5]) if row[5] else 0
+			assignment_penalty = _check_weight(row[4]) if row[4] else 0
 			if assignment_penalty is None:
 				logger.warn("Invalid assignment penalty in row %s,%s", count, row)
 				assignment_penalty = 0
 			asg_scheme.penalty = assignment_penalty
 			
-			name = row[6].lower() if row[6] else 'integer'
+			name = row[5].lower() if row[5] else 'integer'
 			scheme = component.queryUtility(IGradeScheme, name=name)
 			if scheme is None:
 				logger.error("Invalid assignment grade scheme in row %s,%s", count, row)
@@ -143,14 +136,14 @@ def process(source):
 			asg_scheme.scheme = copy.copy(scheme)
 			
 			if INumericGradeScheme.providedBy(scheme):
-				if len(row) < 8:
+				if len(row) < 7:
 					logger.error("No max points specififed for assignment in row %s,%s", 
 								count, row)
 					continue
 				elif IIntegerGradeScheme.providedBy(scheme):
-					points = _check_int(row[7])
+					points = _check_int(row[6])
 				else:
-					points = _check_float(row[7])
+					points = _check_float(row[6])
 		
 				if not points:
 					logger.error("Invalid assignment max points in row %s,%s", count, row)
@@ -168,6 +161,9 @@ def process(source):
 		else:
 			items = dict(items)
 			cat_scheme.assigments = items
+			weight = round(1/float(len(items)), 3)
+			for item in items.values():
+				item.weight = weight
 	
 	if categories:
 		result = CS1323CourseGradingPolicy()

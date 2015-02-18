@@ -260,7 +260,7 @@ class CategoryGradeScheme(Persistent, SchemaConfigured):
 		return self.assigments[key]
 
 	def __iter__(self):
-		return iter(self.assigments)
+		return iter(self.assigments.values())
 	
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(BaseGradingPolicy):
@@ -353,7 +353,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		result = defaultdict(list)
 		entered = defaultdict(set)	
 		
-		# parse all grades and bucket them by category
+		## parse all grades and bucket them by category
 		for grade in self.book.iter_grades(username):
 			assignmentId = grade.AssignmentId
 				
@@ -381,11 +381,11 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			penalty = self._penalties.get(assignmentId, 0) if is_late else 0
 		
 			value = grade.value 
-			if value is None: # not graded assume correct
+			if value is None: ## not graded assume correct
 				value = 0
 				correctness = 1
 				
-			# record grade
+			## record grade
 			proxy = GradeProxy(assignmentId, value, weight, scheme, excused, penalty)
 			if 	correctness is not None:
 				proxy.correctness = correctness
@@ -394,8 +394,8 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			result[cat_name].append(proxy)
 			entered[cat_name].add(assignmentId)
 		
-		# now create proxy grades with 0 correctes for missing ones
-		# that we know about in the policy
+		## now create proxy grades with 0 correctes for missing ones
+		## that we know about in the policy
 		for cat_name, category in self.categories.items():
 			inputed = entered[cat_name]
 			assignments = set(category.items.keys())
@@ -404,29 +404,29 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 				is_late = self._is_late(assignmentId, now)
 				is_no_submit = self._is_no_submit(assignmentId)
 					
-				# we assume the assigment is correct
+				## we assume the assigment is correct
 				correctness = 1
 				weight = self._weights.get(assignmentId)
 				scheme = self._schemes.get(assignmentId)
 				
-				# check if the assigment is late
+				## check if the assigment is late
 				if is_late:
-					if not is_no_submit: # no no_submit
+					if not is_no_submit: ## no no_submit
 						correctness = 0
 					else:
 						penalty = self._penalties.get(assignmentId, 0)
 						correctness = 1 - penalty
 						
-				# create proxy grade
+				## create proxy grade
 				proxy = GradeProxy(assignmentId, 0, weight, scheme)
 				proxy.correctness = correctness
 				result[cat_name].append(proxy)
 			
-		# sort by correctness
+		## sort by correctness
 		for name in result.keys():
 			result[name].sort(key=lambda g: g.correctness)
 
-		# return
+		## return
 		return result
 		
 	def grade(self, principal):
@@ -440,8 +440,8 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			
 			category = self.categories[name]
 			
-			# drop lowest grades in the category
-			# make sure we don't drop excused grades
+			## drop lowest grades in the category
+			## make sure we don't drop excused grades
 			if category.DropLowest and category.DropLowest < len(grades):
 				idx = count = 0
 				while count < category.DropLowest and idx < len(grades):
@@ -449,12 +449,16 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 					if not grade.excused:
 						count += 1
 						grades.pop(idx)
-						result += grade.weight
 						logger.debug("%s has been dropped", grade)
 					else:
-						idx += 1		
+						idx += 1	
+				## if we drop any rebalance weights equally
+				if count and grades:
+					item_weight = round(1/float(len(category)-count), 3)
+					for grade in grades or ():	
+						grade.weight = item_weight * category.weight
 						
-			# go through remaining grades
+			## go through remaining grades
 			for grade in grades or ():
 				weight = grade.weight
 				if grade.excused:
