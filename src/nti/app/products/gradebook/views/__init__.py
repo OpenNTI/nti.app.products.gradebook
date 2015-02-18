@@ -359,7 +359,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		links = user_dict.setdefault( LINKS, [] )
 		links.append( Link( self.course,
 							rel='AssignmentHistory',
-							elements=('AssignmentHistories', user_summary.username)) )
+							elements=('AssignmentHistories', user_summary.user.username)) )
 		return user_dict
 
 	def _get_user_summaries( self, result_dict ):
