@@ -70,7 +70,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		try:
 			correctness = None
 			is_predicted = False
-			grade = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME]
+			grade = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME][self.remoteUser.username]
 		except KeyError:
 			is_predicted = True
 			scheme = params.get('scheme') or u''
