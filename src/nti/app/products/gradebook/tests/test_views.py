@@ -7,11 +7,14 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.app.products.gradebook.views.grading_views import is_none
 
 from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLayer
 
@@ -50,3 +53,15 @@ class TestViews(ApplicationLayerTest):
 		res = self.testapp.get(path, extra_environ=environ)
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
 		assert_that( res.json_body, has_entry('Items', has_length(0)))
+
+
+	def test_is_none(self):
+		assert_that(is_none(None), is_(True))
+		assert_that(is_none(''), is_(True))
+		assert_that(is_none('-'), is_(True))
+		assert_that(is_none(' - '), is_(True))
+		
+		assert_that(is_none(5), is_(False))
+		assert_that(is_none('--'), is_(False))
+		assert_that(is_none('D - '), is_(False))
+		assert_that(is_none('55 D-'), is_(False))

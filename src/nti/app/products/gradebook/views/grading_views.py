@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from .. import MessageFactory as _
 
+import six
+
 from zope import component
 
 from pyramid.view import view_config
@@ -40,6 +42,17 @@ from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..grading import VIEW_CURRENT_GRADE
 from ..grading import find_grading_policy_for_course
+
+def is_none(value):
+	result = False
+	if value is None:
+		result = True
+	elif isinstance(value, six.string_types):
+		value = value.strip()
+		if value.endswith('-'):
+			value = value[:-1]
+		result = not bool(value)
+	return result
 
 @view_config(context=ICourseInstance)
 @view_config(context=ICourseInstanceEnrollment)
@@ -71,7 +84,11 @@ class CurrentGradeView(AbstractAuthenticatedView):
 			correctness = None
 			is_predicted = False
 			grade = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME][self.remoteUser.username]
+			grade = None if is_none(grade.value) else grade
 		except KeyError:
+			grade = None
+		
+		if grade is None:
 			is_predicted = True
 			scheme = params.get('scheme') or u''
 			presentation = policy.presentation or component.getUtility(IGradeScheme, name=scheme)
