@@ -435,6 +435,22 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		return result
 		
 	def grade(self, principal):
+		"""
+		if an assignment is overdue and there is no submission, the assignment grade is 0
+		if an assignment is submitted and no grades were assigned, the assignment grade is max grade.
+		For each category of assignments:
+		    1.    ignore/drop the assignments that were marked as excused
+		
+		    2.    ignore/drop the assignments that are invalid (i.e. entered grade is greater than specified max grade)
+		
+		    3.    calculate grade percentage: actual grade/max grade
+		
+		    4.    ignore/drop the specified N lowest grade assignments
+		
+		    5.    calculate average out of remaining assignments and multiply by category weights.
+		
+		Sum up the result derived from each category and arrive at predictor grade
+		"""
 		logger.debug("Grading %s", principal)
 		
 		result = 0
