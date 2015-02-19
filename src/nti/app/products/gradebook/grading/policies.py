@@ -458,12 +458,15 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 		grade_map = self._grade_map(username)
 		for name, grades in grade_map.items():
 			logger.debug("Grading category %s", name)
-			
+							
 			drop_count = 0
 			grade_count = len(grades)
 			category = self.categories[name]
 			
 			## drop excused grades and invalid grades
+			logger.debug("%s have been skipped", 
+						 [x for x in grades if x.excused or x.invalid_grade] )
+						
 			grades = [x for x in grades if not x.excused and not x.invalid_grade]
 			drop_count += (grade_count - len(grades))
 			grade_count = len(grades)
@@ -471,6 +474,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			## drop lowest grades in the category
 			## make sure we don't drop excused grades
 			if category.DropLowest and category.DropLowest < grade_count:
+				logger.debug("%s have been dropped", grades[0:category.DropLowest])
 				grades = grades[category.DropLowest:]
 				drop_count += (grade_count - len(grades))
 	
