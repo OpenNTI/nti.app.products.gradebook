@@ -91,7 +91,7 @@ class TestAssignments(ApplicationLayerTest):
 			# Changing the title changes the display name, but
 			# not the key
 
-			asg = component.getUtility(IQAssignment, 
+			asg = component.getUtility(IQAssignment,
 									   name="tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1")
 			assert_that( asg.title, is_('Main Title') )
 
@@ -146,6 +146,7 @@ class TestAssignments(ApplicationLayerTest):
 					for asg in asgs:
 						assert_that( asg, externalizes( has_entry( 'GradeSubmittedCount', 0 )))
 						ext = to_external_object(asg)
+						self.require_link_href_with_rel(ext, 'GradeBookByAssignment')
 						href = self.require_link_href_with_rel(ext, 'GradeSubmittedAssignmentHistory')
 						title = asg.title
 						title = urllib.quote(title)
@@ -208,6 +209,7 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, extra_environ=instructor_environ)
 		assert_that( res.json_body, has_entry( 'GradeSubmittedCount', 1 ))
 
+		self.require_link_href_with_rel(res.json_body, 'GradeBookByAssignment')
 		sum_link =  self.require_link_href_with_rel(res.json_body, 'GradeSubmittedAssignmentHistorySummaries')
 		assert_that( sum_link,
 					 is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main%20Title/SubmittedAssignmentHistorySummaries'))
