@@ -85,5 +85,5 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		result.update(to_external_object(grade))
 		result['IsPredicted'] = is_predicted
 		if correctness is not None:
-			result['Correctness'] = correctness
+			result['Correctness'] = int(correctness * 100)
 		return result
