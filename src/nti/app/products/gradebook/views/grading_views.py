@@ -22,6 +22,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.products.courseware.utils import is_enrolled
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
@@ -62,27 +64,26 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		if not book.has_grades(self.remoteUser.username):
 			raise hexec.HTTPNotFound()
 		
+		params = CaseInsensitiveDict(self.request.params)
+
 		## check for a final grade.
 		try:
-			result = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME]
-			return result
+			correctness = None
+			is_predicted = False
+			grade = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME]
 		except KeyError:
-			pass
+			is_predicted = True
+			scheme = params.get('scheme') or u''
+			presentation = policy.presentation or component.getUtility(IGradeScheme, name=scheme)
+			correctness = policy.grade(self.remoteUser)
 		
-		presentation = policy.presentation
-		scheme = self.request.params.get('scheme')
-		if scheme:
-			presentation = component.getUtility(IGradeScheme, name=scheme)
-	
-		correctness = policy.grade(self.remoteUser)
-		
-		grade = PersistentGrade()
-		grade.username = self.remoteUser.username
-		grade.value = presentation.fromCorrectness(correctness) \
-					  if presentation is not None else int(correctness * 100)
+			grade = PersistentGrade()
+			grade.username = self.remoteUser.username
+			grade.value = presentation.fromCorrectness(correctness)
 
 		result = LocatedExternalDict()		
 		result.update(to_external_object(grade))
-		result['Correctness'] = correctness
-		result['IsPredicted'] = True
+		result['IsPredicted'] = is_predicted
+		if correctness is not None:
+			result['Correctness'] = correctness
 		return result
