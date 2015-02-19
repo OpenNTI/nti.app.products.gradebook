@@ -62,6 +62,8 @@ def to_correctness(value, scheme):
 @EqHash('assignmentId')
 class GradeProxy(object):
 	
+	invalid_grade = False
+	
 	def __init__(self, assignmentId, value, weight, scheme, excused=False, penalty=0.0):
 		self.value = value
 		self.weight = weight
@@ -79,6 +81,7 @@ class GradeProxy(object):
 			logger.error("Invalid value %s for grade scheme %s in assignment %s", 
 						 self.value, self.scheme, self.assignmentId)
 			result = 0
+			self.invalid_grade = True
 		return result
 
 class BaseGradingPolicy(CreatedAndModifiedTimeMixin,
@@ -444,8 +447,8 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			grade_count = len(grades)
 			category = self.categories[name]
 			
-			## drop excused grades
-			grades = [x for x in grades or () if not x.excused]
+			## drop excused grades and invalid grades
+			grades = [x for x in grades if not x.excused and not x.invalid_grade]
 			drop_count += (grade_count - len(grades))
 			grade_count = len(grades)
 			

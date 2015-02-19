@@ -238,6 +238,9 @@ class IGradeBookPart(IContainer,
 #: grades
 NO_SUBMIT_PART_NAME = 'no_submit'
 
+# special final grade name
+FINAL_GRADE_NAME = 'Final Grade'
+
 class IGradeBook(IContainer,
 				 IContained,
 				 IShouldHaveTraversablePath):

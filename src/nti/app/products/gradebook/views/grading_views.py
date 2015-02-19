@@ -33,6 +33,8 @@ from ..grades import PersistentGrade
 
 from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
+from ..interfaces import FINAL_GRADE_NAME
+from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..grading import VIEW_CURRENT_GRADE
 from ..grading import find_grading_policy_for_course
@@ -60,22 +62,27 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		if not book.has_grades(self.remoteUser.username):
 			raise hexec.HTTPNotFound()
 		
+		## check for a final grade.
+		try:
+			result = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME]
+			return result
+		except KeyError:
+			pass
+		
 		presentation = policy.presentation
 		scheme = self.request.params.get('scheme')
 		if scheme:
 			presentation = component.getUtility(IGradeScheme, name=scheme)
 	
-		if presentation is None:
-			# use default
-			presentation = component.getUtility(IGradeScheme)
-
 		correctness = policy.grade(self.remoteUser)
 		
 		grade = PersistentGrade()
 		grade.username = self.remoteUser.username
-		grade.value = presentation.fromCorrectness(correctness)
+		grade.value = presentation.fromCorrectness(correctness) \
+					  if presentation is not None else int(correctness * 100)
 
 		result = LocatedExternalDict()		
 		result.update(to_external_object(grade))
 		result['Correctness'] = correctness
+		result['IsPredicted'] = True
 		return result
