@@ -18,10 +18,17 @@ from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import contains_inanyorder
 
+from zope.component import provideAdapter
+
+from nti.app.products.gradebook.adapters import _as_course
+from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.views import GradeBookSummaryView
 from nti.app.products.gradebook.gradebook import GradeBook
 
 from nti.app.testing.request_response import DummyRequest
+
+from nti.app.products.courseware.interfaces import ICourseInstance
+from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.externalization.representation import WithRepr
 
@@ -46,16 +53,21 @@ class MockSummary( object ):
 
 class TestGradeBookSummary( TestCase ):
 
+	def setUp(self):
+		provideAdapter( _as_course, adapts=(IGradeBook,), provides=ICourseInstance )
+
 	@fudge.patch( 'pyramid.url.URLMethodsMixin.current_route_path' )
-	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_final_grade_entry' )
-	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_assignment_for_course' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.final_grade_entry' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.assignments' )
 	def test_sorting( self, mock_url, mock_final_grade, mock_assignments ):
 		"Test sorting/batching params of gradebook summary."
 		mock_url.is_callable().returns( '/path/' )
 		mock_final_grade.is_callable()
 		mock_assignments.is_callable()
 		request = DummyRequest( params={} )
-		view = GradeBookSummaryView( GradeBook(), request )
+		gradebook = GradeBook()
+		gradebook.__parent__ = CourseInstance()
+		view = GradeBookSummaryView( gradebook, request )
 		do_sort = view._get_user_result_set
 
 		# Empty
@@ -129,14 +141,16 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, contains( summary4 ))
 
 	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_students' )
-	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_final_grade_entry' )
-	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_assignment_for_course' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.final_grade_entry' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.assignments' )
 	def test_filtering( self, mock_get_students, mock_final_grade, mock_assignments ):
 		"Test sorting/batching params of gradebook summary."
 		mock_final_grade.is_callable()
 		mock_assignments.is_callable()
 		request = DummyRequest( params={} )
-		view = GradeBookSummaryView( GradeBook(), request )
+		gradebook = GradeBook()
+		gradebook.__parent__ = CourseInstance()
+		view = GradeBookSummaryView( gradebook, request )
 		do_filter = view._do_get_user_summaries
 
 		# Empty

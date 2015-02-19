@@ -40,7 +40,5 @@ class TestDecorators(unittest.TestCase):
 		links = gradebook['Links']
 		assert_that( links, has_items(
 								has_property( 'rel', 'GradeBookSummary' ),
-								has_property( 'rel', 'GradeBookByUser' ),
-								has_property( 'rel', 'GradeBookByAssignment' ),
 								has_property( 'rel', 'SetGrade' ),
 								has_property( 'rel', 'ExportContents' ) ) )
