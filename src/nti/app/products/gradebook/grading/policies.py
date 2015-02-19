@@ -44,6 +44,7 @@ from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
+from ..interfaces import FINAL_GRADE_NAME
 from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..utils import MetaGradeBookObject
@@ -362,7 +363,7 @@ class CS1323CourseGradingPolicy(BaseGradingPolicy):
 			name = getattr(entry, 'Name', None)
 			part = getattr(entry, '__parent__', None)
 			if 	part is not None and part.__name__ == NO_SUBMIT_PART_NAME and \
-				name == 'Final Grade':
+				name == FINAL_GRADE_NAME:
 				continue
 					
 			weight = self._weights.get(assignmentId)
