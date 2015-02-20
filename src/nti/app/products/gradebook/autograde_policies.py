@@ -86,9 +86,21 @@ class PointBasedAutoGradePolicy(object):
 		points = question_map.get(ntiid) or question_map.get('default')
 		return points
 	
+	def assignment_points(self, item):
+		result = 0
+		for assessed_set in item.parts:
+			for assessed_question in assessed_set.questions:
+				question_points = self.question_points(assessed_question.questionId)
+				result += question_points
+		return result
+	
 	def autograde(self, item):
 		assessed_sum = 0.0
+		practical_best = self.assignment_points(item)
 		theoretical_best = self.auto_grade.get('total_points')
+		if practical_best != theoretical_best:
+			logger.warn("Policy total points %s is different from sum of questions points %s",
+						theoretical_best, practical_best)
 		for assessed_set in item.parts:
 			for assessed_question in assessed_set.questions:
 				part_sum = 0.0
