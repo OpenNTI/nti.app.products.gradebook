@@ -103,5 +103,5 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		result['IsPredicted'] = is_predicted
 		if correctness is not None:
 			result['RawValue'] = correctness
-			result['Correctness'] = int(correctness * 100)
+			result['Correctness'] = int(round(correctness * 100))
 		return result
