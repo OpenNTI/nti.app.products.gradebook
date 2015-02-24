@@ -30,7 +30,7 @@ from nti.common.property import readproperty
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.dataserver.datastructures import CreatedAndModifiedTimeMixin
+from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 
 from nti.externalization.representation import WithRepr
 
