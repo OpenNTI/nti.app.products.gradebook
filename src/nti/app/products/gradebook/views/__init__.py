@@ -125,18 +125,44 @@ class UserGradeSummary( object ):
 
 	@Lazy
 	def user_grade_entry(self):
-		# Not sure why we would not have final grade entry
 		result = None
 		if self.grade_entry is not None:
 			result = self.grade_entry.get( self.user.username )
 		return result
 
 	@Lazy
-	def history_summary(self):
-		result = history_item = None
+	def grade_value(self):
+		result = None
+		if self.user_grade_entry is not None:
+			result = self.user_grade_entry.value
+		return result
+
+	@Lazy
+	def feedback_count(self):
+		result = None
+		if self.history_item is not None:
+			result = self.history_item.FeedbackCount
+		return result
+
+	@Lazy
+	def created_date(self):
+		result = None
+		if self.history_summary is not None:
+			result = self.history_summary.createdTime
+		return result
+
+	@Lazy
+	def history_item(self):
+		result = None
 		user_grade_entry = self.user_grade_entry
 		if user_grade_entry is not None:
-			history_item = IUsersCourseAssignmentHistoryItem( user_grade_entry, None )
+			result = IUsersCourseAssignmentHistoryItem( user_grade_entry, None )
+		return result
+
+	@Lazy
+	def history_summary(self):
+		result = None
+		history_item = self.history_item
 		if history_item is not None:
 			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
 		return result
@@ -217,7 +243,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
-		``Alias``, ``FinalGrade``, and ``Username``.  The default is by
+		``Alias``, ``Grade``, and ``Username``.  The default is by
 		LastName.
 
 	sortOrder
@@ -267,6 +293,24 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return UserGradeBookSummary( username, self.course, self.assignments,
 									self.gradebook, self.final_grade_entry )
 
+	def _get_summaries_for_usernames( self, student_names ):
+		"For the given names, retunr student summaries."
+		instructor_usernames = {x.username.lower() for x in self.course.instructors}
+
+		def _do_include( username ):
+			return 	User.get_user( username ) is not None \
+				and username not in instructor_usernames
+
+		students_iter = (self._get_summary_for_student( username )
+						for username in student_names
+						if _do_include( username ) )
+		return students_iter, len( student_names )
+
+	def _get_all_student_summaries( self ):
+		everyone = self.course.SharingScopes['Public']
+		enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
+		return self._get_summaries_for_usernames( enrollment_usernames )[0]
+
 	def _get_students( self, scope_name ):
 		"Return the set of student names we want results for, along with the total count of students."
 		# We default to ForCredit. If we want public, subtract out the for credit students.
@@ -278,16 +322,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
 			student_names = enrollment_usernames - student_names
 
-		instructor_usernames = {x.username.lower() for x in self.course.instructors}
-
-		def _do_include( username ):
-			return 	User.get_user( username ) is not None \
-				and username not in instructor_usernames
-
-		students_iter = (self._get_summary_for_student( username )
-						for username in student_names
-						if _do_include( username ) )
-		return students_iter, len( student_names )
+		return self._get_summaries_for_usernames( student_names )
 
 	def _do_get_user_summaries( self ):
 		"Get the filtered user summaries of users we may want to return."
@@ -319,17 +354,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_summaries = sorted( user_summaries, key=sort_key, reverse=sort_desc )
 		return user_summaries
 
-	def _get_user_result_set(self, result_dict, user_summaries):
-		"Return a sorted/batched collection of user summaries to return."
-		sort_on = self.request.params.get('sortOn')
-		sort_on = sort_on and sort_on.lower()
-
-		# Ascending is default
-		sort_order = self.request.params.get('sortOrder')
-		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
-
-		if sort_on and sort_on == 'finalgrade':
-			sort_key = lambda x: x.final_grade.value if x.final_grade else ''
+	def _get_sort_key( self, sort_on ):
+		if sort_on and sort_on == 'grade':
+			sort_key = lambda x: x.grade_value if x.grade_value else ''
 		elif sort_on and sort_on == 'alias':
 			sort_key = lambda x: x.alias.lower() if x.alias else ''
 		elif sort_on and sort_on == 'username':
@@ -337,6 +364,17 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		else:
 			# Sorting by last_name is default
 			sort_key = lambda x: x.last_name.lower() if x.last_name else ''
+		return sort_key
+
+	def _get_user_result_set(self, result_dict, user_summaries):
+		"Return a sorted/batched collection of user summaries to return."
+		sort_on = self.request.params.get('sortOn')
+		sort_on = sort_on and sort_on.lower()
+		sort_key = self._get_sort_key( sort_on )
+
+		# Ascending is default
+		sort_order = self.request.params.get('sortOrder')
+		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
 		result_set = self._get_sorted_result_set( user_summaries, sort_key, sort_descending )
 		self._batch_items_iterable( result_dict, result_set )
@@ -362,17 +400,36 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 							elements=('AssignmentHistories', user_summary.user.username)) )
 		return user_dict
 
+	def _get_search_results( self, search_param ):
+		"""
+		For the given search_param, return the results for those users
+		if it matches username, last_name, alias, or displayable username.
+		"""
+		# The entity catalog could be used here, but we
+		# have to make sure we can search via the
+		# substituted username (e.g. OU4x4).
+
+		def _matches( user_summary ):
+			result = (	user_summary.alias
+					and search_param in user_summary.alias.lower()) \
+				or	(	user_summary.username
+					and search_param in user_summary.username.lower()) \
+				or 	( 	user_summary.last_name
+					and	search_param in user_summary.last_name.lower() ) \
+				or 	search_param in user_summary.user.username.lower()
+			return result
+
+		all_summaries = self._get_all_student_summaries()
+		results = [x for x in all_summaries if _matches( x )]
+		return results
+
 	def _get_user_summaries( self, result_dict ):
 		"Returns a list of user summaries.  Search supercedes all filters/sorting params."
 		search = self.request.params.get('search')
-		username = search and search.lower()
+		search_param = search and search.lower()
 
-		if username:
-			if User.get_user( username ) is not None:
-				summary = self._get_summary_for_student( username )
-				results = (summary,)
-			else:
-				results = ()
+		if search_param:
+			results = self._get_search_results( search_param )
 		else:
 			# Get our intermediate set
 			user_summaries, student_count = self._do_get_user_summaries()
@@ -418,8 +475,8 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
-		``Alias``, ``FinalGrade``, and ``Username``.  The default is by
-		LastName.
+		``Alias``, ``Grade``, ``Username``, ``Feedback``, and ``CompletedDate``.
+		The default is by LastName.
 
 	sortOrder
 		The sort direction. Options are ``ascending`` and
@@ -428,11 +485,8 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 		by default.
 
 	filter
-		The case insensitive filter list.  This is a two part filter.
-		Options are ``Ungraded``, ``Overdue``, and ``Actionable``.
-		Actionable is a combination of the other two. The other filter
-		occurs on the enrollment scope.  Options are ``Open`` and
-		``ForCredit``.  ForCredit is the default enrollment scope.
+		The case insensitive filter on the enrollment scope.  Options
+		are ``Open`` and ``ForCredit``.  ForCredit is the default enrollment scope.
 
 	search
 		The username to search on, regardless of enrollment scope. If
@@ -448,6 +502,18 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 	def _get_summary_for_student( self, username ):
 		return UserGradeSummary( username, self.grade_entry )
+
+	def _get_sort_key( self, sort_on ):
+		sort_key = None
+		if sort_on and sort_on == 'feedback':
+			sort_key = lambda x: x.feedback_count if x.feedback_count else ''
+		elif sort_on and sort_on == 'completeddate':
+			sort_key = lambda x: x.created_date if x.created_date else ''
+
+		if sort_key is None:
+			# Super class handles name and grade sorting, as well as the default.
+			sort_key = super( AssignmentSummaryView, self )._get_sort_key( sort_on )
+		return sort_key
 
 	def _get_user_dict( self, user_summary ):
 		"Returns a user's assignment summary."
