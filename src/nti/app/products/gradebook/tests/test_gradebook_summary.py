@@ -39,17 +39,12 @@ class MockGrade( object ):
 		self.value = value
 
 @WithRepr
-class MockUser( object ):
-	def __init__( self, username='' ):
-		self.username=username
-
-@WithRepr
 class MockSummary( object ):
 	"By default, every field is non-null at the start of ascending order."
 
 	def __init__( self, alias='a', last_name='a', username='a',
 					overdue_count=0, ungraded_count=0, grade_value=0,
-					feedback_count=0, created_date=0, user=MockUser() ):
+					feedback_count=0, created_date=0 ):
 		self.alias = alias
 		self.last_name = last_name
 		self.username = username
@@ -58,7 +53,6 @@ class MockSummary( object ):
 		self.grade_value = grade_value
 		self.feedback_count = feedback_count
 		self.created_date = created_date
-		self.user = user
 
 class TestGradeBookSummary( TestCase ):
 
@@ -271,15 +265,13 @@ class TestGradeBookSummary( TestCase ):
 		summary2 = MockSummary()
 		summary3 = MockSummary()
 		summary4 = MockSummary()
-		summary5 = MockSummary()
 		summary.username = 'thisisbraskydotcom'
 		summary2.alias = 'billbRASKy'
-		summary3.user = MockUser( 'brasky, william' )
-		summary4.last_name = 'BRASKY'
-		summaries = ( summary, summary2, summary3, summary4, summary5 )
+		summary3.last_name = 'brasky, william'
+		summaries = ( summary, summary2, summary3, summary4 )
 		mock_get_summaries.is_callable().returns( summaries )
 
 		result = do_search( 'brasky' )
-		assert_that( result, has_length( 4 ))
+		assert_that( result, has_length( 3 ))
 		assert_that( result,
-					contains_inanyorder( summary, summary2, summary3, summary4 ))
+					contains_inanyorder( summary, summary2, summary3 ))

@@ -415,8 +415,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 				or	(	user_summary.username
 					and search_param in user_summary.username.lower()) \
 				or 	( 	user_summary.last_name
-					and	search_param in user_summary.last_name.lower() ) \
-				or 	search_param in user_summary.user.username.lower()
+					and	search_param in user_summary.last_name.lower() )
 			return result
 
 		all_summaries = self._get_all_student_summaries()
