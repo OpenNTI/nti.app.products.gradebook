@@ -22,8 +22,11 @@ from zope.component import provideAdapter
 
 from nti.app.products.gradebook.adapters import _as_course
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.views import GradeBookSummaryView
 from nti.app.products.gradebook.gradebook import GradeBook
+
+from nti.app.products.gradebook.views import _get_grade_parts
+from nti.app.products.gradebook.views import GradeBookSummaryView
+from nti.app.products.gradebook.views import UserGradeSummary
 
 from nti.app.testing.request_response import DummyRequest
 
@@ -39,7 +42,7 @@ class MockGrade( object ):
 		self.value = value
 
 @WithRepr
-class MockSummary( object ):
+class MockSummary( UserGradeSummary ):
 	"By default, every field is non-null at the start of ascending order."
 
 	def __init__( self, alias='a', last_name='a', username='a',
@@ -58,6 +61,24 @@ class TestGradeBookSummary( TestCase ):
 
 	def setUp(self):
 		provideAdapter( _as_course, adapts=(IGradeBook,), provides=ICourseInstance )
+
+	def test_grade_parts(self):
+		# Could be a lot of types: 7, 7/10, 95, 95%, A-, 90 A
+		grade_val = _get_grade_parts( 100 )
+		assert_that( grade_val, is_( (100,) ) )
+
+		grade_val = _get_grade_parts( '20' )
+		assert_that( grade_val, is_( (20,) ) )
+
+		grade_val = _get_grade_parts( 98.6 )
+		assert_that( grade_val, is_( (98.6,) ) )
+
+		grade_val = _get_grade_parts( '98 -' )
+		assert_that( grade_val, is_( (98, '-') ) )
+
+		# We don't handle this yet.
+		grade_val = _get_grade_parts( '90 A' )
+		assert_that( grade_val, is_( (90, 'A') ) )
 
 	@fudge.patch( 'pyramid.url.URLMethodsMixin.current_route_path' )
 	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.final_grade_entry' )
@@ -96,19 +117,19 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, has_length( 1 ))
 		assert_that( result, contains( summary ))
 
-		# Case insensitive sort by final
+		# Case insensitive numerical sort by grade
 		summary2 = MockSummary()
 		summary2.grade_value = '10'
 		summary3 = MockSummary()
-		summary3.grade_value = '90'
+		summary3.grade_value = '90 -'
 		summary4 = MockSummary()
-		summary4.grade_value = None
+		summary4.grade_value = '55 A'
 
 		summaries = [ summary4, summary3, summary2, summary ]
 		request.params={ 'sortOn' : 'gradE', 'sortOrder': 'ascending' }
 		result = do_sort( {}, summaries )
 		assert_that( result, has_length( 4 ))
-		assert_that( result, contains( summary4, summary, summary2, summary3 ))
+		assert_that( result, contains( summary, summary2, summary4, summary3 ))
 
 		# Alias; desc
 		summary2.alias = 'zzzz'

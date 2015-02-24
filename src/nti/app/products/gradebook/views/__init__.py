@@ -17,6 +17,8 @@ import nameparser
 from datetime import datetime
 from collections import OrderedDict
 
+from six import string_types
+
 from zope import component
 from zope import interface
 from zope.container.contained import Contained
@@ -80,6 +82,18 @@ LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 
+def _get_grade_parts( grade_value ):
+	"""Convert the webapp's "number - letter" scheme to a tuple."""
+	result = ( grade_value, )
+	if grade_value and isinstance(grade_value, string_types):
+		try:
+			values = grade_value.split()
+			values[0] = float(values[0])
+			result = tuple( values )
+		except ValueError:
+			pass
+	return result
+
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
 def GradeBookPathAdapter( context, request ):
@@ -135,6 +149,14 @@ class UserGradeSummary( object ):
 		result = None
 		if self.user_grade_entry is not None:
 			result = self.user_grade_entry.value
+		return result
+
+	@Lazy
+	def grade_tuple(self):
+		"A tuple of (grade_num, grade_other)."
+		result = None
+		if self.grade_value is not None:
+			result = _get_grade_parts( self.grade_value )
 		return result
 
 	@Lazy
@@ -356,7 +378,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_sort_key( self, sort_on ):
 		if sort_on and sort_on == 'grade':
-			sort_key = lambda x: x.grade_value if x.grade_value else ''
+			sort_key = lambda x: x.grade_tuple if x.grade_tuple else ''
 		elif sort_on and sort_on == 'alias':
 			sort_key = lambda x: x.alias.lower() if x.alias else ''
 		elif sort_on and sort_on == 'username':
