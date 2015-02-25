@@ -178,37 +178,35 @@ class TestGradeBookSummary( TestCase ):
 		do_filter = view._do_get_user_summaries
 
 		# Empty
-		mock_get_students.is_callable().returns( ( (),0 ) )
-		result, count = do_filter()
+		mock_get_students.is_callable().returns( () )
+		result = do_filter()
 		assert_that( result, has_length( 0 ))
-		assert_that( count, is_( 0 ))
 
 		# Single with no filter
 		summary = MockSummary()
 		summaries = ( summary, )
-		mock_get_students.is_callable().returns( ( summaries, 50 ) )
-		result, count = do_filter()
+		mock_get_students.is_callable().returns( summaries )
+		result = do_filter()
 		assert_that( list( result ), has_length( 1 ))
-		assert_that( count, is_( 50 ))
 
 		# Single filter ungraded
 		request.params={ 'filter' : 'UnGRADED' }
-		result, count = do_filter()
+		result = do_filter()
 		assert_that( list( result ), has_length( 0 ))
 
 		# Single filter overdue
 		request.params={ 'filter' : 'overDUE' }
-		result, count = do_filter()
+		result = do_filter()
 		assert_that( list( result ), has_length( 0 ))
 
 		# actionable
 		request.params={ 'filter' : 'actionablE' }
-		result, count = do_filter()
+		result = do_filter()
 		assert_that( list( result ), has_length( 0 ))
 
 		# Multiple filters
 		request.params={ 'filter' : 'actionablE,open' }
-		result, count = do_filter()
+		result = do_filter()
 		assert_that( list( result ), has_length( 0 ))
 
 		# Multiple summaries/ filter ungraded
@@ -220,14 +218,13 @@ class TestGradeBookSummary( TestCase ):
 		summary4.ungraded_count = 99
 
 		summaries = [ summary4, summary3, summary2, summary ]
-		mock_get_students.is_callable().returns( ( summaries, 50 ) )
+		mock_get_students.is_callable().returns( summaries )
 
 		request.params={ 'filter' : 'ungraded,open' }
-		result, count = do_filter()
+		result = do_filter()
 		result = list( result )
 		assert_that( result, has_length( 3 ))
 		assert_that( result, contains_inanyorder( summary2, summary3, summary4 ))
-		assert_that( count, is_( 50 ))
 
 		# Filter overdue
 		summary2.overdue_count = 9
@@ -235,22 +232,20 @@ class TestGradeBookSummary( TestCase ):
 		summary4.overdue_count = 99
 		request.params={ 'filter' : 'OVerDUE,open' }
 
-		result, count = do_filter()
+		result = do_filter()
 		result = list( result )
 		assert_that( result, has_length( 3 ))
 		assert_that( result, contains_inanyorder( summary2, summary3, summary4 ))
-		assert_that( count, is_( 50 ))
 
 		# Actionable
 		summary4.overdue_count = 0
 		summary4.ungraded_count = 0
 		request.params={ 'filter' : 'ACTIONAble,open' }
 
-		result, count = do_filter()
+		result = do_filter()
 		result = list( result )
 		assert_that( result, has_length( 2 ))
 		assert_that( result, contains_inanyorder( summary2, summary3 ))
-		assert_that( count, is_( 50 ))
 
 	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_all_student_summaries' )
 	def test_searching( self, mock_get_summaries ):

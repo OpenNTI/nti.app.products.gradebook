@@ -326,12 +326,12 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		students_iter = (self._get_summary_for_student( username )
 						for username in student_names
 						if _do_include( username ) )
-		return students_iter, len( student_names )
+		return students_iter
 
 	def _get_all_student_summaries( self ):
 		everyone = self.course.SharingScopes['Public']
 		enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
-		return self._get_summaries_for_usernames( enrollment_usernames )[0]
+		return self._get_summaries_for_usernames( enrollment_usernames )
 
 	def _get_students( self, scope_name ):
 		"Return the set of student names we want results for, along with the total count of students."
@@ -359,7 +359,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		if 'open' in filter_by:
 			scope_name = 'Public'
 
-		user_summaries, total_possible_count = self._get_students( scope_name )
+		user_summaries = self._get_students( scope_name )
 
 		if 'ungraded' in filter_by:
 			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
@@ -369,7 +369,10 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			user_summaries = ( x for x in user_summaries
 								if x.overdue_count > 0 or x.ungraded_count > 0 )
 
-		return user_summaries, total_possible_count
+		# Resolve
+		user_summaries = [x for x in user_summaries]
+
+		return user_summaries
 
 	def _get_sorted_result_set( self, user_summaries, sort_key, sort_desc=False ):
 		"Get the batched/sorted result set."
@@ -453,8 +456,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			results = self._get_search_results( search_param )
 		else:
 			# Get our intermediate set
-			user_summaries, student_count = self._do_get_user_summaries()
-			result_dict['TotalItemCount'] = student_count
+			user_summaries = self._do_get_user_summaries()
+			result_dict['TotalItemCount'] = len( user_summaries )
 			# Now our batched set
 			# We should have links here after batching.
 			results = self._get_user_result_set( result_dict, user_summaries )
