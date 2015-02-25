@@ -381,7 +381,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_sort_key( self, sort_on ):
 		if sort_on and sort_on == 'grade':
-			sort_key = lambda x: x.grade_tuple if x.grade_tuple else ''
+			sort_key = lambda x: x.grade_tuple
 		elif sort_on and sort_on == 'alias':
 			sort_key = lambda x: x.alias.lower() if x.alias else ''
 		elif sort_on and sort_on == 'username':

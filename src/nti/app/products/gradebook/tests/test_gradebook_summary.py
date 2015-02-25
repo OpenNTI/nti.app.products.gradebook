@@ -101,7 +101,7 @@ class TestGradeBookSummary( TestCase ):
 		# Single sort by final
 		summary = MockSummary()
 		summaries = ( summary, )
-		request.params={ 'sortOn' : 'FINALGRADE' }
+		request.params={ 'sortOn' : 'GRADE' }
 		result = do_sort( {}, summaries )
 		assert_that( result, has_length( 1 ))
 
@@ -130,6 +130,12 @@ class TestGradeBookSummary( TestCase ):
 		result = do_sort( {}, summaries )
 		assert_that( result, has_length( 4 ))
 		assert_that( result, contains( summary, summary2, summary4, summary3 ))
+
+		# Reverse
+		request.params={ 'sortOn' : 'gradE', 'sortOrder': 'descending' }
+		result = do_sort( {}, summaries )
+		assert_that( result, has_length( 4 ))
+		assert_that( result, contains( summary3, summary4, summary2, summary ))
 
 		# Alias; desc
 		summary2.alias = 'zzzz'
