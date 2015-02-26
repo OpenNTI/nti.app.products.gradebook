@@ -16,23 +16,8 @@
 
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ICategoryGradeScheme
-						 .interfaces.IAssigmentGradeScheme
-						 .interfaces.ICS1323CourseGradingPolicy
-						 .interfaces.IDefaultCourseGradingPolicy"
+						 .interfaces.ICS1323CourseGradingPolicy"
 		modules=".policies" />
-
-	<!-- Internalization -->
-	<adapter factory=".internalization._DefaultCourseGradingPolicyUpdater"
-			 for=".interfaces.IDefaultCourseGradingPolicy"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-			
-	<adapter factory=".internalization._CategoryGradeSchemesUpdater"
-			 for=".interfaces.ICategoryGradeScheme"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-	 
-	<adapter factory=".internalization._CS1323CourseGradingPolicyUpdater"
-			 for=".interfaces.ICS1323CourseGradingPolicy"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 	
 	<!-- Decorators -->
 	<subscriber factory=".decorators._CurrentGradeLinkDecorator"
