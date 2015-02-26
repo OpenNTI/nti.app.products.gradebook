@@ -20,24 +20,33 @@ import codecs
 import unittest
 import simplejson
 
-from nti.app.products.gradebook.grades import Grade
-from nti.app.products.gradebook.gradebook import GradeBook
+import fudge
+
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+
 from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
 
-from nti.app.products.gradebook.grading.policies import AssigmentGradeScheme
 from nti.app.products.gradebook.grading.policies import CategoryGradeScheme
 from nti.app.products.gradebook.grading.policies import ICategoryGradeScheme
 from nti.app.products.gradebook.grading.policies import CS1323EqualGroupGrader
 from nti.app.products.gradebook.grading.policies import CS1323CourseGradingPolicy
 from nti.app.products.gradebook.grading.policies import ICS1323CourseGradingPolicy
 
+from nti.contenttypes.courses.courses import CourseInstance
+from nti.contenttypes.courses.assignment import MappingAssignmentPolicies
+
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 	
+import nti.dataserver.tests.mock_dataserver as mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
 from nti.testing.matchers import verifiably_provides, validly_provides
 
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
@@ -80,48 +89,56 @@ class TestCS1323GradePolicy(unittest.TestCase):
 
 		assert_that(obj, has_property('Grader', has_property('Groups', has_length(1))))
 		
-	def test_internalization(self):
+	@property
+	def cs1323_policy(self):
 		path = os.path.join( os.path.dirname(__file__), 'cs1323_policy.json')
 		with codecs.open(path, "r", encoding="UTF-8") as fp:
 			ext = simplejson.load(fp)
 		factory = find_factory_for(ext)
-		obj = factory()
-		update_from_external_object(obj, ext)
-		
+		result = factory()
+		update_from_external_object(result, ext)
+		return result
+
+	def test_internalization(self):
+		obj = self.cs1323_policy	
+		assert_that(obj, has_property('grader', has_length(2)))	
 		category = obj.grader['iclicker']
 		assert_that(category, has_property('Weight', is_(0.25)))
 		assert_that(category, has_property('DropLowest', is_(1)))
 
-	def test_grade(self):
-		return
-		items = {}
-		cat = CategoryGradeScheme()
-		cat.Weight = 1.0
-		cat.GradeScheme = IntegerGradeScheme(min=0, max=1)		
-		for x in range(5):
-			age = AssigmentGradeScheme()
-			age.Weight = 0.20
-			age.GradeScheme = IntegerGradeScheme(min=0, max=10)
-			items['assigment_%s' % (x+1)] = age
-		cat.AssigmentGradeSchemes = items
+	@WithMockDSTrans
+	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
+				 'nti.contenttypes.courses.grading.policies.get_assignment_policies')
+	def test_grade(self, mock_ga, mock_gap):
+		connection = mock_dataserver.current_transaction
+		course = CourseInstance()
+		connection.add(course)
 		
-		policy = CS1323CourseGradingPolicy()
-		policy.DefaultGradeScheme = IntegerGradeScheme(min=0, max=50)
-		policy.CategoryGradeSchemes = {'category': cat}
+		policy = self.cs1323_policy	
+		policy.__parent__ = course
 		
-		book = GradeBook()
-		part = GradeBookPart()
-		book['part'] = part
-		for x in range(5):
-			name = 'assigment_%s' % (x+1)
+		# assignment policies
+		mock_ga.is_callable().with_args().returns(fudge.Fake())
+		cap = MappingAssignmentPolicies()
+		cap['a1'] = {'grader': {'group':'iclicker', 'points':10}}
+		cap['a2'] = {'grader': {'group':'turingscraft', 'points':10}}
+		
+		mock_gap.is_callable().with_args().returns(cap)
+		policy.validate()
+		
+		book = IGradeBook(course)
+		for name, cat in (('a1', 'iclicker'), ('a2', 'turingscraft')):
+			part = GradeBookPart()
+			book[cat] = part
+			
 			entry = GradeBookEntry()
 			entry.assignmentId = name
-			part[name] = entry
-			grade = Grade()
+			part[cat] = entry
+			
+			grade = PersistentGrade()
 			grade.value = 5
 			grade.username = 'cald3307'
 			entry['cald3307'] = grade
 		
-		policy.__dict__['book'] = book
 		grade = policy.grade('cald3307')
 		assert_that(grade, is_(0.5))

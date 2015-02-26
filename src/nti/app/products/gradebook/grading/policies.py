@@ -117,20 +117,25 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	
 	def validate(self):
 		super(CS1323CourseGradingPolicy, self).validate()
-		for assignment in self.assignments:
-			points = self.points.get(assignment)
+		for assignment in self.grader._assignments:
+			points = self._points.get(assignment)
 			assert points, "Could not find points for %s" % assignment
 	
 	@property
 	def groups(self):
 		return self.grader.groups
 	
-	@property
-	def assignments(self):
-		return self.grader._assignments
+	@Lazy
+	def _assignments(self):
+		result = defaultdict(set)
+		for name, items in self.grader._categories.items():
+			for data in items:
+				assignment = data['assignment']
+				result[name].add(assignment)
+		return result
 
 	@Lazy
-	def points(self):
+	def _points(self):
 		result = {}
 		for items in self.grader._categories.values():
 			for data in items:
@@ -143,8 +148,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	@Lazy
 	def _total_weight(self):
 		result = 0
-		for weight in self.groups.values():
-			result += weight
+		for category in self.groups.values():
+			result += category.Weight
 		return result
 
 	@Lazy
@@ -154,17 +159,17 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	@Lazy
 	def _weights(self):
 		result = {}
-		for name, data in self.grader._categories.items():
-			category= self.groups['name']
+		for name, data in self._assignments.items():
+			category= self.groups[name]
 			item_weight = round(1/float(len(data)), 3)
-			for name in [x['assignment'] for x in data]:
+			for name in data:
 				result[name] = item_weight * category.Weight
 		return result
 
 	@Lazy
 	def _schemes(self):
 		result = {}
-		for name, points in self.points.items():
+		for name, points in self._points.items():
 			scheme = IntegerGradeScheme(min=0, max=points)
 			result[name] = scheme
 		return result
@@ -229,9 +234,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		
 		## now create proxy grades with 0 correctes for missing ones
 		## that we know about in the policy
-		for cat_name, category in self.categories.items():
+		for cat_name, assignments in self._assignments.items():
 			inputed = entered[cat_name]
-			assignments = set(category.items.keys())
 			for assignmentId in assignments.difference(inputed):
 				
 				is_late = self._is_late(assignmentId, now)
