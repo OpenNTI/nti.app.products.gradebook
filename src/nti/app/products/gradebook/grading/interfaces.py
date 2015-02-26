@@ -28,6 +28,13 @@ deprecated('IAssigmentGradeScheme', 'Use lastest implementation')
 class IAssigmentGradeScheme(interface.Interface):
 	pass
 
+class IGradeBookGradingPolicy(ICourseGradingPolicy):
+	
+	PresentationGradeScheme = Object(IGradeScheme, required=False)
+	
+	def verify(gradebook=None):
+		pass
+		
 class ICategoryGradeScheme(ICTGCategoryGradeScheme):
 	GradeScheme = Object(IGradeScheme, required=False)
 	DropLowest = Int(title="Drop lowest grade in category", min=0, required=False)
@@ -37,6 +44,5 @@ class ICS1323EqualGroupGrader(IEqualGroupGrader):
 	  			  value_type=Object(ICategoryGradeScheme, required=True),
 				  min_length=1)
 		
-class ICS1323CourseGradingPolicy(ICourseGradingPolicy):	
-	PresentationGradeScheme = Object(IGradeScheme, required=False)
+class ICS1323CourseGradingPolicy(IGradeBookGradingPolicy):
 	Grader = Object(ICS1323EqualGroupGrader, required=True, title="Grader")

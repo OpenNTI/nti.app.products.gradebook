@@ -57,6 +57,7 @@ from .utils import remove_from_container
 
 from .assignments import synchronize_gradebook
 
+from .grading import IGradeBookGradingPolicy
 from .grading import find_grading_policy_for_course
 
 from .autograde_policies import find_autograde_policy_for_assignment_in_course
@@ -155,11 +156,11 @@ def _assignment_history_item_removed(item, event):
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
 	synchronize_gradebook(course)
-	## CS: We validate the grading policy to make sure 
+	## CS: We verify the grading policy after
 	## the gradebook has been synchronized
 	policy = find_grading_policy_for_course(course)
-	if policy is not None:
-		policy.validate()
+	if policy is not None and IGradeBookGradingPolicy.providedBy(policy):
+		policy.verify()
 
 ###
 # Storing notable items.

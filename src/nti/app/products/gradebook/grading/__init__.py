@@ -12,17 +12,21 @@ logger = __import__('logging').getLogger(__name__)
 import logging
 
 from zope import component
-from zope.security.interfaces import IPrincipal
+
 from zope.container.interfaces import INameChooser
+
+from zope.security.interfaces import IPrincipal
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-from nti.contenttypes.courses.interfaces import ICourseGradingPolicy
+from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 
 from ..grades import PersistentGrade
 from ..interfaces import NO_SUBMIT_PART_NAME
 from ..assignments import create_assignment_part
+
+from .interfaces import IGradeBookGradingPolicy
 
 VIEW_CURRENT_GRADE = 'CurrentGrade'
 

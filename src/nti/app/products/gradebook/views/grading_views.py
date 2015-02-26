@@ -41,6 +41,7 @@ from ..interfaces import FINAL_GRADE_NAME
 from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..grading import VIEW_CURRENT_GRADE
+from ..grading import IGradeBookGradingPolicy
 from ..grading import find_grading_policy_for_course
 
 def is_none(value):
@@ -53,6 +54,11 @@ def is_none(value):
 			value = value[:-1]
 		result = not bool(value)
 	return result
+
+def presentation(policy):
+	if IGradeBookGradingPolicy.providedBy(policy):
+		return policy.PresentationGradeScheme
+	return None
 
 @view_config(context=ICourseInstance)
 @view_config(context=ICourseInstanceEnrollment)
@@ -91,7 +97,8 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		if grade is None:
 			is_predicted = True
 			scheme = params.get('scheme') or u''
-			presentation = policy.presentation or component.getUtility(IGradeScheme, name=scheme)
+			presentation = 	presentation(policy) or \
+							component.getUtility(IGradeScheme, name=scheme)
 			correctness = policy.grade(self.remoteUser)
 		
 			grade = PersistentGrade()

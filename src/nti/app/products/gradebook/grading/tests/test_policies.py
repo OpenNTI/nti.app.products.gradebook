@@ -31,8 +31,10 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
 
+from nti.app.products.gradebook.grading.interfaces import ICategoryGradeScheme
+from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
+
 from nti.app.products.gradebook.grading.policies import CategoryGradeScheme
-from nti.app.products.gradebook.grading.policies import ICategoryGradeScheme
 from nti.app.products.gradebook.grading.policies import CS1323EqualGroupGrader
 from nti.app.products.gradebook.grading.policies import CS1323CourseGradingPolicy
 from nti.app.products.gradebook.grading.policies import ICS1323CourseGradingPolicy
@@ -101,6 +103,8 @@ class TestCS1323GradePolicy(unittest.TestCase):
 
 	def test_internalization(self):
 		obj = self.cs1323_policy	
+		assert_that(obj, validly_provides(IGradeBookGradingPolicy))
+		
 		assert_that(obj, has_property('grader', has_length(2)))	
 		category = obj.grader['iclicker']
 		assert_that(category, has_property('Weight', is_(0.25)))

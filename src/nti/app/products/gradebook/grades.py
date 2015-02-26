@@ -28,7 +28,8 @@ from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.dataserver.interfaces import ALL_PERMISSIONS
-from nti.dataserver.datastructures import CreatedModDateTrackingObject
+
+from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 

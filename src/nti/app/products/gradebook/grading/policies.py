@@ -15,6 +15,7 @@ from collections import defaultdict
 
 from zope import component
 from zope import interface
+from zope.interface import Invalid
 
 from zope.security.interfaces import IPrincipal
 
@@ -30,6 +31,8 @@ from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 from nti.contenttypes.courses.grading.policies import CategoryGradeScheme as CTGCategoryGradeScheme
 
 from nti.externalization.representation import WithRepr
+
+from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.schema.schema import EqHash
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -101,6 +104,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICS1323CourseGradingPolicy)
 	
+	presentation = alias('PresentationGradeScheme')
+	
 	@Lazy
 	def book(self):
 		book = IGradeBook(self.course)
@@ -120,6 +125,14 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		for assignment in self.grader._assignments:
 			points = self._points.get(assignment)
 			assert points, "Could not find points for %s" % assignment
+	
+	def verify(self, book=None):
+		book = self.book if book is None else book
+		for name in self.grader._assignments:
+			if is_valid_ntiid_string(name):
+				entry = book.getEntryByAssignment(name)
+				if entry is None:
+					raise Invalid("Could not find GradeBook Entry for %s", name)
 	
 	@property
 	def groups(self):
@@ -269,17 +282,19 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	def grade(self, principal):
 		"""
 		if an assignment is overdue and there is no submission, the assignment grade is 0
-		if an assignment is submitted and no grades were assigned, the assignment grade is max grade.
+		if an assignment is submitted and no grades were assigned, the assignment grade 
+		is max grade.
 		For each category of assignments:
-		    1.    ignore/drop the assignments that were marked as excused
+		    1.	ignore/drop the assignments that were marked as excused
 		
-		    2.    ignore/drop the assignments that are invalid (i.e. entered grade is greater than specified max grade)
+		    2.	ignore/drop the assignments that are invalid 
+		   		(i.e. entered grade is greater than specified max grade)
 		
-		    3.    calculate grade percentage: actual grade/max grade
+		    3.	calculate grade percentage: actual grade/max grade
 		
-		    4.    ignore/drop the specified N lowest grade assignments
+		    4.	ignore/drop the specified N lowest grade assignments
 		
-		    5.    calculate average out of remaining assignments and multiply by category weights.
+		    5.	calculate average out of remaining assignments and multiply by category weights.
 		
 		Sum up the result derived from each category and arrive at predictor grade
 		"""

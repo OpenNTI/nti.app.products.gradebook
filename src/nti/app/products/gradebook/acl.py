@@ -24,6 +24,7 @@ from nti.dataserver.authorization import ROLE_ADMIN
 
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import ALL_PERMISSIONS
+
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
@@ -59,7 +60,5 @@ class _GradeBookACLProvider(object):
 			acl.extend( (ace_allowing(i, ACT_UPDATE, type(self)) for i in course.instructors) )
 
 		acl.append( ace_allowing( ROLE_ADMIN, ALL_PERMISSIONS, type(self) ) )
-
 		acl.append( ace_denying_all() )
-
 		return acl

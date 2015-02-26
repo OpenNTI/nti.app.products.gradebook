@@ -27,6 +27,8 @@ from nti.app.products.courseware.utils import is_course_instructor
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.common.deprecated import deprecated
+
 from nti.contentlibrary.interfaces import IContentPackage
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -42,8 +44,6 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
-
-from nti.deprecated import deprecated
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook
