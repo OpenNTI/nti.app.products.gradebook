@@ -55,7 +55,7 @@ def is_none(value):
 		result = not bool(value)
 	return result
 
-def presentation(policy):
+def get_presentation(policy):
 	if IGradeBookGradingPolicy.providedBy(policy):
 		return policy.PresentationGradeScheme
 	return None
@@ -97,7 +97,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		if grade is None:
 			is_predicted = True
 			scheme = params.get('scheme') or u''
-			presentation = 	presentation(policy) or \
+			presentation = 	get_presentation(policy) or \
 							component.getUtility(IGradeScheme, name=scheme)
 			correctness = policy.grade(self.remoteUser)
 		
