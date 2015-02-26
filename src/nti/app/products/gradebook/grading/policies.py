@@ -264,7 +264,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 					if not is_no_submit: ## no no_submit
 						correctness = 0
 					else:
-						penalty = self._penalties.get(assignmentId, 0)
+						penalty = 1
 						correctness = 1 - penalty
 						
 				## create proxy grade
