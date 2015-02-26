@@ -499,7 +499,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
-		``Alias``, ``Grade``, ``Username``, ``Feedback``, and ``DateSubmitted``.
+		``Alias``, ``Grade``, ``Username``, ``FeedbackCount``, and ``DateSubmitted``.
 		The default is by LastName.
 
 	sortOrder
@@ -529,7 +529,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 	def _get_sort_key( self, sort_on ):
 		sort_key = None
-		if sort_on and sort_on == 'feedback':
+		if sort_on and sort_on == 'feedbackcount':
 			sort_key = lambda x: x.feedback_count if x.feedback_count else ''
 		elif sort_on and sort_on == 'datesubmitted':
 			sort_key = lambda x: x.created_date if x.created_date else ''
