@@ -19,6 +19,8 @@ from zope.interface import Invalid
 
 from zope.security.interfaces import IPrincipal
 
+from ZODB import loglevels
+
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
@@ -313,8 +315,9 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 			category = self.groups[name]
 			
 			## drop excused grades and invalid grades
-			logger.debug("%s have been skipped", 
-						 [x for x in grades if x.excused or x.invalid_grade] )
+			logger.log(	loglevels.TRACE,
+						"%s have been skipped", 
+						[x for x in grades if x.excused or x.invalid_grade] )
 						
 			grades = [x for x in grades if not x.excused and not x.invalid_grade]
 			drop_count += (grade_count - len(grades))
@@ -323,13 +326,21 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 			## drop lowest grades in the category
 			## make sure we don't drop excused grades
 			if category.DropLowest and category.DropLowest < grade_count:
-				logger.debug("%s have been dropped", grades[0:category.DropLowest])
+				logger.log(	loglevels.TRACE,
+							"%s have been dropped", grades[0:category.DropLowest])
 				grades = grades[category.DropLowest:]
 				drop_count += (grade_count - len(grades))
 	
 			## if we drop any rebalance weights equally
 			if drop_count and grades:
-				item_weight = round(1/float(len(category)-drop_count), 3)
+				assignments = len(self._assignments.get(name) or ())
+				denominator = assignments - drop_count
+				if denominator:
+					item_weight = round(1/float(denominator), 3)
+				else:
+					logger.error("Internal policy error. %s, %s",assignments, drop_count )
+					item_weight = 0
+					
 				for grade in grades:	
 					grade.weight = item_weight * category.weight
 						
@@ -338,7 +349,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				weight = grade.weight
 				if grade.excused:
 					result += weight
-					logger.debug("%s is excused. Skipped", grade)
+					logger.log(loglevels.TRACE, "%s is excused. Skipped", grade)
 					continue
 				correctness = grade.correctness
 				weighted_correctness = correctness * weight
