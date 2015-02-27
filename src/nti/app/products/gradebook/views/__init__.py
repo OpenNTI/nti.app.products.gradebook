@@ -319,13 +319,13 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		"For the given names, retunr student summaries."
 		instructor_usernames = {x.username.lower() for x in self.course.instructors}
 
-		def _do_include( username ):
+		def do_include( username ):
 			return 	User.get_user( username ) is not None \
 				and username not in instructor_usernames
 
 		students_iter = (self._get_summary_for_student( username )
 						for username in student_names
-						if _do_include( username ) )
+						if do_include( username ) )
 		return students_iter
 
 	def _get_students( self, scope_name ):
@@ -386,6 +386,16 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			sort_key = lambda x: x.last_name.lower() if x.last_name else ''
 		return sort_key
 
+	def _check_batch_around( self, user_summaries ):
+		"Return our batch around the given username."
+		batch_username = self.request.params.get( 'batchAroundUsername' )
+
+		if batch_username:
+			batch_username = batch_username.lower()
+			batch_around_test = lambda x: x.user.username.lower() == batch_username
+			# This toggles the batchStart params.
+			self._batch_around( user_summaries, batch_around_test )
+
 	def _get_user_result_set(self, result_dict, user_summaries):
 		"Return a sorted/batched collection of user summaries to return."
 		sort_on = self.request.params.get('sortOn')
@@ -397,6 +407,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
 
 		result_set = self._get_sorted_result_set( user_summaries, sort_key, sort_descending )
+
+		self._check_batch_around( result_set )
 		self._batch_items_iterable( result_dict, result_set )
 
 		# Pop our items that we want to return.
@@ -429,7 +441,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# have to make sure we can search via the
 		# substituted username (e.g. OU4x4).
 
-		def _matches( user_summary ):
+		def matches( user_summary ):
 			result = (	user_summary.alias
 					and search_param in user_summary.alias.lower()) \
 				or	(	user_summary.username
@@ -438,7 +450,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 					and	search_param in user_summary.last_name.lower() )
 			return result
 
-		results = [x for x in user_summaries if _matches( x )]
+		results = [x for x in user_summaries if matches( x )]
 		return results
 
 	def _get_user_summaries( self, result_dict ):
