@@ -328,11 +328,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 						if _do_include( username ) )
 		return students_iter
 
-	def _get_all_student_summaries( self ):
-		everyone = self.course.SharingScopes['Public']
-		enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
-		return self._get_summaries_for_usernames( enrollment_usernames )
-
 	def _get_students( self, scope_name ):
 		"Return the set of student names we want results for, along with the total count of students."
 		# We default to ForCredit. If we want public, subtract out the for credit students.
@@ -425,7 +420,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 							elements=('AssignmentHistories', user_summary.user.username)) )
 		return user_dict
 
-	def _get_search_results( self, search_param ):
+	def _search_summaries( self, search_param, user_summaries ):
 		"""
 		For the given search_param, return the results for those users
 		if it matches username, last_name, alias, or displayable username.
@@ -443,8 +438,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 					and	search_param in user_summary.last_name.lower() )
 			return result
 
-		all_summaries = self._get_all_student_summaries()
-		results = [x for x in all_summaries if _matches( x )]
+		results = [x for x in user_summaries if _matches( x )]
 		return results
 
 	def _get_user_summaries( self, result_dict ):
@@ -452,15 +446,16 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		search = self.request.params.get('search')
 		search_param = search and search.lower()
 
+		# Get our filtered intermediate set
+		user_summaries = self._do_get_user_summaries()
+
 		if search_param:
-			results = self._get_search_results( search_param )
-		else:
-			# Get our intermediate set
-			user_summaries = self._do_get_user_summaries()
-			result_dict['TotalItemCount'] = len( user_summaries )
-			# Now our batched set
-			# We should have links here after batching.
-			results = self._get_user_result_set( result_dict, user_summaries )
+			user_summaries = self._search_summaries( search_param, user_summaries )
+
+		result_dict['TotalItemCount'] = len( user_summaries )
+		# Now our batched set
+		# We should have links here after batching.
+		results = self._get_user_result_set( result_dict, user_summaries )
 		return results
 
 	def __call__(self):

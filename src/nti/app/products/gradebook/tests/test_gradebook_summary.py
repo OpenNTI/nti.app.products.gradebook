@@ -253,32 +253,28 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, has_length( 2 ))
 		assert_that( result, contains_inanyorder( summary2, summary3 ))
 
-	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_all_student_summaries' )
-	def test_searching( self, mock_get_summaries ):
+	def test_searching( self ):
 		"Test searching gradebook summary."
 		request = DummyRequest( params={} )
 		gradebook = GradeBook()
 		gradebook.__parent__ = CourseInstance()
 		view = GradeBookSummaryView( gradebook, request )
-		do_search = view._get_search_results
+		do_search = view._search_summaries
 
 		# Empty
-		mock_get_summaries.is_callable().returns( () )
-		result = do_search( 'brasky' )
+		result = do_search( 'brasky', () )
 		assert_that( result, has_length( 0 ))
 
 		# Single with no match
 		summary = MockSummary()
 		summaries = ( summary, )
-		mock_get_summaries.is_callable().returns( summaries )
-		result = do_search( 'brasky' )
+		result = do_search( 'brasky', summaries )
 		assert_that( result, has_length( 0 ))
 
 		# Multi with no match
 		summary2 = MockSummary()
 		summaries = ( summary, summary2 )
-		mock_get_summaries.is_callable().returns( summaries )
-		result = do_search( 'brasky' )
+		result = do_search( 'brasky', summaries )
 		assert_that( result, has_length( 0 ))
 
 		# Four matches, case insensitive; matches
@@ -291,9 +287,8 @@ class TestGradeBookSummary( TestCase ):
 		summary2.alias = 'billbRASKy'
 		summary3.last_name = 'brasky, william'
 		summaries = ( summary, summary2, summary3, summary4 )
-		mock_get_summaries.is_callable().returns( summaries )
 
-		result = do_search( 'brasky' )
+		result = do_search( 'brasky', summaries )
 		assert_that( result, has_length( 3 ))
 		assert_that( result,
 					contains_inanyorder( summary, summary2, summary3 ))
