@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import is_not
+from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -98,17 +99,21 @@ class TestCS1323GradePolicy(unittest.TestCase):
 			ext = simplejson.load(fp)
 		factory = find_factory_for(ext)
 		result = factory()
-		update_from_external_object(result, ext)
+		update_from_external_object(result, ext)		
 		return result
 
 	def test_internalization(self):
-		obj = self.cs1323_policy	
-		assert_that(obj, validly_provides(IGradeBookGradingPolicy))
+		policy = self.cs1323_policy	
+		assert_that(policy, validly_provides(IGradeBookGradingPolicy))
 		
-		assert_that(obj, has_property('grader', has_length(2)))	
-		category = obj.grader['iclicker']
+		assert_that(policy, has_property('grader', has_length(2)))	
+		category = policy.grader['iclicker']
 		assert_that(category, has_property('Weight', is_(0.25)))
 		assert_that(category, has_property('DropLowest', is_(1)))
+		
+		ext = to_external_object(policy)
+		assert_that(ext, has_key('PresentationGradeScheme'))
+				
 
 	@WithMockDSTrans
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',

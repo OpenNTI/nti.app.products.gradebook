@@ -104,6 +104,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICS1323CourseGradingPolicy)
 	
+	PresentationGradeScheme = None
+	
 	presentation = alias('PresentationGradeScheme')
 	
 	@Lazy
