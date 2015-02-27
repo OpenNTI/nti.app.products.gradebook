@@ -308,7 +308,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		username = IPrincipal(principal).id
 		grade_map = self._grade_map(username)
 		for name, grades in grade_map.items():
-			logger.debug("Grading category %s", name)
+			logger.log(	loglevels.TRACE,
+						"Grading category %s", name)
 							
 			drop_count = 0
 			grade_count = len(grades)

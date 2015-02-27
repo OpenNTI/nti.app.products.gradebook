@@ -33,7 +33,7 @@ from nti.dataserver import authorization as nauth
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
 
-from ..grades import PersistentGrade
+from ..grades import Grade
 
 from ..interfaces import IGradeBook
 from ..interfaces import IGradeScheme
@@ -101,7 +101,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 							component.getUtility(IGradeScheme, name=scheme)
 			correctness = policy.grade(self.remoteUser)
 		
-			grade = PersistentGrade()
+			grade = Grade() # non persistent
 			grade.username = self.remoteUser.username
 			grade.value = presentation.fromCorrectness(correctness)
 
