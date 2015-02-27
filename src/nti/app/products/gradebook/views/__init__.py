@@ -263,6 +263,10 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	batchStart
 		The starting batch index.  Defaults to 0.
 
+	batchAroundUsername
+		String parameter giving the ``Username`` to build a batch
+		around. Otherwise identical to ``batchAround``.
+
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
 		``Alias``, ``Grade``, and ``Username``.  The default is by
