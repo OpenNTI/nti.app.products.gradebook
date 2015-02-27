@@ -354,11 +354,13 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				correctness = grade.correctness
 				weighted_correctness = correctness * weight
 				result += weighted_correctness
-				logger.debug("%s correctness and weighted correctness are %s, %s",
+				logger.log(	loglevels.TRACE,
+							"%s correctness and weighted correctness are %s, %s",
 							 grade, correctness, weighted_correctness)
 		
-		logger.debug("Unjusted total grade percentage is %s. Adjust weight is %s",
-					  result, self._total_weight)
+		logger.log(	loglevels.TRACE,
+					"Unjusted total grade percentage is %s. Adjust weight is %s",
+					result, self._total_weight)
 		
 		# divide over the total weight in case the policy
 		# is not complete
