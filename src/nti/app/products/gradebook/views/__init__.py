@@ -267,6 +267,10 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		String parameter giving the ``Username`` to build a batch
 		around. Otherwise identical to ``batchAround``.
 
+	batchAroundUsernameFilterByScope
+		Like ``batchAroundUsername``, but also returns the batched
+		users belonging to the enrollment scope of the given user.
+
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
 		``Alias``, ``Grade``, and ``Username``.  The default is by
@@ -320,7 +324,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 									self.gradebook, self.final_grade_entry )
 
 	def _get_summaries_for_usernames( self, student_names ):
-		"For the given names, retunr student summaries."
+		"For the given names, return student summaries."
 		instructor_usernames = {x.username.lower() for x in self.course.instructors}
 
 		def do_include( username ):
@@ -332,18 +336,45 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 						if do_include( username ) )
 		return students_iter
 
-	def _get_students( self, scope_name ):
-		"Return the set of student names we want results for, along with the total count of students."
-		# We default to ForCredit. If we want public, subtract out the for credit students.
+	@Lazy
+	def _open_students(self):
+		everyone = self.course.SharingScopes['Public']
+		enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
+		student_names = enrollment_usernames - self._for_credit_students
+		return student_names
+
+	@Lazy
+	def _for_credit_students(self):
 		for_credit_scope = self.course.SharingScopes[ ES_CREDIT ]
-		student_names = {x.lower() for x in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
+		student_names = {x.lower() for x
+						in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
+		return student_names
 
-		if scope_name == 'Public':
-			everyone = self.course.SharingScopes['Public']
-			enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
-			student_names = enrollment_usernames - student_names
+	def _get_enrollment_scoped_summaries(self, filter_by):
+		"Find the enrollment scoped user summaries."
+		student_names = None
 
-		return self._get_summaries_for_usernames( student_names )
+		# If they want to batch and filter by the scope of the given username.
+		batch_username = self.request.params.get( 'batchAroundUsernameFilterByScope' )
+		if batch_username:
+			batch_username = batch_username.lower()
+
+			if batch_username in self._open_students:
+				filter_scope_name = 'Open'
+				student_names = self._open_students
+
+		if student_names is None:
+			# Filter by given scope, defaulting to ForCredit
+			if 'open' in filter_by:
+				filter_scope_name = 'Open'
+				student_names = self._open_students
+			else:
+				filter_scope_name = 'ForCredit'
+				student_names = self._for_credit_students
+
+		self.filter_scope_name = filter_scope_name
+		user_summaries = self._get_summaries_for_usernames( student_names )
+		return user_summaries
 
 	def _do_get_user_summaries( self ):
 		"Get the filtered user summaries of users we may want to return."
@@ -353,12 +384,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		filter_by = filter_by.split( ',' ) if filter_by else ()
 		filter_by = [x.lower() for x in filter_by]
 
-		# ForCredit is default.
-		scope_name = 'ForCredit'
-		if 'open' in filter_by:
-			scope_name = 'Public'
-
-		user_summaries = self._get_students( scope_name )
+		user_summaries = self._get_enrollment_scoped_summaries( filter_by )
 
 		if 'ungraded' in filter_by:
 			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
@@ -393,6 +419,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def _check_batch_around( self, user_summaries ):
 		"Return our batch around the given username."
 		batch_username = self.request.params.get( 'batchAroundUsername' )
+		if not batch_username:
+			batch_username = self.request.params.get( 'batchAroundUsernameFilterByScope' )
 
 		if batch_username:
 			batch_username = batch_username.lower()
@@ -442,8 +470,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		if it matches username, last_name, alias, or displayable username.
 		"""
 		# The entity catalog could be used here, but we
-		# have to make sure we can search via the
-		# substituted username (e.g. OU4x4).
+		# have to make sure we can search via the substituted username (e.g. OU4x4).
 
 		def matches( user_summary ):
 			result = (	user_summary.alias
@@ -459,6 +486,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_user_summaries( self, result_dict ):
 		"Returns a list of user summaries.  Search supercedes all filters/sorting params."
+		# 1. Filter
+		# 2. Sort
+		# 3. Batch
 		search = self.request.params.get('search')
 		search_param = search and search.lower()
 
@@ -483,6 +513,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
+		result_dict['EnrollmentScope'] = self.filter_scope_name
 		result_dict['ItemCount'] = len( user_summaries ) if user_summaries is not None else 0
 
 		# Now build our data for each user
@@ -565,6 +596,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookByAssignmentSummary'
+		result_dict['EnrollmentScope'] = self.filter_scope_name
 		result_dict['ItemCount'] = len( user_summaries ) if user_summaries is not None else 0
 
 		# Now build our data for each user

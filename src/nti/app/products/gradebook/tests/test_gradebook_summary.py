@@ -170,7 +170,7 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, has_length( 1 ))
 		assert_that( result, contains( summary4 ))
 
-	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_students' )
+	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView._get_enrollment_scoped_summaries' )
 	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.final_grade_entry' )
 	@fudge.patch( 'nti.app.products.gradebook.views.GradeBookSummaryView.assignments' )
 	def test_filtering( self, mock_get_students, mock_final_grade, mock_assignments ):
