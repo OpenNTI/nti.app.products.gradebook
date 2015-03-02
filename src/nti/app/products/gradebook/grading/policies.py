@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import logging
 from six import string_types
 from datetime import datetime
 from collections import defaultdict
@@ -303,7 +304,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		Sum up the result derived from each category and arrive at predictor grade
 		"""
 		
-		LOGLEVEL = loglevels.BLATHER if verbose else loglevels.TRACE
+		LOGLEVEL = logging.INFO if verbose else loglevels.TRACE
 		
 		logger.log(LOGLEVEL, "Grading %s", principal)
 		
