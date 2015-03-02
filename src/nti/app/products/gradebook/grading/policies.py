@@ -283,7 +283,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		## return
 		return result
 		
-	def grade(self, principal):
+	def grade(self, principal, verbose=False):
 		"""
 		if an assignment is overdue and there is no submission, the assignment grade is 0
 		if an assignment is submitted and no grades were assigned, the assignment grade 
@@ -302,13 +302,16 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		
 		Sum up the result derived from each category and arrive at predictor grade
 		"""
-		logger.debug("Grading %s", principal)
+		
+		LOGLEVEL = loglevels.BLATHER if verbose else loglevels.TRACE
+		
+		logger.log(LOGLEVEL, "Grading %s", principal)
 		
 		result = 0
 		username = IPrincipal(principal).id
 		grade_map = self._grade_map(username)
 		for name, grades in grade_map.items():
-			logger.log(	loglevels.TRACE,
+			logger.log(	LOGLEVEL,
 						"Grading category %s", name)
 							
 			drop_count = 0
@@ -316,7 +319,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 			category = self.groups[name]
 			
 			## drop excused grades and invalid grades
-			logger.log(	loglevels.TRACE,
+			logger.log( LOGLEVEL,
 						"%s have been skipped", 
 						[x for x in grades if x.excused or x.invalid_grade] )
 						
@@ -327,8 +330,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 			## drop lowest grades in the category
 			## make sure we don't drop excused grades
 			if category.DropLowest and category.DropLowest < grade_count:
-				logger.log(	loglevels.TRACE,
-							"%s have been dropped", grades[0:category.DropLowest])
+				logger.log(	LOGLEVEL, "%s have been dropped", grades[0:category.DropLowest])
 				grades = grades[category.DropLowest:]
 				drop_count += (grade_count - len(grades))
 	
@@ -350,16 +352,16 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				weight = grade.weight
 				if grade.excused:
 					result += weight
-					logger.log(loglevels.TRACE, "%s is excused. Skipped", grade)
+					logger.log(LOGLEVEL, "%s is excused. Skipped", grade)
 					continue
 				correctness = grade.correctness
 				weighted_correctness = correctness * weight
 				result += weighted_correctness
-				logger.log(	loglevels.TRACE,
+				logger.log(	LOGLEVEL,
 							"%s correctness and weighted correctness are %s, %s",
 							 grade, correctness, weighted_correctness)
 		
-		logger.log(	loglevels.TRACE,
+		logger.log(	LOGLEVEL,
 					"Unjusted total grade percentage is %s. Adjust weight is %s",
 					result, self._total_weight)
 		

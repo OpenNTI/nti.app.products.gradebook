@@ -13,8 +13,6 @@ import os
 import argparse
 import importlib
 
-from ZODB import loglevels
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.utils import run_with_dataserver
@@ -29,9 +27,6 @@ from .. import calculate_grades
 
 def _process_args(ntiid, scheme=None, usernames=(), site=None, 
 				  entry_name=None, verbose=False):
-
-	if verbose:
-		logger.setLevel(loglevels.TRACE)
 		
 	if scheme:
 		module_name, class_name = scheme.rsplit(".", 1)
@@ -51,7 +46,7 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 		raise ValueError("Course not found", ntiid)
 
 	usernames = {x.lower() for x in usernames or ()}
-	result = calculate_grades(course, usernames=usernames, grade_scheme=grade_scheme, 
+	result = calculate_grades(course, usernames=usernames, grade_scheme=grade_scheme,
 							  entry_name=entry_name, verbose=verbose)
 	if not entry_name or verbose:
 		print("\nGrades...")
@@ -66,7 +61,7 @@ def main():
 	arg_parser.add_argument('ntiid', help="Course NTIID")
 	arg_parser.add_argument('-s', '--site', dest='site', help="Request site")
 	arg_parser.add_argument('-g', '--grade', dest='scheme', 
-							help="Grade scheme class name (nti.app.products.gradebook.gradescheme.LetterGradeScheme)")
+							help="Grade scheme class name")
 	arg_parser.add_argument('-e', '--entry', dest='entry', help="Grade entry name")
 	arg_parser.add_argument('-u', '--users',
 							 dest='usernames',

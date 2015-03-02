@@ -34,6 +34,9 @@ class IGradeBookGradingPolicy(ICourseGradingPolicy):
 	
 	def verify(gradebook=None):
 		pass
+	
+	def grade(principal, verbose=False):
+		pass
 		
 class ICategoryGradeScheme(ICTGCategoryGradeScheme):
 	GradeScheme = Object(IGradeScheme, required=False)
