@@ -10,9 +10,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import logging
 import argparse
 import importlib
+
+from ZODB import loglevels
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -30,7 +31,7 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 				  entry_name=None, verbose=False):
 
 	if verbose:
-		logger.setLevel(logging.DEBUG)
+		logger.setLevel(loglevels.TRACE)
 		
 	if scheme:
 		module_name, class_name = scheme.rsplit(".", 1)
