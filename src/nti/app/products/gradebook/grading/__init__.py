@@ -91,7 +91,7 @@ def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
             continue
         
         # grade correctness
-        if IGradeBookGradingPolicy.providedBy(policy)
+        if IGradeBookGradingPolicy.providedBy(policy):
             value = correctness = policy.grade(principal, verbose=verbose)
         else:
             value = correctness = policy.grade(principal)
