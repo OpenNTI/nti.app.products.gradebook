@@ -32,7 +32,6 @@ from nti.common.property import CachedProperty
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users import User
-from nti.dataserver.traversal import find_interface
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization.representation import WithRepr
@@ -44,6 +43,8 @@ from nti.ntiids import ntiids
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.traversal.traversal import find_interface
 
 from .interfaces import IGradeBook
 from .interfaces import IGradeBookPart

@@ -34,9 +34,7 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.dataserver.links import Link
 from nti.dataserver.users import User
-from nti.dataserver.traversal import find_interface
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -44,6 +42,10 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
+
+from nti.links.links import Link
+
+from nti.traversal.traversal import find_interface
 
 from .interfaces import IGrade
 from .interfaces import IGradeBook

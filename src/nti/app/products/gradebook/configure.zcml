@@ -107,7 +107,7 @@
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"/>
 
 	<!-- Currently any grade can be created without a submission
-	<adapter factory="nti.dataserver.traversal.ContainerAdapterTraversable"
+	<adapter factory="nti.traversal.traversal.ContainerAdapterTraversable"
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
 	-->

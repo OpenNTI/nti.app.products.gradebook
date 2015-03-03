@@ -22,7 +22,8 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.traversal import find_interface
+
+from nti.traversal.traversal import find_interface
 
 from .grades import PersistentGrade
 
