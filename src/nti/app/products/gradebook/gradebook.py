@@ -329,7 +329,7 @@ NoSubmitGradeBookEntry = GradeBookEntryWithoutSubmission
 
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
-from nti.dataserver.traversal import ContainerAdapterTraversable
+from nti.traversal.traversal import ContainerAdapterTraversable
 
 class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
 	"""
