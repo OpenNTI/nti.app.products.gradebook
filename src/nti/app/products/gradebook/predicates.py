@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 
@@ -49,13 +50,22 @@ class _GradeBookPrincipalObjects(BasePrincipalObjects):
 
 	def iter_objects(self):
 		result = []
+
 		def _collector():
-			return  #TODO: Loop in all courses
-			for book in gradebook_collector():
+			catalog = component.queryUtility(ICourseCatalog)
+			if catalog is None:
+				return
+			for entry in catalog.iterCatalogEntries():
+				course = ICourseInstance(entry, None)
+				book = ICourseInstance(course, None)
+				if book is None:
+					continue
+				
 				for part in book.values():
 					result.append(part)
 					for entry in part.values():
 						result.append(entry)
+
 		run_job_in_all_host_sites(_collector)
 		for obj in result:
 			yield obj
