@@ -23,8 +23,8 @@ from nti.site.hostpolicy import run_job_in_all_host_sites
 
 from .interfaces import IGradeBook
 
-def gradebook_collector(self):
-	for enrollments in component.subscribers( (self.user,), IPrincipalEnrollments):
+def gradebook_collector(user):
+	for enrollments in component.subscribers( (user,), IPrincipalEnrollments):
 		for enrollment in enrollments.iter_enrollments():
 			course = ICourseInstance(enrollment, None)
 			book = IGradeBook(course, None)
@@ -37,7 +37,7 @@ class _GradePrincipalObjects(BasePrincipalObjects):
 	def iter_objects(self):
 		result = []
 		def _collector():
-			for book in gradebook_collector():
+			for book in gradebook_collector(self.user):
 				for grade in book.iter_grades(self.user.username):
 					result.append(grade)
 		run_job_in_all_host_sites(_collector)
@@ -50,6 +50,7 @@ class _GradeBookPrincipalObjects(BasePrincipalObjects):
 	def iter_objects(self):
 		result = []
 		def _collector():
+			return  #TODO: Loop in all courses
 			for book in gradebook_collector():
 				for part in book.values():
 					result.append(part)
