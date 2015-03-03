@@ -67,7 +67,6 @@ class TestAssignments(ApplicationLayerTest):
 
 			lib = component.getUtility(IContentPackageLibrary)
 
-
 			law_course = None
 			for package in lib.contentPackages:
 				course = ICourseInstance(package)

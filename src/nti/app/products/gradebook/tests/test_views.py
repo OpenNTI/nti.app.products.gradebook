@@ -54,7 +54,6 @@ class TestViews(ApplicationLayerTest):
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
 		assert_that( res.json_body, has_entry('Items', has_length(0)))
 
-
 	def test_is_none(self):
 		assert_that(is_none(None), is_(True))
 		assert_that(is_none(''), is_(True))

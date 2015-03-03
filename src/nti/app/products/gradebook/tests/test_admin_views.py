@@ -26,6 +26,7 @@ class TestAdminViews(ApplicationLayerTest):
 	default_origin = str('http://janux.ou.edu')
 
 	course_ntiid = 'tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2013_CLC3403_LawAndJustice'
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_synchronize_gradebook(self):
 		environ = self._make_extra_environ()
