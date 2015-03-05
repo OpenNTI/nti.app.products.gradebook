@@ -15,10 +15,10 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.app.products.courseware.utils import is_enrolled
 
-from nti.dataserver.links import Link
-
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.links.links import Link
 
 from . import VIEW_CURRENT_GRADE
 from . import find_grading_policy_for_course

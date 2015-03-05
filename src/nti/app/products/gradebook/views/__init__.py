@@ -51,7 +51,6 @@ from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
-from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
@@ -64,6 +63,8 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.externalization import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
+
+from nti.links.links import Link
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
