@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
@@ -73,7 +75,7 @@ def _tx_string(s):
     return s
 
 def _tx_grade(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         return value
     if value.endswith('-'):
         value = value[:-1].strip()
