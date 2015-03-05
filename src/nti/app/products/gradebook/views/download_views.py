@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import csv
+import six
 import nameparser
 import collections
 from cStringIO import StringIO
@@ -130,7 +131,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# typed a number: "75 -". For export purposes, if we can reverse that to a number,
 		# we want it to be a number.
 		def _tx_grade(value):
-			if not isinstance(value, basestring):
+			if not isinstance(value, six.string_types):
 				return value
 			if value.endswith(' -'):
 				try:
