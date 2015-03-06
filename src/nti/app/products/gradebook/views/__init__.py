@@ -291,8 +291,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		``ForCredit``.  ForCredit is the default enrollment scope.
 
 	search
-		The username to search on, regardless of enrollment scope. If
-		not found, an empty set is returned.
+		The username to search on. If not found, an empty set is returned.
 
 	"""
 
@@ -401,7 +400,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return user_summaries
 
 	def _get_sorted_result_set( self, user_summaries, sort_key, sort_desc=False ):
-		"Get the batched/sorted result set."
+		"Get the sorted result set."
 		user_summaries = sorted( user_summaries, key=sort_key, reverse=sort_desc )
 		return user_summaries
 
@@ -454,6 +453,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
+		user_dict['Username'] = user_summary.username
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
@@ -468,7 +468,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def _search_summaries( self, search_param, user_summaries ):
 		"""
 		For the given search_param, return the results for those users
-		if it matches username, last_name, alias, or displayable username.
+		if it matches last_name, alias, or displayable username.
 		"""
 		# The entity catalog could be used here, but we
 		# have to make sure we can search via the substituted username (e.g. OU4x4).
@@ -486,10 +486,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return results
 
 	def _get_user_summaries( self, result_dict ):
-		"Returns a list of user summaries.  Search supercedes all filters/sorting params."
+		"Returns a list of user summaries."
 		# 1. Filter
-		# 2. Sort
-		# 3. Batch
+		# 2. Search
+		# 3. Sort
+		# 4. Batch
 		search = self.request.params.get('search')
 		search_param = search and search.lower()
 
@@ -506,7 +507,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return results
 
 	def __call__(self):
-		# TODO Use assignment grade index?
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
 		result_dict = LocatedExternalDict()
@@ -588,6 +588,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
 		user_dict['Alias'] = user_summary.alias
+		user_dict['Username'] = user_summary.username
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		return user_dict
 
