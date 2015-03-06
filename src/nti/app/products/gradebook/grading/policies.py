@@ -40,7 +40,7 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.schema.schema import EqHash
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from ..gradescheme import IntegerGradeScheme
+from ..gradescheme import NumericGradeScheme
 
 from ..interfaces import IGradeBook
 from ..interfaces import IExcusedGrade
@@ -188,7 +188,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	def _schemes(self):
 		result = {}
 		for name, points in self._points.items():
-			scheme = IntegerGradeScheme(min=0, max=points)
+			scheme = NumericGradeScheme(min=0, max=points)
 			result[name] = scheme
 		return result
 
