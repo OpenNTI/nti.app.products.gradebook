@@ -515,7 +515,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
 		result_dict['EnrollmentScope'] = self.filter_scope_name
-		result_dict['ItemCount'] = len( user_summaries ) if user_summaries is not None else 0
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
@@ -599,7 +598,6 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookByAssignmentSummary'
 		result_dict['EnrollmentScope'] = self.filter_scope_name
-		result_dict['ItemCount'] = len( user_summaries ) if user_summaries is not None else 0
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
