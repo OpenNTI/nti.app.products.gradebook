@@ -83,6 +83,10 @@ LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 
+def _get_history_item( course, user, assignment_id ):
+	history = component.getMultiAdapter((course, user), IUsersCourseAssignmentHistory)
+	return history.get( assignment_id )
+
 def _get_grade_parts( grade_value ):
 	"""Convert the webapp's "number - letter" scheme to a tuple."""
 	result = ( grade_value, )
@@ -110,9 +114,10 @@ class UserGradeSummary( object ):
 
 	__class_name__ = 'UserGradeBookSummary'
 
-	def __init__( self, username, grade_entry ):
+	def __init__( self, username, grade_entry, course ):
 		self.user = User.get_user( username )
 		self.grade_entry = grade_entry
+		self.course = course
 
 	@Lazy
 	def alias(self):
@@ -176,10 +181,12 @@ class UserGradeSummary( object ):
 
 	@Lazy
 	def history_item(self):
+		# We always want to return this if possible, even
+		# if we do not have a grade.
 		result = None
-		user_grade_entry = self.user_grade_entry
-		if user_grade_entry is not None:
-			result = IUsersCourseAssignmentHistoryItem( user_grade_entry, None )
+		if self.grade_entry is not None:
+			assignment_id = self.grade_entry.AssignmentId
+			result = _get_history_item( self.course, self.user, assignment_id )
 		return result
 
 	@Lazy
@@ -199,8 +206,7 @@ class UserGradeBookSummary( UserGradeSummary ):
 	__class_name__ = 'UserGradeBookSummary'
 
 	def __init__( self, username, course, assignments, gradebook, grade_entry ):
-		super( UserGradeBookSummary, self ).__init__( username, grade_entry )
-		self.course = course
+		super( UserGradeBookSummary, self ).__init__( username, grade_entry, course )
 		self.assignments = assignments
 		self.gradebook = gradebook
 
@@ -567,7 +573,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 		self.course = ICourseInstance( context )
 
 	def _get_summary_for_student( self, username ):
-		return UserGradeSummary( username, self.grade_entry )
+		return UserGradeSummary( username, self.grade_entry, self.course )
 
 	def _get_sort_key( self, sort_on ):
 		sort_key = None
