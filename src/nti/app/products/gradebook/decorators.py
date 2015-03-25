@@ -27,8 +27,6 @@ from nti.app.products.courseware.utils import is_course_instructor
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.common.deprecated import deprecated
-
 from nti.contentlibrary.interfaces import IContentPackage
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -128,7 +126,6 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		_links = gradebook_shell.setdefault(LINKS, [])
 		gradebook = IGradeBook( course )
 
-		# TODO SetGrade off of assignment?
 		rel_map = {	'ExportContents': 'contents.csv',
 					'GradeBookSummary': 'GradeBookSummary',
 					'SetGrade': 'SetGrade' }
@@ -136,25 +133,6 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 			link = Link( gradebook, rel=rel, elements=(element,) )
 			_links.append( link )
 		return result
-
-# TODO These links off of the IGradeBook can disappear in favor
-# of the ICourseInstance links we are now using.
-@deprecated()
-@interface.implementer(IExternalMappingDecorator)
-class _GradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
-
-	def _predicate(self, context, result):
-		return self._is_authenticated and _grades_readable(context)
-
-	def _do_decorate_external(self, book, result):
-		rel_map = {	'ExportContents': 'contents.csv',
-					'GradeBookByUser': 'GradeBookByUser',
-					'GradeBookSummary': 'GradeBookSummary',
-					'GradeBookByAssignment': 'GradeBookByAssignment'}
-		_links = result.setdefault(LINKS, [])
-		for rel, element in rel_map.items():
-			link = Link(book, rel=rel, elements=(element,))
-			_links.append(link)
 
 @interface.implementer(IExternalObjectDecorator)
 class _UsersCourseAssignmentHistoryItemDecorator(object):

@@ -126,7 +126,7 @@ def _assignment_history_item_added(item, event):
 		user = IUser(item)
 		grade = PersistentGrade()
 		grade.username = user.username
-		
+
 		# If there is an auto-grading policy for the course instance,
 		# then let it convert the auto-assessed part of the submission
 		# into the initial grade value
@@ -141,7 +141,7 @@ def _assignment_history_item_added(item, event):
 				grade.value = grade.AutoGrade
 		# Finally after we finish filling it in, publish it
 		save_in_container(entry, user.username, grade)
-		
+
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
 	entry = _find_entry_for_item(item)
@@ -222,7 +222,7 @@ def _do_store_grade_created_event(grade, event):
 	## set (which they will be because they were copied from grade)
 	del change.__name__
 	del change.__parent__
-	
+
 	## Define it as top-level content for indexing purposes
 	change.__is_toplevel_content__ = True
 	storage[grade.Username] = change

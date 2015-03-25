@@ -271,7 +271,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		# ...or through the book
 		book_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook'
-		book_res = res = self.testapp.get(book_path,  extra_environ=instructor_environ)
+		res = self.testapp.get(book_path,  extra_environ=instructor_environ)
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								has_entry('quizzes',
@@ -348,7 +348,11 @@ class TestAssignments(ApplicationLayerTest):
 			prof.realname = 'Steve Johnson\u0107'
 			lifecycleevent.modified(prof.__parent__)
 
-		csv_link = self.require_link_href_with_rel(book_res.json_body, 'ExportContents')
+		# Our links are now off of a GradeBook shell in the course
+		course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
+		course_res = self.testapp.get(course_path,  extra_environ=instructor_environ)
+		gradebook_json = course_res.json_body.get( 'GradeBook' )
+		csv_link = self.require_link_href_with_rel( gradebook_json, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403-grades.csv"'))
 		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'

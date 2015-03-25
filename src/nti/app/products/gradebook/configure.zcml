@@ -69,7 +69,7 @@
 
 	<adapter factory=".adapters._as_catalog_entry"
 			 for=".interfaces.IGrade" />
-			 
+
 	<adapter factory=".grades.GradeWeakRef" />
 
 	<adapter factory=".adapters.grade_for_history_item"
@@ -164,11 +164,6 @@
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest" />
 
-	<subscriber factory=".decorators._GradebookLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for=".interfaces.IGradeBook
-					 pyramid.interfaces.IRequest"/>
-
 	<subscriber factory=".decorators._GradeHistoryItemLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for=".interfaces.IGrade
@@ -183,7 +178,7 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest"/>
-					 
+
 	<!-- Events -->
 	<subscriber handler=".subscribers._on_user_will_be_removed" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />
@@ -232,11 +227,11 @@
 	<utility factory=".gradescheme.LetterGradeScheme"
 			 provides=".interfaces.ILetterGradeScheme"
 			 name="letter_grade" />
-			 
+
 	<utility factory=".gradescheme._default_integer_grade_scheme"
 			 provides=".interfaces.IIntegerGradeScheme"
 			 name="integer" />
-			 
+
 	<utility factory=".gradescheme._default_numeric_grade_scheme"
 			 provides=".interfaces.INumericGradeScheme"
 			 name="float" />
@@ -245,9 +240,9 @@
 	<configure zcml:condition="installed nti.metadata">
 		<subscriber	factory=".predicates._GradePrincipalObjects"
 					provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
-					
+
 		<subscriber	factory=".predicates._GradeBookPrincipalObjects"
 					provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
 	</configure>
-		 
+
 </configure>
