@@ -114,7 +114,6 @@ class TestCS1323GradePolicy(unittest.TestCase):
 		ext = to_external_object(policy)
 		assert_that(ext, has_key('PresentationGradeScheme'))
 				
-
 	@WithMockDSTrans
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
 				 'nti.contenttypes.courses.grading.policies.get_assignment_policies')

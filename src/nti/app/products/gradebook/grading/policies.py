@@ -25,9 +25,9 @@ from ZODB import loglevels
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
-from nti.common.property import Lazy
 from nti.common.property import alias
 from nti.common.property import readproperty
+from nti.common.property import CachedProperty
 
 from nti.contenttypes.courses.grading.policies import EqualGroupGrader
 from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
@@ -104,19 +104,20 @@ class CS1323EqualGroupGrader(EqualGroupGrader):
 	
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
+
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICS1323CourseGradingPolicy)
 	
 	PresentationGradeScheme = None
 	
 	presentation = alias('PresentationGradeScheme')
-	
-	@Lazy
+
+	@CachedProperty('lastModified')
 	def book(self):
 		book = IGradeBook(self.course)
 		return book
 
-	@Lazy
+	@CachedProperty('lastModified')
 	def dateContext(self):
 		result = IQAssignmentDateContext(self.course, None)
 		return result
@@ -143,7 +144,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	def groups(self):
 		return self.grader.groups
 	
-	@Lazy
+	@CachedProperty('lastModified')
 	def _assignments(self):
 		result = defaultdict(set)
 		for name, items in self.grader._categories.items():
@@ -152,7 +153,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				result[name].add(assignment)
 		return result
 
-	@Lazy
+	@CachedProperty('lastModified')
 	def _points(self):
 		result = {}
 		for items in self.grader._categories.values():
@@ -163,18 +164,18 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 					result[assignment] = points
 		return result
 	
-	@Lazy
+	@CachedProperty('lastModified')
 	def _total_weight(self):
 		result = 0
 		for category in self.groups.values():
 			result += category.Weight
 		return result
 
-	@Lazy
+	@CachedProperty('lastModified')
 	def _rev_categories(self):
 		return self.grader._rev_categories
 		
-	@Lazy
+	@CachedProperty('lastModified')
 	def _weights(self):
 		result = {}
 		for name, data in self._assignments.items():
@@ -184,7 +185,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				result[name] = item_weight * category.Weight
 		return result
 
-	@Lazy
+	@CachedProperty('lastModified')
 	def _schemes(self):
 		result = {}
 		for name, points in self._points.items():
