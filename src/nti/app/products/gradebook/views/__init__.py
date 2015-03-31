@@ -159,10 +159,11 @@ class UserGradeSummary( object ):
 
 	@Lazy
 	def grade_tuple(self):
-		"A tuple of (grade_num, grade_other)."
-		result = None
+		"A tuple of (grade_num, grade_other, submitted)."
 		if self.grade_value is not None:
 			result = _get_grade_parts( self.grade_value )
+		else:
+			result = ( None, None, bool( self.history_item ) )
 		return result
 
 	@Lazy
