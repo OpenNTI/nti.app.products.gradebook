@@ -46,8 +46,8 @@ class MockSummary( UserGradeSummary ):
 	"By default, every field is non-null at the start of ascending order."
 
 	def __init__( self, alias='a', last_name='a', username='a',
-					overdue_count=0, ungraded_count=0, grade_value=0,
-					history_item=False,
+					overdue_count=0, ungraded_count=0,
+					grade_value=0, history_item=False,
 					feedback_count=0, created_date=0 ):
 		self.alias = alias
 		self.last_name = last_name

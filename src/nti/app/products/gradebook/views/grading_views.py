@@ -68,21 +68,21 @@ def get_presentation(policy):
 			   renderer='rest',
 			   request_method='GET')
 class CurrentGradeView(AbstractAuthenticatedView):
-	
+
 	def __call__(self):
 		course = ICourseInstance(self.request.context)
 		if not is_enrolled(course, self.remoteUser):
 			raise hexec.HTTPForbidden(_("must be enrolled in course."))
-		
+
 		policy = find_grading_policy_for_course(course)
 		if policy is None:
 			raise hexec.HTTPUnprocessableEntity(_("Course does not define a grading policy."))
-		
+
 		course = ICourseInstance(self.context)
 		book = IGradeBook(course)
 		if not book.has_grades(self.remoteUser.username):
 			raise hexec.HTTPNotFound()
-		
+
 		params = CaseInsensitiveDict(self.request.params)
 
 		## check for a final grade.
@@ -93,19 +93,19 @@ class CurrentGradeView(AbstractAuthenticatedView):
 			grade = None if is_none(grade.value) else grade
 		except KeyError:
 			grade = None
-		
+
 		if grade is None:
 			is_predicted = True
 			scheme = params.get('scheme') or u''
 			presentation = 	get_presentation(policy) or \
 							component.getUtility(IGradeScheme, name=scheme)
 			correctness = policy.grade(self.remoteUser)
-		
+
 			grade = Grade() # non persistent
 			grade.username = self.remoteUser.username
 			grade.value = presentation.fromCorrectness(correctness)
 
-		result = LocatedExternalDict()		
+		result = LocatedExternalDict()
 		result.update(to_external_object(grade))
 		result['IsPredicted'] = is_predicted
 		if correctness is not None:

@@ -68,6 +68,7 @@ from nti.links.links import Link
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
+from ..interfaces import IGradeScheme
 from ..interfaces import IGradeBookEntry
 from ..interfaces import IExcusedGrade
 from ..interfaces import ACT_VIEW_GRADES
@@ -78,6 +79,10 @@ from ..utils import remove_from_container
 from ..utils import record_grade_without_submission
 
 from ..grades import PersistentGrade as Grade
+
+from ..grading import find_grading_policy_for_course
+
+from .grading_views import get_presentation
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
@@ -206,10 +211,11 @@ class UserGradeBookSummary( UserGradeSummary ):
 
 	__class_name__ = 'UserGradeBookSummary'
 
-	def __init__( self, username, course, assignments, gradebook, grade_entry ):
+	def __init__( self, username, course, assignments, gradebook, grade_entry, grade_policy ):
 		super( UserGradeBookSummary, self ).__init__( username, grade_entry, course )
 		self.assignments = assignments
 		self.gradebook = gradebook
+		self.grade_policy = grade_policy
 
 	@Lazy
 	def _user_stats( self ):
@@ -245,6 +251,16 @@ class UserGradeBookSummary( UserGradeSummary ):
 						overdue_count += 1
 
 		return overdue_count, ungraded_count
+
+	@Lazy
+	def predicted_grade( self ):
+		result = None
+		if self.grade_policy:
+			presentation = 	get_presentation( self.grade_policy ) or \
+							component.getUtility( IGradeScheme )
+			correctness = self.grade_policy.grade( self.user )
+			result = presentation.fromCorrectness( correctness )
+		return result
 
 	@Lazy
 	def overdue_count(self):
@@ -312,6 +328,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		self.course = ICourseInstance( context )
 
 	@Lazy
+	def grade_policy( self ):
+		policy = find_grading_policy_for_course( self.course )
+		return policy
+
+	@Lazy
 	def assignments( self ):
 		assignment_catalog = ICourseAssignmentCatalog( self.course )
 		assignments = [asg for asg in assignment_catalog.iter_assignments()]
@@ -328,7 +349,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _get_summary_for_student( self, username ):
 		return UserGradeBookSummary( username, self.course, self.assignments,
-									self.gradebook, self.final_grade_entry )
+									self.gradebook, self.final_grade_entry,
+									self.grade_policy )
 
 	def _get_summaries_for_usernames( self, student_names ):
 		"For the given names, return student summaries."
@@ -464,6 +486,10 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
+
+		# Only expose if our course has one
+		if self.grade_policy:
+			user_dict['PredictedGrade'] = user_summary.predicted_grade
 
 		# Link to user's assignment histories
 		links = user_dict.setdefault( LINKS, [] )
