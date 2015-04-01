@@ -297,7 +297,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	sortOn
 		The case insensitive field to sort on. Options are ``LastName``,
-		``Alias``, ``Grade``, and ``Username``.  The default is by
+		``Alias``, ``Grade``, ``PredictedGrade``, ``Username``.  The default is by
 		LastName.
 
 	sortOrder
@@ -434,15 +434,20 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return user_summaries
 
 	def _get_sort_key( self, sort_on ):
-		if sort_on and sort_on == 'grade':
-			sort_key = lambda x: x.grade_tuple
-		elif sort_on and sort_on == 'alias':
-			sort_key = lambda x: x.alias.lower() if x.alias else ''
-		elif sort_on and sort_on == 'username':
-			sort_key = lambda x: x.username.lower() if x.username else ''
-		else:
-			# Sorting by last_name is default
-			sort_key = lambda x: x.last_name.lower() if x.last_name else ''
+		# Sorting by last_name is default
+		sort_key = lambda x: x.last_name.lower() if x.last_name else ''
+
+		if sort_on:
+			sort_on = sort_on.lower()
+			if sort_on == 'grade':
+				sort_key = lambda x: x.grade_tuple
+			elif sort_on == 'alias':
+				sort_key = lambda x: x.alias.lower() if x.alias else ''
+			elif sort_on == 'username':
+				sort_key = lambda x: x.username.lower() if x.username else ''
+			elif sort_on == 'predictedgrade':
+				sort_key = lambda x: x.predicted_grade or ''
+
 		return sort_key
 
 	def _check_batch_around( self, user_summaries ):
@@ -460,7 +465,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def _get_user_result_set(self, result_dict, user_summaries):
 		"Return a sorted/batched collection of user summaries to return."
 		sort_on = self.request.params.get('sortOn')
-		sort_on = sort_on and sort_on.lower()
 		sort_key = self._get_sort_key( sort_on )
 
 		# Ascending is default
