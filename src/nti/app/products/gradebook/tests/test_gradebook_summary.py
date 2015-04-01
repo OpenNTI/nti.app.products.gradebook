@@ -48,7 +48,8 @@ class MockSummary( UserGradeSummary ):
 	def __init__( self, alias='a', last_name='a', username='a',
 					overdue_count=0, ungraded_count=0,
 					grade_value=0, history_item=False,
-					feedback_count=0, created_date=0 ):
+					feedback_count=0, created_date=0,
+					predicted_grade=0 ):
 		self.alias = alias
 		self.last_name = last_name
 		self.username = username
@@ -58,6 +59,7 @@ class MockSummary( UserGradeSummary ):
 		self.feedback_count = feedback_count
 		self.history_item = history_item
 		self.created_date = created_date
+		self.predicted_grade = predicted_grade
 
 class TestGradeBookSummary( TestCase ):
 
@@ -154,6 +156,20 @@ class TestGradeBookSummary( TestCase ):
 		result = do_sort( {}, summaries )
 		assert_that( result, has_length( 4 ))
 		assert_that( result, contains( summary3, summary2, summary4, summary ))
+
+		# Sort by predicted_grade
+		summary2 = MockSummary()
+		summary2.predicted_grade = '10'
+		summary3 = MockSummary()
+		summary3.predicted_grade = '90 -'
+		summary4 = MockSummary()
+		summary4.predicted_grade = '55 A'
+
+		summaries = [ summary4, summary3, summary2, summary ]
+		request.params={ 'sortOn' : 'PREDICTEDgradE', 'sortOrder': 'ascending' }
+		result = do_sort( {}, summaries )
+		assert_that( result, has_length( 4 ))
+		assert_that( result, contains( summary, summary2, summary4, summary3 ))
 
 		# Alias; desc
 		summary2.alias = 'zzzz'
