@@ -287,12 +287,12 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	batchStart
 		The starting batch index.  Defaults to 0.
 
-	batchAroundUsername
+	batchContainingUsername
 		String parameter giving the ``Username`` to build a batch
-		around. Otherwise identical to ``batchAround``.
+		around. Otherwise identical to ``batchContaining``.
 
-	batchAroundUsernameFilterByScope
-		Like ``batchAroundUsername``, but also returns the batched
+	batchContainingUsernameFilterByScope
+		Like ``batchContainingUsername``, but also returns the batched
 		users belonging to the enrollment scope of the given user.
 
 	sortOn
@@ -384,7 +384,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		student_names = None
 
 		# If they want to batch and filter by the scope of the given username.
-		batch_username = self.request.params.get( 'batchAroundUsernameFilterByScope' )
+		batch_username = self.request.params.get( 'batchContainingUsernameFilterByScope' )
 		if batch_username:
 			batch_username = batch_username.lower()
 
@@ -452,15 +452,15 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	def _check_batch_around( self, user_summaries ):
 		"Return our batch around the given username."
-		batch_username = self.request.params.get( 'batchAroundUsername' )
+		batch_username = self.request.params.get( 'batchContainingUsername' )
 		if not batch_username:
-			batch_username = self.request.params.get( 'batchAroundUsernameFilterByScope' )
+			batch_username = self.request.params.get( 'batchContainingUsernameFilterByScope' )
 
 		if batch_username:
 			batch_username = batch_username.lower()
 			batch_around_test = lambda x: x.user.username.lower() == batch_username
-			# This toggles the batchStart params.
-			self._batch_around( user_summaries, batch_around_test )
+			# This toggles the batchStart params to our page.
+			self._batch_around( user_summaries, batch_around_test, batch_containing=True )
 
 	def _get_user_result_set(self, result_dict, user_summaries):
 		"Return a sorted/batched collection of user summaries to return."
