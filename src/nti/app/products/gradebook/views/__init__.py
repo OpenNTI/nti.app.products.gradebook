@@ -15,6 +15,7 @@ from .. import MessageFactory
 
 import nameparser
 from datetime import datetime
+from collections import namedtuple
 from collections import OrderedDict
 
 from six import string_types
@@ -203,6 +204,8 @@ class UserGradeSummary( object ):
 			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
 		return result
 
+PredictedGrade = namedtuple('PredictedGrade', 'Grade RawValue Correctness')
+
 class UserGradeBookSummary( UserGradeSummary ):
 	"""
 	An overall gradebook summary for a user that includes
@@ -259,7 +262,8 @@ class UserGradeBookSummary( UserGradeSummary ):
 			presentation = 	get_presentation( self.grade_policy ) or \
 							component.getUtility( IGradeScheme )
 			correctness = self.grade_policy.grade( self.user )
-			result = presentation.fromCorrectness( correctness )
+			grade = presentation.fromCorrectness( correctness )
+			result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
 		return result
 
 	@Lazy
@@ -446,7 +450,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			elif sort_on == 'username':
 				sort_key = lambda x: x.username.lower() if x.username else ''
 			elif sort_on == 'predictedgrade':
-				sort_key = lambda x: x.predicted_grade or ''
+				sort_key = lambda x: getattr(x.predicted_grade, 'Correctness', None) or 0
 
 		return sort_key
 
@@ -493,7 +497,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		# Only expose if our course has one
 		if self.grade_policy:
-			user_dict['PredictedGrade'] = user_summary.predicted_grade
+			predicted = user_summary.predicted_grade
+			if predicted is not None:
+				user_dict['PredictedGrade'] = { 'Grade': predicted.Grade,
+												'RawValue': predicted.RawValue,
+												'Correctness' : predicted.Correctness }
 
 		# Link to user's assignment histories
 		links = user_dict.setdefault( LINKS, [] )
