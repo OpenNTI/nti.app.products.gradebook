@@ -21,10 +21,12 @@ from hamcrest import contains_inanyorder
 from zope.component import provideAdapter
 
 from nti.app.products.gradebook.adapters import _as_course
-from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.gradebook import GradeBook
 
-from nti.app.products.gradebook.views import PredictedGrade
+from nti.app.products.gradebook.gradebook import GradeBook
+from nti.app.products.gradebook.interfaces import IGradeBook
+
+from nti.app.products.gradebook.grading import PredictedGrade
+
 from nti.app.products.gradebook.views import _get_grade_parts
 from nti.app.products.gradebook.views import GradeBookSummaryView
 from nti.app.products.gradebook.views import UserGradeSummary

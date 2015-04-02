@@ -13,8 +13,6 @@ from .. import MessageFactory as _
 
 import six
 
-from zope import component
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexec
@@ -36,12 +34,11 @@ from nti.externalization.externalization import to_external_object
 from ..grades import Grade
 
 from ..interfaces import IGradeBook
-from ..interfaces import IGradeScheme
 from ..interfaces import FINAL_GRADE_NAME
 from ..interfaces import NO_SUBMIT_PART_NAME
 
 from ..grading import VIEW_CURRENT_GRADE
-from ..grading import IGradeBookGradingPolicy
+from ..grading import calculate_predicted_grade
 from ..grading import find_grading_policy_for_course
 
 def is_none(value):
@@ -54,11 +51,6 @@ def is_none(value):
 			value = value[:-1]
 		result = not bool(value)
 	return result
-
-def get_presentation(policy):
-	if IGradeBookGradingPolicy.providedBy(policy):
-		return policy.PresentationGradeScheme
-	return None
 
 @view_config(context=ICourseInstance)
 @view_config(context=ICourseInstanceEnrollment)
@@ -87,7 +79,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
 		## check for a final grade.
 		try:
-			correctness = None
+			predicted = None
 			is_predicted = False
 			grade = book[NO_SUBMIT_PART_NAME][FINAL_GRADE_NAME][self.remoteUser.username]
 			grade = None if is_none(grade.value) else grade
@@ -97,18 +89,16 @@ class CurrentGradeView(AbstractAuthenticatedView):
 		if grade is None:
 			is_predicted = True
 			scheme = params.get('scheme') or u''
-			presentation = 	get_presentation(policy) or \
-							component.getUtility(IGradeScheme, name=scheme)
-			correctness = policy.grade(self.remoteUser)
+			predicted = calculate_predicted_grade(self.remoteUser, policy, scheme)
 
 			grade = Grade() # non persistent
+			grade.value = predicted.Grade
 			grade.username = self.remoteUser.username
-			grade.value = presentation.fromCorrectness(correctness)
 
 		result = LocatedExternalDict()
 		result.update(to_external_object(grade))
 		result['IsPredicted'] = is_predicted
-		if correctness is not None:
-			result['RawValue'] = correctness
-			result['Correctness'] = int(round(correctness * 100))
+		if predicted is not None:
+			result['RawValue'] = predicted.RawValue
+			result['Correctness'] = predicted.Correctness
 		return result

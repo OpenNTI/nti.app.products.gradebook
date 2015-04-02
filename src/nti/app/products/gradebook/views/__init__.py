@@ -11,18 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .. import MessageFactory
-
 import nameparser
 from datetime import datetime
-from collections import namedtuple
-from collections import OrderedDict
 
 from six import string_types
 
 from zope import component
 from zope import interface
-from zope.container.contained import Contained
 
 from zope.traversing.interfaces import IPathAdapter
 
@@ -40,8 +35,6 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
-
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
@@ -50,18 +43,15 @@ from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEnumerableEntityContainer
 
 from nti.dataserver.users.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.externalization import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
 
@@ -69,7 +59,6 @@ from nti.links.links import Link
 
 from ..interfaces import IGrade
 from ..interfaces import IGradeBook
-from ..interfaces import IGradeScheme
 from ..interfaces import IGradeBookEntry
 from ..interfaces import IExcusedGrade
 from ..interfaces import ACT_VIEW_GRADES
@@ -79,11 +68,8 @@ from ..utils import replace_username
 from ..utils import remove_from_container
 from ..utils import record_grade_without_submission
 
-from ..grades import PersistentGrade as Grade
-
+from ..grading import calculate_predicted_grade
 from ..grading import find_grading_policy_for_course
-
-from .grading_views import get_presentation
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
@@ -204,8 +190,6 @@ class UserGradeSummary( object ):
 			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
 		return result
 
-PredictedGrade = namedtuple('PredictedGrade', 'Grade RawValue Correctness')
-
 class UserGradeBookSummary( UserGradeSummary ):
 	"""
 	An overall gradebook summary for a user that includes
@@ -259,11 +243,7 @@ class UserGradeBookSummary( UserGradeSummary ):
 	def predicted_grade( self ):
 		result = None
 		if self.grade_policy:
-			presentation = 	get_presentation( self.grade_policy ) or \
-							component.getUtility( IGradeScheme )
-			correctness = self.grade_policy.grade( self.user )
-			grade = presentation.fromCorrectness( correctness )
-			result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
+			result = calculate_predicted_grade(self.user, self.grade_policy)
 		return result
 
 	@Lazy
