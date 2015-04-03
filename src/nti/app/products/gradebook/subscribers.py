@@ -15,7 +15,9 @@ from zope import component
 from zope.annotation.interfaces import IAnnotations
 
 from zope.catalog.interfaces import ICatalog
+from zope.event import notify
 
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -184,7 +186,9 @@ def _get_entry_change_storage(entry):
 def _do_store_grade_created_event(grade, event):
 	storage = _get_entry_change_storage(grade.__parent__)
 	if grade.Username in storage:
-		storage[grade.Username].updateLastMod()
+		change_event = storage[grade.Username]
+		change_event.updateLastMod()
+		notify( ObjectModifiedEvent( change_event ) )
 		return
 
 	change = Change(Change.CREATED, grade)
