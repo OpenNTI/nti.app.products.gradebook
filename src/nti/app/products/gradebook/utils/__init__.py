@@ -40,7 +40,6 @@ def replace_username(username):
 
 ## rexport for BWC
 
-from .errors import _json_error_map
 from .errors import raise_json_error
 from .errors import raise_field_error
 
