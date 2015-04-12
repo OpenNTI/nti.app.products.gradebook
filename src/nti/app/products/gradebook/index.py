@@ -96,7 +96,8 @@ class ValidatingGradeCatalogEntryID(object):
 
 	def __init__(self, obj, default=None):
 		grade = IGrade(obj, default)
-		entry = ICourseCatalogEntry(ICourseInstance(grade, None), None)
+		course = ICourseInstance(grade, None) # course is in lineage
+		entry = ICourseCatalogEntry(course, None) # entry is an annotation
 		if entry is not None:
 			self.ntiid = unicode(entry.ntiid)
 
