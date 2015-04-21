@@ -128,13 +128,13 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	
 	def validate(self):
 		super(CS1323CourseGradingPolicy, self).validate()
-		for assignment in self.grader._assignments:
+		for assignment in self.grader._raw_assignments():
 			points = self._points.get(assignment)
 			assert points, "Could not find points for %s" % assignment
 	
 	def verify(self, book=None):
 		book = self.book if book is None else book
-		for name in self.grader._assignments:
+		for name in self.grader._raw_assignments():
 			if is_valid_ntiid_string(name):
 				entry = book.getEntryByAssignment(name)
 				if entry is None:
