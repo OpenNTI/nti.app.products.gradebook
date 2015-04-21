@@ -112,12 +112,18 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	
 	presentation = alias('PresentationGradeScheme')
 
-	@CachedProperty('lastModified')
+	@property	
+	def lastSynchronized(self):
+		self_lastModified = self.lastModified or 0
+		parent_lastSynchronized = getattr(self.course, 'lastSynchronized', None) or 0
+		return max(self_lastModified, parent_lastSynchronized)
+
+	@CachedProperty('lastSynchronized')
 	def book(self):
 		book = IGradeBook(self.course)
 		return book
 
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def dateContext(self):
 		result = IQAssignmentDateContext(self.course, None)
 		return result
@@ -144,7 +150,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	def groups(self):
 		return self.grader.groups
 	
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def _assignments(self):
 		result = defaultdict(set)
 		for name, items in self.grader._categories.items():
@@ -153,7 +159,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				result[name].add(assignment)
 		return result
 
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def _points(self):
 		result = {}
 		for items in self.grader._categories.values():
@@ -164,18 +170,18 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 					result[assignment] = points
 		return result
 	
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def _total_weight(self):
 		result = 0
 		for category in self.groups.values():
 			result += category.Weight
 		return result
 
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def _rev_categories(self):
 		return self.grader._rev_categories
 		
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def _weights(self):
 		result = {}
 		for name, data in self._assignments.items():
@@ -185,7 +191,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				result[name] = item_weight * category.Weight
 		return result
 
-	@CachedProperty('lastModified')
+	@CachedProperty('lastSynchronized')
 	def _schemes(self):
 		result = {}
 		for name, points in self._points.items():
