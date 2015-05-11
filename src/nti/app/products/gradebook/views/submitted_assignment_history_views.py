@@ -193,7 +193,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 
 			# While this returns a value, we're interested in its side effect
 			# of changing the batch_start for us
-			self._batch_around(sorted_usernames, test)
+			self._batch_on_item(sorted_usernames, test)
 			batch_size, batch_start = self._get_batch_size_start()
 
 			# Since we've done this already, we can
@@ -554,7 +554,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 				batchAroundTest = lambda key_value: key_value[0].lower() == batchAround
 
 			if batchAroundTest:
-				items_iter = self._batch_around(items_iter, batchAroundTest)
+				items_iter = self._batch_on_item(items_iter, batchAroundTest)
 				batch_size, batch_start = self._get_batch_size_start()
 
 		if (batch_size is not None and batch_start is not None) or items_factory is list:

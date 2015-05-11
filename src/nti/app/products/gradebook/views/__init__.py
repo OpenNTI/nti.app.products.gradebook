@@ -444,7 +444,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			batch_username = batch_username.lower()
 			batch_around_test = lambda x: x.user.username.lower() == batch_username
 			# This toggles the batchStart params to our page.
-			self._batch_around( user_summaries, batch_around_test, batch_containing=True )
+			self._batch_on_item( user_summaries, batch_around_test, batch_containing=True )
 
 	def _get_user_result_set(self, result_dict, user_summaries):
 		"Return a sorted/batched collection of user summaries to return."
