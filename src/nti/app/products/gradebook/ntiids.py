@@ -22,7 +22,7 @@ from nti.ntiids.interfaces import INTIIDResolver
 from .interfaces import IGradeBook
 
 def get_course(catalog, key):
-	for course in catalog:
+	for course in catalog.iterCatalogEntries():
 		if course.__name__ == key:
 			return course
 	return None
@@ -32,7 +32,7 @@ class _GradeBookResolver(object):
 
 	def resolve(self, key):
 		catalog = component.queryUtility(ICourseCatalog)
-		if catalog:
+		if catalog is not None:
 			name = get_specific(key)
 			course = get_course(catalog, name)
 			return IGradeBook(course, None)
@@ -43,7 +43,7 @@ class _GradeBookPartResolver(object):
 
 	def resolve(self, key):
 		catalog = component.queryUtility(ICourseCatalog)
-		if catalog:
+		if catalog is not None:
 			specific = get_specific(key)
 			try:
 				course, part = specific.split('.')[-2]
@@ -62,7 +62,7 @@ class _GradeBookEntryResolver(object):
 
 	def resolve(self, key):
 		catalog = component.queryUtility(ICourseCatalog)
-		if catalog:
+		if catalog is not None:
 			specific = get_specific(key)
 			try:
 				course, part, entry = specific.split('.')[-3]
