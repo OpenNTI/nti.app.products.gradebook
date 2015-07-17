@@ -25,6 +25,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
 
@@ -53,6 +54,7 @@ def is_none(value):
 	return result
 
 @view_config(context=ICourseInstance)
+@view_config(context=ICourseCatalogEntry)
 @view_config(context=ICourseInstanceEnrollment)
 @view_defaults(route_name='objects.generic.traversal',
 			   permission=nauth.ACT_READ,
@@ -77,7 +79,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
 		params = CaseInsensitiveDict(self.request.params)
 
-		## check for a final grade.
+		# check for a final grade.
 		try:
 			predicted = None
 			is_predicted = False
@@ -91,7 +93,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 			scheme = params.get('scheme') or u''
 			predicted = calculate_predicted_grade(self.remoteUser, policy, scheme)
 
-			grade = Grade() # non persistent
+			grade = Grade()  # non persistent
 			grade.value = predicted.Grade
 			grade.username = self.remoteUser.username
 
