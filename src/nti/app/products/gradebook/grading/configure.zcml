@@ -27,6 +27,11 @@
 					 
 	<subscriber factory=".decorators._CurrentGradeLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.contenttypes.courses.interfaces.ICourseCatalogEntry
+					 pyramid.interfaces.IRequest"/> 
+					 
+	<subscriber factory=".decorators._CurrentGradeLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.app.products.courseware.interfaces.ICourseInstanceEnrollment
 					 pyramid.interfaces.IRequest"/> 
 

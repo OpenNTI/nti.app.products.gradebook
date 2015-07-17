@@ -29,10 +29,11 @@ LINKS = StandardExternalFields.LINKS
 class _CurrentGradeLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		result = self._is_authenticated and find_grading_policy_for_course(context) and \
-				 is_enrolled(context, self.remoteUser)
+		result = bool(self._is_authenticated and is_enrolled(context, self.remoteUser))
+		if result:
+			result = find_grading_policy_for_course(context) is not None
 		return result
-	
+
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel=VIEW_CURRENT_GRADE, elements=(VIEW_CURRENT_GRADE,))
