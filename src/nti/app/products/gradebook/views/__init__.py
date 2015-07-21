@@ -596,10 +596,12 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 	def _get_sort_key( self, sort_on ):
 		sort_key = None
-		if sort_on and sort_on == 'feedbackcount':
-			sort_key = lambda x: x.feedback_count if x.feedback_count else ''
-		elif sort_on and sort_on == 'datesubmitted':
-			sort_key = lambda x: x.created_date if x.created_date else ''
+		if sort_on:
+			sort_on = sort_on.lower()
+			if sort_on == 'feedbackcount':
+				sort_key = lambda x: x.feedback_count if x.feedback_count else ''
+			elif sort_on == 'datesubmitted':
+				sort_key = lambda x: x.created_date if x.created_date else ''
 
 		if sort_key is None:
 			# Super class handles name and grade sorting, as well as the default.
