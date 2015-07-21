@@ -11,11 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
+
+from persistent import Persistent
 
 from nti.common.property import Lazy
 from nti.common.property import alias
@@ -69,7 +72,7 @@ class Grade(CreatedModDateTrackingObject,
 		if 'username' in kwargs and 'Username' not in kwargs:
 			kwargs['Username'] = kwargs['username']
 			del kwargs['username']
-		super(Grade,self).__init__(**kwargs)
+		super(Grade, self).__init__(**kwargs)
 
 	@Lazy
 	def createdTime(self):
@@ -85,15 +88,15 @@ class Grade(CreatedModDateTrackingObject,
 		if self.__parent__ is not None:
 			return self.__parent__.AssignmentId
 
-	@property # Since we're not persistent, the regular use of CachedProperty fails
+	@property  # Since we're not persistent, the regular use of CachedProperty fails
 	def __acl__(self):
 		acl = acl_from_aces()
 		course = ICourseInstance(self, None)
 		if course is not None:
 			acl.extend((ace_allowing(i, ALL_PERMISSIONS) for i in course.instructors))
-		if self.Username: # This will become conditional on whether we are published
-			acl.append( ace_allowing(self.Username, ACT_READ) )
-		acl.append( ace_denying_all() )
+		if self.Username:  # This will become conditional on whether we are published
+			acl.append(ace_allowing(self.Username, ACT_READ))
+		acl.append(ace_denying_all())
 		return acl
 
 @interface.implementer(IWeakRef)
@@ -109,7 +112,7 @@ class GradeWeakRef(object):
 
 	__slots__ = ('_part_wref', '_username')
 
-	def __init__( self, grade ):
+	def __init__(self, grade):
 		if grade.__parent__ is None or not grade.Username:
 			raise TypeError("Too soon, grade has no parent or username")
 
@@ -143,19 +146,25 @@ from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 @interface.implementer(ICreated, IContentTypeAware)
 class PersistentGrade(Grade, PersistentPropertyHolder):
-	# order of inheritance matters; if Persistent is first, 
+	# order of inheritance matters; if Persistent is first,
 	# we can't have our own __setstate__; only subclasses can
 
 	__external_class_name__ = "Grade"
-	
+
 	parameters = {}
 	mimeType = mime_type = 'application/vnd.nextthought.grade'
 
 	def __init__(self, *args, **kwargs):
 		Grade.__init__(self, *args, **kwargs)
 		PersistentPropertyHolder.__init__(self)
-		
+
 	@property
 	def containerId(self):
 		if self.__parent__ is not None:
 			return self.__parent__.NTIID
+
+from zope.deprecation import deprecated
+
+deprecated('Grades', 'No longer used')
+class Grades(Persistent):
+	pass
