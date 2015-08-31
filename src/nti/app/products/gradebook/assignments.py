@@ -16,13 +16,13 @@ from nti.app.assessment.common import get_course_assignments
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from .interfaces import IGradeBook
-from .interfaces import NO_SUBMIT_PART_NAME
-
 from .gradebook import GradeBookPart
 from .gradebook import NoSubmitGradeBookPart
 
-_assignment_comparator = assignment_comparator #BWC
+from .interfaces import IGradeBook
+from .interfaces import NO_SUBMIT_PART_NAME
+
+_assignment_comparator = assignment_comparator  # BWC
 
 def create_assignment_part(course, part_name, _book=None):
 	book = _book if _book is not None else IGradeBook(course)
@@ -33,7 +33,7 @@ def create_assignment_part(course, part_name, _book=None):
 			factory = GradeBookPart
 
 		part = factory(displayName=part_name,
-					   order=1) # Order makes very little sense here...
+					   order=1)  # Order makes very little sense here...
 
 		book[INameChooser(book).chooseName(part_name, part)] = part
 	return book[part_name]
@@ -48,11 +48,10 @@ def create_assignment_entry(course, assignment, displayName, order=1, _book=None
 	if entry is None:
 		part = get_or_create_assignment_part(course, assignment.category_name)
 		# Hmm, maybe we should just ask it to create the entry
-		part.validateAssignment(assignment) 
-		entry = part.entryFactory(
-							   displayName=displayName,
-							   order=order,
-							   AssignmentId=assignmentId)
+		part.validateAssignment(assignment)
+		entry = part.entryFactory(displayName=displayName,
+							   	  order=order,
+							   	  AssignmentId=assignmentId)
 		part[INameChooser(part).chooseName(displayName, entry)] = entry
 	elif entry.displayName != displayName:
 		entry.displayName = displayName
@@ -71,21 +70,21 @@ def synchronize_gradebook(context):
 	course = ICourseInstance(context, None)
 	if course is None:
 		return
-			
+
 	assignment_ids = set()
 	book = IGradeBook(course)
 	assignments = get_course_assignments(course)
-	
+
 	category_map = {}
 	for part in book.values():
 		for entry in part.values():
 			category_map[entry.assignmentId] = part.__name__
-	
+
 	# FIXME: What if an assignment changes parts (category_name)?
 	# We'll need to move them
 	for idx, assignment in enumerate(assignments):
 		ordinal = idx + 1
-		assignment_ids.add( assignment.__name__ )
+		assignment_ids.add(assignment.__name__)
 		if assignment.title:
 			displayName = assignment.title
 		else:

@@ -11,8 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.common.property import Lazy
 
@@ -54,11 +54,14 @@ class _GradeBookACLProvider(object):
 
 		course = ICourseInstance(self.context, None)
 		if course is not None:
-			#TODO: Use roles
-			acl.extend( (ace_allowing(i, ACT_READ, type(self)) for i in course.instructors) )
-			acl.extend( (ace_allowing(i, ACT_VIEW_GRADES, type(self)) for i in course.instructors) )
-			acl.extend( (ace_allowing(i, ACT_UPDATE, type(self)) for i in course.instructors) )
+			# TODO: Use roles
+			acl.extend((ace_allowing(i, ACT_READ, type(self)) 
+						for i in course.instructors))
+			acl.extend((ace_allowing(i, ACT_UPDATE, type(self)) 
+						for i in course.instructors))
+			acl.extend((ace_allowing(i, ACT_VIEW_GRADES, type(self))
+						for i in course.instructors))
 
-		acl.append( ace_allowing( ROLE_ADMIN, ALL_PERMISSIONS, type(self) ) )
-		acl.append( ace_denying_all() )
+		acl.append(ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)))
+		acl.append(ace_denying_all())
 		return acl

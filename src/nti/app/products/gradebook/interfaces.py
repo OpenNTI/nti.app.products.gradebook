@@ -338,7 +338,7 @@ class IPendingAssessmentAutoGradePolicy(interface.Interface):
 		Return None if no autograding is possible.
 		"""
 
-IUsernameSortSubstitutionPolicy = IUsernameSubstitutionPolicy # alias
+IUsernameSortSubstitutionPolicy = IUsernameSubstitutionPolicy # alias BWC
 
 class IGradebookSettings(interface.Interface):
 	"""

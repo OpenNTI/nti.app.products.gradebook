@@ -15,10 +15,14 @@ import six
 import numbers
 
 from zope import interface
+
 from zope.mimetype.interfaces import IContentTypeAware
+
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
-from nti.externalization.representation import WithRepr
+from nti.common.string import TRUE_VALUES
+from nti.common.string import FALSE_VALUES
+from nti.common.representation import WithRepr
 
 from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
@@ -31,11 +35,11 @@ from .interfaces import INumericGradeScheme
 
 from .utils import MetaGradeBookObject
 
-@interface.implementer(ILetterGradeScheme, IContentTypeAware)
 @WithRepr
 @EqHash('grades', 'ranges')
+@interface.implementer(ILetterGradeScheme, IContentTypeAware)
 class LetterGradeScheme(SchemaConfigured):
-	
+
 	__metaclass__ = MetaGradeBookObject
 
 	_type = six.string_types
@@ -106,6 +110,7 @@ class LetterGradeScheme(SchemaConfigured):
 			raise ValueError("Invalid grade value")
 
 class ExtendedLetterGradeScheme(LetterGradeScheme):
+
 	__metaclass__ = MetaGradeBookObject
 
 	default_grades = ('A+', 'A', 'A-',
@@ -114,15 +119,15 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 					  'D', 'D', 'F')
 
 	default_ranges = ((90, 100), (86, 89), (80, 85),
-					  (77, 79),  (73, 76), (70, 72),
-					  (67, 69),  (63, 66), (60, 62),
-					  (57, 59),  (50, 56), (0, 49))
+					  (77, 79), (73, 76), (70, 72),
+					  (67, 69), (63, 66), (60, 62),
+					  (57, 59), (50, 56), (0, 49))
 
-@interface.implementer(INumericGradeScheme, IContentTypeAware)
 @WithRepr
 @EqHash('min', 'max')
+@interface.implementer(INumericGradeScheme, IContentTypeAware)
 class NumericGradeScheme(SchemaConfigured):
-	
+
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(INumericGradeScheme)
 
@@ -151,12 +156,12 @@ class NumericGradeScheme(SchemaConfigured):
 
 @interface.implementer(INumericGradeScheme)
 def _default_numeric_grade_scheme():
-	result= NumericGradeScheme(min=0.0, max=100.0)
+	result = NumericGradeScheme(min=0.0, max=100.0)
 	return result
 
 @interface.implementer(IIntegerGradeScheme, IContentTypeAware)
 class IntegerGradeScheme(NumericGradeScheme):
-	
+
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IIntegerGradeScheme)
 
@@ -171,20 +176,20 @@ class IntegerGradeScheme(NumericGradeScheme):
 
 @interface.implementer(IIntegerGradeScheme)
 def _default_integer_grade_scheme():
-	result= IntegerGradeScheme(min=0, max=100)
+	result = IntegerGradeScheme(min=0, max=100)
 	return result
 
-@interface.implementer(IBooleanGradeScheme, IContentTypeAware)
 @WithRepr
+@interface.implementer(IBooleanGradeScheme, IContentTypeAware)
 class BooleanGradeScheme(SchemaConfigured):
-	
+
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(IBooleanGradeScheme)
 
-	_type  = bool
+	_type = bool
 
-	true_values = ('1', 'y', 't', 'v', 'yes', 'true')
-	false_values = ('0', 'n', 'f', 'no', 'false')
+	true_values = TRUE_VALUES
+	false_values = FALSE_VALUES
 
 	@classmethod
 	def fromUnicode(cls, value):

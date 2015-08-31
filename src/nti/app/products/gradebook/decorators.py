@@ -10,18 +10,15 @@ Decorators for providing access to the various grades pieces.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
-
-from ZODB import loglevels
 
 from nti.app.products.courseware.utils import is_course_instructor
 
@@ -81,7 +78,7 @@ def _find_course_for_user(data, user):
 		# Try to find the course within the context of the user;
 		# this takes into account the user's enrollment status
 		# to find the best course (sub) instance
-		course = component.queryMultiAdapter( (data, user), ICourseInstance)
+		course = component.queryMultiAdapter((data, user), ICourseInstance)
 
 	if course is None:
 		# Ok, can we get there genericlly, as in the old-school
@@ -99,10 +96,9 @@ def _find_course_for_user(data, user):
 			logger.debug("No enrollment for user %s in course %s found "
 						 "for data %s; assuming generic/global course instance",
 						 user, course, data)
-
 	return course
 
-find_course_for_user=_find_course_for_user
+find_course_for_user = _find_course_for_user
 
 @interface.implementer(IExternalMappingDecorator)
 class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -117,21 +113,21 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 		course = self.course
 		# For backwards compatibility
 		_links = result.setdefault(LINKS, [])
-		link = Link( IGradeBook( course ), rel="GradeBook" )
-		_links.append( link )
+		link = Link(IGradeBook(course), rel="GradeBook")
+		_links.append(link)
 
 		gradebook_shell = {}
 		result['GradeBook'] = gradebook_shell
 		gradebook_shell['Class'] = "GradeBook"
 		_links = gradebook_shell.setdefault(LINKS, [])
-		gradebook = IGradeBook( course )
+		gradebook = IGradeBook(course)
 
 		rel_map = {	'ExportContents': 'contents.csv',
 					'GradeBookSummary': 'GradeBookSummary',
 					'SetGrade': 'SetGrade' }
 		for rel, element in rel_map.items():
-			link = Link( gradebook, rel=rel, elements=(element,) )
-			_links.append( link )
+			link = Link(gradebook, rel=rel, elements=(element,))
+			_links.append(link)
 		return result
 
 @interface.implementer(IExternalObjectDecorator)
@@ -156,8 +152,8 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
 	def _do_decorate_external(self, context, result):
 		user = User.get_user(context.Username) if context.Username else None
 		course = find_interface(context, ICourseInstance, strict=False)
-		user_history = component.queryMultiAdapter(	(course, user),
-													IUsersCourseAssignmentHistory )
+		user_history = component.queryMultiAdapter((course, user),
+													IUsersCourseAssignmentHistory)
 
 		if not user_history:
 			return
@@ -186,6 +182,20 @@ class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			link = Link(context, elements=(rel,), rel=rel, method='POST')
 			links.append(link)
 
+@component.adapter(IGrade)
+@interface.implementer(IExternalMappingDecorator)
+class _GradeEditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _predicate(self, context, result):
+		return bool(self._is_authenticated)
+
+	def _do_decorate_external(self, context, result):
+		course = find_interface(context, ICourseInstance, strict=False)
+		if is_course_instructor(course, self.remoteUser):
+			links = result.setdefault(LINKS, [])
+			link = Link(context, rel='edit', method='POST')
+			links.append(link)
+			
 @component.adapter(IGrade)
 @interface.implementer(IExternalMappingDecorator)
 class _GradeCatalogEntryDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -230,10 +240,6 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		# XXX Need a specific unit test for this
 		self.course = find_interface(self.request.context, ICourseInstance,
 									 strict=False)
-		if self.course is not None:
-			logger.log(loglevels.TRACE,
-					   "Using course instance from request %r for context %s",
-					   self.request.context, context)
 		if self.course is None:
 			self.course = _find_course_for_user(context, self.remoteUser)
 		return self.course is not None and _grades_readable(self.course)
@@ -243,7 +249,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 
 		book = IGradeBook(course)
 		column = book.getColumnForAssignmentId(assignment.__name__)
-		if column is None: # pragma: no cover
+		if column is None:  # pragma: no cover
 			# mostly tests
 			return
 
@@ -256,7 +262,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 									rel='GradeSubmittedAssignmentHistory')
 		link_to_summ_history = Link(ISubmittedAssignmentHistorySummaries(column),
 									rel='GradeSubmittedAssignmentHistorySummaries')
-		gradebook_summary_link = Link( column,
+		gradebook_summary_link = Link(column,
 									rel='GradeBookByAssignment', elements=('Summary',))
 
 		ext_links = external.setdefault(LINKS, [])

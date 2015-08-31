@@ -13,8 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import copy
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope.interface import Invalid
 
 from nti.assessment.interfaces import IQAssignmentPolicies

@@ -75,29 +75,31 @@ LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 
-def _get_history_item( course, user, assignment_id ):
+def _get_history_item(course, user, assignment_id):
 	history = component.getMultiAdapter((course, user), IUsersCourseAssignmentHistory)
-	return history.get( assignment_id )
+	return history.get(assignment_id)
 
-def _get_grade_parts( grade_value ):
-	"""Convert the webapp's "number - letter" scheme to a tuple."""
-	result = ( grade_value, )
+def _get_grade_parts(grade_value):
+	"""
+	Convert the webapp's "number - letter" scheme to a tuple.
+	"""
+	result = (grade_value,)
 	if grade_value and isinstance(grade_value, string_types):
 		try:
 			values = grade_value.split()
 			values[0] = float(values[0])
-			result = tuple( values )
+			result = tuple(values)
 		except ValueError:
 			pass
 	return result
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
-def GradeBookPathAdapter( context, request ):
+def GradeBookPathAdapter(context, request):
 	result = IGradeBook(context)
 	return result
 
-class UserGradeSummary( object ):
+class UserGradeSummary(object):
 	"""
 	A container for user grade summary info.  Most of these fields
 	are lazy loaded so that these objects can be used in sorting, so
@@ -106,40 +108,39 @@ class UserGradeSummary( object ):
 
 	__class_name__ = 'UserGradeBookSummary'
 
-	def __init__( self, username, grade_entry, course ):
-		self.user = User.get_user( username )
+	def __init__(self, username, grade_entry, course):
+		self.user = User.get_user(username)
 		self.grade_entry = grade_entry
 		self.course = course
 
 	@Lazy
 	def alias(self):
-		named_user = IFriendlyNamed( self.user )
+		named_user = IFriendlyNamed(self.user)
 		return named_user.alias
 
 	@Lazy
 	def last_name(self):
 		username = self.user.username
-		profile = IUserProfile( self.user )
+		profile = IUserProfile(self.user)
 
 		lastname = ''
 		realname = profile.realname or ''
 		if realname and '@' not in realname and realname != username:
-			human_name = nameparser.HumanName( realname )
+			human_name = nameparser.HumanName(realname)
 			lastname = human_name.last or ''
-
 		return lastname
 
 	@Lazy
 	def username(self):
 		"The displayable, sortable username."
 		username = self.user.username
-		return replace_username( username )
+		return replace_username(username)
 
 	@Lazy
 	def user_grade_entry(self):
 		result = None
 		if self.grade_entry is not None:
-			result = self.grade_entry.get( self.user.username )
+			result = self.grade_entry.get(self.user.username)
 		return result
 
 	@Lazy
@@ -153,9 +154,9 @@ class UserGradeSummary( object ):
 	def grade_tuple(self):
 		"A tuple of (grade_num, grade_other, submitted)."
 		if self.grade_value is not None:
-			result = _get_grade_parts( self.grade_value )
+			result = _get_grade_parts(self.grade_value)
 		else:
-			result = ( None, None, bool( self.history_item ) )
+			result = (None, None, bool(self.history_item))
 		return result
 
 	@Lazy
@@ -179,7 +180,7 @@ class UserGradeSummary( object ):
 		result = None
 		if self.grade_entry is not None:
 			assignment_id = self.grade_entry.AssignmentId
-			result = _get_history_item( self.course, self.user, assignment_id )
+			result = _get_history_item(self.course, self.user, assignment_id)
 		return result
 
 	@Lazy
@@ -187,10 +188,10 @@ class UserGradeSummary( object ):
 		result = None
 		history_item = self.history_item
 		if history_item is not None:
-			result = IUsersCourseAssignmentHistoryItemSummary( history_item, None )
+			result = IUsersCourseAssignmentHistoryItemSummary(history_item, None)
 		return result
 
-class UserGradeBookSummary( UserGradeSummary ):
+class UserGradeBookSummary(UserGradeSummary):
 	"""
 	An overall gradebook summary for a user that includes
 	aggregate stats.
@@ -198,15 +199,17 @@ class UserGradeBookSummary( UserGradeSummary ):
 
 	__class_name__ = 'UserGradeBookSummary'
 
-	def __init__( self, username, course, assignments, gradebook, grade_entry, grade_policy ):
-		super( UserGradeBookSummary, self ).__init__( username, grade_entry, course )
+	def __init__(self, username, course, assignments, gradebook, grade_entry, grade_policy):
+		super(UserGradeBookSummary, self).__init__(username, grade_entry, course)
 		self.assignments = assignments
 		self.gradebook = gradebook
 		self.grade_policy = grade_policy
 
 	@Lazy
-	def _user_stats( self ):
-		"Return overdue/ungraded stats for user."
+	def _user_stats(self):
+		"""
+		Return overdue/ungraded stats for user.
+		"""
 		gradebook = self.gradebook
 		assignments = self.assignments
 		user = self.user
@@ -215,32 +218,32 @@ class UserGradeBookSummary( UserGradeSummary ):
 		overdue_count = 0
 		ungraded_count = 0
 		today = datetime.utcnow()
-		user_histories = component.queryMultiAdapter( ( course, user ),
-												IUsersCourseAssignmentHistory )
+		user_histories = component.queryMultiAdapter((course, user),
+												IUsersCourseAssignmentHistory)
 
 		if user_histories is not None:
 			for assignment in assignments:
-				grade = gradebook.getColumnForAssignmentId( assignment.ntiid )
-				user_grade = grade.get( user.username )
-				history_item = user_histories.get( assignment.ntiid )
+				grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
+				user_grade = grade.get(user.username)
+				history_item = user_histories.get(assignment.ntiid)
 
 				# Submission but no grade
 				if 		history_item \
-					and ( 	user_grade is None
-						or 	user_grade.value is None ):
+					and (user_grade is None
+						or 	user_grade.value is None):
 					ungraded_count += 1
 
 				# No submission and past due
 				if history_item is None:
 
-					due_date = IQAssignmentDateContext(course).of( assignment ).available_for_submission_ending
+					due_date = IQAssignmentDateContext(course).of(assignment).available_for_submission_ending
 					if due_date and today > due_date:
 						overdue_count += 1
 
 		return overdue_count, ungraded_count
 
 	@Lazy
-	def predicted_grade( self ):
+	def predicted_grade(self):
 		result = None
 		if self.grade_policy:
 			result = calculate_predicted_grade(self.user, self.grade_policy)
@@ -306,24 +309,24 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	_DEFAULT_BATCH_START = 0
 
 	def __init__(self, context, request):
-		super( GradeBookSummaryView, self ).__init__( request )
+		super(GradeBookSummaryView, self).__init__(request)
 		self.request = request
 		self.gradebook = context
-		self.course = ICourseInstance( context )
+		self.course = ICourseInstance(context)
 
 	@Lazy
-	def grade_policy( self ):
-		policy = find_grading_policy_for_course( self.course )
+	def grade_policy(self):
+		policy = find_grading_policy_for_course(self.course)
 		return policy
 
 	@Lazy
-	def assignments( self ):
-		assignment_catalog = ICourseAssignmentCatalog( self.course )
+	def assignments(self):
+		assignment_catalog = ICourseAssignmentCatalog(self.course)
 		assignments = [asg for asg in assignment_catalog.iter_assignments()]
 		return assignments
 
 	@Lazy
-	def final_grade_entry( self ):
+	def final_grade_entry(self):
 		for part in self.gradebook.values():
 			for part_name, entry in part.items():
 				if 		part.__name__ == NO_SUBMIT_PART_NAME \
@@ -331,22 +334,22 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 					return entry
 		return None
 
-	def _get_summary_for_student( self, username ):
-		return UserGradeBookSummary( username, self.course, self.assignments,
+	def _get_summary_for_student(self, username):
+		return UserGradeBookSummary(username, self.course, self.assignments,
 									self.gradebook, self.final_grade_entry,
-									self.grade_policy )
+									self.grade_policy)
 
-	def _get_summaries_for_usernames( self, student_names ):
+	def _get_summaries_for_usernames(self, student_names):
 		"For the given names, return student summaries."
 		instructor_usernames = {x.username.lower() for x in self.course.instructors}
 
-		def do_include( username ):
-			return 	User.get_user( username ) is not None \
+		def do_include(username):
+			return 	User.get_user(username) is not None \
 				and username not in instructor_usernames
 
-		students_iter = (self._get_summary_for_student( username )
+		students_iter = (self._get_summary_for_student(username)
 						for username in student_names
-						if do_include( username ) )
+						if do_include(username))
 		return students_iter
 
 	@Lazy
@@ -364,11 +367,13 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return student_names
 
 	def _get_enrollment_scoped_summaries(self, filter_by):
-		"Find the enrollment scoped user summaries."
+		"""
+		Find the enrollment scoped user summaries.
+		"""
 		student_names = None
 
 		# If they want to batch and filter by the scope of the given username.
-		batch_username = self.request.params.get( 'batchContainingUsernameFilterByScope' )
+		batch_username = self.request.params.get('batchContainingUsernameFilterByScope')
 		if batch_username:
 			batch_username = batch_username.lower()
 
@@ -386,38 +391,42 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 				student_names = self._for_credit_students
 
 		self.filter_scope_name = filter_scope_name
-		user_summaries = self._get_summaries_for_usernames( student_names )
+		user_summaries = self._get_summaries_for_usernames(student_names)
 		return user_summaries
 
-	def _do_get_user_summaries( self ):
-		"Get the filtered user summaries of users we may want to return."
+	def _do_get_user_summaries(self):
+		"""
+		Get the filtered user summaries of users we may want to return.
+		"""
 		# We expect a list of filters.
 		# They can filter by counts or by enrollment scope (or both).
 		filter_by = self.request.params.get('filter')
-		filter_by = filter_by.split( ',' ) if filter_by else ()
+		filter_by = filter_by.split(',') if filter_by else ()
 		filter_by = [x.lower() for x in filter_by]
 
-		user_summaries = self._get_enrollment_scoped_summaries( filter_by )
+		user_summaries = self._get_enrollment_scoped_summaries(filter_by)
 
 		if 'ungraded' in filter_by:
-			user_summaries = ( x for x in user_summaries if x.ungraded_count > 0 )
+			user_summaries = (x for x in user_summaries if x.ungraded_count > 0)
 		elif 'overdue' in filter_by:
-			user_summaries = ( x for x in user_summaries if x.overdue_count > 0 )
+			user_summaries = (x for x in user_summaries if x.overdue_count > 0)
 		elif 'actionable' in filter_by:
-			user_summaries = ( x for x in user_summaries
-								if x.overdue_count > 0 or x.ungraded_count > 0 )
+			user_summaries = (x for x in user_summaries
+							  if x.overdue_count > 0 or x.ungraded_count > 0)
 
 		# Resolve
 		user_summaries = [x for x in user_summaries]
 
 		return user_summaries
 
-	def _get_sorted_result_set( self, user_summaries, sort_key, sort_desc=False ):
-		"Get the sorted result set."
-		user_summaries = sorted( user_summaries, key=sort_key, reverse=sort_desc )
+	def _get_sorted_result_set(self, user_summaries, sort_key, sort_desc=False):
+		"""
+		Get the sorted result set.
+		"""
+		user_summaries = sorted(user_summaries, key=sort_key, reverse=sort_desc)
 		return user_summaries
 
-	def _get_sort_key( self, sort_on ):
+	def _get_sort_key(self, sort_on):
 		# Sorting by last_name is default
 		sort_key = lambda x: x.last_name.lower() if x.last_name else ''
 
@@ -434,38 +443,44 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		return sort_key
 
-	def _check_batch_around( self, user_summaries ):
-		"Return our batch around the given username."
-		batch_username = self.request.params.get( 'batchContainingUsername' )
+	def _check_batch_around(self, user_summaries):
+		"""
+		Return our batch around the given username.
+		"""
+		batch_username = self.request.params.get('batchContainingUsername')
 		if not batch_username:
-			batch_username = self.request.params.get( 'batchContainingUsernameFilterByScope' )
+			batch_username = self.request.params.get('batchContainingUsernameFilterByScope')
 
 		if batch_username:
 			batch_username = batch_username.lower()
 			batch_around_test = lambda x: x.user.username.lower() == batch_username
 			# This toggles the batchStart params to our page.
-			self._batch_on_item( user_summaries, batch_around_test, batch_containing=True )
+			self._batch_on_item(user_summaries, batch_around_test, batch_containing=True)
 
 	def _get_user_result_set(self, result_dict, user_summaries):
-		"Return a sorted/batched collection of user summaries to return."
+		"""
+		Return a sorted/batched collection of user summaries to return.
+		"""
 		sort_on = self.request.params.get('sortOn')
-		sort_key = self._get_sort_key( sort_on )
+		sort_key = self._get_sort_key(sort_on)
 
 		# Ascending is default
 		sort_order = self.request.params.get('sortOrder')
-		sort_descending = bool( sort_order and sort_order.lower() == 'descending' )
+		sort_descending = bool(sort_order and sort_order.lower() == 'descending')
 
-		result_set = self._get_sorted_result_set( user_summaries, sort_key, sort_descending )
+		result_set = self._get_sorted_result_set(user_summaries, sort_key, sort_descending)
 
-		self._check_batch_around( result_set )
-		self._batch_items_iterable( result_dict, result_set )
+		self._check_batch_around(result_set)
+		self._batch_items_iterable(result_dict, result_set)
 
 		# Pop our items that we want to return.
 		# We have our batch links for free at this point.
-		return result_dict.pop( ITEMS )
+		return result_dict.pop(ITEMS)
 
-	def _get_user_dict( self, user_summary ):
-		"Returns a user's gradebook summary."
+	def _get_user_dict(self, user_summary):
+		"""
+		Returns a user's gradebook summary.
+		"""
 		user_dict = LocatedExternalDict()
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
@@ -484,13 +499,13 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 												'Correctness' : predicted.Correctness }
 
 		# Link to user's assignment histories
-		links = user_dict.setdefault( LINKS, [] )
-		links.append( Link( self.course,
+		links = user_dict.setdefault(LINKS, [])
+		links.append(Link(self.course,
 							rel='AssignmentHistory',
-							elements=('AssignmentHistories', user_summary.user.username)) )
+							elements=('AssignmentHistories', user_summary.user.username)))
 		return user_dict
 
-	def _search_summaries( self, search_param, user_summaries ):
+	def _search_summaries(self, search_param, user_summaries):
 		"""
 		For the given search_param, return the results for those users
 		if it matches last_name, alias, or displayable username.
@@ -498,20 +513,22 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# The entity catalog could be used here, but we
 		# have to make sure we can search via the substituted username (e.g. OU4x4).
 
-		def matches( user_summary ):
-			result = (	user_summary.alias
+		def matches(user_summary):
+			result = (user_summary.alias
 					and search_param in user_summary.alias.lower()) \
-				or	(	user_summary.username
+				or	(user_summary.username
 					and search_param in user_summary.username.lower()) \
-				or 	( 	user_summary.last_name
-					and	search_param in user_summary.last_name.lower() )
+				or 	(user_summary.last_name
+					and	search_param in user_summary.last_name.lower())
 			return result
 
-		results = [x for x in user_summaries if matches( x )]
+		results = [x for x in user_summaries if matches(x)]
 		return results
 
-	def _get_user_summaries( self, result_dict ):
-		"Returns a list of user summaries."
+	def _get_user_summaries(self, result_dict):
+		"""
+		Returns a list of user summaries.
+		"""
 		# 1. Filter
 		# 2. Search
 		# 3. Sort
@@ -523,19 +540,19 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_summaries = self._do_get_user_summaries()
 
 		if search_param:
-			user_summaries = self._search_summaries( search_param, user_summaries )
+			user_summaries = self._search_summaries(search_param, user_summaries)
 
-		result_dict['TotalItemCount'] = len( user_summaries )
+		result_dict['TotalItemCount'] = len(user_summaries)
 		# Now our batched set
 		# We should have links here after batching.
-		results = self._get_user_result_set( result_dict, user_summaries )
+		results = self._get_user_result_set(result_dict, user_summaries)
 		return results
 
 	def __call__(self):
 		# TODO We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
 		result_dict = LocatedExternalDict()
-		user_summaries = self._get_user_summaries( result_dict )
+		user_summaries = self._get_user_summaries(result_dict)
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
@@ -543,8 +560,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
-			user_dict = self._get_user_dict( user_summary )
-			items.append( user_dict )
+			user_dict = self._get_user_dict(user_summary)
+			items.append(user_dict)
 
 		return result_dict
 
@@ -554,7 +571,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			 context=IGradeBookEntry,
 			 name='Summary',
 			 request_method='GET')
-class AssignmentSummaryView( GradeBookSummaryView ):
+class AssignmentSummaryView(GradeBookSummaryView):
 	"""
 	Return the assignment summary for students in the given assignment.
 
@@ -586,15 +603,15 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 	"""
 
 	def __init__(self, context, request):
-		super( AssignmentSummaryView, self ).__init__( context.__parent__, request )
+		super(AssignmentSummaryView, self).__init__(context.__parent__, request)
 		self.request = request
 		self.grade_entry = context
-		self.course = ICourseInstance( context )
+		self.course = ICourseInstance(context)
 
-	def _get_summary_for_student( self, username ):
-		return UserGradeSummary( username, self.grade_entry, self.course )
+	def _get_summary_for_student(self, username):
+		return UserGradeSummary(username, self.grade_entry, self.course)
 
-	def _get_sort_key( self, sort_on ):
+	def _get_sort_key(self, sort_on):
 		sort_key = None
 		if sort_on:
 			sort_on = sort_on.lower()
@@ -605,11 +622,13 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 		if sort_key is None:
 			# Super class handles name and grade sorting, as well as the default.
-			sort_key = super( AssignmentSummaryView, self )._get_sort_key( sort_on )
+			sort_key = super(AssignmentSummaryView, self)._get_sort_key(sort_on)
 		return sort_key
 
-	def _get_user_dict( self, user_summary ):
-		"Returns a user's assignment summary."
+	def _get_user_dict(self, user_summary):
+		"""
+		Returns a user's assignment summary.
+		"""
 		user_dict = LocatedExternalDict()
 		user_dict[CLASS] = user_summary.__class_name__
 		user_dict['User'] = user_summary.user
@@ -620,7 +639,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 	def __call__(self):
 		result_dict = LocatedExternalDict()
-		user_summaries = self._get_user_summaries( result_dict )
+		user_summaries = self._get_user_summaries(result_dict)
 
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookByAssignmentSummary'
@@ -628,8 +647,8 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
-			user_dict = self._get_user_dict( user_summary )
-			items.append( user_dict )
+			user_dict = self._get_user_dict(user_summary)
+			items.append(user_dict)
 
 		return result_dict
 
@@ -639,7 +658,7 @@ class AssignmentSummaryView( GradeBookSummaryView ):
 			 context=IGradeBook,
 			 name='SetGrade',
 			 request_method='POST')
-class GradeBookPutView(	AbstractAuthenticatedView,
+class GradeBookPutView(AbstractAuthenticatedView,
 				   		ModeledContentUploadRequestUtilsMixin,
 						ModeledContentEditRequestUtilsMixin):
 	"""
@@ -649,32 +668,32 @@ class GradeBookPutView(	AbstractAuthenticatedView,
 
 	def _do_call(self):
 		gradebook = self.context
-		params = CaseInsensitiveDict( self.readInput() )
+		params = CaseInsensitiveDict(self.readInput())
 
-		username = params.get( 'Username' )
-		new_grade_value = params.get( 'Value' )
-		assignment_ntiid = params.get( 'AssignmentId' )
+		username = params.get('Username')
+		new_grade_value = params.get('Value')
+		assignment_ntiid = params.get('AssignmentId')
 
-		user = User.get_user( username )
+		user = User.get_user(username)
 		if user is None:
-			raise hexec.HTTPNotFound( username )
+			raise hexec.HTTPNotFound(username)
 
-		assignment = component.queryUtility( IQAssignment, name=assignment_ntiid )
+		assignment = component.queryUtility(IQAssignment, name=assignment_ntiid)
 		if assignment is None:
-			raise hexec.HTTPNotFound( assignment_ntiid )
+			raise hexec.HTTPNotFound(assignment_ntiid)
 
 		gradebook_entry = gradebook.getColumnForAssignmentId(assignment.__name__)
 		if gradebook_entry is None:
-			raise hexec.HTTPNotFound( assignment.__name__ )
+			raise hexec.HTTPNotFound(assignment.__name__)
 
 		# This will create our grade and assignment history, if necessary.
 		record_grade_without_submission(gradebook_entry,
 										user,
-										assignment_ntiid )
-		grade = gradebook_entry.get( username )
+										assignment_ntiid)
+		grade = gradebook_entry.get(username)
 
 		# Check our if-modified-since header
-		self._check_object_unmodified_since( grade )
+		self._check_object_unmodified_since(grade)
 
 		grade.creator = self.getRemoteUser()
 		grade.value = new_grade_value
@@ -685,7 +704,7 @@ class GradeBookPutView(	AbstractAuthenticatedView,
 					username)
 
 		# Not ideal that we return this here.
-		history_item = IUsersCourseAssignmentHistoryItem( grade )
+		history_item = IUsersCourseAssignmentHistoryItem(grade)
 		return history_item
 
 @view_config(route_name='objects.generic.traversal',
@@ -747,8 +766,8 @@ class ExcuseGradeView(AbstractAuthenticatedView,
 			 name="unexcuse",
 			 request_method='POST')
 class UnexcuseGradeView(AbstractAuthenticatedView,
-				 	    ModeledContentUploadRequestUtilsMixin,
-				   	    ModeledContentEditRequestUtilsMixin):
+				 		ModeledContentUploadRequestUtilsMixin,
+				   		ModeledContentEditRequestUtilsMixin):
 
 	content_predicate = IGrade.providedBy
 
@@ -772,7 +791,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 	Called to put to a grade that doesn't yet exist.
 	"""
 
-	#: We don't want extra catching of key errors
+	# : We don't want extra catching of key errors
 	_EXTRA_INPUT_ERRORS = ()
 
 	def _do_call(self):
@@ -783,7 +802,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
 		grade = record_grade_without_submission(entry, user)
 		if grade is not None:
-			## place holder grade was inserted
+			# # place holder grade was inserted
 			self.request.context = grade
 		else:
 			# This inserted the 'real' grade. To actually
@@ -791,7 +810,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 			# class do the work
 			self.request.context = entry[username]
 
-		result = super(GradeWithoutSubmissionPutView,self)._do_call()
+		result = super(GradeWithoutSubmissionPutView, self)._do_call()
 		return result
 
 from zope import lifecycleevent

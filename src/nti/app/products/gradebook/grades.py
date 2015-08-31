@@ -44,8 +44,8 @@ from nti.wref.interfaces import IWeakRef
 
 from .interfaces import IGrade
 
-@interface.implementer(IGrade)
 @WithRepr
+@interface.implementer(IGrade)
 @EqHash('username', 'assignmentId', 'value')
 class Grade(CreatedModDateTrackingObject,
 			SchemaConfigured,

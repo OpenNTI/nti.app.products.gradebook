@@ -5,6 +5,7 @@ gradebook internalization
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,8 +15,8 @@ from . import MessageFactory as _
 
 import operator
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
@@ -27,28 +28,27 @@ from .interfaces import ILetterGradeScheme
 
 from .utils import raise_field_error
 
-@interface.implementer(IInternalObjectUpdater)
 @component.adapter(IGrade)
+@interface.implementer(IInternalObjectUpdater)
 class _GradeObjectUpdater(InterfaceObjectIO):
 
 	# INterface object io doesn't seem to have a way to pull this
 	# info from the iface so we do it manually.
-	_excluded_in_ivars_ = InterfaceObjectIO._excluded_in_ivars_.union( {'AssignmentId', 'Username'})
+	_excluded_in_ivars_ = InterfaceObjectIO._excluded_in_ivars_.union({'AssignmentId', 'Username'})
 
 	_ext_iface_upper_bound = IGrade
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		result = False
 		if 'Username' in parsed and self._ext_replacement().Username is None:
-			self._ext_setattr( self._ext_replacement(), 'Username', parsed['Username'] )
+			self._ext_setattr(self._ext_replacement(), 'Username', parsed['Username'])
 			result = True
 
-		result |= super(_GradeObjectUpdater,self).updateFromExternalObject(parsed, *args, **kwargs) or False
-
+		result |= super(_GradeObjectUpdater, self).updateFromExternalObject(parsed, *args, **kwargs) or False
 		return result
 
-@interface.implementer(IInternalObjectUpdater)
 @component.adapter(ILetterGradeScheme)
+@interface.implementer(IInternalObjectUpdater)
 class _LetterGradeSchemeObjectUpdater(object):
 
 	__slots__ = ('obj',)
@@ -65,7 +65,7 @@ class _LetterGradeSchemeObjectUpdater(object):
 		request = get_current_request()
 		if len(grades) < 1 or len(set(grades)) != len(grades):
 			raise_field_error(request, "grades",
-							  _( "must specify a valid unique list of letter grades") )
+							  _("must specify a valid unique list of letter grades"))
 
 		if len(grades) != len(ranges):
 			raise_field_error(request, "ranges",

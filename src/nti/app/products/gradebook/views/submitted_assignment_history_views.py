@@ -380,7 +380,6 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		items_iter = sorted(all_items,
 							key=key,
 							reverse=sort_reverse)
-
 		return items_iter
 
 	def _do_sort_gradeValue(self, filter_usernames, sort_reverse):

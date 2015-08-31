@@ -11,8 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
@@ -71,9 +71,9 @@ def grade_for_history_item(item):
 	Registered as an adapter for both history item and summary
 	"""
 	course = ICourseInstance(item, None)
-	if course is None: # during tests
+	if course is None:  # during tests
 		return
-	user = IUser(item) # Can we do this with just the item? item.creator?
+	user = IUser(item)  # Can we do this with just the item? item.creator?
 	book = IGradeBook(course)
 	assignmentId = item.Submission.assignmentId
 	entry = book.getColumnForAssignmentId(assignmentId)

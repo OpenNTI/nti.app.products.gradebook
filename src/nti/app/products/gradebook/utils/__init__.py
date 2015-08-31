@@ -38,7 +38,7 @@ def replace_username(username):
 	result = substituter.replace(username) or username
 	return result
 
-## rexport for BWC
+# rexport for BWC
 
 from .errors import raise_json_error
 from .errors import raise_field_error

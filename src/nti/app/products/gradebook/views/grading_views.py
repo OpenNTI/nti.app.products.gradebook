@@ -66,7 +66,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 	def __call__(self):
 		course = ICourseInstance(self.request.context)
 		if not is_enrolled(course, self.remoteUser):
-			raise hexec.HTTPForbidden(_("must be enrolled in course."))
+			raise hexec.HTTPForbidden(_("Must be enrolled in course."))
 
 		policy = find_grading_policy_for_course(course)
 		if policy is None:

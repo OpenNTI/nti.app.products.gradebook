@@ -59,7 +59,7 @@ from .interfaces import ISubmittedAssignmentHistorySummaries
 class _NTIIDMixin(object):
 
 	parameters = {}
-	
+
 	_ntiid_type = None
 	_ntiid_include_self_name = False
 	_ntiid_default_provider = 'NextThought'
@@ -102,9 +102,9 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 				_NTIIDMixin):
 
 	mimeType = mime_type = MIME_BASE + u'.gradebook'
-	
+
 	_ntiid_type = NTIID_TYPE_GRADE_BOOK
-		
+
 	def getColumnForAssignmentId(self, assignmentId, check_name=False):
 		for part in self.values():
 			entry = part.get_entry_by_assignment(assignmentId, check_name=check_name)
@@ -122,35 +122,35 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 			result = self.get(part, {}).get(entry)
 		return result
 	get_entry_by_ntiid = getEntryByNTIID
-	
+
 	def remove_user(self, username):
 		result = 0
 		for part in self.values():
 			if part.remove_user(username):
-				result +=1
+				result += 1
 		return result
 	removeUser = remove_user
-	
+
 	@property
 	def Items(self):
 		return dict(self)
-	
+
 	def has_grades(self, username):
 		for part in self.values():
 			if part.has_grades(username):
 				return True
 		return False
-	
+
 	def iter_grades(self, username):
 		for part in self.values():
 			for grade in part.iter_grades(username):
 				yield grade
 
-_GradeBookFactory= an_factory(GradeBook, 'GradeBook')
+_GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
-@interface.implementer(IGradeBookEntry, IAttributeAnnotatable)
 @WithRepr
 @EqHash('NTIID',)
+@interface.implementer(IGradeBookEntry, IAttributeAnnotatable)
 class GradeBookEntry(SchemaConfigured,
 					 # XXX: FIXME: This is wrong, this should be a Case/INSENSITIVE/ btree,
 					 # usernames are case insensitive. Everyone that uses this this
@@ -198,7 +198,7 @@ class GradeBookEntry(SchemaConfigured,
 		return {k.lower():k for k in self.keys()}
 
 	def __contains__(self, key):
-		result = super(GradeBookEntry,self).__contains__(key)
+		result = super(GradeBookEntry, self).__contains__(key)
 		if not result and key and isinstance(key, basestring):
 			# Sigh, long expensive path
 			result = key.lower() in self._lower_keys_to_upper_key
@@ -207,14 +207,14 @@ class GradeBookEntry(SchemaConfigured,
 
 	def __getitem__(self, key):
 		try:
-			return super(GradeBookEntry,self).__getitem__(key)
+			return super(GradeBookEntry, self).__getitem__(key)
 		except KeyError:
 			if not key or not isinstance(key, basestring):
 				raise
 
 			# Sigh, long expensive path
 			upper = self._lower_keys_to_upper_key.get(key.lower())
-			if upper and upper != key: # careful not to infinite recurse
+			if upper and upper != key:  # careful not to infinite recurse
 				return self.__getitem__(upper)
 			raise
 
@@ -231,18 +231,18 @@ class GradeBookEntry(SchemaConfigured,
 	@property
 	def DueDate(self):
 		try:
-			asg =component.getUtility(IQAssignment, name=self.assignmentId)
+			asg = component.getUtility(IQAssignment, name=self.assignmentId)
 			course = ICourseInstance(self)
 			datecontext = IQAssignmentDateContext(course)
 			return datecontext.of(asg).available_for_submission_ending
-		except (LookupError,TypeError):
+		except (LookupError, TypeError):
 			return None
 
 	def __str__(self):
 		return self.displayName
 
-@interface.implementer(IGradeBookPart, IAttributeAnnotatable)
 @WithRepr
+@interface.implementer(IGradeBookPart, IAttributeAnnotatable)
 class GradeBookPart(SchemaConfigured,
 					CheckingLastModifiedBTreeContainer,
 					Contained,
@@ -274,7 +274,7 @@ class GradeBookPart(SchemaConfigured,
 				return entry
 		return None
 	get_entry_by_assignment = getEntryByAssignment
-	
+
 	def remove_user(self, username):
 		result = 0
 		username = username.lower()
@@ -284,7 +284,7 @@ class GradeBookPart(SchemaConfigured,
 				result += 1
 		return result
 	removeUser = remove_user
-	
+
 	@property
 	def Items(self):
 		return dict(self)
@@ -294,7 +294,7 @@ class GradeBookPart(SchemaConfigured,
 			if username in entry:
 				return True
 		return False
-	
+
 	def iter_grades(self, username):
 		for entry in self.values():
 			if username in entry:
@@ -312,7 +312,7 @@ class GradeWithoutSubmission(PersistentGrade):
 	"""
 	__external_class_name__ = 'Grade'
 	__external_can_create__ = False
-	
+
 PersistentGradeWithoutSubmission = NoSubmitGradeBookEntryGrade = GradeWithoutSubmission
 
 class GradeBookEntryWithoutSubmission(GradeBookEntry):
@@ -322,7 +322,7 @@ class GradeBookEntryWithoutSubmission(GradeBookEntry):
 	"""
 	__external_class_name__ = 'GradeBookEntry'
 	__external_can_create__ = False
-	
+
 	mimeType = mime_type = MIME_BASE + u'.gradebook.gradebookentry'
 
 NoSubmitGradeBookEntry = GradeBookEntryWithoutSubmission
@@ -349,7 +349,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
 
 	def traverse(self, name, furtherPath):
 		try:
-			return super(GradeBookEntryWithoutSubmissionTraversable,self).traverse(name, furtherPath)
+			return super(GradeBookEntryWithoutSubmissionTraversable, self).traverse(name, furtherPath)
 		except KeyError:
 			# Check first for items in the container and named adapters.
 			# Only if that fails do we dummy up a grade,
@@ -379,7 +379,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 
 	__external_class_name__ = 'GradeBookPart'
 	mimeType = mime_type = MIME_BASE + u'.gradebook.gradebookpart'
-	
+
 	entryFactory = GradeBookEntryWithoutSubmission
 
 	def validateAssignment(self, assignment):
@@ -407,8 +407,8 @@ from nti.app.assessment.adapters import _history_for_user_in_course
 
 _NotGiven = object()
 
-@interface.implementer(ISubmittedAssignmentHistory)
 @component.adapter(IGradeBookEntry)
+@interface.implementer(ISubmittedAssignmentHistory)
 class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 
 	__name__ = 'SubmittedAssignmentHistory'
@@ -486,14 +486,14 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 			user = User.get_user(username_that_submitted)
 			if not user:
 				continue
-			username_that_submitted = user.username # go back to canonical
+			username_that_submitted = user.username  # go back to canonical
 			history = _history_for_user_in_course(course, user, create=False)
 
 			try:
 				item = history[assignment_id]
 				if self.as_summary:
 					item = IUsersCourseAssignmentHistoryItemSummary(item)
-			except (KeyError,TypeError):
+			except (KeyError, TypeError):
 				if placeholder is not _NotGiven:
 					yield (username_that_submitted, placeholder)
 				else:
