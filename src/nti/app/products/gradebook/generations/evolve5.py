@@ -22,15 +22,15 @@ def remove_annotations_attribute(book):
 			for value in entry.values():
 				if hasattr(value, '__annotations__'):
 					del value.__annotations__
-					count += 1			
+					count += 1
 	return count
-		
+
 def do_evolve(context, generation=generation):
 	logger.info("Gradebook evolution %s started", generation);
-	
+
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
-	
+
 	total = 0
 	for entry, course in iter_courses(dataserver_folder):
 		book = IGradeBook(course)
@@ -41,9 +41,9 @@ def do_evolve(context, generation=generation):
 
 	logger.info('Gradebook evolution %s done; %s grade(s) updated',
 				generation, total)
-	
+
 	return total
-			
+
 def evolve(context):
 	"""
 	Evolve to generation 5 by removing the __annotations__ attribute from the grades
