@@ -32,8 +32,8 @@ from nti.dataserver.authorization_acl import ace_denying_all
 from .interfaces import IGradeBook
 from .interfaces import ACT_VIEW_GRADES
 
-@interface.implementer(IACLProvider)
 @component.adapter(IGradeBook)
+@interface.implementer(IACLProvider)
 class _GradeBookACLProvider(object):
 	"""
 	Only instructors can see the gradebook and its parts,
@@ -51,17 +51,15 @@ class _GradeBookACLProvider(object):
 	@Lazy
 	def __acl__(self):
 		acl = acl_from_aces()
-
 		course = ICourseInstance(self.context, None)
 		if course is not None:
 			# TODO: Use roles
-			acl.extend((ace_allowing(i, ACT_READ, type(self)) 
+			acl.extend((ace_allowing(i, ACT_READ, type(self))
 						for i in course.instructors))
-			acl.extend((ace_allowing(i, ACT_UPDATE, type(self)) 
+			acl.extend((ace_allowing(i, ACT_UPDATE, type(self))
 						for i in course.instructors))
 			acl.extend((ace_allowing(i, ACT_VIEW_GRADES, type(self))
 						for i in course.instructors))
-
 		acl.append(ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)))
 		acl.append(ace_denying_all())
 		return acl

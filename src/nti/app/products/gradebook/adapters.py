@@ -49,7 +49,9 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 
 @interface.implementer(ICourseInstance)
 def _as_course(context):
-	"Registered as an adapter for things we expect to be a descendant of a course"
+	"""
+	Registered as an adapter for things we expect to be a descendant of a course
+	"""
 	return find_interface(context, ICourseInstance,
 						  # Don't be strict so that we can still find it
 						  # if some parent object has already had its
