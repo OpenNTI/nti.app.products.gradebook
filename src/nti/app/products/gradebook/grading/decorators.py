@@ -13,7 +13,7 @@ from zope import interface
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.app.products.courseware.utils import is_enrolled
+from nti.contenttypes.courses.utils import is_enrolled
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator

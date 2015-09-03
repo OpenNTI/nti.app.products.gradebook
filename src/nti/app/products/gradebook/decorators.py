@@ -20,14 +20,14 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
-from nti.app.products.courseware.utils import is_course_instructor
-
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contentlibrary.interfaces import IContentPackage
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
+from nti.contenttypes.courses.utils import is_course_instructor
 
 from nti.dataserver.users import User
 
@@ -195,7 +195,7 @@ class _GradeEditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			links = result.setdefault(LINKS, [])
 			link = Link(context, rel='edit', method='POST')
 			links.append(link)
-			
+
 @component.adapter(IGrade)
 @interface.implementer(IExternalMappingDecorator)
 class _GradeCatalogEntryDecorator(AbstractAuthenticatedRequestAwareDecorator):

@@ -19,13 +19,14 @@ from pyramid import httpexceptions as hexec
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.products.courseware.utils import is_enrolled
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
+from nti.contenttypes.courses.utils import is_enrolled
 
 from nti.dataserver import authorization as nauth
 
