@@ -25,7 +25,6 @@ from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 from pyramid import httpexceptions as hexec
 
-from nti.app.assessment.interfaces import ICourseAssignmentCatalog
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
@@ -43,6 +42,7 @@ from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
 
 from nti.dataserver import authorization as nauth
 
