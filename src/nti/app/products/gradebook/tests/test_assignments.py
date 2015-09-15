@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import greater_than
+from hamcrest import contains_inanyorder
 does_not = is_not
 
 import urllib
@@ -312,6 +313,7 @@ class TestAssignments(ApplicationLayerTest):
 
 			from nti.app.assessment.feedback import UsersCourseAssignmentHistoryItemFeedback
 			feedback = UsersCourseAssignmentHistoryItemFeedback(body=['Some feedback'])
+			feedback.containerId = '' # Need at least an empty container id
 			ext_feedback = to_external_object(feedback)
 			__traceback_info__ = ext_feedback
 			res = self.testapp.post_json( history_feedback_container_href,
@@ -455,7 +457,7 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( sum_res.json_body, has_entry( 'FilteredTotalItemCount', 2) )
 		assert_that( sum_res.json_body, has_entry( 'Items', has_length(2)))
 		assert_that( [x[0] for x in sum_res.json_body['Items']],
-					 is_(['sjohnson@nextthought.com', 'aaa@nextthought.com']))
+					 contains_inanyorder( 'sjohnson@nextthought.com', 'aaa@nextthought.com' ))
 
 		sj_hist_oid = sum_res.json_body['Items'][0][1]['OID']
 
