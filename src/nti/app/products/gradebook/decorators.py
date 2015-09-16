@@ -40,6 +40,8 @@ from nti.externalization.externalization import to_external_object
 
 from nti.links.links import Link
 
+from nti.mimetype.mimetype import MIME_BASE
+
 from nti.traversal.traversal import find_interface
 
 from .interfaces import IGrade
@@ -48,6 +50,8 @@ from .interfaces import IExcusedGrade
 from .interfaces import ACT_VIEW_GRADES
 
 LINKS = StandardExternalFields.LINKS
+CLASS = StandardExternalFields.CLASS
+MIME_TYPE = StandardExternalFields.MIMETYPE
 
 def gradebook_readable(context, interaction=None):
 	book = IGradeBook(context)
@@ -118,7 +122,8 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 
 		gradebook_shell = {}
 		result['GradeBook'] = gradebook_shell
-		gradebook_shell['Class'] = "GradeBook"
+		gradebook_shell[ CLASS ] = "GradeBook"
+		gradebook_shell[ MIME_TYPE ] = MIME_BASE + '.gradebookshell'
 		_links = gradebook_shell.setdefault(LINKS, [])
 		gradebook = IGradeBook(course)
 
