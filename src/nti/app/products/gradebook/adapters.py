@@ -17,11 +17,14 @@ from zope import interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.appserver.interfaces import ITrustedTopLevelContainerContextProvider
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IStreamChangeEvent
 
 from nti.traversal.traversal import find_interface
 
@@ -109,3 +112,19 @@ def history_item_for_grade(grade):
 @component.adapter(IGrade)
 def grade_to_user(grade):
 	return User.get_user(grade.__name__)
+
+@interface.implementer(ITrustedTopLevelContainerContextProvider)
+@component.adapter(IGrade)
+def _trusted_context_from_grade(obj):
+	course = _as_course( obj )
+	results = ()
+	if course is not None:
+		catalog_entry = ICourseCatalogEntry( course, None )
+		results = (catalog_entry,) if catalog_entry is not None else ()
+	return results
+
+@interface.implementer(ITrustedTopLevelContainerContextProvider)
+@component.adapter(IStreamChangeEvent)
+def _trusted_context_from_change(obj):
+	obj = getattr( obj, 'object', None )
+	return _trusted_context_from_grade(obj)
