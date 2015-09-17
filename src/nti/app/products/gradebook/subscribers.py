@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from functools import partial
 
 from zope import component
@@ -193,10 +195,12 @@ def _do_store_grade_created_event(grade, event):
 
 	change = Change(Change.CREATED, grade)
 
-	# Copy the date info from the grade (primarily relevant
-	# for migration); the change doesn't do this itself
-	change.lastModified = grade.lastModified
-	change.createdTime = grade.createdTime
+	# Set the time to now. Since grades are created
+	# at assignment submission time, we rely on the
+	# change times for more accurate reporting.
+	now = time.time()
+	change.lastModified = now
+	change.createdTime = now
 
 	if grade.creator is not None:
 		change.creator = grade.creator
