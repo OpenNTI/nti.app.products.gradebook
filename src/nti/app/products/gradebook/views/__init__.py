@@ -18,6 +18,9 @@ from six import string_types
 
 from zope import component
 from zope import interface
+from zope.event import notify
+
+from zope.lifecycleevent import ObjectModifiedEvent
 
 from zope.traversing.interfaces import IPathAdapter
 
@@ -697,6 +700,10 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
 		grade.creator = self.getRemoteUser()
 		grade.value = new_grade_value
+
+		# If we get this far, we've modified a new or
+		# previously existing grade and need to broadcast.
+		notify(ObjectModifiedEvent(grade))
 
 		logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
 					self.getRemoteUser(),
