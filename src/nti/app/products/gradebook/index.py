@@ -46,6 +46,11 @@ class AssignmentIdIndex(ValueIndex):
 	default_field_name = 'AssignmentId'
 	default_interface = IGrade
 
+	def index_doc(self, docid, obj):
+		if not self.interface.providedBy(obj):
+			return None
+		return super(AssignmentIdIndex, self).index_doc(docid, obj)
+
 class CreatorRawIndex(RawValueIndex):
 	pass
 
@@ -68,6 +73,11 @@ class GradeValueIndex(ValueIndex):
 	default_field_name = 'value'
 	default_interface = IGrade
 	
+	def index_doc(self, docid, obj):
+		if not self.interface.providedBy(obj):
+			return None
+		return super(GradeValueIndex, self).index_doc(docid, obj)
+
 class ValidatingGradeValueType(object):
 	"""
 	The "interface" we adapt to to find the grade value type.
