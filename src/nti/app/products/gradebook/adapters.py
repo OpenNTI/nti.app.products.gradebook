@@ -116,15 +116,15 @@ def grade_to_user(grade):
 @interface.implementer(ITrustedTopLevelContainerContextProvider)
 @component.adapter(IGrade)
 def _trusted_context_from_grade(obj):
-	course = _as_course( obj )
+	course = _as_course(obj)
 	results = ()
 	if course is not None:
-		catalog_entry = ICourseCatalogEntry( course, None )
+		catalog_entry = ICourseCatalogEntry(course, None)
 		results = (catalog_entry,) if catalog_entry is not None else ()
 	return results
 
 @interface.implementer(ITrustedTopLevelContainerContextProvider)
 @component.adapter(IStreamChangeEvent)
 def _trusted_context_from_change(obj):
-	obj = getattr( obj, 'object', None )
+	obj = getattr(obj, 'object', None)
 	return _trusted_context_from_grade(obj)

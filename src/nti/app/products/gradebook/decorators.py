@@ -48,6 +48,8 @@ from .interfaces import IGrade
 from .interfaces import IGradeBook
 from .interfaces import IExcusedGrade
 from .interfaces import ACT_VIEW_GRADES
+from .interfaces import ISubmittedAssignmentHistory
+from .interfaces import ISubmittedAssignmentHistorySummaries
 
 LINKS = StandardExternalFields.LINKS
 CLASS = StandardExternalFields.CLASS
@@ -212,9 +214,6 @@ class _GradeCatalogEntryDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		entry = ICourseCatalogEntry(context, None)
 		if entry is not None:
 			result['CatalogEntryNTIID'] = entry.ntiid
-
-from .interfaces import ISubmittedAssignmentHistory
-from .interfaces import ISubmittedAssignmentHistorySummaries
 
 @interface.implementer(IExternalMappingDecorator)
 class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
