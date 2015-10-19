@@ -25,9 +25,8 @@ from ..interfaces import IGradeScheme
 
 from .. import calculate_grades
 
-def _process_args(ntiid, scheme=None, usernames=(), site=None, 
+def _process_args(ntiid, scheme=None, usernames=(), site=None,
 				  entry_name=None, verbose=False):
-		
 	if scheme:
 		module_name, class_name = scheme.rsplit(".", 1)
 		module = importlib.import_module(module_name)
@@ -37,9 +36,7 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 	else:
 		grade_scheme = None
 
-	if site:
-		set_site(site)
-	
+	set_site(site)
 	context = find_object_with_ntiid(ntiid)
 	course = ICourseInstance(context, None)
 	if course is None:
@@ -60,7 +57,7 @@ def main():
 							 dest='verbose')
 	arg_parser.add_argument('ntiid', help="Course NTIID")
 	arg_parser.add_argument('-s', '--site', dest='site', help="Request site")
-	arg_parser.add_argument('-g', '--grade', dest='scheme', 
+	arg_parser.add_argument('-g', '--grade', dest='scheme',
 							help="Grade scheme class name")
 	arg_parser.add_argument('-e', '--entry', dest='entry', help="Grade entry name")
 	arg_parser.add_argument('-u', '--users',
@@ -70,7 +67,7 @@ def main():
 							 help="The usernames")
 	args = arg_parser.parse_args()
 	verbose = args.verbose
-	
+
 	site = args.site
 	if not site and verbose:
 		print('WARN: NO site specified')

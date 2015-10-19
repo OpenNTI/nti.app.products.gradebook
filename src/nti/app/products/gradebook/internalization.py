@@ -43,7 +43,6 @@ class _GradeObjectUpdater(InterfaceObjectIO):
 		if 'Username' in parsed and self._ext_replacement().Username is None:
 			self._ext_setattr(self._ext_replacement(), 'Username', parsed['Username'])
 			result = True
-
 		result |= super(_GradeObjectUpdater, self).updateFromExternalObject(parsed, *args, **kwargs) or False
 		return result
 

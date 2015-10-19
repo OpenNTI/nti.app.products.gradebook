@@ -20,14 +20,18 @@ from zope.catalog.interfaces import ICatalogIndex
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-	
+
 from nti.dataserver.interfaces import ICreatedUsername
-from nti.dataserver.interfaces import IMetadataCatalog
+
+from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
+
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
+
+from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.string import StringTokenNormalizer
 
@@ -59,7 +63,7 @@ def CreatorIndex(family=None):
 								interface=ICreatedUsername,
 								index=CreatorRawIndex(family=family),
 								normalizer=StringTokenNormalizer())
-	
+
 class UsernameRawIndex(RawValueIndex):
 	pass
 
@@ -68,11 +72,11 @@ def UsernameIndex(family=None):
 								interface=IGrade,
 								index=UsernameRawIndex(family=family),
 								normalizer=StringTokenNormalizer())
-	
+
 class GradeValueIndex(ValueIndex):
 	default_field_name = 'value'
 	default_interface = IGrade
-	
+
 	def index_doc(self, docid, obj):
 		if not self.interface.providedBy(obj):
 			return None
@@ -107,8 +111,10 @@ class ValidatingGradeCatalogEntryID(object):
 
 	def __init__(self, obj, default=None):
 		grade = IGrade(obj, default)
-		course = ICourseInstance(grade, None) # course is in lineage
-		entry = ICourseCatalogEntry(course, None) # entry is an annotation
+		course = find_interface(grade, 
+								ICourseInstance, 
+								strict=False) if grade is not None else None
+		entry = ICourseCatalogEntry(course, None)  # entry is an annotation
 		if entry is not None:
 			self.ntiid = unicode(entry.ntiid)
 
@@ -121,14 +127,14 @@ class CatalogEntryIDIndex(ValueIndex):
 
 @interface.implementer(IMetadataCatalog)
 class MetadataGradeCatalog(Catalog):
-	
+
 	super_index_doc = Catalog.index_doc
 
 	def index_doc(self, docid, ob):
 		pass
 
 	def force_index_doc(self, docid, ob):
-		self.super_index_doc( docid, ob)
+		self.super_index_doc(docid, ob)
 
 def install_grade_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
@@ -141,24 +147,24 @@ def install_grade_catalog(site_manager_container, intids=None):
 
 	catalog = MetadataGradeCatalog(family=intids.family)
 	locate(catalog, site_manager_container, CATALOG_NAME)
-	intids.register( catalog )
-	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME )
+	intids.register(catalog)
+	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
-	for name, clazz in ( (IX_CREATOR, CreatorIndex),
-						 (IX_USERNAME, UsernameIndex),
-						 (IX_GRADE_VALUE, GradeValueIndex),
-						 (IX_GRADE_TYPE, GradeValueTypeIndex),
-						 (IX_ASSIGNMENT_ID, AssignmentIdIndex), 
-						 (IX_GRADE_COURSE, CatalogEntryIDIndex) ):
-		index = clazz( family=intids.family )
+	for name, clazz in ((IX_CREATOR, CreatorIndex),
+						(IX_USERNAME, UsernameIndex),
+						(IX_GRADE_VALUE, GradeValueIndex),
+						(IX_GRADE_TYPE, GradeValueTypeIndex),
+						(IX_ASSIGNMENT_ID, AssignmentIdIndex),
+						(IX_GRADE_COURSE, CatalogEntryIDIndex)):
+		index = clazz(family=intids.family)
 		assert ICatalogIndex.providedBy(index)
-		intids.register( index )
+		intids.register(index)
 		locate(index, catalog, name)
 		catalog[name] = index
 
 	return catalog
 
-# deprecated 
+# deprecated
 from zope.deprecation import deprecated
 
 deprecated("GradeCatalog", "use MetadataGradeCatalog")

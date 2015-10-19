@@ -43,7 +43,7 @@ def find_grading_policy_for_course(context):
 
 	registry = component
 	try:
-		# Courses may be ISites 
+		# Courses may be ISites
 		registry = course.getSiteManager()
 		names = ('',)
 	except LookupError:
@@ -60,14 +60,14 @@ def find_grading_policy_for_course(context):
 			return registry.getUtility(ICourseGradingPolicy, name=name)
 		except LookupError:
 			pass
-		
+
 	# We need to actually be registering these as annotations
 	policy = ICourseGradingPolicy(course, None)
 	return policy
 
-def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None, 
+def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
 					 verbose=False):
-	
+
 	result = {}
 	course = ICourseInstance(context)
 	policy = find_grading_policy_for_course(course)
@@ -79,13 +79,13 @@ def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
 		entry = part.getEntryByAssignment(entry_name)
 		if entry is None:
 			order = len(part) + 1
-			entry = part.entryFactory(displayName=entry_name, 
+			entry = part.entryFactory(displayName=entry_name,
 									  order=order,
 									  AssignmentId=entry_name)
 			part[INameChooser(part).chooseName(entry_name, entry)] = entry
 	else:
 		entry = None
-		
+
 	for record in ICourseEnrollments(course).iter_enrollments():
 		principal = IPrincipal(record.Principal, None)
 		if principal is None:
@@ -95,21 +95,21 @@ def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
 		username = principal.id.lower()
 		if usernames and username not in usernames:
 			continue
-		
+
 		# grade correctness
 		if IGradeBookGradingPolicy.providedBy(policy):
 			value = correctness = policy.grade(principal, verbose=verbose)
 		else:
 			value = correctness = policy.grade(principal)
-		
+
 		# if there is a grade scheme convert value
 		if grade_scheme is not None:
 			value = grade_scheme.fromCorrectness(correctness)
-		
+
 		grade = PersistentGrade(value=value)
 		grade.username = username
 		result[username] = grade
-		
+
 		# if entry is available save it
 		if entry is not None:
 			entry[username] = grade
@@ -124,6 +124,6 @@ def calculate_predicted_grade(user, policy, scheme=u''):
 	presentation = get_presentation_scheme(policy) or \
 				   component.getUtility(IGradeScheme, name=scheme)
 	correctness = policy.grade(user)
-	grade = presentation.fromCorrectness( correctness )
+	grade = presentation.fromCorrectness(correctness)
 	result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
 	return result

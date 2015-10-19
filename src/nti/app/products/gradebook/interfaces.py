@@ -8,12 +8,13 @@ from __future__ import unicode_literals, print_function, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.interface.interface import taggedValue
 
 from zope.container.constraints import contains
 from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
 from zope.container.constraints import containers
+
+from zope.interface.interface import taggedValue
 
 from zope.security.permission import Permission
 
@@ -38,7 +39,7 @@ from nti.schema.field import ValidTextLine
 
 ACT_VIEW_GRADES = Permission('nti.actions.gradebook.view_grades')
 
-# ## NTIID values
+# NTIID values
 
 NTIID_TYPE_GRADE_BOOK = 'gradebook'
 NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'

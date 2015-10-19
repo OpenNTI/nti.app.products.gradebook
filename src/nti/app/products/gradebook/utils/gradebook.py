@@ -104,9 +104,9 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 
 	try:
 		assignment_history.recordSubmission(submission, pending_assessment)
-		# # at this point a place holder grade is created we don't return it
-		# # to indicate to callers of this function that they need to get
-		# # the grade from the entry
+		# at this point a place holder grade is created we don't return it
+		# to indicate to callers of this function that they need to get
+		# the grade from the entry
 	except KeyError:
 		# In case there is already a submission (but no grade)
 		# we need to deal with creating the grade object ourself.

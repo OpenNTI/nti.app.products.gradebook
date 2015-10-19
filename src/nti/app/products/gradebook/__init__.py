@@ -14,7 +14,7 @@ MessageFactory = zope.i18nmessageid.MessageFactory(__name__)
 
 from zope import component
 
-from nti.dataserver.interfaces import IMetadataCatalog
+from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from .index import CATALOG_NAME
 
