@@ -18,6 +18,7 @@ from six import string_types
 
 from zope import component
 from zope import interface
+
 from zope.event import notify
 
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -136,7 +137,9 @@ class UserGradeSummary(object):
 
 	@Lazy
 	def username(self):
-		"The displayable, sortable username."
+		"""
+		The displayable, sortable username.
+		"""
 		username = self.user.username
 		return replace_username(username)
 
@@ -156,7 +159,9 @@ class UserGradeSummary(object):
 
 	@Lazy
 	def grade_tuple(self):
-		"A tuple of (grade_num, grade_other, submitted)."
+		"""
+		A tuple of (grade_num, grade_other, submitted).
+		"""
 		if self.grade_value is not None:
 			result = _get_grade_parts(self.grade_value)
 		else:
@@ -223,7 +228,7 @@ class UserGradeBookSummary(UserGradeSummary):
 		ungraded_count = 0
 		today = datetime.utcnow()
 		user_histories = component.queryMultiAdapter((course, user),
-												IUsersCourseAssignmentHistory)
+													 IUsersCourseAssignmentHistory)
 
 		if user_histories is not None:
 			for assignment in assignments:
@@ -239,7 +244,6 @@ class UserGradeBookSummary(UserGradeSummary):
 
 				# No submission and past due
 				if history_item is None:
-
 					due_date = IQAssignmentDateContext(course).of(assignment).available_for_submission_ending
 					if due_date and today > due_date:
 						overdue_count += 1
@@ -369,7 +373,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def _for_credit_students(self):
 		for_credit_scope = self.course.SharingScopes[ ES_CREDIT ]
 		student_names = {x.lower() for x
-						in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
+						 in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
 		return student_names
 
 	def _get_enrollment_scoped_summaries(self, filter_by):
@@ -844,8 +848,7 @@ class GradebookDeleteView(UGDDeleteView):
 	"""
 
 	def _do_delete_object(self, context):
-		# We happen to know that it is stored as
-		# an annotation.
+		# We happen to know that it is stored as an annotation.
 		annots = IAnnotations(context.__parent__)
 		del annots[context.__name__]
 		lifecycleevent.removed(context)
