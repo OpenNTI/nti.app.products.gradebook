@@ -77,6 +77,7 @@ from ..grading import find_grading_policy_for_course
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 def _get_history_item(course, user, assignment_id):
 	history = component.getMultiAdapter((course, user), IUsersCourseAssignmentHistory)
@@ -343,7 +344,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 									self.grade_policy)
 
 	def _get_summaries_for_usernames(self, student_names):
-		"For the given names, return student summaries."
+		"""
+		For the given names, return student summaries.
+		"""
 		instructor_usernames = {x.username.lower() for x in self.course.instructors}
 
 		def do_include(username):
@@ -492,6 +495,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
+		user_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.usergradebooksummary'
 
 		# Only expose if our course has one
 		if self.grade_policy:
@@ -560,6 +564,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookSummary'
 		result_dict['EnrollmentScope'] = self.filter_scope_name
+		result_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.gradebooksummary'
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
@@ -638,6 +643,7 @@ class AssignmentSummaryView(GradeBookSummaryView):
 		user_dict['Alias'] = user_summary.alias
 		user_dict['Username'] = user_summary.username
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
+		user_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.userassignmentsummary'
 		return user_dict
 
 	def __call__(self):
@@ -647,6 +653,7 @@ class AssignmentSummaryView(GradeBookSummaryView):
 		result_dict[ITEMS] = items = []
 		result_dict[CLASS] = 'GradeBookByAssignmentSummary'
 		result_dict['EnrollmentScope'] = self.filter_scope_name
+		result_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.gradebookbyassignmentsummary'
 
 		# Now build our data for each user
 		for user_summary in user_summaries:
