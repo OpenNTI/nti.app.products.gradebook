@@ -29,10 +29,11 @@ from nti.assessment.interfaces import IQAssignmentDateContext
 from nti.common.property import alias
 from nti.common.property import CachedProperty
 
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users import User
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization.representation import WithRepr
 

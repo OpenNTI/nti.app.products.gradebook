@@ -34,6 +34,8 @@ from pyramid.traversal import find_interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
+
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
@@ -45,8 +47,6 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
 
 from nti.dataserver.activitystream_change import Change
-
-from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
