@@ -313,7 +313,6 @@ class TestAssignments(ApplicationLayerTest):
 
 			from nti.app.assessment.feedback import UsersCourseAssignmentHistoryItemFeedback
 			feedback = UsersCourseAssignmentHistoryItemFeedback(body=['Some feedback'])
-			feedback.containerId = '' # Need at least an empty container id
 			ext_feedback = to_external_object(feedback)
 			__traceback_info__ = ext_feedback
 			res = self.testapp.post_json( history_feedback_container_href,

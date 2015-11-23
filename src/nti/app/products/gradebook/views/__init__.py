@@ -305,8 +305,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		The case insensitive filter list.  This is a two part filter.
 		Options are ``Ungraded``, ``Overdue``, and ``Actionable``.
 		Actionable is a combination of the other two. The other filter
-		occurs on the enrollment scope.  Options are ``Open`` and
-		``ForCredit``.  ForCredit is the default enrollment scope.
+		occurs on the enrollment scope.  Options are ``Open``, ``All`` and
+		``ForCredit``.  ForCredit is the default enrollment scope (due to BWC).
 
 	search
 		The username to search on. If not found, an empty set is returned.
@@ -351,22 +351,25 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		"""
 		For the given names, return student summaries.
 		"""
-		instructor_usernames = {x.username.lower() for x in self.course.instructors}
-
-		def do_include(username):
-			return 	User.get_user(username) is not None \
-				and username not in instructor_usernames
-
 		students_iter = (self._get_summary_for_student(username)
 						for username in student_names
-						if do_include(username))
+						if User.get_user(username) is not None)
 		return students_iter
 
 	@Lazy
-	def _open_students(self):
+	def _instructors(self):
+		instructor_usernames = {x.username.lower() for x in self.course.instructors}
+		return instructor_usernames
+
+	@Lazy
+	def _all_students(self):
 		everyone = self.course.SharingScopes['Public']
 		enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
-		student_names = enrollment_usernames - self._for_credit_students
+		return enrollment_usernames - self._instructors
+
+	@Lazy
+	def _open_students(self):
+		student_names = self._all_students - self._for_credit_students
 		return student_names
 
 	@Lazy
@@ -374,7 +377,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		for_credit_scope = self.course.SharingScopes[ ES_CREDIT ]
 		student_names = {x.lower() for x
 						 in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
-		return student_names
+		return student_names - self._instructors
 
 	def _get_enrollment_scoped_summaries(self, filter_by):
 		"""
@@ -396,6 +399,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			if 'open' in filter_by:
 				filter_scope_name = 'Open'
 				student_names = self._open_students
+			elif 'all' in filter_by:
+				filter_scope_name = 'All'
+				student_names = self._all_students
 			else:
 				filter_scope_name = 'ForCredit'
 				student_names = self._for_credit_students
