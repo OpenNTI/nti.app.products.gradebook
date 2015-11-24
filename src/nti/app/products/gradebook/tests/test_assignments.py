@@ -56,6 +56,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.testing.time import time_monotonically_increases
 
+COURSE_NTIID = 'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
+
 class TestAssignments(ApplicationLayerTest):
 	layer = InstructedCourseApplicationTestLayer
 
@@ -178,7 +180,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								status=201 )
 
 		# submit
@@ -186,7 +188,7 @@ class TestAssignments(ApplicationLayerTest):
 								ext_obj,
 								status=201)
 		# The student has no edit link for the grade
-		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
 		history_res = self.testapp.get( history_path )
 		assert_that( history_res.json_body['Items'].values(),
 					 contains( has_entry( 'Grade', has_entry( 'Links', has_length(1) ))) )
@@ -409,7 +411,7 @@ class TestAssignments(ApplicationLayerTest):
 						   #('harp4162', instructor_environ),
 						   ('aaa@nextthought.com', jmadden_environ)):
 			self.testapp.post_json( '/dataserver2/users/'+uname+'/Courses/EnrolledCourses',
-									'CLC 3403',
+									COURSE_NTIID,
 									extra_environ=env,
 									status=201 )
 
@@ -662,7 +664,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/jason/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
@@ -757,7 +759,7 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								status=201 )
 		# Make sure we have no notable items
 		notable_res = self.fetch_user_recursive_notable_ugd()
@@ -786,7 +788,7 @@ class TestAssignments(ApplicationLayerTest):
 	def test_instructor_grade_is_ugd_notable_to_student(self):
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
@@ -805,7 +807,7 @@ class TestAssignments(ApplicationLayerTest):
 		# If the instructor deletes it...
 		# (delete indirectly by resetting the submission to be sure the right
 		# event chain works)
-		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
 		history_res = self.testapp.get(history_path)
 
 		submission = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
@@ -820,7 +822,7 @@ class TestAssignments(ApplicationLayerTest):
 	def test_mutating_grade_changes_history_item_last_modified(self):
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
@@ -833,7 +835,7 @@ class TestAssignments(ApplicationLayerTest):
 		self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
 		# ...the student sees a history item
-		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
 		history_res = self.testapp.get(history_path)
 
 		history_item = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
@@ -859,7 +861,7 @@ class TestAssignments(ApplicationLayerTest):
 	def test_instructor_delete_grade(self):
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								 status=201 )
 
 		instructor_environ = self._make_extra_environ(username='harp4162')
@@ -896,7 +898,7 @@ class TestAssignments(ApplicationLayerTest):
 		normal_environ = self._make_extra_environ(username='regular_user')
 
 		res = self.testapp.post_json( '/dataserver2/users/regular_user/Courses/EnrolledCourses',
-									  'CLC 3403',
+									  COURSE_NTIID,
 									  status=201,
 									  extra_environ=normal_environ  )
 

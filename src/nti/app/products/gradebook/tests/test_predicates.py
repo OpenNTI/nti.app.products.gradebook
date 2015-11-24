@@ -28,18 +28,20 @@ from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLaye
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+COURSE_NTIID = 'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
+
 class TestPredictes(ApplicationLayerTest):
-	
+
 	layer = InstructedCourseApplicationTestLayer
 
 	default_origin = str('http://janux.ou.edu')
 
 	assignment_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1"
 	question_set_id = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:ASMT1_ichigo"
-	
+
 	@WithSharedApplicationMockDS(users=True, testapp=True,default_authenticate=True)
 	def test_predicates(self):
-	
+
 		extra_env = self.testapp.extra_environ or {}
 		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
 		self.testapp.extra_environ = extra_env
@@ -53,20 +55,20 @@ class TestPredictes(ApplicationLayerTest):
 
 		# Make sure we're enrolled
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-								'CLC 3403',
+								COURSE_NTIID,
 								status=201 )
 
 		# submit
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
 								ext_obj,
 								status=201)
-		
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user('sjohnson@nextthought.com')
 			predicate = predicates._GradePrincipalObjects(user)
 			grades = list( predicate.iter_objects() )
 			assert_that(grades, has_length(1))
-		
+
 			predicate = predicates._GradeBookPrincipalObjects()
 			objects = list( predicate.iter_objects() )
 			assert_that(objects, greater_than(70))

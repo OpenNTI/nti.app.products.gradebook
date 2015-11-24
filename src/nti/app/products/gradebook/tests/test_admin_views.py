@@ -20,20 +20,20 @@ from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLaye
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 class TestAdminViews(ApplicationLayerTest):
-	
+
 	layer = InstructedCourseApplicationTestLayer
 
 	default_origin = str('http://janux.ou.edu')
 
-	course_ntiid = 'tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2013_CLC3403_LawAndJustice'
+	course_ntiid = 'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_synchronize_gradebook(self):
 		environ = self._make_extra_environ()
 		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
-		
+
 		res = self.testapp.post_json('/dataserver2/@@SynchronizeGradebook',
-									 {'ntiid': 'CLC 3403'},
+									 {'ntiid': self.course_ntiid},
 									 extra_environ=environ,
 									 status=200)
 		assert_that(res.json_body, has_entry('Items',
