@@ -23,6 +23,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
+from nti.app.products.gradebook.interfaces import IExcusedGrade
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users import User
@@ -162,8 +164,16 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			data = (username, external_id, firstname, lastname, realname)
 			row = [_tx_string(x) for x in data]
 			for _, assignment in sorted_asg_names:
-				grade = user_dict[assignment].value if assignment in user_dict else ""
-				row.append(_tx_grade(grade))
+				grade_val = ""
+				if assignment in user_dict:
+					user_grade = user_dict[assignment]
+					grade_val = user_grade.value
+					# For CS1323, we need to expose Excused grades. It's not entirely clear
+					# how to do so in a D2L import-compatible way, but we've seen text
+					# exported values (from our system) anyway, which are probably not
+					# imported into D2L.
+					grade_val = 'Excused' if IExcusedGrade.providedBy( user_grade ) else _tx_grade(grade_val)
+				row.append( grade_val )
 
 			final_grade = final_grade_entry.get(username) if final_grade_entry else None
 			row.append(_tx_grade(final_grade.value) if final_grade else 0)
