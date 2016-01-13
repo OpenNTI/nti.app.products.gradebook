@@ -346,7 +346,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		# Our links are now off of a GradeBook shell in the course
 		course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
-		course_res = self.testapp.get(course_path,  extra_environ=instructor_environ)
+		course_res = self.testapp.get(course_path, extra_environ=instructor_environ)
 		gradebook_json = course_res.json_body.get( 'GradeBook' )
 		csv_link = self.require_link_href_with_rel( gradebook_json, 'ExportContents')
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)

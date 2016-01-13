@@ -110,23 +110,25 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.__name__ = self.request.view_name
 		rows.__parent__ = self.request.context
 
-		def _tx_string(s):
+		def _tx_string( val ):
 			# At least in python 2, the CSV writer only works
 			# correctly with str objects, implicitly encoding
 			# otherwise
-			if isinstance(s, unicode):
-				s = s.encode('utf-8')
-			return s
+			if isinstance(val, unicode):
+				val = val.encode('utf-8')
+			return val
 
-		# First a header row.
-		# Note that we are allowed to use multiple columns to identify
-		# students
-		rows.append( ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
-					 # Assignment names could theoretically have non-ascii chars
-					 + [_tx_string(x[0]) + ' Points Grade' for x in sorted_asg_names]
-					 + ['Adjusted Final Grade Numerator',
-					 	'Adjusted Final Grade Denominator']
-					 + ['End-of-Line Indicator'] )
+		# First a header row. Note that we are allowed to use multiple columns to
+		# identify students.
+		headers = ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
+		# Assignment names could theoretically have non-ascii chars
+		for asg in sorted_asg_names:
+			asg_name = _tx_string( asg[0] )
+			# Avoid unicode conversion of our already encoded str.
+			asg_name = asg_name + str( ' Points Grade' )
+			headers.append( asg_name )
+		headers.extend( ['Adjusted Final Grade Numerator','Adjusted Final Grade Denominator', 'End-of-Line Indicator'] )
+		rows.append( headers )
 
 		# Now a row for each user and each assignment in the same order.
 		# Note that the webapp tends to send string values even when the user
