@@ -34,6 +34,24 @@ from pyramid.traversal import find_interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.app.products.gradebook.assignments import synchronize_gradebook
+
+from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
+
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.grading import IGradeBookGradingPolicy
+from nti.app.products.gradebook.grading import find_grading_policy_for_course
+
+from nti.app.products.gradebook.index import IX_STUDENT
+from nti.app.products.gradebook.index import CATALOG_NAME
+
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBook
+
+from nti.app.products.gradebook.utils import save_in_container
+from nti.app.products.gradebook.utils import remove_from_container
+
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
@@ -49,24 +67,6 @@ from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
 from nti.dataserver.activitystream_change import Change
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
-
-from .index import IX_STUDENT
-from .index import CATALOG_NAME
-
-from .grades import PersistentGrade
-
-from .interfaces import IGrade
-from .interfaces import IGradeBook
-
-from .utils import save_in_container
-from .utils import remove_from_container
-
-from .assignments import synchronize_gradebook
-
-from .grading import IGradeBookGradingPolicy
-from .grading import find_grading_policy_for_course
-
-from .autograde_policies import find_autograde_policy_for_assignment_in_course
 
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
@@ -152,12 +152,13 @@ def _assignment_history_item_added(item, event):
 def _assignment_history_item_removed(item, event):
 	entry = _find_entry_for_item(item)
 	if entry is not None:
-		user = IUser(item)
-		try:
-			remove_from_container(entry, user.username)
-		except KeyError:
-			# Hmm...
-			pass
+		user = IUser(item, None)
+		if user is not None:
+			try:
+				remove_from_container(entry, user.username)
+			except KeyError:
+				# Hmm...
+				pass
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
