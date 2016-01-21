@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
-from functools import partial
-
 from zope import component
 
 from zope.annotation.interfaces import IAnnotations
@@ -20,6 +18,8 @@ from zope.annotation.interfaces import IAnnotations
 from zope.catalog.interfaces import ICatalog
 
 from zope.event import notify
+
+from zope.intid.interfaces import IIntIds
 
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
@@ -54,9 +54,12 @@ from nti.app.products.gradebook.utils import remove_from_container
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
+from nti.contenttypes.courses import get_enrollment_catalog
+
+from nti.contenttypes.courses.index import IX_USERNAME
+
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
 from nti.dataserver.interfaces import IUser
@@ -65,8 +68,6 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
 
 from nti.dataserver.activitystream_change import Change
-
-from nti.site.hostpolicy import run_job_in_all_host_sites
 
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
@@ -274,16 +275,18 @@ def unindex_grade_data(username):
 
 def delete_user_data(user):
 	username = user.username
-	for enrollments in component.subscribers((user,), IPrincipalEnrollments):
-		for enrollment in enrollments.iter_enrollments():
-			course = ICourseInstance(enrollment, None)
-			book = IGradeBook(course, None)
-			if book is not None:
-				book.remove_user(username)
+	catalog = get_enrollment_catalog()
+	intids = component.getUtility(IIntIds)
+	query = { IX_USERNAME: {'any_of':(username,)} }
+	for uid in catalog.apply(query) or ():
+		context = intids.queryObject(uid)
+		course = ICourseInstance(context, None)
+		book = IGradeBook(course, None)
+		if book is not None:
+			book.remove_user(username)
 
 @component.adapter(IUser, IWillDeleteEntityEvent)
 def _on_user_will_be_removed(user, event):
 	logger.info("Removing gradebook data for user %s", user)
 	unindex_grade_data(user.username)
-	func = partial(delete_user_data, user=user)
-	run_job_in_all_host_sites(func)
+	delete_user_data(user=user)
