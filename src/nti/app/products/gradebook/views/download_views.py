@@ -26,6 +26,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.users import User
 from nti.dataserver import authorization as nauth
@@ -58,9 +59,12 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		(https://php.radford.edu/~knowledge/lore/attachment.php?id=57)
 		Dialects would be easily possible.
 	"""
+	@property
+	def _enrollment_filter(self):
+		return self.request.GET.get('LegacyEnrollmentStatus')
 
 	def _make_enrollment_predicate(self):
-		status_filter = self.request.GET.get('LegacyEnrollmentStatus')
+		status_filter = self._enrollment_filter
 		if not status_filter:
 			return lambda course, user: True
 
@@ -73,6 +77,28 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				return False
 			return enrollment.LegacyEnrollmentStatus == status_filter # Let this blow up when this goes away
 		return f
+
+	def _string(self, val):
+		if val:
+			val = val.replace( ' ', '' )
+		return val
+
+	def _get_course_name(self, course):
+		entry = ICourseCatalogEntry( course, None )
+		if entry is not None:
+			base_name = entry.ProviderUniqueID
+			base_name = self._string( base_name )
+		if not base_name:
+			base_name = course.__name__
+		return base_name
+
+	def _get_filename(self, course):
+		base_name = self._get_course_name( course )
+		filter_name = self._enrollment_filter
+		filter_name = self._string( filter_name ) or 'full'
+		suffix = 'grades.csv'
+		result = '%s_%s-%s' % (base_name, filter_name, suffix)
+		return result
 
 	def __call__(self):
 		gradebook = self.request.context
@@ -195,7 +221,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		writer = csv.writer(buf)
 		writer.writerows(rows)
 
-		filename = course.__name__ + '-grades.csv'
+		filename = self._get_filename( course )
 		content_disposition = str( 'attachment; filename="%s"' % filename )
 		self.request.response.body = buf.getvalue()
 		self.request.response.content_disposition = content_disposition
