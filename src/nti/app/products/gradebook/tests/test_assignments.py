@@ -356,7 +356,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		# He can filter it to Open and ForCredit subsets
 		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=Open', extra_environ=instructor_environ)
-		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403_Open_-grades.csv"'))
+		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403_Open-grades.csv"'))
 		assert_that( res.text, is_(csv_text))
 
 		res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit', extra_environ=instructor_environ)
