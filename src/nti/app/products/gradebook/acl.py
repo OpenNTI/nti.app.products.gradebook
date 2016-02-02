@@ -14,6 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+
 from nti.common.property import Lazy
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -22,15 +26,12 @@ from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization import ROLE_ADMIN
 
-from nti.dataserver.interfaces import IACLProvider
-from nti.dataserver.interfaces import ALL_PERMISSIONS
-
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
 
-from .interfaces import IGradeBook
-from .interfaces import ACT_VIEW_GRADES
+from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 @component.adapter(IGradeBook)
 @interface.implementer(IACLProvider)
@@ -51,15 +52,13 @@ class _GradeBookACLProvider(object):
 	@Lazy
 	def __acl__(self):
 		acl = acl_from_aces()
+		acl.append(ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)))
 		course = ICourseInstance(self.context, None)
 		if course is not None:
 			# TODO: Use roles
-			acl.extend((ace_allowing(i, ACT_READ, type(self))
-						for i in course.instructors))
-			acl.extend((ace_allowing(i, ACT_UPDATE, type(self))
-						for i in course.instructors))
-			acl.extend((ace_allowing(i, ACT_VIEW_GRADES, type(self))
-						for i in course.instructors))
-		acl.append(ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)))
+			for i in course.instructors:
+				acl.append(ace_allowing(i, ACT_READ, type(self)))
+				acl.append(ace_allowing(i, ACT_UPDATE, type(self)))
+				acl.append(ace_allowing(i, ACT_VIEW_GRADES, type(self)))
 		acl.append(ace_denying_all())
 		return acl

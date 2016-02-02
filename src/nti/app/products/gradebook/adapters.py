@@ -17,22 +17,23 @@ from zope import interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+
 from nti.appserver.interfaces import ITrustedTopLevelContainerContextProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IStreamChangeEvent
 
+from nti.dataserver.users import User
+
 from nti.traversal.traversal import find_interface
-
-from .grades import PersistentGrade
-
-from .interfaces import IGrade
-from .interfaces import IGradeBook
-from .interfaces import IGradeBookEntry
 
 @interface.implementer(IGradeBookEntry)
 @component.adapter(IGrade)
