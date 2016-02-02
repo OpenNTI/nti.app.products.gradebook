@@ -13,6 +13,10 @@ import os
 import argparse
 import importlib
 
+from nti.app.products.gradebook.grading import calculate_grades
+
+from nti.app.products.gradebook.interfaces import IGradeScheme
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.utils import run_with_dataserver
@@ -20,10 +24,6 @@ from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from ..interfaces import IGradeScheme
-
-from .. import calculate_grades
 
 def _process_args(ntiid, scheme=None, usernames=(), site=None,
 				  entry_name=None, verbose=False):
@@ -43,8 +43,11 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 		raise ValueError("Course not found", ntiid)
 
 	usernames = {x.lower() for x in usernames or ()}
-	result = calculate_grades(course, usernames=usernames, grade_scheme=grade_scheme,
-							  entry_name=entry_name, verbose=verbose)
+	result = calculate_grades(course, 
+							  usernames=usernames,
+							  grade_scheme=grade_scheme,
+							  entry_name=entry_name, 
+							  verbose=verbose)
 	if not entry_name or verbose:
 		print("\nGrades...")
 		for name, grade in result.items():
@@ -56,10 +59,14 @@ def main():
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							 dest='verbose')
 	arg_parser.add_argument('ntiid', help="Course NTIID")
+	
 	arg_parser.add_argument('-s', '--site', dest='site', help="Request site")
+	
 	arg_parser.add_argument('-g', '--grade', dest='scheme',
 							help="Grade scheme class name")
+	
 	arg_parser.add_argument('-e', '--entry', dest='entry', help="Grade entry name")
+	
 	arg_parser.add_argument('-u', '--users',
 							 dest='usernames',
 							 nargs="+",
@@ -80,12 +87,12 @@ def main():
 						context=context,
 						minimal_ds=True,
 						xmlconfig_packages=conf_packages,
-						function=lambda: _process_args(	site=site,
-														verbose=verbose,
-														ntiid=args.ntiid,
-														scheme=args.scheme,
-														entry_name=args.entry,
-														usernames=args.usernames))
+						function=lambda: _process_args(site=site,
+													   verbose=verbose,
+													   ntiid=args.ntiid,
+													   scheme=args.scheme,
+													   entry_name=args.entry,
+													   usernames=args.usernames))
 
 if __name__ == '__main__':
 	main()
