@@ -17,9 +17,12 @@ from zope.annotation.interfaces import IAnnotations
 
 from zope.catalog.interfaces import ICatalog
 
+from zope.component.hooks import getSite
+
 from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
+from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
@@ -34,6 +37,10 @@ from pyramid.traversal import find_interface
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.app.products.gradebook import get_grade_catalog
+
+from nti.app.products.gradebook.index import IX_SITE
+from nti.app.products.gradebook.index import IX_COURSE
 from nti.app.products.gradebook.index import IX_STUDENT
 from nti.app.products.gradebook.index import CATALOG_NAME
 
@@ -54,6 +61,7 @@ from nti.contenttypes.courses.index import IX_USERNAME
 
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
 from nti.dataserver.activitystream_change import Change
@@ -240,3 +248,18 @@ def _on_user_will_be_removed(user, event):
 	logger.info("Removing gradebook data for user %s", user)
 	unindex_grade_data(user.username)
 	delete_user_data(user=user)
+
+# courses
+
+def unindex_course_data(course):
+	entry = ICourseCatalogEntry(course, None)
+	if entry is not None:
+		catalog = get_grade_catalog()
+		query = { IX_COURSE: {'any_of':(entry.ntiid,)},
+				  IX_SITE: {'any_of':(getSite().__name__,) } }
+		for uid in catalog.apply(query) or ():
+			catalog.unindex_doc(uid)
+
+@component.adapter(ICourseInstance, IIntIdRemovedEvent)
+def _on_course_instance_removed(course, event):
+	unindex_course_data(course)

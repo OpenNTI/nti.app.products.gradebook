@@ -44,10 +44,10 @@ CATALOG_NAME = 'nti.dataserver.++etc++gradebook-catalog'
 IX_SITE = 'site'
 IX_GRADE_TYPE = 'gradeType'
 IX_GRADE_VALUE = 'gradeValue'
-IX_GRADE_COURSE = 'gradeCourse'
 IX_ASSIGNMENT_ID = 'assignmentId'
 IX_STUDENT = IX_USERNAME = 'username'
 IX_CREATOR = IX_INSTRUCTOR = 'creator'
+IX_COURSE = IX_ENTRY = IX_GRADE_COURSE = 'gradeCourse'
 
 class AssignmentIdIndex(ValueIndex):
 	default_field_name = 'AssignmentId'

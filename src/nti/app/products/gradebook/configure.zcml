@@ -206,6 +206,8 @@
 	<subscriber handler=".subscribers._grade_modified" />
 	<subscriber handler=".subscribers._remove_grade_created_event" />
 
+	<subscriber handler=".subscribers._on_course_instance_removed" />
+	
 	<!-- NTIID Resolvers -->
 	<utility factory=".ntiids._GradeBookResolver" name="gradebook" />
 	<utility factory=".ntiids._GradeBookPartResolver" name="gradebookpart" />
