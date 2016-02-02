@@ -11,6 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 7
 
+from zope import component
+
+from zope.component.hooks import site
+from zope.component.hooks import setHooks
+
 from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
@@ -28,26 +33,31 @@ from nti.dataserver.metadata_index import CATALOG_NAME
 def do_evolve(context, generation=generation):
 	logger.info("Gradebook evolution %s started", generation);
 
+	setHooks()
 	conn = context.connection
 	ds_folder = conn.root()['nti.dataserver']
 	lsm = ds_folder.getSiteManager()
 	intids = lsm.getUtility(IIntIds)
 
-	catalog = install_grade_catalog(ds_folder, intids)
-	if IX_SITE not in catalog:
-		index = SiteIndex(family=intids.family)
-		intids.register(index)
-		locate(index, catalog, IX_SITE)
-		catalog[IX_SITE] = index
+	with site(ds_folder):
+		assert 	component.getSiteManager() == ds_folder.getSiteManager(), \
+				"Hooks not installed?"
 
-		metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
-		query = {
-			'mimeType': {'any_of': ('application/vnd.nextthought.grade',)}
-		}
-		for uid in metadata.apply(query) or ():
-			grade = intids.queryObject(uid)
-			if IGrade.providedBy(grade):
-				index.index_doc(uid, grade)
+		catalog = install_grade_catalog(ds_folder, intids)
+		if IX_SITE not in catalog:
+			index = SiteIndex(family=intids.family)
+			intids.register(index)
+			locate(index, catalog, IX_SITE)
+			catalog[IX_SITE] = index
+	
+			metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+			query = {
+				'mimeType': {'any_of': ('application/vnd.nextthought.grade',)}
+			}
+			for uid in metadata.apply(query) or ():
+				grade = intids.queryObject(uid)
+				if IGrade.providedBy(grade):
+					index.index_doc(uid, grade)
 
 	logger.info('Gradebook evolution %s done' , generation)
 
