@@ -14,13 +14,14 @@ from zope.container.interfaces import INameChooser
 from nti.app.assessment.common import assignment_comparator
 from nti.app.assessment.common import get_course_assignments
 
+from nti.app.products.gradebook.gradebook import GradeBookPart
+from nti.app.products.gradebook.gradebook import NoSubmitGradeBookPart
+
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
-
-from .gradebook import GradeBookPart
-from .gradebook import NoSubmitGradeBookPart
-
-from .interfaces import IGradeBook
-from .interfaces import NO_SUBMIT_PART_NAME
 
 _assignment_comparator = assignment_comparator  # BWC
 

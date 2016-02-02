@@ -18,11 +18,11 @@ from zope import interface
 
 from zope.interface import Invalid
 
+from nti.app.products.gradebook.interfaces import IPendingAssessmentAutoGradePolicy
+
 from nti.assessment.interfaces import IQAssignmentPolicies
 
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-
-from .interfaces import IPendingAssessmentAutoGradePolicy
 
 @interface.implementer(IPendingAssessmentAutoGradePolicy)
 class TrivialFixedScaleAutoGradePolicy(object):
