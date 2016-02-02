@@ -18,20 +18,24 @@ from zope.container.interfaces import INameChooser
 
 from zope.security.interfaces import IPrincipal
 
+from nti.app.products.gradebook.assignments import create_assignment_part
+
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
+
+from nti.app.products.gradebook.interfaces import IGradeScheme
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 
-from ..grades import PersistentGrade
+from nti.contenttypes.courses.utils import get_course_packages
 
-from ..interfaces import IGradeScheme
-from ..interfaces import NO_SUBMIT_PART_NAME
-
-from ..assignments import create_assignment_part
-
-from .interfaces import IGradeBookGradingPolicy
-
+# : Current grade link/view
 VIEW_CURRENT_GRADE = 'CurrentGrade'
 
 PredictedGrade = namedtuple('PredictedGrade', 'Grade RawValue Correctness')
@@ -48,7 +52,7 @@ def find_grading_policy_for_course(context):
 		names = ('',)
 	except LookupError:
 		# try content pacakges
-		names = [x.ntiid for x in course.ContentPackageBundle.ContentPackages]
+		names = [x.ntiid for x in get_course_packages(course)]
 		# try catalog entry
 		cat_entry = ICourseCatalogEntry(course, None)
 		if cat_entry:
@@ -65,7 +69,10 @@ def find_grading_policy_for_course(context):
 	policy = ICourseGradingPolicy(course, None)
 	return policy
 
-def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
+def calculate_grades(context,
+					 usernames=(),
+					 grade_scheme=None,
+					 entry_name=None,
 					 verbose=False):
 
 	result = {}
@@ -79,8 +86,8 @@ def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
 		entry = part.getEntryByAssignment(entry_name)
 		if entry is None:
 			order = len(part) + 1
-			entry = part.entryFactory(displayName=entry_name,
-									  order=order,
+			entry = part.entryFactory(order=order,
+									  displayName=entry_name,
 									  AssignmentId=entry_name)
 			part[INameChooser(part).chooseName(entry_name, entry)] = entry
 	else:
@@ -113,6 +120,7 @@ def calculate_grades(context, usernames=(), grade_scheme=None, entry_name=None,
 		# if entry is available save it
 		if entry is not None:
 			entry[username] = grade
+
 	return result
 
 def get_presentation_scheme(policy):
@@ -121,8 +129,9 @@ def get_presentation_scheme(policy):
 	return None
 
 def calculate_predicted_grade(user, policy, scheme=u''):
-	presentation = get_presentation_scheme(policy) or \
-				   component.getUtility(IGradeScheme, name=scheme)
+	presentation = get_presentation_scheme(policy)
+	if presentation is None:
+		presentation = component.getUtility(IGradeScheme, name=scheme)
 	correctness = policy.grade(user)
 	grade = presentation.fromCorrectness(correctness)
 	result = PredictedGrade(grade, correctness, int(round(correctness * 100)))

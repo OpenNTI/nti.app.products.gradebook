@@ -10,17 +10,32 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import logging
+
 from six import string_types
 from datetime import datetime
 from collections import defaultdict
 
 from zope import component
 from zope import interface
+
 from zope.interface import Invalid
 
 from zope.security.interfaces import IPrincipal
 
 from ZODB import loglevels
+
+from nti.app.products.gradebook.gradescheme import NumericGradeScheme
+
+from nti.app.products.gradebook.grading.interfaces import ICategoryGradeScheme
+from nti.app.products.gradebook.grading.interfaces import ICS1323EqualGroupGrader
+from nti.app.products.gradebook.grading.interfaces import ICS1323CourseGradingPolicy
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.utils import MetaGradeBookObject
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
@@ -39,19 +54,6 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.schema.schema import EqHash
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from ..gradescheme import NumericGradeScheme
-
-from ..interfaces import IGradeBook
-from ..interfaces import IExcusedGrade
-from ..interfaces import FINAL_GRADE_NAME
-from ..interfaces import NO_SUBMIT_PART_NAME
-
-from ..utils import MetaGradeBookObject
-
-from .interfaces import ICategoryGradeScheme
-from .interfaces import ICS1323EqualGroupGrader
-from .interfaces import ICS1323CourseGradingPolicy
 
 def to_correctness(value, scheme):
 	value = scheme.fromUnicode(value) if isinstance(value, string_types) else value
@@ -366,12 +368,12 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 				weighted_correctness = correctness * weight
 				result += weighted_correctness
 				logger.log(LOGLEVEL,
-							"%s correctness and weighted correctness are %s, %s",
-							 grade, correctness, weighted_correctness)
+						   "%s correctness and weighted correctness are %s, %s",
+						   grade, correctness, weighted_correctness)
 
 		logger.log(LOGLEVEL,
-					"Unjusted total grade percentage is %s. Adjust weight is %s",
-					result, self._total_weight)
+				   "Unjusted total grade percentage is %s. Adjust weight is %s",
+				   result, self._total_weight)
 
 		# divide over the total weight in case the policy
 		# is not complete

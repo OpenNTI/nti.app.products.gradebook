@@ -11,6 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
+from nti.app.products.gradebook.grading import find_grading_policy_for_course
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contenttypes.courses.utils import is_enrolled
@@ -19,9 +22,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
-
-from . import VIEW_CURRENT_GRADE
-from . import find_grading_policy_for_course
 
 LINKS = StandardExternalFields.LINKS
 

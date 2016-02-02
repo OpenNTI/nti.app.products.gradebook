@@ -13,6 +13,8 @@ from zope import interface
 
 from zope.deprecation import deprecated
 
+from nti.app.products.gradebook.interfaces import IGradeScheme
+
 from nti.contenttypes.courses.grading.interfaces import IEqualGroupGrader
 from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 from nti.contenttypes.courses.grading.interfaces import ICategoryGradeScheme as ICTGCategoryGradeScheme
@@ -21,8 +23,6 @@ from nti.schema.field import Int
 from nti.schema.field import Dict
 from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
-
-from ..interfaces import IGradeScheme
 
 deprecated('IAssigmentGradeScheme', 'Use lastest implementation')
 class IAssigmentGradeScheme(interface.Interface):
