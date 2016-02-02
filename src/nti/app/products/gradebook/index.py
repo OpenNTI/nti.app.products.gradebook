@@ -25,6 +25,8 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.interfaces import ICreatedUsername
 
+from nti.site.interfaces import IHostPolicyFolder
+
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
@@ -39,6 +41,7 @@ from nti.zope_catalog.string import StringTokenNormalizer
 
 CATALOG_NAME = 'nti.dataserver.++etc++gradebook-catalog'
 
+IX_SITE = 'site'
 IX_GRADE_TYPE = 'gradeType'
 IX_GRADE_VALUE = 'gradeValue'
 IX_GRADE_COURSE = 'gradeCourse'
@@ -102,6 +105,28 @@ class GradeValueTypeIndex(ValueIndex):
 	default_field_name = 'type'
 	default_interface = ValidatingGradeValueType
 
+class ValidatingGradeSite(object):
+	"""
+	The "interface" we adapt to to find the grade value course.
+	"""
+
+	__slots__ = (b'site',)
+
+	def __init__(self, obj, default=None):
+		grade = IGrade(obj, default)
+		folder = find_interface(grade, 
+								IHostPolicyFolder, 
+								strict=False) if grade is not None else None
+		if folder is not None:
+			self.site = unicode(folder.__name__)
+
+	def __reduce__(self):
+		raise TypeError()
+
+class SiteIndex(ValueIndex):
+	default_field_name = 'site'
+	default_interface = ValidatingGradeSite
+
 class ValidatingGradeCatalogEntryID(object):
 	"""
 	The "interface" we adapt to to find the grade value course.
@@ -150,7 +175,8 @@ def install_grade_catalog(site_manager_container, intids=None):
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
-	for name, clazz in ((IX_CREATOR, CreatorIndex),
+	for name, clazz in ((IX_SITE, SiteIndex),
+						(IX_CREATOR, CreatorIndex),
 						(IX_USERNAME, UsernameIndex),
 						(IX_GRADE_VALUE, GradeValueIndex),
 						(IX_GRADE_TYPE, GradeValueTypeIndex),

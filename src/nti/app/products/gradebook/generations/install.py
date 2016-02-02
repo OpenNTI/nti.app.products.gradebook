@@ -11,28 +11,28 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 6
+generation = 7
 
-import zope.intid
+from zope.intid.interfaces import IIntIds
 
 from zope.generations.generations import SchemaManager
 
-from ..index import install_grade_catalog
+from nti.app.products.gradebook.index import install_grade_catalog
 
 class _GradeBookSchemaManager(SchemaManager):
 	"""
 	A schema manager that we can register as a utility in ZCML.
 	"""
-	
-	def __init__( self ):
+
+	def __init__(self):
 		super(_GradeBookSchemaManager, self).__init__(generation=generation,
 													  minimum_generation=generation,
 													  package_name='nti.app.products.gradebook.generations')
 
-def evolve( context ):
+def evolve(context):
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
 	lsm = dataserver_folder.getSiteManager()
-	intids = lsm.getUtility(zope.intid.IIntIds)	
+	intids = lsm.getUtility(IIntIds)
 	install_grade_catalog(dataserver_folder, intids)
 	return context
