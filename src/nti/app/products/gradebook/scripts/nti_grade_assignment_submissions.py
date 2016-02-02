@@ -35,6 +35,7 @@ def get_course(ntiid):
 	course = ICourseInstance(obj, None)
 	if course is None or ILegacyCourseInstance.providedBy(course):
 		raise ValueError("Could not find course with NTIID %s", ntiid)
+	return course
 
 def get_assignment(ntiid):
 	result = component.queryUtility(IQAssignment, name=ntiid)
