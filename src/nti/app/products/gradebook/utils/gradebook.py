@@ -17,15 +17,27 @@ from zope.location.location import locate
 from ZODB.interfaces import IConnection
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.app.products.courseware.interfaces import ICourseInstanceActivity
+
+from nti.app.products.gradebook.assignments import synchronize_gradebook
+
+from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
+
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.grading import IGradeBookGradingPolicy
+from nti.app.products.gradebook.grading import find_grading_policy_for_course
+
+from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.assessment.submission import AssignmentSubmission
 from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from ..grades import PersistentGrade
+from nti.dataserver.interfaces import IUser
 
 def mark_btree_bucket_as_changed(grade):
 	# Now, because grades are not persistent objects,
@@ -119,3 +131,64 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 		activity = ICourseInstanceActivity(course)
 		activity.remove(submission)
 	return grade
+
+def synchronize_gradebook_and_verify_policy(course, *args, **kwargs):
+	synchronize_gradebook(course)
+	# CS: We verify the grading policy after
+	# the gradebook has been synchronized
+	policy = find_grading_policy_for_course(course)
+	if policy is not None and IGradeBookGradingPolicy.providedBy(policy):
+		policy.verify()
+
+def find_entry_for_item(item):
+	assert IUsersCourseAssignmentHistoryItem.providedBy(item)
+	assignmentId = item.Submission.assignmentId
+	course = ICourseInstance(item, None)
+	if course is None:
+		# Typically during tests
+		logger.warning("Assignment %s has no course", assignmentId)
+		return None
+
+	book = IGradeBook(course)
+	entry = book.getColumnForAssignmentId(assignmentId)
+	if entry is None:
+		# Typically during tests something is added
+		synchronize_gradebook_and_verify_policy(course)
+		entry = book.getColumnForAssignmentId(assignmentId)
+	if entry is None:
+		# Also typically during tests.
+		# TODO: Fix those tests to properly register assignments
+		# so this branch goes away
+		logger.warning("Assignment %s not found in course %s", assignmentId, course)
+		return
+	return entry
+
+def set_grade_by_assignment_history_item(item):
+	entry = find_entry_for_item(item)
+	if entry is not None:
+		user = IUser(item)
+		username = user.username
+		if username in entry:
+			grade = entry[username]
+		else:
+			grade = PersistentGrade()
+			grade.username = username
+
+		# If there is an auto-grading policy for the course instance,
+		# then let it convert the auto-assessed part of the submission
+		# into the initial grade value
+		course = ICourseInstance(item)
+		assignmentId = item.Submission.assignmentId
+		policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
+		if policy is not None:
+			autograde = policy.autograde(item.pendingAssessment)
+			if autograde is not None:
+				grade.AutoGrade, grade.AutoGradeMax = autograde
+			if grade.value is None:
+				grade.value = grade.AutoGrade
+
+		if username in entry:
+			grade.updateLastMod()
+		else:
+			# Finally after we finish filling it in, publish it
+			save_in_container(entry, user.username, grade)

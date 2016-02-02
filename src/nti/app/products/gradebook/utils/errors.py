@@ -15,6 +15,6 @@ from pyramid import httpexceptions as hexc
 from nti.app.externalization.error import raise_json_error
 
 def raise_field_error(request, field, message):
-    exc_info = sys.exc_info()
-    data = {u'field':field, u'message': message}
-    raise_json_error(request, hexc.HTTPUnprocessableEntity, data, exc_info[2])
+	exc_info = sys.exc_info()
+	data = {u'field':field, u'message': message}
+	raise_json_error(request, hexc.HTTPUnprocessableEntity, data, exc_info[2])

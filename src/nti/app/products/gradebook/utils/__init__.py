@@ -11,10 +11,22 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+# rexport for BWC
+
+from nti.app.products.gradebook.utils.errors import raise_json_error
+from nti.app.products.gradebook.utils.errors import raise_field_error
+
+from nti.app.products.gradebook.utils.gradebook import save_in_container
+from nti.app.products.gradebook.utils.gradebook import remove_from_container
+from nti.app.products.gradebook.utils.gradebook import mark_btree_bucket_as_changed
+from nti.app.products.gradebook.utils.gradebook import record_grade_without_submission
+from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_history_item
+
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
 from nti.mimetype.mimetype import MIME_BASE
 
+#: Gradebook Base MimeType
 GRADEBOOK_MIME_BASE = MIME_BASE + b'.gradebook'
 
 class MetaGradeBookObject(type):
@@ -37,13 +49,3 @@ def replace_username(username):
 		return username
 	result = substituter.replace(username) or username
 	return result
-
-# rexport for BWC
-
-from .errors import raise_json_error
-from .errors import raise_field_error
-
-from .gradebook import save_in_container
-from .gradebook import remove_from_container
-from .gradebook import mark_btree_bucket_as_changed
-from .gradebook import record_grade_without_submission
