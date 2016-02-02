@@ -20,20 +20,22 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
-from nti.common.string import TRUE_VALUES
-from nti.common.string import FALSE_VALUES
+from nti.app.products.gradebook.interfaces import ILetterGradeScheme
+from nti.app.products.gradebook.interfaces import IBooleanGradeScheme
+from nti.app.products.gradebook.interfaces import IIntegerGradeScheme
+from nti.app.products.gradebook.interfaces import INumericGradeScheme
+
+from nti.app.products.gradebook.utils import MetaGradeBookObject
+
 from nti.common.representation import WithRepr
 
-from nti.schema.schema import EqHash
+from nti.common.string import TRUE_VALUES
+from nti.common.string import FALSE_VALUES
+
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .interfaces import ILetterGradeScheme
-from .interfaces import IBooleanGradeScheme
-from .interfaces import IIntegerGradeScheme
-from .interfaces import INumericGradeScheme
-
-from .utils import MetaGradeBookObject
+from nti.schema.schema import EqHash
 
 @WithRepr
 @EqHash('grades', 'ranges')

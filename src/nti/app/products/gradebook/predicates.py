@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.app.products.gradebook.interfaces import IGradeBook
+
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
@@ -21,8 +23,6 @@ from nti.dataserver.interfaces import ISystemUserPrincipal
 from nti.metadata.predicates import BasePrincipalObjects
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
-
-from .interfaces import IGradeBook
 
 def gradebook_collector(user):
 	for enrollments in component.subscribers((user,), IPrincipalEnrollments):

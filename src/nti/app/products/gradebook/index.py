@@ -11,12 +11,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.intid import IIntIds
+from zope.catalog.interfaces import ICatalog
+from zope.catalog.interfaces import ICatalogIndex
+
+from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
-from zope.catalog.interfaces import ICatalog
-from zope.catalog.interfaces import ICatalogIndex
+from nti.app.products.gradebook.interfaces import IGrade
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -34,8 +36,6 @@ from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.string import StringTokenNormalizer
-
-from .interfaces import IGrade
 
 CATALOG_NAME = 'nti.dataserver.++etc++gradebook-catalog'
 

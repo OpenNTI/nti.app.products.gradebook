@@ -20,17 +20,22 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from persistent import Persistent
 
+from nti.app.products.gradebook.interfaces import IGrade
+
 from nti.common.property import Lazy
 from nti.common.property import alias
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
+
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.dataserver.interfaces import ALL_PERMISSIONS
+
+from nti.dataserver.interfaces import ICreated
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
@@ -42,7 +47,7 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.wref.interfaces import IWeakRef
 
-from .interfaces import IGrade
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 @WithRepr
 @interface.implementer(IGrade)
@@ -139,10 +144,6 @@ class GradeWeakRef(object):
 
 	def __setstate__(self, state):
 		self._part_wref, self._username = state
-
-from nti.dataserver.interfaces import ICreated
-
-from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 @interface.implementer(ICreated, IContentTypeAware)
 class PersistentGrade(Grade, PersistentPropertyHolder):

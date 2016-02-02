@@ -37,12 +37,18 @@ from nti.schema.field import TextLine
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
+#: View grades permission
 ACT_VIEW_GRADES = Permission('nti.actions.gradebook.view_grades')
 
 # NTIID values
 
+#: Gradebook NTIID type
 NTIID_TYPE_GRADE_BOOK = 'gradebook'
+
+#: Gradebook part NTIID type
 NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
+
+#: Gradebook entry NTIID type
 NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
 class IGradeScheme(interface.Interface):
@@ -120,12 +126,6 @@ class IGradeBookEntry(IContainer,
 
 	AssignmentId = ValidTextLine(title="assignment id", required=True)
 
-#	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
-#						  min=0.0,
-#						  max=1.0,
-#						  default=1.0,
-#						  required=False)
-
 	order = Int(title="The entry order", min=1)
 
 	DueDate = Date(title="The date on which the assignment is due", required=False,
@@ -176,12 +176,14 @@ class ISubmittedAssignmentHistoryBase(IShouldHaveTraversablePath):
 		"""
 
 class ISubmittedAssignmentHistory(ISubmittedAssignmentHistoryBase):
-	"Returns full assignment history items."
-
+	"""
+	Returns full assignment history items.
+	"""
 
 class ISubmittedAssignmentHistorySummaries(ISubmittedAssignmentHistoryBase):
-	"Returns summary assignment history items"
-
+	"""
+	Returns summary assignment history items
+	"""
 
 class IGradeBookPart(IContainer,
 					 IContained,
@@ -239,7 +241,7 @@ class IGradeBookPart(IContainer,
 #: grades
 NO_SUBMIT_PART_NAME = 'no_submit'
 
-# special final grade name
+#: Special final grade name
 FINAL_GRADE_NAME = 'Final Grade'
 
 class IGradeBook(IContainer,

@@ -12,12 +12,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.app.products.gradebook.interfaces import IGradeBook
+
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 
-from nti.ntiids.ntiids import get_specific
 from nti.ntiids.interfaces import INTIIDResolver
 
-from .interfaces import IGradeBook
+from nti.ntiids.ntiids import get_specific
 
 def get_course(catalog, key):
 	for course in catalog.iterCatalogEntries():

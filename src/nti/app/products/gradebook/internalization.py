@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import operator
 
 from zope import component
@@ -20,13 +18,16 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
+from nti.app.products.gradebook import MessageFactory as _
+
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import ILetterGradeScheme
+
+from nti.app.products.gradebook.utils import raise_field_error
+
 from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.interfaces import IInternalObjectUpdater
-
-from .interfaces import IGrade
-from .interfaces import ILetterGradeScheme
-
-from .utils import raise_field_error
 
 @component.adapter(IGrade)
 @interface.implementer(IInternalObjectUpdater)
@@ -64,11 +65,11 @@ class _LetterGradeSchemeObjectUpdater(object):
 		request = get_current_request()
 		if len(grades) < 1 or len(set(grades)) != len(grades):
 			raise_field_error(request, "grades",
-							  _("must specify a valid unique list of letter grades"))
+							  _("Must specify a valid unique list of letter grades"))
 
 		if len(grades) != len(ranges):
 			raise_field_error(request, "ranges",
-							  _("must specify equal number of ranges to grades"))
+							  _("Must specify equal number of ranges to grades"))
 
 		# XXX: If we wanted to localize these messages, we must
 		# take the explicit string formatting out
