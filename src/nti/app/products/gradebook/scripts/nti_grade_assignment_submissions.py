@@ -62,7 +62,7 @@ def _process_args(args):
 		submission = item.Submission
 		if not submission: # empty -> manual grades
 			continue
-		grade = set_grade_by_assignment_history_item(item, update=True)
+		grade = set_grade_by_assignment_history_item(item)
 		if args.verbose and grade is not None:
 			logger.info("Setting grade for user %s to %s", username, grade.value)
 

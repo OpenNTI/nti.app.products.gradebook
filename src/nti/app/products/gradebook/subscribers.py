@@ -110,7 +110,7 @@ def _assignment_history_item_added(item, event):
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectModifiedEvent)
 def _assignment_history_item_modifiedl(item, event):
-	set_grade_by_assignment_history_item(item, update=True)
+	set_grade_by_assignment_history_item(item)
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):

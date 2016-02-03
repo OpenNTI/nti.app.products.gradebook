@@ -163,7 +163,7 @@ def find_entry_for_item(item):
 		return
 	return entry
 
-def set_grade_by_assignment_history_item(item, update=False):
+def set_grade_by_assignment_history_item(item):
 	entry = find_entry_for_item(item)
 	if entry is not None:
 		user = IUser(item)
@@ -184,7 +184,7 @@ def set_grade_by_assignment_history_item(item, update=False):
 			autograde = policy.autograde(item.pendingAssessment)
 			if autograde is not None:
 				grade.AutoGrade, grade.AutoGradeMax = autograde
-			if update or grade.value is None:
+			if grade.value is None or grade.value == grade.AutoGrade:
 				grade.value = grade.AutoGrade
 
 		if username in entry:
