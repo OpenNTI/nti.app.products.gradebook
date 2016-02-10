@@ -46,6 +46,7 @@ from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
 
 from nti.dataserver import authorization as nauth
@@ -363,9 +364,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	@Lazy
 	def _all_students(self):
-		everyone = self.course.SharingScopes['Public']
-		enrollment_usernames = {x.lower() for x in IEnumerableEntityContainer(everyone).iter_usernames()}
-		return enrollment_usernames - self._instructors
+		enrollments = ICourseEnrollments( self.course )
+		result = set( (x.lower() for x in enrollments.iter_principals()) )
+		return result - self._instructors
 
 	@Lazy
 	def _open_students(self):
@@ -377,7 +378,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		for_credit_scope = self.course.SharingScopes[ ES_CREDIT ]
 		student_names = {x.lower() for x
 						 in IEnumerableEntityContainer(for_credit_scope).iter_usernames()}
-		return student_names - self._instructors
+		return student_names & self._all_students - self._instructors
 
 	def _get_enrollment_scoped_summaries(self, filter_by):
 		"""
