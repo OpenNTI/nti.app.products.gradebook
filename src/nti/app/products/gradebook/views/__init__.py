@@ -18,6 +18,9 @@ from six import string_types
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
+
+from zope.annotation import IAnnotations
 
 from zope.event import notify
 
@@ -37,6 +40,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
@@ -62,19 +67,19 @@ from nti.externalization.externalization import StandardExternalFields
 
 from nti.links.links import Link
 
-from ..interfaces import IGrade
-from ..interfaces import IGradeBook
-from ..interfaces import IGradeBookEntry
-from ..interfaces import IExcusedGrade
-from ..interfaces import ACT_VIEW_GRADES
-from ..interfaces import NO_SUBMIT_PART_NAME
+from nti.app.products.gradebook.grading import calculate_predicted_grade
+from nti.app.products.gradebook.grading import find_grading_policy_for_course
 
-from ..utils import replace_username
-from ..utils import remove_from_container
-from ..utils import record_grade_without_submission
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
-from ..grading import calculate_predicted_grade
-from ..grading import find_grading_policy_for_course
+from nti.app.products.gradebook.utils import replace_username
+from nti.app.products.gradebook.utils import remove_from_container
+from nti.app.products.gradebook.utils import record_grade_without_submission
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
@@ -837,11 +842,6 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
 		result = super(GradeWithoutSubmissionPutView, self)._do_call()
 		return result
-
-from zope import lifecycleevent
-from zope.annotation import IAnnotations
-
-from nti.appserver.ugd_edit_views import UGDDeleteView
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
