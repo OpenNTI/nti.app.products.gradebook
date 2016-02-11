@@ -65,7 +65,7 @@ def _process_args(args):
 			continue
 		grade = set_grade_by_assignment_history_item(item, args.overwrite)
 		if grade is None:
-			logger.warn("Could not set grade for submission for user %s. Empty Gradebook?", 
+			logger.info("Could not set grade for submission for user %s. Empty Gradebook?", 
 						username)
 		elif args.verbose:
 			logger.info("Setting grade for user %s to %s", username, grade.value)
