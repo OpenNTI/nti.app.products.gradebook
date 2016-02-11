@@ -56,6 +56,7 @@ def _process_args(args):
 	if not users:
 		logger.warn("No submissions in course")
 
+	count = 0
 	assignmentId = args.assignment
 	for username in users:
 		history = histories[username]
@@ -63,21 +64,25 @@ def _process_args(args):
 			continue
 		item = history[assignmentId]
 		submission = item.Submission
-		if not submission: # empty -> manual grades
+		if not submission:  # empty -> manual grades
 			logger.info("Ignoring empty submission for user %s", username)
 			continue
 		grade = set_grade_by_assignment_history_item(item, args.overwrite)
 		if grade is None:
-			logger.warn("Could not set grade for submission for user %s. Empty Gradebook?", 
+			logger.warn("Could not set grade for submission for user %s. Empty Gradebook?",
 						username)
-		elif args.verbose:
-			logger.info("Setting grade for user %s to %s", username, grade.value)
+		else:
+			count += 1
+			if args.verbose:
+				logger.info("Setting grade for user %s to %s", username, grade.value)
+
+	logger.info("%s grade(s) updated", count)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Grade course assignment submissions")
 	arg_parser.add_argument('-v', '--verbose', help="Be Verbose", action='store_true',
 							dest='verbose')
-	
+
 	arg_parser.add_argument('-o', '--overwrite', help="Overwrite grades", action='store_true',
 							dest='overwrite')
 
