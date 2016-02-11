@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import lifecycleevent
 
 from zope.lifecycleevent import added
 
@@ -163,7 +164,7 @@ def find_entry_for_item(item):
 		return
 	return entry
 
-def set_grade_by_assignment_history_item(item, overwrite=False):
+def set_grade_by_assignment_history_item(item, overwrite=False, event=False):
 	entry = find_entry_for_item(item)
 	if entry is not None:
 		user = IUser(item)
@@ -188,7 +189,10 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
 				grade.value = grade.AutoGrade
 
 		if username in entry:
-			grade.updateLastMod()
+			if event:
+				lifecycleevent.modified(event)
+			else:
+				grade.updateLastMod()
 		else:
 			# Finally after we finish filling it in, publish it
 			save_in_container(entry, user.username, grade)

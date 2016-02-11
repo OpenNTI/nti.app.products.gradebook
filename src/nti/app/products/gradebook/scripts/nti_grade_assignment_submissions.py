@@ -67,7 +67,9 @@ def _process_args(args):
 		if not submission:  # empty -> manual grades
 			logger.info("Ignoring empty submission for user %s", username)
 			continue
-		grade = set_grade_by_assignment_history_item(item, args.overwrite)
+		grade = set_grade_by_assignment_history_item(item,
+													 overwrite=args.overwrite,
+													 event=True)
 		if grade is None:
 			logger.warn("Could not set grade for submission for user %s. Empty Gradebook?",
 						username)
