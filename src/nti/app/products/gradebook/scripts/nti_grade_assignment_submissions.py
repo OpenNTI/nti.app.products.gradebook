@@ -62,7 +62,7 @@ def _process_args(args):
 		submission = item.Submission
 		if not submission: # empty -> manual grades
 			continue
-		grade = set_grade_by_assignment_history_item(item)
+		grade = set_grade_by_assignment_history_item(item, args.overwrite)
 		if args.verbose and grade is not None:
 			logger.info("Setting grade for user %s to %s", username, grade.value)
 
@@ -70,6 +70,9 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Grade course assignment submissions")
 	arg_parser.add_argument('-v', '--verbose', help="Be Verbose", action='store_true',
 							dest='verbose')
+	
+	arg_parser.add_argument('-o', '--overwrite', help="Overwrite grades", action='store_true',
+							dest='overwrite')
 
 	arg_parser.add_argument('-s', '--site',
 							dest='site',
