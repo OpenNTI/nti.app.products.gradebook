@@ -61,6 +61,7 @@ def _process_args(args):
 		item = history[assignmentId]
 		submission = item.Submission
 		if not submission: # empty -> manual grades
+			logger.info("Ignoring empty submission for user %s", username)
 			continue
 		grade = set_grade_by_assignment_history_item(item, args.overwrite)
 		if args.verbose and grade is not None:
