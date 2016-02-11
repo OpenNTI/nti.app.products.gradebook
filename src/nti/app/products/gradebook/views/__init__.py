@@ -53,6 +53,7 @@ from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
+from nti.contenttypes.courses.interfaces import get_course_assessment_predicate_for_user
 
 from nti.dataserver import authorization as nauth
 
@@ -66,6 +67,8 @@ from nti.externalization.externalization import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
 
 from nti.links.links import Link
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.app.products.gradebook.grading import calculate_predicted_grade
 from nti.app.products.gradebook.grading import find_grading_policy_for_course
@@ -114,7 +117,7 @@ class UserGradeSummary(object):
 	"""
 	A container for user grade summary info.  Most of these fields
 	are lazy loaded so that these objects can be used in sorting, so
-	that we initialize only the fields we need.
+	that we initialize only the fields as needed.
 	"""
 
 	__class_name__ = 'UserGradeBookSummary'
@@ -123,6 +126,11 @@ class UserGradeSummary(object):
 		self.user = User.get_user(username)
 		self.grade_entry = grade_entry
 		self.course = course
+
+	@property
+	def assignment_filter(self):
+		return get_course_assessment_predicate_for_user( self.user,
+														 self.course )
 
 	@Lazy
 	def alias(self):
@@ -220,13 +228,24 @@ class UserGradeBookSummary(UserGradeSummary):
 		self.gradebook = gradebook
 		self.grade_policy = grade_policy
 
+
+	@Lazy
+	def available_assignments(self):
+		"""
+		Return the available assignment ntiids for this student.
+		"""
+		result = []
+		for assignment in self.assignments:
+			if self.assignment_filter( assignment ):
+				result.append( assignment.ntiid )
+		return result
+
 	@Lazy
 	def _user_stats(self):
 		"""
 		Return overdue/ungraded stats for user.
 		"""
-		gradebook = self.gradebook
-		assignments = self.assignments
+		assignments = (x for x in self.assignments if self.assignment_filter( x ))
 		user = self.user
 		course = self.course
 
@@ -238,13 +257,13 @@ class UserGradeBookSummary(UserGradeSummary):
 
 		if user_histories is not None:
 			for assignment in assignments:
-				grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
+				grade = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
 				user_grade = grade.get(user.username)
 				history_item = user_histories.get(assignment.ntiid)
 
 				# Submission but no grade
 				if 		history_item \
-					and (user_grade is None
+					and (	user_grade is None
 						or 	user_grade.value is None):
 					ungraded_count += 1
 
@@ -348,6 +367,13 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 					return entry
 		return None
 
+	@Lazy
+	def final_grade_assignment(self):
+		result = None
+		if self.final_grade_entry is not None:
+			result = find_object_with_ntiid( self.final_grade_entry.AssignmentId )
+		return result
+
 	def _get_summary_for_student(self, username):
 		return UserGradeBookSummary(username, self.course, self.assignments,
 									self.gradebook, self.final_grade_entry,
@@ -360,7 +386,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		students_iter = (self._get_summary_for_student(username)
 						for username in student_names
 						if User.get_user(username) is not None)
-		return students_iter
+		return (x for x in students_iter if x is not None)
 
 	@Lazy
 	def _instructors(self):
@@ -499,6 +525,12 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# We have our batch links for free at this point.
 		return result_dict.pop(ITEMS)
 
+	def _get_available_final_grade_for_summary(self, summary):
+		result = False
+		if self.final_grade_assignment is not None:
+			result = summary.assignment_filter( self.final_grade_assignment )
+		return result
+
 	def _get_user_dict(self, user_summary):
 		"""
 		Returns a user's gradebook summary.
@@ -511,6 +543,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
+		user_dict['AvailableAssignmentNTIIDs'] = user_summary.available_assignments
+		user_dict['AvailableFinalGrade'] = self._get_available_final_grade_for_summary( user_summary )
 		user_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.usergradebooksummary'
 
 		# Only expose if our course has one
@@ -572,7 +606,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		return results
 
 	def __call__(self):
-		# TODO We could cache on the gradebook, but the
+		# TODO: We could cache on the gradebook, but the
 		# overdue/ungraded counts could change.
 		result_dict = LocatedExternalDict()
 		user_summaries = self._get_user_summaries(result_dict)
@@ -582,11 +616,16 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		result_dict['EnrollmentScope'] = self.filter_scope_name
 		result_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.gradebooksummary'
 
+		any_final_grades = False
 		# Now build our data for each user
 		for user_summary in user_summaries:
 			user_dict = self._get_user_dict(user_summary)
 			items.append(user_dict)
+			if not any_final_grades:
+				any_final_grades = user_dict.get( 'AvailableFinalGrade' )
 
+		# For this result set, do any users have accessible final grades?
+		result_dict['AvailableFinalGrade'] = any_final_grades
 		return result_dict
 
 @view_config(route_name='objects.generic.traversal',
@@ -632,8 +671,16 @@ class AssignmentSummaryView(GradeBookSummaryView):
 		self.grade_entry = context
 		self.course = ICourseInstance(context)
 
+	@property
+	def assignment(self):
+		return find_object_with_ntiid( self.grade_entry.AssignmentId )
+
 	def _get_summary_for_student(self, username):
-		return UserGradeSummary(username, self.grade_entry, self.course)
+		# We filter out any students without access to this assignment here.
+		result = UserGradeSummary(username, self.grade_entry, self.course)
+		if not result.assignment_filter( self.assignment ):
+			result = None
+		return result
 
 	def _get_sort_key(self, sort_on):
 		sort_key = None
