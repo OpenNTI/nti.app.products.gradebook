@@ -182,10 +182,11 @@ def set_grade_by_assignment_history_item(item, overwrite=False, event=False):
 		assignmentId = item.Submission.assignmentId
 		policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
 		if policy is not None:
+			previous = grade.AutoGrade
 			autograde = policy.autograde(item.pendingAssessment)
 			if autograde is not None:
 				grade.AutoGrade, grade.AutoGradeMax = autograde
-			if grade.value is None or grade.value == grade.AutoGrade or overwrite:
+			if grade.value is None or grade.value == previous or overwrite:
 				grade.value = grade.AutoGrade
 
 		if username in entry:
