@@ -23,21 +23,21 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
+from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.utils import replace_username
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.dataserver.users import User
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.interfaces import LocatedExternalList
-
-from ..utils import replace_username
-
-from ..interfaces import IGradeBook
-from ..interfaces import NO_SUBMIT_PART_NAME
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -68,34 +68,34 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		if not status_filter:
 			return lambda course, user: True
 
-		def f(course,user):
+		def f(course, user):
 			# TODO: Replace this with nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord
 			enrollment = component.queryMultiAdapter((course, user),
-												     ICourseInstanceEnrollment)
+													 ICourseInstanceEnrollment)
 			if enrollment is None:
 				# We have a submitted assignment for a user no longer enrolled.
 				return False
-			return enrollment.LegacyEnrollmentStatus == status_filter # Let this blow up when this goes away
+			return enrollment.LegacyEnrollmentStatus == status_filter  # Let this blow up when this goes away
 		return f
 
 	def _string(self, val):
 		if val:
-			val = val.replace( ' ', '' )
+			val = val.replace(' ', '')
 		return val
 
 	def _get_course_name(self, course):
-		entry = ICourseCatalogEntry( course, None )
+		entry = ICourseCatalogEntry(course, None)
 		if entry is not None:
 			base_name = entry.ProviderUniqueID
-			base_name = self._string( base_name )
+			base_name = self._string(base_name)
 		if not base_name:
 			base_name = course.__name__
 		return base_name
 
 	def _get_filename(self, course):
-		base_name = self._get_course_name( course )
+		base_name = self._get_course_name(course)
 		filter_name = self._enrollment_filter
-		filter_name = self._string( filter_name ) or 'full'
+		filter_name = self._string(filter_name) or 'full'
 		suffix = 'grades.csv'
 		result = '%s_%s-%s' % (base_name, filter_name, suffix)
 		return result
@@ -136,7 +136,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		rows.__name__ = self.request.view_name
 		rows.__parent__ = self.request.context
 
-		def _tx_string( val ):
+		def _tx_string(val):
 			# At least in python 2, the CSV writer only works
 			# correctly with str objects, implicitly encoding
 			# otherwise
@@ -149,12 +149,14 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		headers = ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
 		# Assignment names could theoretically have non-ascii chars
 		for asg in sorted_asg_names:
-			asg_name = _tx_string( asg[0] )
+			asg_name = _tx_string(asg[0])
 			# Avoid unicode conversion of our already encoded str.
-			asg_name = asg_name + str( ' Points Grade' )
-			headers.append( asg_name )
-		headers.extend( ['Adjusted Final Grade Numerator','Adjusted Final Grade Denominator', 'End-of-Line Indicator'] )
-		rows.append( headers )
+			asg_name = asg_name + str(' Points Grade')
+			headers.append(asg_name)
+		headers.extend(['Adjusted Final Grade Numerator',
+						'Adjusted Final Grade Denominator',
+						'End-of-Line Indicator'])
+		rows.append(headers)
 
 		# Now a row for each user and each assignment in the same order.
 		# Note that the webapp tends to send string values even when the user
@@ -174,7 +176,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
 			user = User.get_user(username)
-			if not user or not predicate(course,user):
+			if not user or not predicate(course, user):
 				continue
 
 			profile = IUserProfile(user)
@@ -182,7 +184,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 			realname = profile.realname or ''
 			if realname and '@' not in realname and realname != username:
-				human_name = nameparser.HumanName( realname )
+				human_name = nameparser.HumanName(realname)
 				firstname = human_name.first or ''
 				lastname = human_name.last or ''
 			else:
@@ -200,12 +202,12 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					# how to do so in a D2L import-compatible way, but we've seen text
 					# exported values (from our system) anyway, which are probably not
 					# imported into D2L.
-					grade_val = 'Excused' if IExcusedGrade.providedBy( user_grade ) else _tx_grade(grade_val)
-				row.append( grade_val )
+					grade_val = 'Excused' if IExcusedGrade.providedBy(user_grade) else _tx_grade(grade_val)
+				row.append(grade_val)
 
 			final_grade = final_grade_entry.get(username) if final_grade_entry else None
 			row.append(_tx_grade(final_grade.value) if final_grade else 0)
-			row.append( 100 )
+			row.append(100)
 
 			# End-of-line
 			row.append('#')
@@ -221,9 +223,9 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		writer = csv.writer(buf)
 		writer.writerows(rows)
 
-		filename = self._get_filename( course )
-		content_disposition = str( 'attachment; filename="%s"' % filename )
+		filename = self._get_filename(course)
+		content_disposition = str('attachment; filename="%s"' % filename)
 		self.request.response.body = buf.getvalue()
 		self.request.response.content_disposition = content_disposition
-		self.request.response.content_type = str( 'application/octet-stream' )
+		self.request.response.content_type = str('application/octet-stream')
 		return self.request.response

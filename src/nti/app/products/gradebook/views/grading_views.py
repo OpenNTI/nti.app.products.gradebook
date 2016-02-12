@@ -9,17 +9,28 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .. import MessageFactory as _
-
 import six
+
+from pyramid import httpexceptions as hexec
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid import httpexceptions as hexec
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
+from nti.app.products.gradebook import MessageFactory as _
+
+from nti.app.products.gradebook.grades import Grade
+
+from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
+from nti.app.products.gradebook.grading import calculate_predicted_grade
+from nti.app.products.gradebook.grading import find_grading_policy_for_course
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -32,16 +43,6 @@ from nti.dataserver import authorization as nauth
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
-
-from ..grades import Grade
-
-from ..interfaces import IGradeBook
-from ..interfaces import FINAL_GRADE_NAME
-from ..interfaces import NO_SUBMIT_PART_NAME
-
-from ..grading import VIEW_CURRENT_GRADE
-from ..grading import calculate_predicted_grade
-from ..grading import find_grading_policy_for_course
 
 def is_none(value):
 	result = False

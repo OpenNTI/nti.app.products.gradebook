@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .. import MessageFactory as _
-
 import time
 import operator
 
@@ -24,9 +22,20 @@ from pyramid import httpexceptions as hexc
 from natsort import natsort_key
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
+from nti.app.products.gradebook import MessageFactory as _
+
+from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
+
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistoryBase
+
+from nti.app.products.gradebook.utils import replace_username
+
 from nti.appserver.interfaces import IIntIdUserSearchPolicy
+
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
@@ -36,21 +45,18 @@ from nti.contenttypes.courses.interfaces import ES_CREDIT_NONDEGREE
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
-from nti.dataserver.users import Entity
-from nti.dataserver.interfaces import IUser
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import StandardExternalFields
 
-from ..utils import replace_username
+from nti.externalization.interfaces import LocatedExternalDict
 
-from ..interfaces import ACT_VIEW_GRADES
-
-from ..interfaces import IGradeBookEntry
-from ..interfaces import ISubmittedAssignmentHistoryBase
+from nti.externalization.oids import to_external_ntiid_oid
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -358,9 +364,9 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
 		# we aren't expecting a submission at all, plus that case causes the creation
 		# of a fake submission anyway).
 		# This will let us apply the force-placeholder trick
-		#return self.__do_sort_by_grade_attribute( filter_usernames,
-		#										  sort_reverse,
-		#										  key=lambda x: x[1].createdTime)
+		# return self.__do_sort_by_grade_attribute( filter_usernames,
+		#										   sort_reverse,
+		#										   key=lambda x: x[1].createdTime)
 
 		# So now this is almost exactly like sorting by feedback count
 		x = self.__sort_usernames_by_submission(filter_usernames,

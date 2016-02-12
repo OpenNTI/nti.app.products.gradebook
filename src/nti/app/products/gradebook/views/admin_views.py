@@ -11,23 +11,30 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
-from pyramid.view import view_config
-from pyramid.view import view_defaults
+from zope import component
+
 from pyramid import httpexceptions as hexc
 
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.products.gradebook.assignments import synchronize_gradebook
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeScheme
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+
+from nti.app.products.gradebook.utils import replace_username
+
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from ..utils import replace_username
-
-from ..interfaces import IGradeBook
-from ..interfaces import IGradeScheme
-from ..interfaces import IGradeBookEntry
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -45,19 +52,16 @@ class SetGradeSchemeView(AbstractAuthenticatedView,
 	def _do_call(self):
 		theObject = self.request.context
 		theObject.creator = self.getRemoteUser()
-
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-
 		externalValue = self.readInput()
 		theObject.GradeScheme = externalValue
-
 		return theObject
 
 import csv
 from io import BytesIO
 
-from zope import component
+from nti.app.products.courseware.views import CourseAdminPathAdapter
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -87,9 +91,7 @@ def _tx_grade(value):
 		return _tx_string(value)
 
 def _catalog_entry(params):
-	ntiid = params.get('ntiid') or \
-			params.get('entry') or \
-			params.get('course')
+	ntiid = params.get('ntiid')
 	if not ntiid:
 		raise hexc.HTTPUnprocessableEntity('No course entry identifier')
 
@@ -104,8 +106,6 @@ def _catalog_entry(params):
 		except KeyError:
 			entry = None
 	return entry
-
-from nti.app.products.courseware.views import CourseAdminPathAdapter
 
 @view_config(context=IDataserverFolder)
 @view_config(context=CourseAdminPathAdapter)
@@ -153,10 +153,6 @@ class CourseGradesView(AbstractAuthenticatedView):
 		response.body = bio.getvalue()
 		response.content_disposition = b'attachment; filename="grades.csv"'
 		return response
-
-from nti.externalization.interfaces import LocatedExternalDict
-
-from ..assignments import synchronize_gradebook
 
 @view_config(context=IDataserverFolder)
 @view_config(context=CourseAdminPathAdapter)
