@@ -164,7 +164,7 @@ def find_entry_for_item(item):
 		return
 	return entry
 
-def set_grade_by_assignment_history_item(item, overwrite=False, event=False):
+def set_grade_by_assignment_history_item(item, overwrite=False):
 	entry = find_entry_for_item(item)
 	if entry is not None:
 		user = IUser(item)
@@ -190,10 +190,7 @@ def set_grade_by_assignment_history_item(item, overwrite=False, event=False):
 				grade.value = grade.AutoGrade
 
 		if username in entry:
-			if event:
-				lifecycleevent.modified(event)
-			else:
-				grade.updateLastMod()
+			lifecycleevent.modified(grade)
 		else:
 			# Finally after we finish filling it in, publish it
 			save_in_container(entry, user.username, grade)

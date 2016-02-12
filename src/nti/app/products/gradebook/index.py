@@ -163,9 +163,7 @@ class MetadataGradeCatalog(Catalog):
 
 def install_grade_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
-	if intids is None:
-		intids = lsm.getUtility(IIntIds)
-
+	intids = lsm.getUtility(IIntIds) if intids is None else intids
 	catalog = lsm.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
 	if catalog is not None:
 		return catalog
