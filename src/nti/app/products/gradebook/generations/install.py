@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 7
+generation = 8
 
 from zope.intid.interfaces import IIntIds
 
