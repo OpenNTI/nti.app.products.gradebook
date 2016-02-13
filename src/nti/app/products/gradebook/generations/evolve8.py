@@ -64,12 +64,15 @@ def do_evolve(context, generation=generation):
 		query = {
 			'mimeType': {'any_of': ('application/vnd.nextthought.grade',)}
 		}
+		count = 0
 		for uid in metadata.apply(query) or ():
 			grade = intids.queryObject(uid)
 			if IGrade.providedBy(grade):
+				count += 1
 				catalog.index_doc(uid, grade)
 
-	logger.info('Gradebook evolution %s done' , generation)
+	logger.info('Gradebook evolution %s done, %s grade(s) indexed',
+				generation, count)
 
 def evolve(context):
 	"""
