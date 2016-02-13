@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 3
 
-import zope.intid
+from zope.intid.interfaces import IIntIds
 
 from zope.location.location import locate
 
@@ -19,13 +19,15 @@ from zope.catalog.interfaces import ICatalog
 
 from ZODB.interfaces import IConnection
 
-from ..grades import Grade
-from ..index import CATALOG_NAME
-from ..interfaces import IGradeBook
+from nti.app.products.gradebook.generations.evolve2 import copy_grade
+from nti.app.products.gradebook.generations.evolve2 import iter_courses
+from nti.app.products.gradebook.generations.evolve2 import pick_course_instructor
 
-from .evolve2 import copy_grade
-from .evolve2 import iter_courses
-from .evolve2 import pick_course_instructor
+from nti.app.products.gradebook.grades import Grade
+
+from nti.app.products.gradebook.index import CATALOG_NAME
+
+from nti.app.products.gradebook.interfaces import IGradeBook
 
 def check_book(book, intids, instructor, grade_index):
 
@@ -67,7 +69,7 @@ def do_evolve(context, generation=generation):
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
 	lsm = dataserver_folder.getSiteManager()
-	intids = lsm.getUtility(zope.intid.IIntIds)
+	intids = lsm.getUtility(IIntIds)
 	grade_index = lsm.getUtility(ICatalog, name=CATALOG_NAME)
 
 	total = 0

@@ -11,11 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 2
 
-import zope.intid
-
 from zope import component
 
 from zope.component.hooks import site as current_site
+
+from zope.intid.interfaces import IIntIds
 
 from zope.location.location import locate
 
@@ -24,15 +24,17 @@ from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
 from ZODB.interfaces import IConnection
 
+from nti.app.products.gradebook.grades import PersistentGrade
+
+from nti.app.products.gradebook.index import install_grade_catalog
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.interfaces import IUser
-
-from ..interfaces import IGradeBook
-from ..grades import PersistentGrade
-from ..index import install_grade_catalog
 
 def copy_grade(grade, instructor, username):
 	new_grade = PersistentGrade()
@@ -117,7 +119,7 @@ def do_evolve(context, generation=generation):
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
 	lsm = dataserver_folder.getSiteManager()
-	intids = lsm.getUtility(zope.intid.IIntIds)
+	intids = lsm.getUtility(IIntIds)
 
 	# install grade catalog
 	grade_index = install_grade_catalog(dataserver_folder, intids)

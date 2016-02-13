@@ -11,9 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 5
 
-from ..interfaces import IGradeBook
+from nti.app.products.gradebook.generations.evolve2 import iter_courses
 
-from .evolve2 import iter_courses
+from nti.app.products.gradebook.interfaces import IGradeBook
 
 def remove_annotations_attribute(book):
 	count = 0

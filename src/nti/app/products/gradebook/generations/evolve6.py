@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 6
 
-from .evolve3 import do_evolve
+from nti.app.products.gradebook.generations.evolve3 import do_evolve
 
 def evolve(context):
 	"""

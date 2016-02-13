@@ -11,16 +11,16 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 4
 
-import zope.intid
-
 from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
 
 import BTrees
 
-from nti.dataserver.interfaces import IMetadataCatalog
+from nti.app.products.gradebook.index import CATALOG_NAME
+from nti.app.products.gradebook.index import MetadataGradeCatalog
 
-from ..index import CATALOG_NAME
-from ..index import MetadataGradeCatalog
+from nti.dataserver.interfaces import IMetadataCatalog
 
 def do_evolve(context, generation=generation):
 	logger.info("Gradebook evolution %s started", generation);
@@ -28,7 +28,7 @@ def do_evolve(context, generation=generation):
 	conn = context.connection
 	ds_folder = conn.root()['nti.dataserver']
 	lsm = ds_folder.getSiteManager()
-	intids = lsm.getUtility(zope.intid.IIntIds)
+	intids = lsm.getUtility(IIntIds)
 
 	# unregister old catalog
 	old_catalog = lsm.getUtility(ICatalog, name=CATALOG_NAME)
