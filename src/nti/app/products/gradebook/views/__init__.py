@@ -228,18 +228,6 @@ class UserGradeBookSummary(UserGradeSummary):
 		self.gradebook = gradebook
 		self.grade_policy = grade_policy
 
-
-	@Lazy
-	def available_assignments(self):
-		"""
-		Return the available assignment ntiids for this student.
-		"""
-		result = []
-		for assignment in self.assignments:
-			if self.assignment_filter( assignment ):
-				result.append( assignment.ntiid )
-		return result
-
 	@Lazy
 	def _user_stats(self):
 		"""
@@ -543,7 +531,6 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
-		user_dict['AvailableAssignmentNTIIDs'] = user_summary.available_assignments
 		user_dict['AvailableFinalGrade'] = self._get_available_final_grade_for_summary( user_summary )
 		user_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.usergradebooksummary'
 
