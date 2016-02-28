@@ -29,13 +29,13 @@ from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 
+from nti.contenttypes.courses.common import get_course_packages
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.contenttypes.courses.utils import get_course_packages
-
-# : Current grade link/view
+#: Current grade link/view
 VIEW_CURRENT_GRADE = 'CurrentGrade'
 
 PredictedGrade = namedtuple('PredictedGrade', 'Grade RawValue Correctness')
