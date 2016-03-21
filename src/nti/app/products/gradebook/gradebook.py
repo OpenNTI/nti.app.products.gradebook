@@ -306,7 +306,7 @@ class GradeBookPart(SchemaConfigured,
 	def __str__(self):
 		return self.displayName
 
-from .grades import PersistentGrade
+from nti.app.products.gradebook.grades import PersistentGrade
 
 class GradeWithoutSubmission(PersistentGrade):
 	"""
