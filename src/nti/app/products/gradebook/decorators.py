@@ -20,6 +20,13 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
+from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
+from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contentlibrary.interfaces import IContentPackage
@@ -31,25 +38,19 @@ from nti.contenttypes.courses.utils import is_course_instructor
 
 from nti.dataserver.users import User
 
+from nti.externalization.externalization import to_external_object
+
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization.externalization import to_external_object
 
 from nti.links.links import Link
 
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.traversal.traversal import find_interface
-
-from .interfaces import IGrade
-from .interfaces import IGradeBook
-from .interfaces import IExcusedGrade
-from .interfaces import ACT_VIEW_GRADES
-from .interfaces import ISubmittedAssignmentHistory
-from .interfaces import ISubmittedAssignmentHistorySummaries
 
 LINKS = StandardExternalFields.LINKS
 CLASS = StandardExternalFields.CLASS
@@ -264,8 +265,10 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 
 		link_to_bulk_history = Link(asg_history,
 									rel='GradeSubmittedAssignmentHistory')
+
 		link_to_summ_history = Link(ISubmittedAssignmentHistorySummaries(column),
 									rel='GradeSubmittedAssignmentHistorySummaries')
+
 		gradebook_summary_link = Link(column,
 									rel='GradeBookByAssignment', elements=('Summary',))
 

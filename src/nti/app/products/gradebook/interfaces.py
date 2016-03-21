@@ -10,9 +10,10 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 
 from zope.container.constraints import contains
+from zope.container.constraints import containers
+
 from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
-from zope.container.constraints import containers
 
 from zope.interface.interface import taggedValue
 

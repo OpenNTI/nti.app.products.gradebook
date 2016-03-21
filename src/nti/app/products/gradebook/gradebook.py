@@ -23,6 +23,15 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from pyramid.traversal import lineage
 
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeBookPart
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK
+from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK_PART
+from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
+from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
+from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
+
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
@@ -41,20 +50,13 @@ from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids import ntiids
 
-from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
+
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.traversal.traversal import find_interface
+from nti.schema.schema import EqHash
 
-from .interfaces import IGradeBook
-from .interfaces import IGradeBookPart
-from .interfaces import IGradeBookEntry
-from .interfaces import NTIID_TYPE_GRADE_BOOK
-from .interfaces import NTIID_TYPE_GRADE_BOOK_PART
-from .interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
-from .interfaces import ISubmittedAssignmentHistory
-from .interfaces import ISubmittedAssignmentHistorySummaries
+from nti.traversal.traversal import find_interface
 
 @interface.implementer(IContentTypeAware)
 class _NTIIDMixin(object):
@@ -270,8 +272,8 @@ class GradeBookPart(SchemaConfigured,
 
 	def getEntryByAssignment(self, assignmentId, check_name=False):
 		for entry in self.values():
-			if 	entry.assignmentId == assignmentId or \
-				(check_name and entry.__name__ == assignmentId):
+			if 		entry.assignmentId == assignmentId \
+				or 	(check_name and entry.__name__ == assignmentId):
 				return entry
 		return None
 	get_entry_by_assignment = getEntryByAssignment
