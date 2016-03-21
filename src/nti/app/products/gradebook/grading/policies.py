@@ -18,8 +18,6 @@ from collections import defaultdict
 from zope import component
 from zope import interface
 
-from zope.interface import Invalid
-
 from zope.security.interfaces import IPrincipal
 
 from ZODB import loglevels
@@ -141,12 +139,15 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 			assert points, "Could not find points for %s" % assignment
 
 	def verify(self, book=None):
+		result = True
 		book = self.book if book is None else book
 		for name in self.grader._raw_assignments():
 			if is_valid_ntiid_string(name):
 				entry = book.getEntryByAssignment(name)
 				if entry is None:
-					raise Invalid("Could not find GradeBook Entry for %s", name)
+					result = False
+					logger.error("Could not find GradeBook Entry for %s", name)
+		return result
 
 	@property
 	def groups(self):
@@ -330,8 +331,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 
 			# drop excused grades and invalid grades
 			logger.log(LOGLEVEL,
-						"%s have been skipped",
-						[x for x in grades if x.excused or x.invalid_grade])
+					   "%s have been skipped",
+					   [x for x in grades if x.excused or x.invalid_grade])
 
 			grades = [x for x in grades if not x.excused and not x.invalid_grade]
 			drop_count += (grade_count - len(grades))
