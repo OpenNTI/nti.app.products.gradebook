@@ -37,6 +37,7 @@ from nti.assessment.submission import AssignmentSubmission
 from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.interfaces import IUser
 
@@ -138,8 +139,11 @@ def synchronize_gradebook_and_verify_policy(course, *args, **kwargs):
 	# CS: We verify the grading policy after
 	# the gradebook has been synchronized
 	policy = find_grading_policy_for_course(course)
-	if policy is not None and IGradeBookGradingPolicy.providedBy(policy):
-		policy.verify()
+	if 		policy is not None \
+		and IGradeBookGradingPolicy.providedBy(policy) \
+		and not policy.verify():
+		entry = ICourseCatalogEntry(course)
+		logger.error("There are errors in grading policy for course %s", entry.ntiid)
 
 def find_entry_for_item(item):
 	assert IUsersCourseAssignmentHistoryItem.providedBy(item)

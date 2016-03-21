@@ -33,7 +33,11 @@ class IGradeBookGradingPolicy(ICourseGradingPolicy):
 	PresentationGradeScheme = Object(IGradeScheme, required=False)
 
 	def verify(gradebook=None):
-		pass
+		"""
+		verify this policy.
+		
+		:returns True if the policy is valid
+		"""
 
 	def grade(principal, verbose=False):
 		pass
