@@ -281,7 +281,7 @@ class GradeBookPart(SchemaConfigured,
 	def remove_user(self, username):
 		result = 0
 		username = username.lower()
-		for entry in self.values():
+		for entry in list(self.values()):
 			if username in entry:
 				del entry[username]
 				result += 1
@@ -293,15 +293,22 @@ class GradeBookPart(SchemaConfigured,
 		return dict(self)
 
 	def has_grades(self, username):
-		for entry in self.values():
+		for entry in list(self.values()):
 			if username in entry:
 				return True
 		return False
 
 	def iter_grades(self, username):
-		for entry in self.values():
+		for entry in list(self.values()):
 			if username in entry:
-				yield entry[username]
+				try:
+					grade = entry[username]
+					yield grade
+				except KeyError:
+					# in alpha we have seen key errors even though
+					# the membership check has been made
+					logger.exception("Could not find grade for %s in entry %s",
+									 username, entry.__name__)
 
 	def __str__(self):
 		return self.displayName
