@@ -193,6 +193,10 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
 			if grade.value is None or grade.value == previous or overwrite:
 				grade.value = grade.AutoGrade
 
+		if not getattr(grade, 'creator', None):
+			instructors = course.instructors  # principals
+			grade.creator = instructors[0].id if instructors else None
+
 		if username in entry:
 			lifecycleevent.modified(grade)
 		else:
