@@ -34,6 +34,7 @@ from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
 from pyramid.traversal import find_interface
 
+from nti.app.assessment.interfaces import IObjectRegradeEvent
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
@@ -109,7 +110,11 @@ def _assignment_history_item_added(item, event):
 	set_grade_by_assignment_history_item(item)
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectModifiedEvent)
-def _assignment_history_item_modifiedl(item, event):
+def _assignment_history_item_modified(item, event):
+	set_grade_by_assignment_history_item(item)
+
+@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRegradeEvent)
+def _regrade_assignment_history_item(item, event):
 	set_grade_by_assignment_history_item(item)
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
