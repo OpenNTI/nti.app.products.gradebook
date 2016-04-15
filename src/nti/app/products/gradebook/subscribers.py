@@ -40,6 +40,8 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.app.products.gradebook import get_grade_catalog
 
+from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
+
 from nti.app.products.gradebook.index import IX_SITE
 from nti.app.products.gradebook.index import IX_COURSE
 from nti.app.products.gradebook.index import IX_STUDENT
@@ -115,7 +117,11 @@ def _assignment_history_item_modified(item, event):
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRegradeEvent)
 def _regrade_assignment_history_item(item, event):
-	set_grade_by_assignment_history_item(item)
+	assignmentId = item.assignmentId
+	course = ICourseInstance(item, None)
+	policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
+	if policy is not None:
+		set_grade_by_assignment_history_item(item)
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):

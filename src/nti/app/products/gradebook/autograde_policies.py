@@ -157,6 +157,9 @@ def find_autograde_policy_for_assignment_in_course(course, assignmentId):
 	# part of the item submitted for autograding. We could wrap the logic
 	# all up in the policy itself. But this makes the API intent fairly clear...
 
+	if course is None or not assignmentId:
+		return None
+
 	# Is there a nice new one?
 	policy = _policy_based_autograde_policy(course, assignmentId)
 	if policy is not None:
@@ -199,3 +202,4 @@ def find_autograde_policy_for_assignment_in_course(course, assignmentId):
 			return registry.getUtility(IPendingAssessmentAutoGradePolicy, name=name)
 		except LookupError:
 			pass
+	return None
