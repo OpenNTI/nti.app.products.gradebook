@@ -65,6 +65,7 @@ from nti.contenttypes.courses.index import IX_USERNAME
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.contenttypes.courses.interfaces import ICourseInstanceImportedEvent
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
 from nti.dataserver.activitystream_change import Change
@@ -137,6 +138,10 @@ def _assignment_history_item_removed(item, event):
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
+	synchronize_gradebook_and_verify_policy(course)
+
+@component.adapter(ICourseInstance, ICourseInstanceImportedEvent)
+def _on_course_instance_imported(course, event):
 	synchronize_gradebook_and_verify_policy(course)
 
 # Storing notable items.

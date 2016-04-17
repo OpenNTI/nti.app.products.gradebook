@@ -193,6 +193,7 @@
 
 	<!-- Events -->
 	<subscriber handler=".subscribers._on_user_will_be_removed" />
+	<subscriber handler=".subscribers._on_course_instance_imported" />
 	<subscriber handler=".subscribers._assignment_history_item_added" />
 	<subscriber handler=".subscribers._assignment_history_item_removed" />
 	<subscriber handler=".subscribers._regrade_assignment_history_item" />
