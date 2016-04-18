@@ -11,8 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import nameparser
 from datetime import datetime
+
+import nameparser
 
 from six import string_types
 
@@ -28,15 +29,18 @@ from zope.lifecycleevent import ObjectModifiedEvent
 
 from zope.traversing.interfaces import IPathAdapter
 
-from pyramid.view import view_config
-from pyramid.interfaces import IRequest
 from pyramid import httpexceptions as hexec
+
+from pyramid.interfaces import IRequest
+
+from pyramid.view import view_config
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -46,8 +50,9 @@ from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
-from nti.common.property import Lazy
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.property import Lazy
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -129,8 +134,8 @@ class UserGradeSummary(object):
 
 	@property
 	def assignment_filter(self):
-		return get_course_assessment_predicate_for_user( self.user,
-														 self.course )
+		return get_course_assessment_predicate_for_user(self.user,
+														 self.course)
 
 	@Lazy
 	def alias(self):
@@ -233,7 +238,7 @@ class UserGradeBookSummary(UserGradeSummary):
 		"""
 		Return overdue/ungraded stats for user.
 		"""
-		assignments = (x for x in self.assignments if self.assignment_filter( x ))
+		assignments = (x for x in self.assignments if self.assignment_filter(x))
 		user = self.user
 		course = self.course
 
@@ -251,7 +256,7 @@ class UserGradeBookSummary(UserGradeSummary):
 
 				# Submission but no grade
 				if 		history_item \
-					and (	user_grade is None
+					and (user_grade is None
 						or 	user_grade.value is None):
 					ungraded_count += 1
 
@@ -343,7 +348,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	@Lazy
 	def assignments(self):
 		assignment_catalog = ICourseAssignmentCatalog(self.course)
-		assignments = [asg for asg in assignment_catalog.iter_assignments()]
+		assignments = tuple(asg for asg in assignment_catalog.iter_assignments())
 		return assignments
 
 	@Lazy
@@ -359,7 +364,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def final_grade_assignment(self):
 		result = None
 		if self.final_grade_entry is not None:
-			result = find_object_with_ntiid( self.final_grade_entry.AssignmentId )
+			result = find_object_with_ntiid(self.final_grade_entry.AssignmentId)
 		return result
 
 	def _get_summary_for_student(self, username):
@@ -372,9 +377,9 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		For the given names, return student summaries.
 		"""
 		students_iter = (self._get_summary_for_student(username)
-						for username in student_names
-						if User.get_user(username) is not None)
-		return (x for x in students_iter if x is not None)
+						 for username in student_names
+						 if User.get_user(username) is not None)
+		return tuple(x for x in students_iter if x is not None)
 
 	@Lazy
 	def _instructors(self):
@@ -383,8 +388,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 	@Lazy
 	def _all_students(self):
-		enrollments = ICourseEnrollments( self.course )
-		result = set( (x.lower() for x in enrollments.iter_principals()) )
+		enrollments = ICourseEnrollments(self.course)
+		result = {x.lower() for x in enrollments.iter_principals()}
 		return result - self._instructors
 
 	@Lazy
@@ -443,12 +448,12 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_summaries = self._get_enrollment_scoped_summaries(filter_by)
 
 		if 'ungraded' in filter_by:
-			user_summaries = (x for x in user_summaries if x.ungraded_count > 0)
+			user_summaries = tuple(x for x in user_summaries if x.ungraded_count > 0)
 		elif 'overdue' in filter_by:
-			user_summaries = (x for x in user_summaries if x.overdue_count > 0)
+			user_summaries = tuple(x for x in user_summaries if x.overdue_count > 0)
 		elif 'actionable' in filter_by:
-			user_summaries = (x for x in user_summaries
-							  if x.overdue_count > 0 or x.ungraded_count > 0)
+			user_summaries = tuple(x for x in user_summaries
+								   if x.overdue_count > 0 or x.ungraded_count > 0)
 
 		# Resolve
 		user_summaries = [x for x in user_summaries]
@@ -516,7 +521,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 	def _get_available_final_grade_for_summary(self, summary):
 		result = False
 		if self.final_grade_assignment is not None:
-			result = summary.assignment_filter( self.final_grade_assignment )
+			result = summary.assignment_filter(self.final_grade_assignment)
 		return result
 
 	def _get_user_dict(self, user_summary):
@@ -531,7 +536,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['HistoryItemSummary'] = user_summary.history_summary
 		user_dict['OverdueAssignmentCount'] = user_summary.overdue_count
 		user_dict['UngradedAssignmentCount'] = user_summary.ungraded_count
-		user_dict['AvailableFinalGrade'] = self._get_available_final_grade_for_summary( user_summary )
+		user_dict['AvailableFinalGrade'] = self._get_available_final_grade_for_summary(user_summary)
 		user_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.usergradebooksummary'
 
 		# Only expose if our course has one
@@ -545,8 +550,8 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		# Link to user's assignment histories
 		links = user_dict.setdefault(LINKS, [])
 		links.append(Link(self.course,
-							rel='AssignmentHistory',
-							elements=('AssignmentHistories', user_summary.user.username)))
+						  rel='AssignmentHistory',
+						  elements=('AssignmentHistories', user_summary.user.username)))
 		return user_dict
 
 	def _search_summaries(self, search_param, user_summaries):
@@ -559,11 +564,11 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
 		def matches(user_summary):
 			result = (user_summary.alias
-					and search_param in user_summary.alias.lower()) \
+					  and search_param in user_summary.alias.lower()) \
 				or	(user_summary.username
-					and search_param in user_summary.username.lower()) \
+					 and search_param in user_summary.username.lower()) \
 				or 	(user_summary.last_name
-					and	search_param in user_summary.last_name.lower())
+					 and search_param in user_summary.last_name.lower())
 			return result
 
 		results = [x for x in user_summaries if matches(x)]
@@ -609,7 +614,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 			user_dict = self._get_user_dict(user_summary)
 			items.append(user_dict)
 			if not any_final_grades:
-				any_final_grades = user_dict.get( 'AvailableFinalGrade' )
+				any_final_grades = user_dict.get('AvailableFinalGrade')
 
 		# For this result set, do any users have accessible final grades?
 		result_dict['AvailableFinalGrade'] = any_final_grades
@@ -660,12 +665,12 @@ class AssignmentSummaryView(GradeBookSummaryView):
 
 	@property
 	def assignment(self):
-		return find_object_with_ntiid( self.grade_entry.AssignmentId )
+		return find_object_with_ntiid(self.grade_entry.AssignmentId)
 
 	def _get_summary_for_student(self, username):
 		# We filter out any students without access to this assignment here.
 		result = UserGradeSummary(username, self.grade_entry, self.course)
-		if not result.assignment_filter( self.assignment ):
+		if not result.assignment_filter(self.assignment):
 			result = None
 		return result
 
@@ -709,7 +714,6 @@ class AssignmentSummaryView(GradeBookSummaryView):
 		for user_summary in user_summaries:
 			user_dict = self._get_user_dict(user_summary)
 			items.append(user_dict)
-
 		return result_dict
 
 @view_config(route_name='objects.generic.traversal',
@@ -719,8 +723,8 @@ class AssignmentSummaryView(GradeBookSummaryView):
 			 name='SetGrade',
 			 request_method='POST')
 class GradeBookPutView(AbstractAuthenticatedView,
-				   		ModeledContentUploadRequestUtilsMixin,
-						ModeledContentEditRequestUtilsMixin):
+				   	   ModeledContentUploadRequestUtilsMixin,
+					   ModeledContentEditRequestUtilsMixin):
 	"""
 	Allows end users to set arbitrary grades in the gradebook,
 	returning the assignment history item.
@@ -755,7 +759,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
 		# Check our if-modified-since header
 		self._check_object_unmodified_since(grade)
 
-		grade.creator = self.getRemoteUser()
+		grade.creator = self.getRemoteUser().username
 		grade.value = new_grade_value
 
 		# If we get this far, we've modified a new or
@@ -784,7 +788,7 @@ class GradePutView(AbstractAuthenticatedView,
 
 	def _do_call(self):
 		theObject = self.request.context
-		theObject.creator = self.getRemoteUser()
+		theObject.creator = self.getRemoteUser().username
 
 		# perform checks
 		self._check_object_exists(theObject)

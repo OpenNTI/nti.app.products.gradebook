@@ -79,8 +79,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		return f
 
 	def _string(self, val):
-		if val:
-			val = val.replace(' ', '')
+		val = val.replace(' ', '') if val else val
 		return val
 
 	def _get_course_name(self, course):

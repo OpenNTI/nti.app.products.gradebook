@@ -16,8 +16,9 @@ from six import string_types
 
 from zope import component
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
 
 from natsort import natsort_key
 
