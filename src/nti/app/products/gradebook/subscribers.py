@@ -151,6 +151,13 @@ def _on_course_instance_imported(course, event):
 
 _CHANGE_KEY = 'nti.app.products.gradebook.subscribers.ENTRY_CHANGE_KEY'
 
+def _get_user(user):
+	if not IUser.providedBy(user) and user:
+		result = User.get_user(str(user))
+	else:
+		result = user
+	return user if result is None else user
+
 def _get_entry_change_storage(entry):
 	annotes = IAnnotations(entry)
 	changes = annotes.get(_CHANGE_KEY)
@@ -179,7 +186,7 @@ def _do_store_grade_created_event(grade, event):
 	change.createdTime = now
 
 	if grade.creator is not None:
-		change.creator = grade.creator
+		change.creator = _get_user(grade.creator)
 	else:
 		# If we can get to a course, we arbitrarily assume
 		# it's from the first instructor in the list
@@ -188,7 +195,8 @@ def _do_store_grade_created_event(grade, event):
 			roles = IPrincipalRoleMap(instance)
 			for instructor in instance.instructors:
 				if roles.getSetting(RID_INSTRUCTOR, instructor.id) is Allow:
-					change.creator = grade.creator = IUser(instructor)
+					grade.creator = instructor.id
+					change.creator = IUser(instructor)
 					break
 		except (TypeError, IndexError, AttributeError):
 			pass
