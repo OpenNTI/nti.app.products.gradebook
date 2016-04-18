@@ -32,13 +32,23 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.securitypolicy.interfaces import Allow
 from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
+from pyramid import httpexceptions as hexc
+
+from pyramid.threadlocal import get_current_request
+
 from pyramid.traversal import find_interface
 
 from nti.app.assessment.interfaces import IObjectRegradeEvent
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
+from nti.app.externalization.error import raise_json_error
+
+from nti.app.products.gradebook import MessageFactory as _
+
 from nti.app.products.gradebook import get_grade_catalog
+
+from nti.app.products.gradebook.assignments import create_assignment_entry
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
 
@@ -55,6 +65,12 @@ from nti.app.products.gradebook.utils import remove_from_container
 from nti.app.products.gradebook.utils.gradebook import find_entry_for_item
 from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_history_item
 from nti.app.products.gradebook.utils.gradebook import synchronize_gradebook_and_verify_policy
+
+from nti.assessment.interfaces import IQAssignment 
+from nti.assessment.interfaces import IQEditableEvalutation
+
+from nti.coremetadata.interfaces import IObjectPublishedEvent
+from nti.coremetadata.interfaces import IObjectUnpublishedEvent
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
@@ -73,8 +89,13 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
+
 from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
 
+def raise_error(v, tb=None, factory=hexc.HTTPUnprocessableEntity):
+	request = get_current_request()
+	raise_json_error(request, factory, v, tb)
+	
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
 	if book is None:
@@ -124,6 +145,29 @@ def _regrade_assignment_history_item(item, event):
 	if policy is not None:
 		set_grade_by_assignment_history_item(item)
 
+@component.adapter(IQEditableEvalutation, IObjectPublishedEvent)
+def _on_evalulation_published(item, event):
+	if IQAssignment.providedBy(item):
+		course = ICourseInstance(item, None)
+		book = IGradeBook(course, None)
+		if book is not None:
+			displayName = item.title or 'Assignment'
+			create_assignment_entry(course, item, displayName, _book=book)
+	
+@component.adapter(IQEditableEvalutation, IObjectUnpublishedEvent)
+def _on_evalulation_unpublished(item, event):
+	if IQAssignment.providedBy(item):
+		course = ICourseInstance(item, None)
+		book = IGradeBook(course, None)
+		if book is not None:
+			entry = book.getColumnForAssignmentId(item.ntiid)
+			if entry:
+				raise_error(
+					{
+						u'message': _("Cannot unpublish assignment with grades."),
+						u'code': 'CannotUnpublishObject',
+					})
+					
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
 	entry = find_entry_for_item(item)
