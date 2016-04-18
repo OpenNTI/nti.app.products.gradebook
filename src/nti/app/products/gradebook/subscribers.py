@@ -294,7 +294,7 @@ def unindex_grade_data(username):
 		# get all doc ids (it's a wrapper)
 		values_to_documents = index.index.values_to_documents
 		docs = values_to_documents.get(username) or ()
-		for uid in list(docs):
+		for uid in tuple(docs):
 			catalog.unindex_doc(uid)
 			result += 1
 	return result
