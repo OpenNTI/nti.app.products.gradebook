@@ -67,7 +67,7 @@ from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_h
 from nti.app.products.gradebook.utils.gradebook import synchronize_gradebook_and_verify_policy
 
 from nti.assessment.interfaces import IQAssignment 
-from nti.assessment.interfaces import IQEditableEvalutation
+from nti.assessment.interfaces import IQEditableEvaluation
 
 from nti.coremetadata.interfaces import IObjectPublishedEvent
 from nti.coremetadata.interfaces import IObjectUnpublishedEvent
@@ -145,7 +145,7 @@ def _regrade_assignment_history_item(item, event):
 	if policy is not None:
 		set_grade_by_assignment_history_item(item)
 
-@component.adapter(IQEditableEvalutation, IObjectPublishedEvent)
+@component.adapter(IQEditableEvaluation, IObjectPublishedEvent)
 def _on_evalulation_published(item, event):
 	if IQAssignment.providedBy(item):
 		course = ICourseInstance(item, None)
@@ -154,7 +154,7 @@ def _on_evalulation_published(item, event):
 			displayName = item.title or 'Assignment'
 			create_assignment_entry(course, item, displayName, _book=book)
 	
-@component.adapter(IQEditableEvalutation, IObjectUnpublishedEvent)
+@component.adapter(IQEditableEvaluation, IObjectUnpublishedEvent)
 def _on_evalulation_unpublished(item, event):
 	if IQAssignment.providedBy(item):
 		course = ICourseInstance(item, None)
