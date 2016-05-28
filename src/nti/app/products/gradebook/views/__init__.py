@@ -251,13 +251,12 @@ class UserGradeBookSummary(UserGradeSummary):
 		if user_histories is not None:
 			for assignment in assignments:
 				grade = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
-				user_grade = grade.get(user.username)
+				user_grade = grade.get(user.username) if grade is not None else None
 				history_item = user_histories.get(assignment.ntiid)
 
 				# Submission but no grade
-				if 		history_item \
-					and (user_grade is None
-						or 	user_grade.value is None):
+				if 		history_item is not None \
+					and (user_grade is None or user_grade.value is None):
 					ungraded_count += 1
 
 				# No submission and past due
