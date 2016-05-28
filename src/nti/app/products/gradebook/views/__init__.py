@@ -261,7 +261,8 @@ class UserGradeBookSummary(UserGradeSummary):
 
 				# No submission and past due
 				if history_item is None:
-					due_date = IQAssignmentDateContext(course).of(assignment).available_for_submission_ending
+					context = IQAssignmentDateContext(course)
+					due_date = context.of(assignment).available_for_submission_ending
 					if due_date and today > due_date:
 						overdue_count += 1
 
