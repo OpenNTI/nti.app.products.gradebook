@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import csv
+from io import BytesIO
 
 from zope import component
 
@@ -23,6 +25,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.products.courseware.views import CourseAdminPathAdapter
+
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -31,10 +35,20 @@ from nti.app.products.gradebook.interfaces import IGradeBookEntry
 
 from nti.app.products.gradebook.utils import replace_username
 
+from nti.common.maps import CaseInsensitiveDict
+
+from nti.contenttypes.courses.interfaces import ICourseCatalog
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -58,21 +72,6 @@ class SetGradeSchemeView(AbstractAuthenticatedView,
 		theObject.GradeScheme = externalValue
 		return theObject
 
-import csv
-from io import BytesIO
-
-from nti.app.products.courseware.views import CourseAdminPathAdapter
-
-from nti.common.maps import CaseInsensitiveDict
-
-from nti.contenttypes.courses.interfaces import ICourseCatalog
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-
-from nti.dataserver.interfaces import IDataserverFolder
-
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 def _tx_string(s):
 	if s is not None and isinstance(s, unicode):
 		s = s.encode('utf-8')
@@ -93,7 +92,7 @@ def _tx_grade(value):
 def _catalog_entry(params):
 	ntiid = params.get('ntiid')
 	if not ntiid:
-		raise hexc.HTTPUnprocessableEntity('No course entry identifier')
+		raise hexc.HTTPUnprocessableEntity(_('No course entry identifier'))
 
 	context = find_object_with_ntiid(ntiid)
 	entry = ICourseCatalogEntry(context, None)
@@ -102,7 +101,7 @@ def _catalog_entry(params):
 			catalog = component.getUtility(ICourseCatalog)
 			entry = catalog.getCatalogEntry(ntiid)
 		except LookupError:
-			raise hexc.HTTPUnprocessableEntity('Catalog not found')
+			raise hexc.HTTPUnprocessableEntity(_('Catalog not found.'))
 		except KeyError:
 			entry = None
 	return entry
@@ -120,7 +119,7 @@ class CourseGradesView(AbstractAuthenticatedView):
 		params = CaseInsensitiveDict(self.request.params)
 		entry = _catalog_entry(params)
 		if entry is None:
-			raise hexc.HTTPUnprocessableEntity(detail=_('Course not found'))
+			raise hexc.HTTPUnprocessableEntity(_('Course not found.'))
 
 		usernames = params.get('usernames') or params.get('username')
 		if usernames:
@@ -168,7 +167,7 @@ class SynchronizeGradebookView(AbstractAuthenticatedView,
 		params = CaseInsensitiveDict(self.readInput())
 		entry = _catalog_entry(params)
 		if entry is None:
-			raise hexc.HTTPUnprocessableEntity(detail='Course not found')
+			raise hexc.HTTPUnprocessableEntity(_('Course not found.'))
 
 		synchronize_gradebook(entry)
 
