@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
 import csv
+import six
 from io import BytesIO
 
 from zope import component
@@ -92,7 +92,7 @@ def _tx_grade(value):
 def _catalog_entry(params):
 	ntiid = params.get('ntiid')
 	if not ntiid:
-		raise hexc.HTTPUnprocessableEntity(_('No course entry identifier'))
+		raise hexc.HTTPUnprocessableEntity(_('No course entry identifier.'))
 
 	context = find_object_with_ntiid(ntiid)
 	entry = ICourseCatalogEntry(context, None)
