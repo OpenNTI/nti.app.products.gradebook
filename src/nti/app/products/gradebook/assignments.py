@@ -13,6 +13,7 @@ from zope.container.interfaces import INameChooser
 
 from nti.app.assessment.common import assignment_comparator
 from nti.app.assessment.common import get_course_assignments
+from nti.app.assessment.common import get_all_course_assignments
 
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import NoSubmitGradeBookPart
@@ -22,8 +23,11 @@ from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-_assignment_comparator = assignment_comparator  # BWC
+# BWC
+_assignment_comparator = assignment_comparator
+get_course_assignments = get_course_assignments
 
 def create_assignment_part(course, part_name, _book=None):
 	book = _book if _book is not None else IGradeBook(course)
@@ -71,10 +75,13 @@ def synchronize_gradebook(context):
 	course = ICourseInstance(context, None)
 	if course is None:
 		return
+	catalog_entry = ICourseCatalogEntry( course, None )
+	course_ntiid = getattr( catalog_entry, 'ntiid', '' )
+	logger.info( "Syncing gradebook for %s", course_ntiid )
 
 	assignment_ids = set()
 	book = IGradeBook(course)
-	assignments = get_course_assignments(course)
+	assignments = get_all_course_assignments(course)
 
 	category_map = {}
 	for part in book.values():
@@ -99,6 +106,9 @@ def synchronize_gradebook(context):
 			if entry.assignmentId not in assignment_ids and len(entry) == 0:
 				try:
 					del part[entry.__name__]
+					logger.info( 'Removed %s from gradebook for %s',
+								 entry.assignmentId,
+								 course_ntiid )
 				except TypeError:
 					logger.warning("Failed to remove part %s", part, exc_info=True)
 
