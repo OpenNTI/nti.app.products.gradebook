@@ -137,6 +137,9 @@ def _policy_based_autograde_policy(course, assignmentId):
 
 	if policy is not None:
 		auto_grade = policy.get('auto_grade') or {}
+		disable = policy.get('disable') or False
+		if disable: # if disable don't auto-grade
+			return None
 		name = auto_grade.get('name')
 		if not name:
 			total_points = auto_grade.get('total_points')
