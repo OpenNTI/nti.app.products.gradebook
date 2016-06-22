@@ -154,6 +154,18 @@ def _on_evalulation_published(item, event):
 			displayName = item.title or 'Assignment'
 			create_assignment_entry(course, item, displayName, _book=book)
 	
+@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
+def _assignment_history_item_removed(item, event):
+	entry = find_entry_for_item(item)
+	if entry is not None:
+		user = IUser(item, None)
+		if user is not None:
+			try:
+				remove_from_container(entry, user.username)
+			except KeyError:
+				# Hmm...
+				pass
+
 @component.adapter(IQEditableEvaluation, IObjectUnpublishedEvent)
 def _on_evalulation_unpublished(item, event):
 	if IQAssignment.providedBy(item):
@@ -167,18 +179,6 @@ def _on_evalulation_unpublished(item, event):
 						u'message': _("Cannot unpublish assignment with grades."),
 						u'code': 'CannotUnpublishObject',
 					})
-					
-@component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
-def _assignment_history_item_removed(item, event):
-	entry = find_entry_for_item(item)
-	if entry is not None:
-		user = IUser(item, None)
-		if user is not None:
-			try:
-				remove_from_container(entry, user.username)
-			except KeyError:
-				# Hmm...
-				pass
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
 def _synchronize_gradebook_with_course_instance(course, event):
