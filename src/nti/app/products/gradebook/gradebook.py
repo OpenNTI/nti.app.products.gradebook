@@ -393,6 +393,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
 	entryFactory = GradeBookEntryWithoutSubmission
 
 	def validateAssignment(self, assignment):
+		__traceback_info__ = assignment
 		if not assignment.no_submit:
 			raise ValueError(assignment.category_name)
 		if len(assignment.parts) != 0:
