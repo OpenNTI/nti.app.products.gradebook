@@ -400,23 +400,32 @@ class NoSubmitGradeBookPart(GradeBookPart):
 			raise ValueError("Too many parts")
 		return True
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
-
-# By directly using this API and (not the adapter interface) and
-# setting create to False, in a large course with many users but few
-# submissions, we gain a significant performance improvement if we
-# iterate across the entire list: 9 or 10x (This is because
-# creating---and then discarding when we abort the GET request
-# transaction---all those histories is expensive, requesting new OIDs
-# from the database and firing lots of events). I'm not formalizing
-# this API yet because we shouldn't be iterating across and
-# materializing the entire list; if we can make that stop we won't
-# need this.
-# from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-from nti.app.assessment.adapters import _histories_for_course
-from nti.app.assessment.adapters import _history_for_user_in_course
-
 _NotGiven = object()
+
+def _entry_submitted_length(self):
+	# By directly using this API and (not the adapter interface) and
+	# setting create to False, in a large course with many users but few
+	# submissions, we gain a significant performance improvement if we
+	# iterate across the entire list: 9 or 10x (This is because
+	# creating---and then discarding when we abort the GET request
+	# transaction---all those histories is expensive, requesting new OIDs
+	# from the database and firing lots of events). I'm not formalizing
+	# this API yet because we shouldn't be iterating across and
+	# materializing the entire list; if we can make that stop we won't
+	# need this.
+	from nti.app.assessment.adapters import _histories_for_course
+
+	count = 0
+	column = self.context
+	course = ICourseInstance(self)
+	assignment_id = column.AssignmentId
+	histories = _histories_for_course(course)
+
+	# do count
+	for history in list(histories.values()):
+		if assignment_id in history:
+			count += 1
+	return count
 
 @component.adapter(IGradeBookEntry)
 @interface.implementer(ISubmittedAssignmentHistory)
@@ -459,22 +468,17 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 		to the assignment; this is distinct from the number of grades that may
 		exist, and much more expensive to compute.
 		"""
-
-		column = self.context
-		assignment_id = column.AssignmentId
-		course = ICourseInstance(self)
-		histories = _histories_for_course(course)
-
-		count = 0
-		for history in histories.values():
-			if assignment_id in history:
-				count += 1
-		return count
+		result = _entry_submitted_length(self)
+		return result
 
 	def __iter__(self,
 				 usernames=_NotGiven,
 				 placeholder=_NotGiven,
 				 forced_placeholder_usernames=None):
+		
+		from nti.app.assessment.adapters import _history_for_user_in_course
+		from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
+		
 		column = self.context
 		course = ICourseInstance(self)
 		assignment_id = column.AssignmentId
@@ -487,7 +491,7 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 		# (for correctness)
 		forced_placeholder_usernames = {x.lower() for x in forced_placeholder_usernames}
 
-		for username_that_submitted in usernames:
+		for username_that_submitted in usernames or ():
 			username_that_submitted = username_that_submitted.lower()
 
 			if username_that_submitted in forced_placeholder_usernames:
@@ -499,7 +503,6 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 				continue
 			username_that_submitted = user.username  # go back to canonical
 			history = _history_for_user_in_course(course, user, create=False)
-
 			try:
 				item = history[assignment_id]
 				if self.as_summary:
@@ -510,8 +513,9 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 				else:
 					# Hopefully only seen during migration;
 					# in production this is an issue
-					logger.exception("Mismatch between recorded submission and history submission for %s",
-									 username_that_submitted)
+					logger.exception(
+						"Mismatch between recorded submission and history submission for %s",
+						username_that_submitted)
 			else:
 				yield (username_that_submitted, item)
 
