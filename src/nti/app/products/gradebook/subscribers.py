@@ -66,7 +66,7 @@ from nti.app.products.gradebook.utils.gradebook import find_entry_for_item
 from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_history_item
 from nti.app.products.gradebook.utils.gradebook import synchronize_gradebook_and_verify_policy
 
-from nti.assessment.interfaces import IQAssignment 
+from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQEditableEvaluation
 
 from nti.coremetadata.interfaces import IObjectPublishedEvent
@@ -95,7 +95,7 @@ from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
 def raise_error(v, tb=None, factory=hexc.HTTPUnprocessableEntity):
 	request = get_current_request()
 	raise_json_error(request, factory, v, tb)
-	
+
 def find_gradebook_in_lineage(obj):
 	book = find_interface(obj, IGradeBook)
 	if book is None:
@@ -146,14 +146,14 @@ def _regrade_assignment_history_item(item, event):
 		set_grade_by_assignment_history_item(item)
 
 @component.adapter(IQEditableEvaluation, IObjectPublishedEvent)
-def _on_evalulation_published(item, event):
+def _create_gradebook_entry_on_publish(item, event):
 	if IQAssignment.providedBy(item):
 		course = ICourseInstance(item, None)
 		book = IGradeBook(course, None)
 		if book is not None:
 			displayName = item.title or 'Assignment'
 			create_assignment_entry(course, item, displayName, _book=book)
-	
+
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
 def _assignment_history_item_removed(item, event):
 	entry = find_entry_for_item(item)
