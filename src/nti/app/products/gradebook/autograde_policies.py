@@ -16,7 +16,11 @@ import copy
 from zope import component
 from zope import interface
 
-from zope.interface import Invalid
+from pyramid import httpexceptions as hexc
+
+from pyramid.threadlocal import get_current_request
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.gradebook.interfaces import IPendingAssessmentAutoGradePolicy
 
@@ -55,7 +59,14 @@ class TrivialFixedScaleAutoGradePolicy(object):
 						# file response
 						# XXX: Better, earlier error at initial grade time
 						# This error is typically caught by view code
-						raise Invalid("Submitted ungradable type to autograde assignment")
+						raise_json_error(
+							get_current_request(),
+							hexc.HTTPUnprocessableEntity,
+							{
+								u'message': _('Submitted ungradable type to autograde assignment.'),
+								u'code': 'InvalidGradableType',
+							},
+							None)
 
 					if not assessed_part.assessedValue:
 						# WRONG part, whole question is toast
@@ -108,7 +119,14 @@ class PointBasedAutoGradePolicy(object):
 
 				for assessed_part in assessed_question.parts:
 					if not hasattr(assessed_part, 'assessedValue'):
-						raise Invalid("Submitted ungradable type to autograde assignment")
+						raise_json_error(
+							get_current_request(),
+							hexc.HTTPUnprocessableEntity,
+							{
+								u'message': _('Submitted ungradable type to autograde assignment.'),
+								u'code': 'InvalidGradableType',
+							},
+							None)
 
 					if not assessed_part.assessedValue:
 						# WRONG part, whole question is toast
