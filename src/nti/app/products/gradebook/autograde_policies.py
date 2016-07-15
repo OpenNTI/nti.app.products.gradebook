@@ -22,6 +22,8 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.app.products.gradebook import MessageFactory as _
+
 from nti.app.products.gradebook.interfaces import IPendingAssessmentAutoGradePolicy
 
 from nti.assessment.interfaces import IQAssignmentPolicies
