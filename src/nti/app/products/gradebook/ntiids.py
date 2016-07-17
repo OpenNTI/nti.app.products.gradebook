@@ -22,7 +22,6 @@ from nti.contenttypes.courses.index import IX_NAME
 from nti.contenttypes.courses.index import IX_SITE
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.ntiids.interfaces import INTIIDResolver
 
@@ -41,7 +40,7 @@ def get_course(key):
 	for doc_id in catalog.apply(query) or ():
 		course = intids.queryObject(doc_id)
 		if ICourseInstance.providedBy(course):
-			return ICourseCatalogEntry(course, None)
+			return course
 	return None
 
 @interface.implementer(INTIIDResolver)
