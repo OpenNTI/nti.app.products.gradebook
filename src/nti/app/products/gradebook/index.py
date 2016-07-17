@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 from zope.catalog.interfaces import ICatalog
-from zope.catalog.interfaces import ICatalogIndex
 
 from zope.intid.interfaces import IIntIds
 
@@ -181,7 +180,6 @@ def install_grade_catalog(site_manager_container, intids=None):
 						(IX_ASSIGNMENT_ID, AssignmentIdIndex),
 						(IX_GRADE_COURSE, CatalogEntryIDIndex)):
 		index = clazz(family=intids.family)
-		assert ICatalogIndex.providedBy(index)
 		intids.register(index)
 		locate(index, catalog, name)
 		catalog[name] = index
