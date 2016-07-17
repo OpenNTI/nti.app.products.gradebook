@@ -63,15 +63,15 @@ def gradebook_readable(context, interaction=None):
 	except NoInteraction:
 		return False
 
-def _grades_readable(grades, interaction=None):
+def grades_readable(grades, interaction=None):
 	# We use check permission here specifically to avoid the ACLs
 	# which could get in our way if we climebed the parent tree
 	# up through legacy courses. We want this all to come from the gradebook
 	grades = ICourseInstance(grades) if ICourseCatalogEntry.providedBy(grades) else grades
 	return gradebook_readable(grades)
-grades_readable = _grades_readable
+_grades_readable = grades_readable # BWC
 
-def _find_course_for_user(data, user):
+def find_course_for_user(data, user):
 	if user is None:
 		return None
 
@@ -104,8 +104,7 @@ def _find_course_for_user(data, user):
 						 "for data %s; assuming generic/global course instance",
 						 user, course, data)
 	return course
-
-find_course_for_user = _find_course_for_user
+_find_course_for_user = find_course_for_user # BWC
 
 @interface.implementer(IExternalMappingDecorator)
 class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -113,8 +112,8 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 	course = None
 
 	def _predicate(self, context, result):
-		self.course = _find_course_for_user(context, self.remoteUser)
-		return self.course is not None and _grades_readable(self.course)
+		self.course = find_course_for_user(context, self.remoteUser)
+		return self.course is not None and grades_readable(self.course)
 
 	def _do_decorate_external(self, course, result):
 		course = self.course
@@ -246,8 +245,8 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 		self.course = find_interface(self.request.context, ICourseInstance,
 									 strict=False)
 		if self.course is None:
-			self.course = _find_course_for_user(context, self.remoteUser)
-		return self.course is not None and _grades_readable(self.course)
+			self.course = find_course_for_user(context, self.remoteUser)
+		return self.course is not None and grades_readable(self.course)
 
 	def _do_decorate_external(self, assignment, external):
 		course = self.course
