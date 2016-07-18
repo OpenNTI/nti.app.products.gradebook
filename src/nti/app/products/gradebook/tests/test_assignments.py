@@ -747,9 +747,11 @@ class TestAssignments(ApplicationLayerTest):
 		question_id2 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
 		# Get one correct and one incorrect
-		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
+		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1,
+											   questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
 		# The incorrect one is partially correct on parts, but the whole thing is still graded wrong
-		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, questions=(QuestionSubmission(questionId=question_id2, parts=[0,1]),))
+		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2,
+											   questions=(QuestionSubmission(questionId=question_id2, parts=[0,1]),))
 
 
 		submission = AssignmentSubmission(assignmentId=assignment_id, parts=(qs1_submission, qs2_submission))
@@ -764,7 +766,6 @@ class TestAssignments(ApplicationLayerTest):
 		# Make sure we have no notable items
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
-
 
 		self.testapp.post_json( '/dataserver2/Objects/' + assignment_id,
 								ext_obj,
