@@ -50,9 +50,9 @@ from nti.externalization.representation import WithRepr
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
-from nti.schema.fieldproperty import createDirectFieldProperties
+from nti.schema.eqhash import EqHash
 
-from nti.schema.schema import EqHash
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 def to_correctness(value, scheme):
 	value = scheme.fromUnicode(value) if isinstance(value, string_types) else value

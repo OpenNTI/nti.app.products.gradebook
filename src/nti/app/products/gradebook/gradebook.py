@@ -50,11 +50,11 @@ from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids import ntiids
 
+from nti.schema.eqhash import EqHash
+
 from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from nti.schema.schema import EqHash
 
 from nti.traversal.traversal import find_interface
 

@@ -27,15 +27,16 @@ from nti.app.products.gradebook.interfaces import INumericGradeScheme
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
-from nti.common.representation import WithRepr
-
 from nti.common.string import TRUE_VALUES
 from nti.common.string import FALSE_VALUES
 
-from nti.schema.field import SchemaConfigured
-from nti.schema.fieldproperty import createDirectFieldProperties
+from nti.externalization.representation import WithRepr
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
+
+from nti.schema.field import SchemaConfigured
+
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 @WithRepr
 @EqHash('grades', 'ranges')
