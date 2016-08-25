@@ -18,8 +18,6 @@ from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 
-from nti.common.property import Lazy
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
@@ -32,6 +30,8 @@ from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import ALL_PERMISSIONS
+
+from nti.property.property import Lazy
 
 @component.adapter(IGradeBook)
 @interface.implementer(IACLProvider)

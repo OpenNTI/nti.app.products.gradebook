@@ -22,9 +22,6 @@ from persistent import Persistent
 
 from nti.app.products.gradebook.interfaces import IGrade
 
-from nti.common.property import Lazy
-from nti.common.property import alias
-
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
@@ -40,6 +37,9 @@ from nti.dataserver.interfaces import ICreated
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
+
+from nti.property.property import Lazy
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 

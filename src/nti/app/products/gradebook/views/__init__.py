@@ -45,14 +45,26 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.products.gradebook.grading import calculate_predicted_grade
+from nti.app.products.gradebook.grading import find_grading_policy_for_course
+
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.utils import replace_username
+from nti.app.products.gradebook.utils import remove_from_container
+from nti.app.products.gradebook.utils import record_grade_without_submission
+
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.common.maps import CaseInsensitiveDict
-
-from nti.common.property import Lazy
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -75,19 +87,7 @@ from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.app.products.gradebook.grading import calculate_predicted_grade
-from nti.app.products.gradebook.grading import find_grading_policy_for_course
-
-from nti.app.products.gradebook.interfaces import IGrade
-from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IGradeBookEntry
-from nti.app.products.gradebook.interfaces import IExcusedGrade
-from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
-from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
-
-from nti.app.products.gradebook.utils import replace_username
-from nti.app.products.gradebook.utils import remove_from_container
-from nti.app.products.gradebook.utils import record_grade_without_submission
+from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS

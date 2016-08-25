@@ -35,9 +35,6 @@ from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySum
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
-from nti.common.property import alias
-from nti.common.property import CachedProperty
-
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -49,6 +46,9 @@ from nti.externalization.representation import WithRepr
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.ntiids import ntiids
+
+from nti.property.property import alias
+from nti.property.property import CachedProperty
 
 from nti.schema.eqhash import EqHash
 

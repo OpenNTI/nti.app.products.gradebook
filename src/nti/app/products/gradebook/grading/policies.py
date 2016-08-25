@@ -38,10 +38,6 @@ from nti.app.products.gradebook.utils import MetaGradeBookObject
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
-from nti.common.property import alias
-from nti.common.property import readproperty
-from nti.common.property import CachedProperty
-
 from nti.contenttypes.courses.grading.policies import EqualGroupGrader
 from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 from nti.contenttypes.courses.grading.policies import CategoryGradeScheme as CTGCategoryGradeScheme
@@ -49,6 +45,10 @@ from nti.contenttypes.courses.grading.policies import CategoryGradeScheme as CTG
 from nti.externalization.representation import WithRepr
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
+
+from nti.property.property import alias
+from nti.property.property import readproperty
+from nti.property.property import CachedProperty
 
 from nti.schema.eqhash import EqHash
 
