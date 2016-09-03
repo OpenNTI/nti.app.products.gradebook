@@ -13,7 +13,7 @@ import csv
 import six
 import nameparser
 import collections
-from io import StringIO
+from cStringIO import StringIO
 
 from zope import component
 
