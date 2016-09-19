@@ -20,6 +20,8 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
+from nti.app.assessment.common import get_submissions
+
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
@@ -223,7 +225,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 	to implement the UI:
 
 	* A count of how many submissions there have been
-		for this assignment (this is a performance problem).
+		for this assignment.
 	* A count of how many submissions have been graded
 		(this is cheap).
 	* A link to a view that can access the submissions (history
@@ -259,9 +261,10 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 
 		external['GradeSubmittedCount'] = len(column)
 
-		asg_history = ISubmittedAssignmentHistory(column)
-		external['GradeAssignmentSubmittedCount'] = len(asg_history)
+		submissions = get_submissions( assignment, course )
+		external['GradeAssignmentSubmittedCount'] = len(submissions or ())
 
+		asg_history = ISubmittedAssignmentHistory(column)
 		link_to_bulk_history = Link(asg_history,
 									rel='GradeSubmittedAssignmentHistory')
 
