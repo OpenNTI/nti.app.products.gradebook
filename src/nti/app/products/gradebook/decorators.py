@@ -34,8 +34,8 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 from nti.contentlibrary.interfaces import IContentPackage
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-
 from nti.contenttypes.courses.utils import is_course_instructor
 
 from nti.dataserver.users import User
@@ -250,6 +250,17 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 			self.course = find_course_for_user(context, self.remoteUser)
 		return self.course is not None and grades_readable(self.course)
 
+	def _get_student_population_count(self, course, assignment):
+		"""
+		The number of students who could possibly take this assignment.
+		"""
+		enrollments = ICourseEnrollments(course)
+		if assignment.is_non_public:
+			result = enrollments.count_legacy_forcredit_enrollments()
+		else:
+			result = enrollments.count_enrollments()
+		return result
+
 	def _do_decorate_external(self, assignment, external):
 		course = self.course
 
@@ -263,6 +274,8 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
 
 		submissions = get_submissions( assignment, course )
 		external['GradeAssignmentSubmittedCount'] = len(submissions or ())
+		student_pop_count = self._get_student_population_count( course, assignment )
+		external['GradeSubmittedStudentPopulationCount'] = student_pop_count
 
 		asg_history = ISubmittedAssignmentHistory(column)
 		link_to_bulk_history = Link(asg_history,
