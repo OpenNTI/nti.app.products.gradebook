@@ -7,6 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import gc
 import os
 import os.path
 
@@ -44,8 +45,10 @@ class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 	@classmethod
 	def setUp(cls):
 		# Must implement!
-		cls.__old_library = component.getUtility(IContentPackageLibrary)
-		component.provideUtility(cls._setup_library(), IContentPackageLibrary)
+		gsm = component.getGlobalSiteManager()
+		cls.__old_library = gsm.getUtility(IContentPackageLibrary)
+		cls.__new_library = cls._setup_library()
+		gsm.registerUtility(cls.__new_library, IContentPackageLibrary)
 
 		database = ZODB.DB( ApplicationTestLayer._storage_base,
 							database_name='Users')
@@ -61,14 +64,28 @@ class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 	@classmethod
 	def tearDown(cls):
 		# Must implement!
-		component.provideUtility(cls.__old_library, IContentPackageLibrary)
+		gsm = component.getGlobalSiteManager()
+		gsm.unregisterUtility(cls.__new_library, IContentPackageLibrary)
+		gsm.registerUtility(cls.__old_library, IContentPackageLibrary)
 
-		components = component.getUtility(IComponents, name='platform.ou.edu')
+		components = gsm.getUtility(IComponents, name='platform.ou.edu')
 		catalog = components.getUtility( ICourseCatalog )
 		catalog.clear()
 
-		global_catalog = component.getUtility(ICourseCatalog)
+		global_catalog = gsm.getUtility(ICourseCatalog)
 		global_catalog.clear()
+
+		del cls.__old_library
+		del cls.__new_library
+		gc.collect()
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		pass
 
 	# TODO: May need to recreate the application with this library?
 
@@ -99,3 +116,7 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def testSetUp(cls, test=None):
 		cls.setUpTestDS(test)
+
+	@classmethod
+	def testTearDown(cls):
+		pass
