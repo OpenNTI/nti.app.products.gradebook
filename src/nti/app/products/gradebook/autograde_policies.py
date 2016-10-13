@@ -28,6 +28,8 @@ from nti.app.products.gradebook.interfaces import IPendingAssessmentAutoGradePol
 
 from nti.assessment.interfaces import IQAssignmentPolicies
 
+from nti.contenttypes.courses.common import get_course_packages
+
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 @interface.implementer(IPendingAssessmentAutoGradePolicy)
@@ -214,7 +216,7 @@ def find_autograde_policy_for_assignment_in_course(course, assignmentId):
 			names.append(course.ContentPackageNTIID)
 		except AttributeError:
 			# new-style
-			names.extend((x.ntiid for x in course.ContentPackageBundle.ContentPackages))
+			names.extend((x.ntiid for x in get_course_packages(course)))
 
 		cat_entry = ICourseCatalogEntry(course, None)
 		if cat_entry:
