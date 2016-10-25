@@ -475,10 +475,10 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 				 usernames=_NotGiven,
 				 placeholder=_NotGiven,
 				 forced_placeholder_usernames=None):
-		
+
 		from nti.app.assessment.adapters import _history_for_user_in_course
 		from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
-		
+
 		column = self.context
 		course = ICourseInstance(self)
 		assignment_id = column.AssignmentId

@@ -16,14 +16,6 @@ import copy
 from zope import component
 from zope import interface
 
-from pyramid import httpexceptions as hexc
-
-from pyramid.threadlocal import get_current_request
-
-from nti.app.externalization.error import raise_json_error
-
-from nti.app.products.gradebook import MessageFactory as _
-
 from nti.app.products.gradebook.interfaces import IPendingAssessmentAutoGradePolicy
 
 from nti.assessment.interfaces import IQAssignmentPolicies
@@ -60,17 +52,11 @@ class TrivialFixedScaleAutoGradePolicy(object):
 					if not hasattr(assessed_part, 'assessedValue'):
 						# Almost certainly trying to autograde something
 						# that cannot be autograded, like a modeled content or
-						# file response
-						# XXX: Better, earlier error at initial grade time
-						# This error is typically caught by view code
-						raise_json_error(
-							get_current_request(),
-							hexc.HTTPUnprocessableEntity,
-							{
-								u'message': _('Submitted ungradable type to autograde assignment.'),
-								u'code': 'InvalidGradableType',
-							},
-							None)
+						# file response.
+						# We can now be lenient with this case; so allow the
+						# submission and this can be re-graded as necessary.
+						logger.warn( 'Non-autogradable type submitted to auto-gradable assignment' )
+						return None
 
 					if not assessed_part.assessedValue:
 						# WRONG part, whole question is toast
@@ -123,14 +109,9 @@ class PointBasedAutoGradePolicy(object):
 
 				for assessed_part in assessed_question.parts:
 					if not hasattr(assessed_part, 'assessedValue'):
-						raise_json_error(
-							get_current_request(),
-							hexc.HTTPUnprocessableEntity,
-							{
-								u'message': _('Submitted ungradable type to autograde assignment.'),
-								u'code': 'InvalidGradableType',
-							},
-							None)
+						# See note in fixed policy.
+						logger.warn( 'Non-autogradable type submitted to auto-gradable assignment' )
+						return None
 
 					if not assessed_part.assessedValue:
 						# WRONG part, whole question is toast
