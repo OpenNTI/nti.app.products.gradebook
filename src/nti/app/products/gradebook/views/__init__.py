@@ -670,7 +670,8 @@ class AssignmentSummaryView(GradeBookSummaryView):
 	def _get_summary_for_student(self, username):
 		# We filter out any students without access to this assignment here.
 		result = UserGradeSummary(username, self.grade_entry, self.course)
-		if not result.assignment_filter(self.assignment):
+		assignment = self.assignment
+		if assignment is None or not result.assignment_filter(self.assignment):
 			result = None
 		return result
 
