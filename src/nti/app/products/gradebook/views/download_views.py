@@ -37,10 +37,8 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
-from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -106,7 +104,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		result = '%s_%s-%s' % (base_name, filter_name, suffix)
 		return result
 	
-	def _parse_names(self, user):
+	def _get_student_name(self, user):
 		if isinstance(user, six.string_types):
 			user = User.get_user(user)
 		named_user = IUserProfile(user)
@@ -114,7 +112,9 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 			human_name = nameparser.HumanName(named_user.realname)
 			last = human_name.last or ''
 			first = human_name.first or ''
-			return first, last, named_user.realname
+			return StudentName(first, last, named_user.username, named_user.realname)
+		else:
+			return StudentName('', '', named_user.username, named_user.realname)
 
 	def __call__(self):
 		gradebook = self.request.context
@@ -129,7 +129,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# to be unique) and the value is the display name
 		usernames_to_assignment_dict = collections.defaultdict(dict)
 		seen_asg_names = dict()
-
+		
 		final_grade_entry = None
 
 		for part in gradebook.values():
@@ -140,8 +140,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 				seen_asg_names[name] = entry.displayName or 'Unknown'
 				for username, grade in entry.items():
-					firstname, lastname, realname = self._parse_names(username)
-					username_data = StudentName(firstname, lastname, username, realname)
+					username_data = self._get_student_name(username)
 					user_dict = usernames_to_assignment_dict[username_data]
 					if name in user_dict:
 						raise ValueError("Two entries in different part with same name")
@@ -194,7 +193,9 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					except ValueError:
 						return _tx_string(value)
 
-		for key, user_dict in sorted(usernames_to_assignment_dict.items()):
+		# Sort by last name, then first name, then username
+		for key, user_dict in sorted(usernames_to_assignment_dict.items(), 
+							key=lambda key: (key[0].lastName, key[0].firstName, key[0].username)):
 			username = key.username
 			user = User.get_user(username)
 			if not user or not predicate(course, user):
