@@ -37,10 +37,14 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.interfaces import LocatedExternalList
+
+StudentName = collections.namedtuple('StudentName', 'firstName lastName username realname')
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -101,13 +105,25 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		suffix = 'grades.csv'
 		result = '%s_%s-%s' % (base_name, filter_name, suffix)
 		return result
+	
+	def _parse_names(self, user):
+		if isinstance(user, six.string_types):
+			user = User.get_user(user)
+		named_user = IUserProfile(user)
+		if named_user.realname and '@' not in named_user.realname:
+			human_name = nameparser.HumanName(named_user.realname)
+			last = human_name.last or ''
+			first = human_name.first or ''
+			return first, last, named_user.realname
 
 	def __call__(self):
 		gradebook = self.request.context
 		course = ICourseInstance(gradebook)
 		predicate = self._make_enrollment_predicate()
 
-		# We build a dictionary of {username: {Assignment: Grade} }
+		# We build a dictionary of {user_data: {Assignment: Grade} }, where 
+		# user_data contains first and last names, the username, and the realname.
+		# (This is to avoid parsing names more often than we need to.)
 		# We keep track of known assignment names so we can sort appropriately;
 		# it is keyed by the column name (as that's the only thing guaranteed
 		# to be unique) and the value is the display name
@@ -124,11 +140,13 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 				seen_asg_names[name] = entry.displayName or 'Unknown'
 				for username, grade in entry.items():
-					user_dict = usernames_to_assignment_dict[username]
+					firstname, lastname, realname = self._parse_names(username)
+					username_data = StudentName(firstname, lastname, username, realname)
+					user_dict = usernames_to_assignment_dict[username_data]
 					if name in user_dict:
 						raise ValueError("Two entries in different part with same name")
 					user_dict[name] = grade
-
+		
 		# Now, sort the *display* names, maintaining the
 		# association to the actual part name
 		sorted_asg_names = sorted((v, k) for k, v in seen_asg_names.items())
@@ -176,22 +194,15 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					except ValueError:
 						return _tx_string(value)
 
-		for username, user_dict in sorted(usernames_to_assignment_dict.items()):
+		for key, user_dict in sorted(usernames_to_assignment_dict.items()):
+			username = key.username
 			user = User.get_user(username)
 			if not user or not predicate(course, user):
 				continue
-
-			profile = IUserProfile(user)
 			external_id = replace_username(username)
-
-			realname = profile.realname or ''
-			if realname and '@' not in realname and realname != username:
-				human_name = nameparser.HumanName(realname)
-				firstname = human_name.first or ''
-				lastname = human_name.last or ''
-			else:
-				firstname = ''
-				lastname = ''
+			firstname = key.firstName
+			lastname = key.lastName
+			realname = key.realname
 
 			data = (username, external_id, firstname, lastname, realname)
 			row = [_tx_string(x) for x in data]
