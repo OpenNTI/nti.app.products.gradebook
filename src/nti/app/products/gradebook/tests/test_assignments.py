@@ -182,7 +182,7 @@ class TestAssignments(ApplicationLayerTest):
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 								COURSE_NTIID,
 								status=201 )
-
+		
 		# submit
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
 								ext_obj,
@@ -343,7 +343,7 @@ class TestAssignments(ApplicationLayerTest):
 			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
 			prof.realname = 'Steve Johnson\u0107'
 			lifecycleevent.modified(prof.__parent__)
-
+			
 		# Our links are now off of a GradeBook shell in the course
 		course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
 		course_res = self.testapp.get(course_path, extra_environ=instructor_environ)
@@ -363,7 +363,134 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403_ForCredit-grades.csv"'))
 		csv_text =  u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
+		
+	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
+								 testapp=True,
+								 default_authenticate=True)
+	def test_download_sorting(self):
 
+		# This only works in the OU environment because that's where the purchasables are
+		extra_env = self.testapp.extra_environ or {}
+		extra_env.update( {b'HTTP_ORIGIN': b'http://janux.ou.edu'} )
+		self.testapp.extra_environ = extra_env
+
+		instructor_environ = self._make_extra_environ(username='harp4162')
+		instructor_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		# Note that our username comes first, but our realname (Madden Jason) comes
+		# after (Johnson Steve) so we can test sorting by name
+		jmadden_environ = self._make_extra_environ(username='aaa@nextthought.com')
+		jmadden_environ[b'HTTP_ORIGIN'] = b'http://janux.ou.edu'
+
+		#  setup profile names
+		with mock_dataserver.mock_db_trans(self.ds):
+			from nti.dataserver.users.interfaces import IFriendlyNamed
+
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Steve Johnson'
+			# get both the user and the profile in the index with this
+			# updated data
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+
+		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
+		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
+		
+		ext_obj = to_external_object( submission )
+		del ext_obj['Class']
+		
+		# Enroll default student
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								COURSE_NTIID,
+								status=201 )
+		# Enroll second student
+		self.testapp.post_json( '/dataserver2/users/aaa@nextthought.com/Courses/EnrolledCourses',
+								COURSE_NTIID,
+								status=201,
+								extra_environ=jmadden_environ )
+		
+		# submit for both students
+		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
+								ext_obj,
+								status=201)
+		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
+								ext_obj,
+								status=201,
+								extra_environ=jmadden_environ)
+		
+		# Our links are now off of a GradeBook shell in the course
+		course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
+		course_res = self.testapp.get(course_path, extra_environ=instructor_environ)
+		gradebook_json = course_res.json_body.get( 'GradeBook' )
+		csv_link = self.require_link_href_with_rel( gradebook_json, 'ExportContents')
+		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson,Steve Johnson,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
+		assert_that( res.text, is_(csv_text))
+		
+		#  If we switch names, they should still be sorted correctly.
+		with mock_dataserver.mock_db_trans(self.ds):
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
+			prof.realname = 'Steve Johnson'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+			
+		# download the gradebook again and check that the sorting is correct
+		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Johnson,Steve Johnson,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
+		assert_that( res.text, is_(csv_text))
+		
+		# If both users have the same last name, should be sorted by first name.
+		# If both have a last name of Madden, then Jason should come before Steve.
+		with mock_dataserver.mock_db_trans(self.ds):
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Steve Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Madden,Steve Madden,,,0,100,#\r\n'
+		assert_that( res.text, is_(csv_text))
+		
+		# Switch names from the above scenario to make sure they're actually being sorted
+		with mock_dataserver.mock_db_trans(self.ds):
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
+			prof.realname = 'Steve Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Madden,Steve Madden,,,0,100,#\r\n'
+		assert_that( res.text, is_(csv_text))
+		
+		# If both names are identical, they should be sorted by username.
+		with mock_dataserver.mock_db_trans(self.ds):
+			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+			prof = IFriendlyNamed(User.get_user('aaa@nextthought.com'))
+			prof.realname = 'Jason Madden'
+			lifecycleevent.modified(prof.__parent__)
+			lifecycleevent.modified(prof)
+		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
+		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
+		assert_that( res.text, is_(csv_text))
+		
+	
 	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
 								 testapp=True,
 								 default_authenticate=True)
