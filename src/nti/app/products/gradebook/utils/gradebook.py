@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.lifecycleevent import added
@@ -33,7 +34,10 @@ from nti.app.products.gradebook.grading import find_grading_policy_for_course
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 
+from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
+
 from nti.assessment.submission import AssignmentSubmission
+
 from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -128,6 +132,7 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 		grade = clazz()
 		save_in_container(entry, username, grade)
 	else:
+		interface.alsoProvides( submission, IPlaceholderAssignmentSubmission )
 		# We don't want this phony-submission showing up as course activity
 		# See nti.app.assessment.subscribers
 		activity = ICourseInstanceActivity(course)

@@ -182,7 +182,7 @@ class TestAssignments(ApplicationLayerTest):
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 								COURSE_NTIID,
 								status=201 )
-		
+
 		# submit
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
 								ext_obj,
@@ -307,8 +307,9 @@ class TestAssignments(ApplicationLayerTest):
 		for env in instructor_environ, {}:
 			history_res = self.testapp.get(history_path,  extra_environ=env)
 			assert_that( history_res.json_body, has_entry('Items', has_entry(final_assignment_id,
-																			 has_entry( 'Grade',
-																						has_entry( 'value', "75 -" )))))
+																			 has_entries( 'Grade',
+																						 has_entry( 'value', "75 -" ),
+																						 'SyntheticSubmission', True))))
 
 			# Both of them can leave feedback on it
 			history_feedback_container_href = history_res.json_body['Items'][final_assignment_id]['Feedback']['href']
@@ -343,7 +344,7 @@ class TestAssignments(ApplicationLayerTest):
 			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
 			prof.realname = 'Steve Johnson\u0107'
 			lifecycleevent.modified(prof.__parent__)
-			
+
 		# Our links are now off of a GradeBook shell in the course
 		course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
 		course_res = self.testapp.get(course_path, extra_environ=instructor_environ)
@@ -363,7 +364,7 @@ class TestAssignments(ApplicationLayerTest):
 		assert_that( res.content_disposition, is_( 'attachment; filename="CLC3403_ForCredit-grades.csv"'))
 		csv_text =  u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
 		assert_that( res.text, is_(csv_text))
-		
+
 	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
 								 testapp=True,
 								 default_authenticate=True)
@@ -399,10 +400,10 @@ class TestAssignments(ApplicationLayerTest):
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
-		
+
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
-		
+
 		# Enroll default student
 		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
 								COURSE_NTIID,
@@ -412,7 +413,7 @@ class TestAssignments(ApplicationLayerTest):
 								COURSE_NTIID,
 								status=201,
 								extra_environ=jmadden_environ )
-		
+
 		# submit for both students
 		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
 								ext_obj,
@@ -421,7 +422,7 @@ class TestAssignments(ApplicationLayerTest):
 								ext_obj,
 								status=201,
 								extra_environ=jmadden_environ)
-		
+
 		# Our links are now off of a GradeBook shell in the course
 		course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
 		course_res = self.testapp.get(course_path, extra_environ=instructor_environ)
@@ -430,7 +431,7 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson,Steve Johnson,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
-		
+
 		#  If we switch names, they should still be sorted correctly.
 		with mock_dataserver.mock_db_trans(self.ds):
 			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
@@ -441,12 +442,12 @@ class TestAssignments(ApplicationLayerTest):
 			prof.realname = 'Steve Johnson'
 			lifecycleevent.modified(prof.__parent__)
 			lifecycleevent.modified(prof)
-			
+
 		# download the gradebook again and check that the sorting is correct
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Johnson,Steve Johnson,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
-		
+
 		# If both users have the same last name, should be sorted by first name.
 		# If both have a last name of Madden, then Jason should come before Steve.
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -461,7 +462,7 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Madden,Steve Madden,,,0,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
-		
+
 		# Switch names from the above scenario to make sure they're actually being sorted
 		with mock_dataserver.mock_db_trans(self.ds):
 			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
@@ -475,7 +476,7 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Madden,Steve Madden,,,0,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
-		
+
 		# If both names are identical, they should be sorted by username.
 		with mock_dataserver.mock_db_trans(self.ds):
 			prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
@@ -489,8 +490,8 @@ class TestAssignments(ApplicationLayerTest):
 		res = self.testapp.get(csv_link, extra_environ=instructor_environ)
 		csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
 		assert_that( res.text, is_(csv_text))
-		
-	
+
+
 	@WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
 								 testapp=True,
 								 default_authenticate=True)

@@ -103,7 +103,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		suffix = 'grades.csv'
 		result = '%s_%s-%s' % (base_name, filter_name, suffix)
 		return result
-	
+
 	def _get_student_name(self, user):
 		if isinstance(user, six.string_types):
 			user = User.get_user(user)
@@ -121,7 +121,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		course = ICourseInstance(gradebook)
 		predicate = self._make_enrollment_predicate()
 
-		# We build a dictionary of {user_data: {Assignment: Grade} }, where 
+		# We build a dictionary of {user_data: {Assignment: Grade} }, where
 		# user_data contains first and last names, the username, and the realname.
 		# (This is to avoid parsing names more often than we need to.)
 		# We keep track of known assignment names so we can sort appropriately;
@@ -145,7 +145,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					if name in user_dict:
 						raise ValueError("Two entries in different part with same name")
 					user_dict[name] = grade
-		
+
 		# Now, sort the *display* names, maintaining the
 		# association to the actual part name
 		sorted_asg_names = sorted((v, k) for k, v in seen_asg_names.items())
