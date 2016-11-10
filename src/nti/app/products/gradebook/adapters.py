@@ -35,8 +35,8 @@ from nti.dataserver.users import User
 
 from nti.traversal.traversal import find_interface
 
-@interface.implementer(IGradeBookEntry)
 @component.adapter(IGrade)
+@interface.implementer(IGradeBookEntry)
 def _GradeToGradeEntry(grade):
 	return grade.__parent__
 
@@ -48,8 +48,8 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
 	# get gradebook entry definition
 	gradebook = IGradeBook(course, None)
 	if gradebook is not None:
-		entry = gradebook.getColumnForAssignmentId(assignmentId)
-		return entry
+		return gradebook.getColumnForAssignmentId(assignmentId)
+	return None
 
 @interface.implementer(ICourseInstance)
 def _as_course(context):
@@ -65,8 +65,7 @@ def _as_course(context):
 @interface.implementer(ICourseCatalogEntry)
 def _as_catalog_entry(context):
 	course = ICourseInstance(context, None)
-	result = ICourseCatalogEntry(course, None)
-	return result
+	return ICourseCatalogEntry(course, None)
 
 def _no_pickle(*args):
 	raise TypeError("This object cannot be pickled")
@@ -97,8 +96,8 @@ def grade_for_history_item(item):
 		return grade
 	return None
 
-@interface.implementer(IUsersCourseAssignmentHistoryItem)
 @component.adapter(IGrade)
+@interface.implementer(IUsersCourseAssignmentHistoryItem)
 def history_item_for_grade(grade):
 	user = IUser(grade)
 	course = ICourseInstance(grade)
@@ -109,23 +108,23 @@ def history_item_for_grade(grade):
 	except KeyError:
 		raise TypeError("No history for grade")
 
-@interface.implementer(IUser)
 @component.adapter(IGrade)
+@interface.implementer(IUser)
 def grade_to_user(grade):
 	return User.get_user(grade.__name__)
 
-@interface.implementer(ITrustedTopLevelContainerContextProvider)
 @component.adapter(IGrade)
+@interface.implementer(ITrustedTopLevelContainerContextProvider)
 def _trusted_context_from_grade(obj):
-	course = _as_course(obj)
 	results = ()
+	course = _as_course(obj)
 	if course is not None:
 		catalog_entry = ICourseCatalogEntry(course, None)
 		results = (catalog_entry,) if catalog_entry is not None else ()
 	return results
 
-@interface.implementer(ITrustedTopLevelContainerContextProvider)
 @component.adapter(IStreamChangeEvent)
+@interface.implementer(ITrustedTopLevelContainerContextProvider)
 def _trusted_context_from_change(obj):
 	obj = getattr(obj, 'object', None)
 	return _trusted_context_from_grade(obj)
