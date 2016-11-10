@@ -56,7 +56,7 @@ class _GradeBookACLProvider(object):
 		course = ICourseInstance(self.context, None)
 		if course is not None:
 			# TODO: Use roles
-			for i in course.instructors:
+			for i in course.instructors or ():
 				acl.append(ace_allowing(i, ACT_READ, type(self)))
 				acl.append(ace_allowing(i, ACT_UPDATE, type(self)))
 				acl.append(ace_allowing(i, ACT_VIEW_GRADES, type(self)))
