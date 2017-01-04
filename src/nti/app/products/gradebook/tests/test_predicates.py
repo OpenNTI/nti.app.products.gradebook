@@ -48,6 +48,7 @@ class TestPredictes(ApplicationLayerTest):
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
+		submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
@@ -58,10 +59,7 @@ class TestPredictes(ApplicationLayerTest):
 								COURSE_NTIID,
 								status=201 )
 
-		# submit
-		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
-								ext_obj,
-								status=201)
+		self.testapp.post_json( submit_href, ext_obj, status=201)
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user('sjohnson@nextthought.com')

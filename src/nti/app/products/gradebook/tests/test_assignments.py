@@ -173,6 +173,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
+		submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
@@ -184,9 +185,8 @@ class TestAssignments(ApplicationLayerTest):
 								status=201 )
 
 		# submit
-		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
-								ext_obj,
-								status=201)
+		self.testapp.post_json( submit_href, ext_obj, status=201)
+
 		# The student has no edit link for the grade
 		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
 		history_res = self.testapp.get( history_path )
@@ -400,6 +400,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
+		submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
@@ -415,11 +416,8 @@ class TestAssignments(ApplicationLayerTest):
 								extra_environ=jmadden_environ )
 
 		# submit for both students
-		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
-								ext_obj,
-								status=201)
-		self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
-								ext_obj,
+		self.testapp.post_json( submit_href, ext_obj, status=201)
+		self.testapp.post_json( submit_href, ext_obj,
 								status=201,
 								extra_environ=jmadden_environ)
 
@@ -527,6 +525,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
 		submission = AssignmentSubmission(assignmentId=self.assignment_id, parts=(qs_submission,))
+		submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
 		ext_obj = to_external_object( submission )
 		del ext_obj['Class']
@@ -564,8 +563,7 @@ class TestAssignments(ApplicationLayerTest):
 		for uname, env in (('sjohnson@nextthought.com',None),
 						   ('aaa@nextthought.com', jmadden_environ)):
 
-			self.testapp.post_json( '/dataserver2/Objects/' + self.assignment_id,
-									ext_obj,
+			self.testapp.post_json( submit_href, ext_obj,
 									extra_environ=env,
 									status=201)
 
@@ -824,6 +822,8 @@ class TestAssignments(ApplicationLayerTest):
 		question_id1 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
 		question_id2 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
+		submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
+
 		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
 		qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, questions=(QuestionSubmission(questionId=question_id2, parts=[0,1]),))
 
@@ -831,9 +831,7 @@ class TestAssignments(ApplicationLayerTest):
 
 		ext_obj = to_external_object( submission )
 
-		res = self.testapp.post_json( '/dataserver2/Objects/' + assignment_id,
-								ext_obj,
-								status=422)
+		res = self.testapp.post_json( submit_href, ext_obj, status=422)
 		assert_that( res.json_body, has_entry('message', "Assignment already submitted"))
 		assert_that( res.json_body, has_entry('code', "NotUnique"))
 
@@ -873,6 +871,7 @@ class TestAssignments(ApplicationLayerTest):
 		qs_id2 = "tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.set.qset:trivial_test_qset2"
 		question_id1 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
 		question_id2 = "tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
+		submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
 
 		# Get one correct and one incorrect
 		qs1_submission = QuestionSetSubmission(questionSetId=qs_id1,
@@ -895,9 +894,7 @@ class TestAssignments(ApplicationLayerTest):
 		notable_res = self.fetch_user_recursive_notable_ugd()
 		assert_that( notable_res.json_body, has_entry('TotalItemCount', 0))
 
-		self.testapp.post_json( '/dataserver2/Objects/' + assignment_id,
-								ext_obj,
-								status=201)
+		self.testapp.post_json( submit_href, ext_obj, status=201)
 		history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
 		history_res = self.testapp.get( history_path )
 		# We were half right
