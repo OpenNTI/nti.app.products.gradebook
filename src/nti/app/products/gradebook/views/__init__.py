@@ -46,7 +46,6 @@ from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMi
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.products.gradebook.grading import calculate_predicted_grade
-from nti.app.products.gradebook.grading import find_grading_policy_for_course
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -65,6 +64,8 @@ from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
 from nti.contenttypes.courses.interfaces import ES_CREDIT
 from nti.contenttypes.courses.interfaces import ICourseInstance

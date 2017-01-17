@@ -29,6 +29,8 @@ from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.contenttypes.courses.common import get_course_packages
 
+from nti.contenttypes.courses.grading import find_grading_policy_for_course
+
 from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -40,99 +42,73 @@ VIEW_CURRENT_GRADE = 'CurrentGrade'
 
 PredictedGrade = namedtuple('PredictedGrade', 'Grade RawValue Correctness')
 
-def find_grading_policy_for_course(context):
-	course = ICourseInstance(context, None)
-	if course is None:
-		return None
-
-	registry = component
-	try:
-		# Courses may be ISites
-		registry = course.getSiteManager()
-		names = ('',)
-	except LookupError:
-		# try content pacakges
-		names = [x.ntiid for x in get_course_packages(course)]
-		# try catalog entry
-		cat_entry = ICourseCatalogEntry(course, None)
-		if cat_entry:
-			names.append(cat_entry.ntiid)
-			names.append(cat_entry.ProviderUniqueID)
-
-	for name in names:
-		try:
-			return registry.getUtility(ICourseGradingPolicy, name=name)
-		except LookupError:
-			pass
-
-	# We need to actually be registering these as annotations
-	policy = ICourseGradingPolicy(course, None)
-	return policy
 
 def calculate_grades(context,
-					 usernames=(),
-					 grade_scheme=None,
-					 entry_name=None,
-					 verbose=False):
+                     usernames=(),
+                     grade_scheme=None,
+                     entry_name=None,
+                     verbose=False):
 
-	result = {}
-	course = ICourseInstance(context)
-	policy = find_grading_policy_for_course(course)
-	if policy is None:
-		raise ValueError("Course does not have grading policy")
+    result = {}
+    course = ICourseInstance(context)
+    policy = find_grading_policy_for_course(course)
+    if policy is None:
+        raise ValueError("Course does not have grading policy")
 
-	if entry_name:
-		part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
-		entry = part.getEntryByAssignment(entry_name)
-		if entry is None:
-			order = len(part) + 1
-			entry = part.entryFactory(order=order,
-									  displayName=entry_name,
-									  AssignmentId=entry_name)
-			part[INameChooser(part).chooseName(entry_name, entry)] = entry
-	else:
-		entry = None
+    if entry_name:
+        part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
+        entry = part.getEntryByAssignment(entry_name)
+        if entry is None:
+            order = len(part) + 1
+            entry = part.entryFactory(order=order,
+                                      displayName=entry_name,
+                                      AssignmentId=entry_name)
+            part[INameChooser(part).chooseName(entry_name, entry)] = entry
+    else:
+        entry = None
 
-	for record in ICourseEnrollments(course).iter_enrollments():
-		principal = IPrincipal(record.Principal, None)
-		if principal is None:
-			# ignore dup enrollment
-			continue
+    for record in ICourseEnrollments(course).iter_enrollments():
+        principal = IPrincipal(record.Principal, None)
+        if principal is None:
+            # ignore dup enrollment
+            continue
 
-		username = principal.id.lower()
-		if usernames and username not in usernames:
-			continue
+        username = principal.id.lower()
+        if usernames and username not in usernames:
+            continue
 
-		# grade correctness
-		if IGradeBookGradingPolicy.providedBy(policy):
-			value = correctness = policy.grade(principal, verbose=verbose)
-		else:
-			value = correctness = policy.grade(principal)
+        # grade correctness
+        if IGradeBookGradingPolicy.providedBy(policy):
+            value = correctness = policy.grade(principal, verbose=verbose)
+        else:
+            value = correctness = policy.grade(principal)
 
-		# if there is a grade scheme convert value
-		if grade_scheme is not None:
-			value = grade_scheme.fromCorrectness(correctness)
+        # if there is a grade scheme convert value
+        if grade_scheme is not None:
+            value = grade_scheme.fromCorrectness(correctness)
 
-		grade = PersistentGrade(value=value)
-		grade.username = username
-		result[username] = grade
+        grade = PersistentGrade(value=value)
+        grade.username = username
+        result[username] = grade
 
-		# if entry is available save it
-		if entry is not None:
-			entry[username] = grade
+        # if entry is available save it
+        if entry is not None:
+            entry[username] = grade
 
-	return result
+    return result
+
 
 def get_presentation_scheme(policy):
-	if IGradeBookGradingPolicy.providedBy(policy):
-		return policy.PresentationGradeScheme
-	return None
+    if IGradeBookGradingPolicy.providedBy(policy):
+        return policy.PresentationGradeScheme
+    return None
+
 
 def calculate_predicted_grade(user, policy, scheme=u''):
-	presentation = get_presentation_scheme(policy)
-	if presentation is None:
-		presentation = component.getUtility(IGradeScheme, name=scheme)
-	correctness = policy.grade(user)
-	grade = presentation.fromCorrectness(correctness)
-	result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
-	return result
+    presentation = get_presentation_scheme(policy)
+    if presentation is None:
+        presentation = component.getUtility(IGradeScheme, name=scheme)
+    correctness = policy.grade(user)
+    grade = presentation.fromCorrectness(correctness)
+    result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
+    return result
