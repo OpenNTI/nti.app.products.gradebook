@@ -91,7 +91,11 @@ class CourseGradingPolicyPostView(UGDPostView, GradingPolicyMixin):
 
         set_grading_policy_for_course(self.course, policy)
         lifecycleevent.created(policy)
-        lifecycleevent.modified(self.course)
+
+        try:
+            policy.validate()
+        except ValueError as e:
+            raise hexc.HTTPUnprocessableEntity(str(e))
 
         self.request.response.status_int = 201
         return policy
@@ -113,7 +117,12 @@ class CourseGradingPolicyPutView(UGDPutView, GradingPolicyMixin):
         return policy
 
     def __call__(self):
-        return UGDPutView.__call__(self)
+        result = UGDPutView.__call__(self)  # modified event is raised
+        try:
+            result.validate()
+        except ValueError as e:
+            raise hexc.HTTPUnprocessableEntity(str(e))
+        return result
 
 
 @view_config(context=ICourseGradingPolicy)
@@ -121,10 +130,10 @@ class CourseGradingPolicyPutView(UGDPutView, GradingPolicyMixin):
                renderer='rest',
                request_method='PUT',
                permission=nauth.ACT_UPDATE)
-class GradingPolicyPutView(UGDPutView, GradingPolicyMixin):
+class GradingPolicyPutView(CourseGradingPolicyPutView):
 
-    def __call__(self):
-        return UGDPutView.__call__(self)
+    def _get_object_to_update(self):
+        return self.context
 
 
 @view_config(context=ICourseInstance)
@@ -145,11 +154,11 @@ class CourseGradingPolicyDeleteView(UGDDeleteView, GradingPolicyMixin):
     def _do_delete_object(self, obj):
         reset_grading_policy(self.course)
         lifecycleevent.removed(obj, self.course, None)
-        lifecycleevent.modified(self.course)
         return True
 
     def __call__(self):
         return UGDDeleteView.__call__(self)
+
 
 @view_config(context=ICourseGradingPolicy)
 @view_defaults(route_name='objects.generic.traversal',
@@ -161,8 +170,7 @@ class GradingPolicyDeleteView(UGDDeleteView, GradingPolicyMixin):
     def _do_delete_object(self, obj):
         reset_grading_policy(self.course)
         lifecycleevent.removed(obj, self.course, None)
-        lifecycleevent.modified(self.course)
         return True
-    
+
     def __call__(self):
         return UGDDeleteView.__call__(self)
