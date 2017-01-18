@@ -10,6 +10,7 @@
 	<pyramid:scan package=".policy_views" />
 	<pyramid:scan package=".general_views" />
 	<pyramid:scan package=".grading_views" />
+	<pyramid:scan package=".summary_views" />
 	<pyramid:scan package=".download_views" />
 	<pyramid:scan package=".submitted_assignment_history_views" />
 

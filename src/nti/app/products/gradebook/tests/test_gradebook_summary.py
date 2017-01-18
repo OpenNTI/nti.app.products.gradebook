@@ -2,21 +2,20 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import contains
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import contains_inanyorder
+
 import fudge
 
 from unittest import TestCase
-
-from hamcrest import is_
-from hamcrest import has_length
-from hamcrest import assert_that
-from hamcrest import contains
-from hamcrest import contains_inanyorder
 
 from zope.component import provideAdapter
 
@@ -28,15 +27,16 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.grading import PredictedGrade
 
 from nti.app.products.gradebook.views import _get_grade_parts
-from nti.app.products.gradebook.views import UserGradeSummary
-from nti.app.products.gradebook.views.general_views import GradeBookSummaryView
-
-from nti.app.testing.request_response import DummyRequest
+from nti.app.products.gradebook.views.summary_views import UserGradeSummary
+from nti.app.products.gradebook.views.summary_views import GradeBookSummaryView
 
 from nti.app.products.courseware.interfaces import ICourseInstance
+
 from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.externalization.representation import WithRepr
+
+from nti.app.testing.request_response import DummyRequest
 
 @WithRepr
 class MockGrade( object ):
@@ -88,8 +88,8 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( grade_val, is_( (90, 'A') ) )
 
 	@fudge.patch( 'pyramid.url.URLMethodsMixin.current_route_path' )
-	@fudge.patch( 'nti.app.products.gradebook.views.general_views.GradeBookSummaryView.final_grade_entry' )
-	@fudge.patch( 'nti.app.products.gradebook.views.general_views.GradeBookSummaryView.assignments' )
+	@fudge.patch( 'nti.app.products.gradebook.views.summary_views.GradeBookSummaryView.final_grade_entry' )
+	@fudge.patch( 'nti.app.products.gradebook.views.summary_views.GradeBookSummaryView.assignments' )
 	def test_sorting( self, mock_url, mock_final_grade, mock_assignments ):
 		"Test sorting/batching params of gradebook summary."
 		mock_url.is_callable().returns( '/path/' )
@@ -207,9 +207,9 @@ class TestGradeBookSummary( TestCase ):
 		assert_that( result, has_length( 1 ))
 		assert_that( result, contains( summary4 ))
 
-	@fudge.patch( 'nti.app.products.gradebook.views.general_views.GradeBookSummaryView._get_enrollment_scoped_summaries' )
-	@fudge.patch( 'nti.app.products.gradebook.views.general_views.GradeBookSummaryView.final_grade_entry' )
-	@fudge.patch( 'nti.app.products.gradebook.views.general_views.GradeBookSummaryView.assignments' )
+	@fudge.patch( 'nti.app.products.gradebook.views.summary_views.GradeBookSummaryView._get_enrollment_scoped_summaries' )
+	@fudge.patch( 'nti.app.products.gradebook.views.summary_views.GradeBookSummaryView.final_grade_entry' )
+	@fudge.patch( 'nti.app.products.gradebook.views.summary_views.GradeBookSummaryView.assignments' )
 	def test_filtering( self, mock_get_students, mock_final_grade, mock_assignments ):
 		"Test sorting/batching params of gradebook summary."
 		mock_final_grade.is_callable()
