@@ -109,10 +109,11 @@ class CS1323EqualGroupGrader(EqualGroupGrader):
 	
 @interface.implementer(ISimpleTotalingGradingPolicy)
 class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
+	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ISimpleTotalingGradingPolicy)
 	
 	def __init__(self, *args, **kwargs):
-		SimpleTotalingGradingPolicy.__init__(self, *args, **kwargs)
+		DefaultCourseGradingPolicy.__init__(self, *args, **kwargs)
 		self.Grader = NullGrader()
 		
 	@CachedProperty('lastSynchronized')
@@ -131,6 +132,9 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		result = IQAssignmentDateContext(self.course, None)
 		return result
 	
+	def verify(self, book=None):
+		return True
+
 	def _is_due(self, assignmentId, now=None):
 		dates = self.dateContext
 		now = now or datetime.utcnow()

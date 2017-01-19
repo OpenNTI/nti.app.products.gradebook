@@ -27,6 +27,8 @@ from nti.schema.field import ValidTextLine
 
 
 deprecated('IAssigmentGradeScheme', 'Use lastest implementation')
+
+
 class IAssigmentGradeScheme(interface.Interface):
     pass
 
@@ -64,4 +66,4 @@ class ICS1323CourseGradingPolicy(IGradeBookGradingPolicy):
 
 
 class ISimpleTotalingGradingPolicy(IGradeBookGradingPolicy):
-    Grader = Object(INullGrader, required=True, title="Grader")
+    Grader = Object(INullGrader, required=False, title="Grader")
