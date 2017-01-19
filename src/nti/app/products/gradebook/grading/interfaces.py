@@ -25,9 +25,8 @@ from nti.schema.field import Dict
 from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
 
+
 deprecated('IAssigmentGradeScheme', 'Use lastest implementation')
-
-
 class IAssigmentGradeScheme(interface.Interface):
     pass
 
