@@ -115,22 +115,12 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 	def __init__(self, *args, **kwargs):
 		DefaultCourseGradingPolicy.__init__(self, *args, **kwargs)
 		self.Grader = NullGrader()
-		
-	@CachedProperty('lastSynchronized')
+
 	def book(self):
-		book = IGradeBook(self.course)
-		return book
+		return IGradeBook(self.course)
 	
-	@property
-	def lastSynchronized(self):
-		self_lastModified = self.lastModified or 0
-		parent_lastSynchronized = getattr(self.course, 'lastSynchronized', None) or 0
-		return max(self_lastModified, parent_lastSynchronized)
-	
-	@CachedProperty('lastSynchronized')
 	def dateContext(self):
-		result = IQAssignmentDateContext(self.course, None)
-		return result
+		return IQAssignmentDateContext(self.course, None)
 	
 	def verify(self, book=None):
 		return True
