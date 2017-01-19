@@ -39,9 +39,11 @@ from nti.app.products.gradebook.utils import MetaGradeBookObject
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.contenttypes.courses.grading.policies import NullGrader
 from nti.contenttypes.courses.grading.policies import EqualGroupGrader
 from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 from nti.contenttypes.courses.grading.policies import CategoryGradeScheme as CTGCategoryGradeScheme
+
 from nti.contenttypes.courses.grading.policies import get_assignment_policies
 
 from nti.externalization.representation import WithRepr
@@ -107,9 +109,12 @@ class CS1323EqualGroupGrader(EqualGroupGrader):
 	
 @interface.implementer(ISimpleTotalingGradingPolicy)
 class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
-	
 	createDirectFieldProperties(ISimpleTotalingGradingPolicy)
 	
+	def __init__(self, *args, **kwargs):
+		SimpleTotalingGradingPolicy.__init__(self, *args, **kwargs)
+		self.Grader = NullGrader()
+		
 	@CachedProperty('lastSynchronized')
 	def book(self):
 		book = IGradeBook(self.course)
@@ -197,8 +202,13 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		return 0
 	
 	def _get_earned_points_for_assignment(self, grade):
+		value = grade.value
+		if isinstance(value, string_types):
+			value = value.strip()
+			if value.endswith('-'):
+				value = value[:-1]
 		try:
-			return int(grade.value)
+			return int(value)
 		except (ValueError, TypeError):
 			return None
 

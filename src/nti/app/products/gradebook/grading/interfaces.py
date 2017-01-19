@@ -15,6 +15,7 @@ from zope.deprecation import deprecated
 
 from nti.app.products.gradebook.interfaces import IGradeScheme
 
+from nti.contenttypes.courses.grading.interfaces import INullGrader
 from nti.contenttypes.courses.grading.interfaces import IEqualGroupGrader
 from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 from nti.contenttypes.courses.grading.interfaces import ICategoryGradeScheme as ICTGCategoryGradeScheme
@@ -25,34 +26,43 @@ from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
 
 deprecated('IAssigmentGradeScheme', 'Use lastest implementation')
+
+
 class IAssigmentGradeScheme(interface.Interface):
-	pass
+    pass
+
 
 class IGradeBookGradingPolicy(ICourseGradingPolicy):
 
-	PresentationGradeScheme = Object(IGradeScheme, required=False)
+    PresentationGradeScheme = Object(IGradeScheme, required=False)
 
-	def verify(gradebook=None):
-		"""
-		verify this policy.
-		
-		:returns True if the policy is valid
-		"""
+    def verify(gradebook=None):
+        """
+        verify this policy.
 
-	def grade(principal, verbose=False):
-		pass
+        :returns True if the policy is valid
+        """
+
+    def grade(principal, verbose=False):
+        pass
+
 
 class ICategoryGradeScheme(ICTGCategoryGradeScheme):
-	GradeScheme = Object(IGradeScheme, required=False)
-	DropLowest = Int(title="Drop lowest grade in category", min=0, required=False)
+    GradeScheme = Object(IGradeScheme, required=False)
+    DropLowest = Int(title="Drop lowest grade in category",
+                     min=0,
+                     required=False)
+
 
 class ICS1323EqualGroupGrader(IEqualGroupGrader):
-	Groups = Dict(key_type=ValidTextLine(title="Category Name"),
-	  			  value_type=Object(ICategoryGradeScheme, required=True),
-				  min_length=1)
+    Groups = Dict(key_type=ValidTextLine(title="Category Name"),
+                  value_type=Object(ICategoryGradeScheme, required=True),
+                  min_length=1)
+
 
 class ICS1323CourseGradingPolicy(IGradeBookGradingPolicy):
-	Grader = Object(ICS1323EqualGroupGrader, required=True, title="Grader")
-	
+    Grader = Object(ICS1323EqualGroupGrader, required=True, title="Grader")
+
+
 class ISimpleTotalingGradingPolicy(IGradeBookGradingPolicy):
-	pass
+    Grader = Object(INullGrader, required=True, title="Grader")
