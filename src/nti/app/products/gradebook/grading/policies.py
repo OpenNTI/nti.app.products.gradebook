@@ -5,6 +5,7 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from test._mock_backport import create_autospec
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,6 +28,7 @@ from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 from nti.app.products.gradebook.grading.interfaces import ICategoryGradeScheme
 from nti.app.products.gradebook.grading.interfaces import ICS1323EqualGroupGrader
 from nti.app.products.gradebook.grading.interfaces import ICS1323CourseGradingPolicy
+from nti.app.products.gradebook.grading.interfaces import ISimpleTotalingGradingPolicy
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
@@ -41,6 +43,7 @@ from nti.assessment.interfaces import IQAssignmentDateContext
 from nti.contenttypes.courses.grading.policies import EqualGroupGrader
 from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 from nti.contenttypes.courses.grading.policies import CategoryGradeScheme as CTGCategoryGradeScheme
+from nti.contenttypes.courses.grading.policies import get_assignment_policies
 
 from nti.externalization.representation import WithRepr
 
@@ -102,6 +105,108 @@ class CategoryGradeScheme(CTGCategoryGradeScheme):
 class CS1323EqualGroupGrader(EqualGroupGrader):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICS1323EqualGroupGrader)
+	
+@interface.implementer(ISimpleTotalingGradingPolicy)
+class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
+	
+	createDirectFieldProperties(ISimpleTotalingGradingPolicy)
+	
+	@CachedProperty('lastSynchronized')
+	def book(self):
+		book = IGradeBook(self.course)
+		return book
+	
+	@property
+	def lastSynchronized(self):
+		self_lastModified = self.lastModified or 0
+		parent_lastSynchronized = getattr(self.course, 'lastSynchronized', None) or 0
+		return max(self_lastModified, parent_lastSynchronized)
+	
+	@CachedProperty('lastSynchronized')
+	def dateContext(self):
+		result = IQAssignmentDateContext(self.course, None)
+		return result
+	
+	def _is_due(self, assignmentId, now=None):
+		dates = self.dateContext
+		now = now or datetime.utcnow()
+		assignment = component.queryUtility(IQAssignment, name=assignmentId)
+		if assignment is not None and dates is not None:
+			_ending = dates.of(assignment).available_for_submission_ending
+			return bool(_ending and now > _ending)
+		return False
+
+	def grade(self, principal, verbose=False):
+		now = datetime.utcnow()
+		
+		total_points_available = 0
+		total_points_earned = 0
+		
+		assignment_policies = get_assignment_policies(self.course)
+
+		for grade in self.book.iter_grades(principal):
+			
+			excused = IExcusedGrade.providedBy(grade)
+			if not excused:
+				total_points = self._get_total_points_for_assignment(grade.AssignmentId, assignment_policies)
+				if total_points == 0:
+					# If an assignment doesn't have a total_point value,
+					# we ignore it.
+					continue
+				
+				earned_points = self._get_earned_points_for_assignment(grade)
+				
+				if earned_points is None:
+					# If for some reason we couldn't convert this grade
+					# to an int, we ignore this assignment.
+					continue
+					
+				if self._is_due(grade.AssignmentId, now) or earned_points > 0:
+					# If it's due, unexcused, and has 0 points, we want to 
+					# count it because either the student didn't submit or else
+					# they did really poorly on it. If they finished early 
+					# and have a grade, we count that. If it's due and has 
+					# points, we want to count that. The only case that we skip
+					# here is if it's not due yet and has no grade assigned:
+					# because this means the student has not been graded on
+					# this assignment yet. 
+					total_points_available += total_points
+					total_points_earned += earned_points
+		
+		if total_points_available == 0:
+			# There are no assignments due with assigned point values,
+			# so just return none because we can't meaningfully
+			# predict any grade for this case. 
+			return None
+		
+		result = float(total_points_earned)/total_points_available
+		return round(result, 2)
+	
+	def _get_total_points_for_assignment(self, assignment_id, assignment_policies):
+		try:
+			policy = assignment_policies[assignment_id]
+		except KeyError:
+			# If there is no entry for this assignment, we ignore it. 
+			return 0
+		
+		autograde_policy = policy.get('auto_grade', None)
+		if autograde_policy:
+			# If we have an autograde entry with total_points,
+			# return total_points. If it does not have total_points,
+			# or if no autograde entry exists, we return 0. 
+			return autograde_policy.get('total_points', 0)
+		return 0
+	
+	def _get_earned_points_for_assignment(self, grade):
+		try:
+			return int(grade.value)
+		except ValueError:
+			# if value is a string that doesn't convert to an int
+			return None
+		except TypeError:
+			# in case value doesn't exist at all
+			return None
+
 
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):

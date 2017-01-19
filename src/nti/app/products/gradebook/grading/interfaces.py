@@ -53,3 +53,6 @@ class ICS1323EqualGroupGrader(IEqualGroupGrader):
 
 class ICS1323CourseGradingPolicy(IGradeBookGradingPolicy):
 	Grader = Object(ICS1323EqualGroupGrader, required=True, title="Grader")
+	
+class ISimpleTotalingGradingPolicy(IGradeBookGradingPolicy):
+	pass
