@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from test._mock_backport import create_autospec
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -200,13 +199,8 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 	def _get_earned_points_for_assignment(self, grade):
 		try:
 			return int(grade.value)
-		except ValueError:
-			# if value is a string that doesn't convert to an int
+		except (ValueError, TypeError):
 			return None
-		except TypeError:
-			# in case value doesn't exist at all
-			return None
-
 
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
