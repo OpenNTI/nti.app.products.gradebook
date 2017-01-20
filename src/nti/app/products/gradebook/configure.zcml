@@ -235,7 +235,7 @@
 	<!-- Grading -->
 	<include package=".grading" />
 
-	<utility factory=".gradescheme.NumericGradeScheme"
+	<utility factory=".gradescheme.IntegerGradeScheme"
 			 provides=".interfaces.IGradeScheme" />
 
 	<utility factory=".gradescheme.LetterGradeScheme"

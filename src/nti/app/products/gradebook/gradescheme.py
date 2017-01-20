@@ -155,7 +155,7 @@ class NumericGradeScheme(SchemaConfigured):
 
 	def fromCorrectness(self, value):
 		result = value * (self.max - self.min) + self.min
-		result = int(round(result))
+		result = round( result, 2 )
 		return result
 
 @interface.implementer(INumericGradeScheme)
@@ -177,6 +177,11 @@ class IntegerGradeScheme(NumericGradeScheme):
 		value = int(value)
 		self.validate(value)
 		return value
+
+	def fromCorrectness(self, value):
+		result = super(IntegerGradeScheme,self).fromCorrectness( value )
+		result = int(round(result))
+		return result
 
 @interface.implementer(IIntegerGradeScheme)
 def _default_integer_grade_scheme():
