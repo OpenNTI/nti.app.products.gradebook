@@ -15,7 +15,8 @@
 
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ICategoryGradeScheme
-						 .interfaces.ICS1323CourseGradingPolicy"
+						 .interfaces.ICS1323CourseGradingPolicy
+						 .interfaces.ISimpleTotalingGradingPolicy"
 		modules=".policies" />
 	
 	<!-- Decorators -->
