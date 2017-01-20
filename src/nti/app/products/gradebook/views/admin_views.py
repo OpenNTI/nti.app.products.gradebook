@@ -13,10 +13,6 @@ import csv
 import six
 from io import BytesIO
 
-from zope import component
-
-from pyramid import httpexceptions as hexc
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
@@ -24,8 +20,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
-from nti.app.products.courseware.views import CourseAdminPathAdapter
 
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 
@@ -37,20 +31,16 @@ from nti.app.products.gradebook.utils import replace_username
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IDataserverFolder
-
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 ITEMS = StandardExternalFields.ITEMS
+
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -72,10 +62,12 @@ class SetGradeSchemeView(AbstractAuthenticatedView,
 		theObject.GradeScheme = externalValue
 		return theObject
 
+
 def _tx_string(s):
 	if s is not None and isinstance(s, unicode):
 		s = s.encode('utf-8')
 	return s
+
 
 def _tx_grade(value):
 	if not isinstance(value, six.string_types):
@@ -89,25 +81,9 @@ def _tx_grade(value):
 				pass
 		return _tx_string(value)
 
-def _catalog_entry(params):
-	ntiid = params.get('ntiid')
-	if not ntiid:
-		raise hexc.HTTPUnprocessableEntity(_('No course entry identifier.'))
 
-	context = find_object_with_ntiid(ntiid)
-	entry = ICourseCatalogEntry(context, None)
-	if entry is None:
-		try:
-			catalog = component.getUtility(ICourseCatalog)
-			entry = catalog.getCatalogEntry(ntiid)
-		except LookupError:
-			raise hexc.HTTPUnprocessableEntity(_('Catalog not found.'))
-		except KeyError:
-			entry = None
-	return entry
-
-@view_config(context=IDataserverFolder)
-@view_config(context=CourseAdminPathAdapter)
+@view_config(context=ICourseInstance)
+@view_config(context=ICourseCatalogEntry)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   request_method='GET',
@@ -116,11 +92,8 @@ def _catalog_entry(params):
 class CourseGradesView(AbstractAuthenticatedView):
 
 	def __call__(self):
+		course = ICourseInstance(self.context)
 		params = CaseInsensitiveDict(self.request.params)
-		entry = _catalog_entry(params)
-		if entry is None:
-			raise hexc.HTTPUnprocessableEntity(_('Course not found.'))
-
 		usernames = params.get('usernames') or params.get('username')
 		if usernames:
 			usernames = usernames.split(',')
@@ -133,7 +106,6 @@ class CourseGradesView(AbstractAuthenticatedView):
 		header = ['username', 'part', 'entry', 'assignment', 'grade']
 		csv_writer.writerow(header)
 
-		course = ICourseInstance(entry)
 		book = IGradeBook(course)
 		for part_name, part in list(book.items()):
 			for name, entry in list(part.items()):
@@ -153,8 +125,9 @@ class CourseGradesView(AbstractAuthenticatedView):
 		response.content_disposition = b'attachment; filename="grades.csv"'
 		return response
 
-@view_config(context=IDataserverFolder)
-@view_config(context=CourseAdminPathAdapter)
+
+@view_config(context=ICourseInstance)
+@view_config(context=ICourseCatalogEntry)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   request_method='POST',
@@ -164,16 +137,11 @@ class SynchronizeGradebookView(AbstractAuthenticatedView,
 							   ModeledContentUploadRequestUtilsMixin):
 
 	def __call__(self):
-		params = CaseInsensitiveDict(self.readInput())
-		entry = _catalog_entry(params)
-		if entry is None:
-			raise hexc.HTTPUnprocessableEntity(_('Course not found.'))
-
-		synchronize_gradebook(entry)
-
+		course = ICourseInstance(self.context)
+		synchronize_gradebook(self.context)
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
-		book = IGradeBook(ICourseInstance(entry, None), None)
+		book = IGradeBook(course, None)
 		if book is not None:
 			for part_name, part in book.items():
 				items.setdefault(part_name, [])
