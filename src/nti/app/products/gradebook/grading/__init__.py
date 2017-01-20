@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import logging
 from collections import namedtuple
 
 from zope import component
@@ -27,15 +26,10 @@ from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolic
 from nti.app.products.gradebook.interfaces import IGradeScheme
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
-from nti.contenttypes.courses.common import get_course_packages
-
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
-
-from nti.contenttypes.courses.grading.interfaces import ICourseGradingPolicy
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 #: Current grade link/view
 VIEW_CURRENT_GRADE = 'CurrentGrade'
@@ -109,8 +103,9 @@ def calculate_predicted_grade(user, policy, scheme=u''):
     if presentation is None:
         presentation = component.getUtility(IGradeScheme, name=scheme)
     correctness = policy.grade(user)
-    result = None
     if correctness is not None:
         grade = presentation.fromCorrectness(correctness)
-        result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
-    return result
+        return PredictedGrade(grade,
+                              correctness,
+                              int(round(correctness * 100)))
+    return None
