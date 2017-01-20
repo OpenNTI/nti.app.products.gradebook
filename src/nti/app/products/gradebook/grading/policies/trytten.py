@@ -22,6 +22,7 @@ from zope.security.interfaces import IPrincipal
 
 from ZODB import loglevels
 
+from nti.app.products.gradebook.gradescheme import LetterGradeScheme
 from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 
 from nti.app.products.gradebook.grading.policies.interfaces import ICategoryGradeScheme
@@ -110,7 +111,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ICS1323CourseGradingPolicy)
 
-	PresentationGradeScheme = None
+	PresentationGradeScheme = LetterGradeScheme()
 
 	presentation = alias('PresentationGradeScheme')
 
