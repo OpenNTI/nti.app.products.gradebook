@@ -130,18 +130,15 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 	def verify(self, book=None):
 		return True
 
-	def _is_due(self, assignmentId, now=None):
+	def _is_due(self, assignment, now):
 		dates = self.dateContext
-		now = now or datetime.utcnow()
-		assignment = component.queryUtility(IQAssignment, name=assignmentId)
 		if assignment is not None and dates is not None:
 			_ending = dates.of(assignment).available_for_submission_ending
 			return bool(_ending and now > _ending)
 		return False
 
-	def grade(self, principal, verbose=False):
+	def grade(self, principal, *args, **kwargs):
 		now = datetime.utcnow()
-
 		total_points_available = 0
 		total_points_earned = 0
 
@@ -153,7 +150,8 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 			excused = IExcusedGrade.providedBy(grade)
 
 			if not excused:
-				total_points = self._get_total_points_for_assignment(grade.AssignmentId, assignment_policies)
+				total_points = self._get_total_points_for_assignment(
+									grade.AssignmentId, assignment_policies)
 				if not total_points:
 					# If an assignment doesn't have a total_point value, we ignore it.
 					continue
@@ -167,12 +165,16 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 				total_points_available += total_points
 				total_points_earned += earned_points
 
+		# Now fetch assignments we haven't seen that are past due.
 		all_assignments = self._get_all_assignments_for_user(self.course, principal)
 
 		for assignment in all_assignments:
-			if self._is_due(assignment.ntiid, now) and not assignment.ntiid in gradebook_assignment_ids:
-				total_points = self._get_total_points_for_assignment(assignment.ntiid, assignment_policies)
-				total_points_available += total_points
+			if 		self._is_due(assignment, now) \
+				and not assignment.ntiid in gradebook_assignment_ids:
+				total_points = self._get_total_points_for_assignment(
+										assignment.ntiid, assignment_policies)
+				if total_points:
+					total_points_available += total_points
 
 		if total_points_available == 0:
 			# There are no assignments due with assigned point values,
@@ -219,7 +221,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		try:
 			return int(value)
 		except (ValueError, TypeError):
-			logger.warn( 'Gradebook entry without a valid points (%s) (%s)',
+			logger.warn( 'Gradebook entry without valid point value (%s) (%s)',
 						 grade.value,
 						 grade.AssignmentId )
 			return None
