@@ -106,6 +106,9 @@ class CurrentGradeView(AbstractAuthenticatedView):
                 grade.value = predicted.Grade
                 grade.username = self.remoteUser.username
 
+        if grade is None:
+            raise hexec.HTTPNotFound()
+
         result = LocatedExternalDict()
         result.update(to_external_object(grade))
         result['IsPredicted'] = is_predicted
