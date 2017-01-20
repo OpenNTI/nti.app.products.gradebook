@@ -31,6 +31,7 @@ from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 
 from nti.contenttypes.courses.grading.policies import get_assignment_policies
 
+from nti.property.property import alias
 from nti.property.property import readproperty
 
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -41,6 +42,9 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
     __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(ISimpleTotalingGradingPolicy)
 
+    PresentationGradeScheme = None
+    presentation = alias('PresentationGradeScheme')
+    
     def __init__(self, *args, **kwargs):
         DefaultCourseGradingPolicy.__init__(self, *args, **kwargs)
         self.Grader = NullGrader()
