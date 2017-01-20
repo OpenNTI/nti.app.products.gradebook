@@ -39,6 +39,9 @@ from nti.app.products.gradebook.utils import MetaGradeBookObject
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
+from nti.contenttypes.courses.interfaces import get_course_assessment_predicate_for_user
+
 from nti.contenttypes.courses.grading.policies import NullGrader
 from nti.contenttypes.courses.grading.policies import EqualGroupGrader
 from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
@@ -116,9 +119,11 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		DefaultCourseGradingPolicy.__init__(self, *args, **kwargs)
 		self.Grader = NullGrader()
 
+	@property
 	def book(self):
 		return IGradeBook(self.course)
 	
+	@property
 	def dateContext(self):
 		return IQAssignmentDateContext(self.course, None)
 	
@@ -141,10 +146,12 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		total_points_earned = 0
 		
 		assignment_policies = get_assignment_policies(self.course)
+		gradebook_assignment_ids = set()
 
 		for grade in self.book.iter_grades(principal):
-			
+			gradebook_assignment_ids.add(grade.AssignmentId)
 			excused = IExcusedGrade.providedBy(grade)
+			
 			if not excused:
 				total_points = self._get_total_points_for_assignment(grade.AssignmentId, assignment_policies)
 				if total_points == 0:
@@ -153,23 +160,20 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 					continue
 				
 				earned_points = self._get_earned_points_for_assignment(grade)
-				
 				if earned_points is None:
 					# If for some reason we couldn't convert this grade
 					# to an int, we ignore this assignment.
 					continue
-					
-				if self._is_due(grade.AssignmentId, now) or earned_points > 0:
-					# If it's due, unexcused, and has 0 points, we want to 
-					# count it because either the student didn't submit or else
-					# they did really poorly on it. If they finished early 
-					# and have a grade, we count that. If it's due and has 
-					# points, we want to count that. The only case that we skip
-					# here is if it's not due yet and has no grade assigned:
-					# because this means the student has not been graded on
-					# this assignment yet. 
-					total_points_available += total_points
-					total_points_earned += earned_points
+
+				total_points_available += total_points
+				total_points_earned += earned_points
+		
+		all_assignments = self._get_all_assignments_for_user(self.course, principal)
+		
+		for assignment in all_assignments:
+			if self._is_due(assignment.ntiid, now) and not assignment.ntiid in gradebook_assignment_ids:
+				total_points = self._get_total_points_for_assignment(assignment.ntiid, assignment_policies)
+				total_points_available += total_points
 		
 		if total_points_available == 0:
 			# There are no assignments due with assigned point values,
@@ -179,6 +183,13 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		
 		result = float(total_points_earned)/total_points_available
 		return round(result, 2)
+	
+	def _get_all_assignments_for_user(self, course, user):
+		catalog = ICourseAssignmentCatalog(course)
+		uber_filter = get_course_assessment_predicate_for_user(user, course)
+		# Must grab all assignments in our parent (since they may be referenced in shared lessons.)
+		assignments = catalog.iter_assignments(course_lineage=True)
+		return (x for x in assignments if uber_filter(x))
 	
 	def _get_total_points_for_assignment(self, assignment_id, assignment_policies):
 		try:
