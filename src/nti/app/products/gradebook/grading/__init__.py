@@ -109,6 +109,8 @@ def calculate_predicted_grade(user, policy, scheme=u''):
     if presentation is None:
         presentation = component.getUtility(IGradeScheme, name=scheme)
     correctness = policy.grade(user)
-    grade = presentation.fromCorrectness(correctness)
-    result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
+    result = None
+    if correctness is not None:
+        grade = presentation.fromCorrectness(correctness)
+        result = PredictedGrade(grade, correctness, int(round(correctness * 100)))
     return result

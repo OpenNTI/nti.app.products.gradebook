@@ -101,10 +101,10 @@ class CurrentGradeView(AbstractAuthenticatedView):
             predicted = calculate_predicted_grade(self.remoteUser,
 												  policy,
 												  scheme)
-
-            grade = Grade()  # non persistent
-            grade.value = predicted.Grade
-            grade.username = self.remoteUser.username
+            if predicted is not None:
+                grade = Grade()  # non persistent
+                grade.value = predicted.Grade
+                grade.username = self.remoteUser.username
 
         result = LocatedExternalDict()
         result.update(to_external_object(grade))
