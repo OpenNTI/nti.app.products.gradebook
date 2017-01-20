@@ -25,7 +25,8 @@ from nti.app.products.gradebook import MessageFactory as _
 from nti.app.products.gradebook.grades import Grade
 
 from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
-from nti.app.products.gradebook.grading import calculate_predicted_grade
+
+from nti.app.products.gradebook.grading.utils import calculate_predicted_grade
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME

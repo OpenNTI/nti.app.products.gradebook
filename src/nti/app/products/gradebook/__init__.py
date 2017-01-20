@@ -18,5 +18,6 @@ from nti.app.products.gradebook.index import CATALOG_NAME
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
+
 def get_grade_catalog():
-	return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+    return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)

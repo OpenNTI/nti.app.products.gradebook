@@ -26,7 +26,7 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSumma
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
-from nti.app.products.gradebook.grading import calculate_predicted_grade
+from nti.app.products.gradebook.grading.utils import calculate_predicted_grade
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
