@@ -383,13 +383,3 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		result = result / self._total_weight
 		result = round(result, 2)
 		return result
-
-# deprecated
-
-from zope.deprecation import deprecated
-
-from persistent import Persistent
-
-deprecated('AssigmentGradeScheme', 'Use lastest implementation')
-class AssigmentGradeScheme(Persistent):
-	pass

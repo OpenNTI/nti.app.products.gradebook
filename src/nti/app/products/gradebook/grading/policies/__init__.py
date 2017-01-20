@@ -13,28 +13,15 @@ from zope.deprecation import deprecated
 
 from persistent import Persistent
 
-from nti.app.products.gradebook.grading.policies.simple import SimpleTotalingGradingPolicy
-
-from nti.app.products.gradebook.grading.policies.trytten import CategoryGradeScheme
-from nti.app.products.gradebook.grading.policies.trytten import CS1323EqualGroupGrader
-from nti.app.products.gradebook.grading.policies.trytten import CS1323CourseGradingPolicy
-
 
 deprecated('AssigmentGradeScheme', 'Use lastest implementation')
 class AssigmentGradeScheme(Persistent):
     pass
 
-import zope.deferredimport
-zope.deferredimport.initialize()
+# XXX: [re]export for BWC
+from nti.app.products.gradebook.grading.policies.simple import SimpleTotalingGradingPolicy
 
-zope.deferredimport.deprecatedFrom(
-    "Moved to nti.app.products.gradebook.grading.policies.simple",
-    "nti.app.products.gradebook.grading.policies.simple",
-    "SimpleTotalingGradingPolicy")
-
-zope.deferredimport.deprecatedFrom(
-    "Moved to nti.app.products.gradebook.grading.policies.trytten",
-    "nti.app.products.gradebook.grading.policies.trytten",
-    "CategoryGradeScheme"
-    "CS1323EqualGroupGrader",
-    "CS1323CourseGradingPolicy")
+# XXX: [re]export for BWC
+from nti.app.products.gradebook.grading.policies.trytten import CategoryGradeScheme
+from nti.app.products.gradebook.grading.policies.trytten import CS1323EqualGroupGrader
+from nti.app.products.gradebook.grading.policies.trytten import CS1323CourseGradingPolicy

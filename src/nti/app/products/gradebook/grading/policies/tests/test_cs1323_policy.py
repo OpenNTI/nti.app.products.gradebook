@@ -40,16 +40,17 @@ from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolic
 from nti.app.products.gradebook.grading.policies.interfaces import ICategoryGradeScheme
 from nti.app.products.gradebook.grading.policies.interfaces import ICS1323CourseGradingPolicy
 
-from nti.app.products.gradebook.grading.policies import CategoryGradeScheme
-from nti.app.products.gradebook.grading.policies import CS1323EqualGroupGrader
-from nti.app.products.gradebook.grading.policies import CS1323CourseGradingPolicy
+from nti.app.products.gradebook.grading.policies.trytten import CategoryGradeScheme
+from nti.app.products.gradebook.grading.policies.trytten import CS1323EqualGroupGrader
+from nti.app.products.gradebook.grading.policies.trytten import CS1323CourseGradingPolicy
 
 from nti.contenttypes.courses.assignment import MappingAssignmentPolicies
 
 from nti.contenttypes.courses.courses import CourseInstance
 
-from nti.externalization.internalization import find_factory_for
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
