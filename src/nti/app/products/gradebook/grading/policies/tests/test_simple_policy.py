@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import is_not
+from hamcrest import has_entry
 from hamcrest import assert_that
 does_not = is_not
 
@@ -41,6 +42,11 @@ from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.contenttypes.courses.grading import set_grading_policy_for_course
 
+from nti.externalization.externalization import to_external_object
+
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
+
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
 from nti.dataserver.tests import mock_dataserver
@@ -56,6 +62,18 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         assert_that(policy, validly_provides(ISimpleTotalingGradingPolicy))
         assert_that(policy, verifiably_provides(ISimpleTotalingGradingPolicy))
 
+    def test_externalization(self):
+        policy = SimpleTotalingGradingPolicy()
+       
+        ext = to_external_object(policy)
+        assert_that(ext, 
+                    has_entry('MimeType', 
+                             'application/vnd.nextthought.gradebook.simpletotalinggradingpolicy'))
+
+        factory = find_factory_for(ext)
+        obj = factory()
+        update_from_external_object(obj, ext)
+        
     @WithMockDSTrans
     @fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
                  'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',

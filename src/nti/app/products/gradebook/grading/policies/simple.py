@@ -28,7 +28,6 @@ from nti.assessment.interfaces import IQAssignmentDateContext
 from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
 from nti.contenttypes.courses.interfaces import get_course_assessment_predicate_for_user
 
-from nti.contenttypes.courses.grading.policies import NullGrader
 from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 
 from nti.contenttypes.courses.grading.policies import get_assignment_policies
@@ -49,7 +48,6 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 
     def __init__(self, *args, **kwargs):
         DefaultCourseGradingPolicy.__init__(self, *args, **kwargs)
-        self.Grader = NullGrader()
 
     @readproperty
     def book(self):
@@ -58,6 +56,10 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
     @readproperty
     def dateContext(self):
         return IQAssignmentDateContext(self.course, None)
+
+    def validate(self):
+        if self.grader is not None:
+            self.grader.validate()
 
     def verify(self, book=None):
         return True
