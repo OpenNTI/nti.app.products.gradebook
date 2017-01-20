@@ -121,7 +121,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
             return None
 
         result = float(total_points_earned) / total_points_available
-        result = min(max(0, result), 1) # results should be bounded to be within [0, 1]    
+        result = min(max(0, result), 1) # results should be bounded to be within [0, 1]
         return round(result, 2)
 
     def _get_all_assignments_for_user(self, course, user):

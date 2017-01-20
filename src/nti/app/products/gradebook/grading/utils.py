@@ -103,7 +103,11 @@ def calculate_predicted_grade(user, policy, scheme=u''):
     correctness = policy.grade(user)
     if correctness is not None:
         grade = presentation.fromCorrectness(correctness)
-        return PredictedGrade(grade,
-                              correctness,
-                              int(round(correctness * 100)))
+        raw = correctness
+        correctness = int(round(correctness * 100))
+        if grade and grade == correctness:
+            # Don't want to return confusing information if the
+            # grade simply matches the correctness.
+            grade = None
+        return PredictedGrade(grade, raw, correctness)
     return None
