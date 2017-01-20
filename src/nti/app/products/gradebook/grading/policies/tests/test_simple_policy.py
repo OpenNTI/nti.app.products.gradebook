@@ -11,6 +11,7 @@ from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import assert_that
 does_not = is_not
+
 from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
 
@@ -28,14 +29,16 @@ from nti.app.products.gradebook.grades import PersistentGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 
-from nti.app.products.gradebook.grading.interfaces import ISimpleTotalingGradingPolicy
+from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
 
-from nti.app.products.gradebook.grading.policies import SimpleTotalingGradingPolicy
+from nti.app.products.gradebook.grading.policies.simple import SimpleTotalingGradingPolicy
 
 from nti.assessment.assignment import QAssignment
 
-from nti.contenttypes.courses.courses import CourseInstance
 from nti.contenttypes.courses.assignment import MappingAssignmentPolicies
+
+from nti.contenttypes.courses.courses import CourseInstance
+
 from nti.contenttypes.courses.grading import set_grading_policy_for_course
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -54,8 +57,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
 	@WithMockDSTrans
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
-				 'nti.app.products.gradebook.grading.policies.get_assignment_policies',
-				 'nti.app.products.gradebook.grading.policies.SimpleTotalingGradingPolicy._get_all_assignments_for_user')
+				 'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user')
 	def test_simple_grade_predictor_policy(self, mock_ga, mock_gap, mock_get_assignments):
 
 		connection = mock_dataserver.current_transaction
@@ -174,9 +177,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
 	@WithMockDSTrans
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
-				 'nti.app.products.gradebook.grading.policies.get_assignment_policies',
-				 'nti.app.products.gradebook.grading.policies.SimpleTotalingGradingPolicy._get_all_assignments_for_user',
-				 'nti.app.products.gradebook.grading.policies.SimpleTotalingGradingPolicy._is_due')
+				 'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user',
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._is_due')
 	def test_simple_grade_predictor_for_late_assignments(self, mock_ga, mock_gap, mock_get_assignments, mock_is_due):
 
 		connection = mock_dataserver.current_transaction

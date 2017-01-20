@@ -9,16 +9,9 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<!-- Externalization -->
-	<include package="nti.externalization" file="meta.zcml" />
-	<include package="nti.externalization" />
+	<!-- Policies -->
+	<include package=".policies" />
 
-	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.ICategoryGradeScheme
-						 .interfaces.ICS1323CourseGradingPolicy
-						 .interfaces.ISimpleTotalingGradingPolicy"
-		modules=".policies" />
-	
 	<!-- Decorators -->
 	<subscriber factory=".decorators._CurrentGradeLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"

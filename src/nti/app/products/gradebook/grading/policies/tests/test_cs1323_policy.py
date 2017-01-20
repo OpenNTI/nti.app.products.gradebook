@@ -35,13 +35,14 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
 
-from nti.app.products.gradebook.grading.interfaces import ICategoryGradeScheme
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
+
+from nti.app.products.gradebook.grading.policies.interfaces import ICategoryGradeScheme
+from nti.app.products.gradebook.grading.policies.interfaces import ICS1323CourseGradingPolicy
 
 from nti.app.products.gradebook.grading.policies import CategoryGradeScheme
 from nti.app.products.gradebook.grading.policies import CS1323EqualGroupGrader
 from nti.app.products.gradebook.grading.policies import CS1323CourseGradingPolicy
-from nti.app.products.gradebook.grading.policies import ICS1323CourseGradingPolicy
 
 from nti.contenttypes.courses.assignment import MappingAssignmentPolicies
 
