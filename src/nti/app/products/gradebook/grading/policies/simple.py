@@ -14,6 +14,8 @@ from datetime import datetime
 
 from zope import interface
 
+from zope.security.interfaces import IPrincipal
+
 from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
 
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -44,7 +46,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 
     PresentationGradeScheme = None
     presentation = alias('PresentationGradeScheme')
-    
+
     def __init__(self, *args, **kwargs):
         DefaultCourseGradingPolicy.__init__(self, *args, **kwargs)
         self.Grader = NullGrader()
@@ -74,8 +76,9 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 
         gradebook_assignment_ids = set()
         assignment_policies = get_assignment_policies(self.course)
+        username = IPrincipal(principal).id
 
-        for grade in self.book.iter_grades(principal):
+        for grade in self.book.iter_grades(username):
             gradebook_assignment_ids.add(grade.AssignmentId)
             excused = IExcusedGrade.providedBy(grade)
             if not excused:
