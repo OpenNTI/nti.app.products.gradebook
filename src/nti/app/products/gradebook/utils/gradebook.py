@@ -153,8 +153,8 @@ def synchronize_gradebook_and_verify_policy(course, *args, **kwargs):
         and IGradeBookGradingPolicy.providedBy(policy) \
         and not policy.verify():
         entry = ICourseCatalogEntry(course)
-        logger.error(
-            "There are errors in grading policy for course %s", entry.ntiid)
+        logger.error("There are errors in grading policy for course %s", 
+                     entry.ntiid)
 
 
 def find_entry_for_item(item):
@@ -176,8 +176,8 @@ def find_entry_for_item(item):
         # Also typically during tests.
         # TODO: Fix those tests to properly register assignments
         # so this branch goes away
-        logger.warning(
-            "Assignment %s not found in course %s", assignmentId, course)
+        logger.warning("Assignment %s not found in course %s",
+                       assignmentId, course)
         return
     return entry
 
