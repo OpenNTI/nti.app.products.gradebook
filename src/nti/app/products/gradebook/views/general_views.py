@@ -162,6 +162,25 @@ class ExcuseGradeView(AbstractAuthenticatedView,
             interface.alsoProvides(theObject, IExcusedGrade)
             theObject.updateLastMod()
         return theObject
+       
+       
+@view_config(route_name='objects.generic.traversal',
+             permission=nauth.ACT_UPDATE,
+             renderer='rest',
+             context='nti.app.products.gradebook.gradebook.GradeWithoutSubmission',
+             name="excuse",
+             request_method='POST')
+class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
+
+    def _do_call(self):
+        entry = self.request.context.__parent__
+        username = self.request.context.__name__
+        user = User.get_user(username)
+        theObject = record_grade_without_submission(entry, user)
+        self.request.context = theObject
+        
+        result = super(ExcuseGradeWithoutSubmissionView, self)._do_call()
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',
