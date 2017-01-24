@@ -320,6 +320,10 @@ class IGrade(IContained,
 	AutoGrade = _grade_property()
 	AutoGradeMax = _grade_property()
 
+class IGradeWithoutSubmission(IGrade):
+	pass
+IGradeWithoutSubmission.setTaggedValue('_ext_is_marker_interface', True)
+
 class IExcusedGrade(IGrade):
 	"""
 	Marker interface for an Excused grade

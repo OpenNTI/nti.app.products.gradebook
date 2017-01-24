@@ -314,7 +314,9 @@ class GradeBookPart(SchemaConfigured,
 		return self.displayName
 
 from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
 
+@interface.implementer(IGradeWithoutSubmission)
 class GradeWithoutSubmission(PersistentGrade):
 	"""
 	A dummy grade we temporarily create before
