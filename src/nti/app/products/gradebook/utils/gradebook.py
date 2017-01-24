@@ -118,15 +118,14 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 
     grade = None
     course = ICourseInstance(entry)
-    pending_assessment = QAssignmentSubmissionPendingAssessment(
-        assignmentId=assignmentId,
-        parts=[])
+    pending = QAssignmentSubmissionPendingAssessment(assignmentId=assignmentId,
+                                                    parts=[])
 
     assignment_history = component.getMultiAdapter((course, submission.creator),
                                                    IUsersCourseAssignmentHistory)
 
     try:
-        assignment_history.recordSubmission(submission, pending_assessment)
+        assignment_history.recordSubmission(submission, pending)
         # at this point a place holder grade is created we don't return it
         # to indicate to callers of this function that they need to get
         # the grade from the entry
@@ -150,9 +149,9 @@ def synchronize_gradebook_and_verify_policy(course, *args, **kwargs):
     # CS: We verify the grading policy after
     # the gradebook has been synchronized
     policy = find_grading_policy_for_course(course)
-    if 		policy is not None \
-            and IGradeBookGradingPolicy.providedBy(policy) \
-            and not policy.verify():
+    if      policy is not None \
+        and IGradeBookGradingPolicy.providedBy(policy) \
+        and not policy.verify():
         entry = ICourseCatalogEntry(course)
         logger.error(
             "There are errors in grading policy for course %s", entry.ntiid)
