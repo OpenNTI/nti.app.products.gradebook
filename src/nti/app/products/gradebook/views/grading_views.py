@@ -81,9 +81,6 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
         course = ICourseInstance(self.context)
         book = IGradeBook(course)
-        if not book.has_grades(self.remoteUser.username):
-            raise hexec.HTTPNotFound()
-
         params = CaseInsensitiveDict(self.request.params)
 
         # check for a final grade.
