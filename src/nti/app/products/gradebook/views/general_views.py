@@ -75,15 +75,15 @@ class GradeBookPutView(AbstractAuthenticatedView,
         if user is None:
             raise hexec.HTTPNotFound(username)
 
-        assignment = component.queryUtility(IQAssignment, 
+        assignment = component.queryUtility(IQAssignment,
                                             name=assignment_ntiid)
         if assignment is None:
             raise hexec.HTTPNotFound(assignment_ntiid)
 
-        gradebook_entry = gradebook.getColumnForAssignmentId(
-            assignment.__name__)
+        asg_name = assignment.__name__
+        gradebook_entry = gradebook.getColumnForAssignmentId(asg_name)
         if gradebook_entry is None:
-            raise hexec.HTTPNotFound(assignment.__name__)
+            raise hexec.HTTPNotFound(asg_name)
 
         # This will create our grade and assignment history, if necessary.
         record_grade_without_submission(gradebook_entry,
@@ -163,8 +163,8 @@ class ExcuseGradeView(AbstractAuthenticatedView,
             interface.alsoProvides(theObject, IExcusedGrade)
             theObject.updateLastMod()
         return theObject
-       
-       
+
+
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
@@ -178,7 +178,7 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
         username = self.request.context.__name__
         user = User.get_user(username)
         grade = record_grade_without_submission(entry, user)
-        
+
         if grade is not None:
             # place holder grade was inserted
             self.request.context = grade
@@ -187,7 +187,7 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
             # updated it with the given values, let the super
             # class do the work
             self.request.context = entry[username]
-        
+
         result = super(ExcuseGradeWithoutSubmissionView, self)._do_call()
         return result
 
