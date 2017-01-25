@@ -20,7 +20,11 @@ from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLaye
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+COURSE_NTIID = 'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
+
 class TestViews(ApplicationLayerTest):
+	
+	default_origin = str('http://janux.ou.edu')
 	
 	layer = InstructedCourseApplicationTestLayer
 
@@ -53,6 +57,54 @@ class TestViews(ApplicationLayerTest):
 		res = self.testapp.get(path, extra_environ=environ)
 		assert_that(res.json_body, has_entry('NTIID', u'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
 		assert_that( res.json_body, has_entry('Items', has_length(0)))
+	
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)	
+	def test_grade_excuse_views(self):
+		
+		# Make sure we're enrolled
+		self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+								COURSE_NTIID,
+								status=201 )
+		
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://platform.ou.edu'
+		instructor_environ = self._make_extra_environ(username='harp4162')
+		path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial%20Test/'
+		
+		
+		# We don't have a grade yet, so this returns a placeholder grade without a value.
+		res = self.testapp.get(path + 'sjohnson@nextthought.com/', extra_environ=instructor_environ)
+		assert_that(res.json_body, has_entry('value', None))
+		
+		# We don't have a grade submission yet, but we should still
+		# be able to excuse the grade. A placeholder grade gets created
+		# and excused, and we can verify the returned object is excused.
+		# The value is still None.
+		self.testapp.post(path + 'sjohnson@nextthought.com/excuse', extra_environ=instructor_environ)
+		res = self.testapp.get(path + 'sjohnson@nextthought.com', extra_environ=instructor_environ)
+		assert_that(res.json_body, has_entry('IsExcused', True))
+		assert_that(res.json_body, has_entry('value', None))
+		
+		# We can also unexcuse this placeholder grade.
+		self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse', extra_environ=instructor_environ)
+		res = self.testapp.get(path + 'sjohnson@nextthought.com', extra_environ=instructor_environ)
+		assert_that(res.json_body, has_entry('IsExcused', False))
+		assert_that(res.json_body, has_entry('value', None))
+		
+		# A non-instructor should not be able to excuse or unexcuse a grade.
+		res = self.testapp.post(path + 'sjohnson@nextthought.com/excuse', extra_environ=environ, status=403)
+		res = self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse', extra_environ=environ, status=403)
+		
+		# Even though we have a placeholder grade in place, we should be able to 
+		# set its value normally if we assign a grade.
+		grade_path = path + 'sjohnson@nextthought.com'
+		grade = {'Class': 'Grade'}
+		grade['value'] = 10
+		self.testapp.put_json(grade_path, grade, extra_environ=instructor_environ)
+		res = self.testapp.get(path + 'sjohnson@nextthought.com', extra_environ=instructor_environ)
+		assert_that(res.json_body, has_entry('IsExcused', False))
+		assert_that(res.json_body, has_entry('value', 10))
+		
 
 	def test_is_none(self):
 		assert_that(is_none(None), is_(True))

@@ -33,6 +33,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
 
 from nti.app.products.gradebook.utils import remove_from_container
 from nti.app.products.gradebook.utils import record_grade_without_submission
@@ -167,7 +168,7 @@ class ExcuseGradeView(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
-             context='nti.app.products.gradebook.gradebook.GradeWithoutSubmission',
+             context=IGradeWithoutSubmission,
              name="excuse",
              request_method='POST')
 class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
@@ -176,8 +177,16 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
         entry = self.request.context.__parent__
         username = self.request.context.__name__
         user = User.get_user(username)
-        theObject = record_grade_without_submission(entry, user)
-        self.request.context = theObject
+        grade = record_grade_without_submission(entry, user)
+        
+        if grade is not None:
+            # place holder grade was inserted
+            self.request.context = grade
+        else:
+            # This inserted the 'real' grade. To actually
+            # updated it with the given values, let the super
+            # class do the work
+            self.request.context = entry[username]
         
         result = super(ExcuseGradeWithoutSubmissionView, self)._do_call()
         return result
@@ -209,7 +218,7 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
-             context='nti.app.products.gradebook.gradebook.GradeWithoutSubmission',
+             context=IGradeWithoutSubmission,
              request_method='PUT')
 class GradeWithoutSubmissionPutView(GradePutView):
     """
