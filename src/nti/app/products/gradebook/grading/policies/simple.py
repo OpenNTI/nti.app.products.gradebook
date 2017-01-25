@@ -109,6 +109,9 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		all_assignments = self._get_all_assignments_for_user(self.course,
 															 principal)
 
+		# Ignore assignments that we've looked at already. Also
+		# ignore no-submit assignments that haven't been graded yet,
+		# and assignments that aren't due yet. 
 		for assignment in all_assignments:
 			ntiid = assignment.ntiid
 			if		self._is_due(assignment, now) \
