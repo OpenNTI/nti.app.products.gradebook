@@ -272,6 +272,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		a6.ntiid = 'tag:nextthought.com,2011-10:ungraded'
 		assignments.append(a6)
 		mock_get_assignments.is_callable().with_args().returns(assignments)
+		
+		grade = policy.grade('cald3307')
+		assert_that(grade, is_(0.0))
 
 		book = IGradeBook(course)
 		# This should be counted because it's due and not excused,

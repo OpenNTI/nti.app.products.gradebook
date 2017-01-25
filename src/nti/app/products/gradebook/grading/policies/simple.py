@@ -80,6 +80,9 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		assignment_policies = get_assignment_policies(self.course)
 		username = IPrincipal(principal).id
 
+		# First we look through all grades for a certain username
+		# in the gradebook. These are all the grades a student
+		# has been assigned.
 		for grade in self.book.iter_grades(username):
 			
 			gradebook_assignment_ids.add(grade.AssignmentId)
