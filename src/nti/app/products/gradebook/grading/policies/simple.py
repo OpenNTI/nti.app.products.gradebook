@@ -86,7 +86,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		# in the gradebook. These are all the grades a student
 		# has been assigned.
 		for grade in self.book.iter_grades(username):
-			
+
 			gradebook_assignment_ids.add(grade.AssignmentId)
 			excused = IExcusedGrade.providedBy(grade)
 			if not excused:
@@ -120,7 +120,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 
 		# Ignore assignments that we've looked at already. Also
 		# ignore no-submit assignments that haven't been graded yet,
-		# and assignments that aren't due yet. 
+		# and assignments that aren't due yet.
 		for assignment in all_assignments:
 			ntiid = assignment.ntiid
 			if		self._is_due(assignment, now) \

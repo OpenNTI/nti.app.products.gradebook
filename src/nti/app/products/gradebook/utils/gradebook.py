@@ -105,9 +105,8 @@ def record_grade_without_submission(entry, user, assignmentId=None,
     username = user.username
     assignmentId = assignmentId or entry.AssignmentId
 
-    # We insert the history item, which the user himself
-    # normally does but cannot in this case. This implicitly
-    # creates the grade
+    # We insert the history item, which the user himself normally does
+    # but cannot in this case. This implicitly creates the grade.
     # TODO: This is very similar to what nti.app.assessment.adapters
     # does for the student, just with fewer constraints...
     # TODO: The handling for a previously deleted grade is
@@ -153,7 +152,7 @@ def synchronize_gradebook_and_verify_policy(course, *args, **kwargs):
         and IGradeBookGradingPolicy.providedBy(policy) \
         and not policy.verify():
         entry = ICourseCatalogEntry(course)
-        logger.error("There are errors in grading policy for course %s", 
+        logger.error("There are errors in grading policy for course %s",
                      entry.ntiid)
 
 

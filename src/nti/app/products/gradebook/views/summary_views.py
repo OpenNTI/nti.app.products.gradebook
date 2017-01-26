@@ -26,6 +26,8 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSumma
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
+from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
+
 from nti.app.products.gradebook.grading.utils import calculate_predicted_grade
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
@@ -494,6 +496,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		user_dict['AvailableFinalGrade'] = self._get_available_final_grade_for_summary(user_summary)
 		user_dict[MIMETYPE] = 'application/vnd.nextthought.gradebook.usergradebooksummary'
 
+		links = user_dict.setdefault(LINKS, [])
 		# Only expose if our course has one
 		if self.grade_policy:
 			predicted = user_summary.predicted_grade
@@ -501,9 +504,12 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 				user_dict['PredictedGrade'] = { 'Grade': predicted.Grade,
 												'RawValue': predicted.RawValue,
 												'Correctness' : predicted.Correctness }
+			links.append(Link(self.course,
+						  	  rel=VIEW_CURRENT_GRADE,
+						  	  elements=(VIEW_CURRENT_GRADE,),
+						  	  params={'user': user_summary.username}))
 
 		# Link to user's assignment histories
-		links = user_dict.setdefault(LINKS, [])
 		links.append(Link(self.course,
 						  rel='AssignmentHistory',
 						  elements=('AssignmentHistories', user_summary.user.username)))
