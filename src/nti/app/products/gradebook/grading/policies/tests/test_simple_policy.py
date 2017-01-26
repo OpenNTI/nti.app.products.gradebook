@@ -35,6 +35,10 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 
 from nti.assessment.assignment import QAssignment
+from nti.assessment.assignment import QAssignmentPart
+from nti.assessment.question import QQuestion
+from nti.assessment.question import QQuestionSet
+from nti.assessment.parts import QMathPart
 
 from nti.contenttypes.courses.assignment import MappingAssignmentPolicies
 
@@ -231,8 +235,14 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
 				 'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
 				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user',
-				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._is_due')
-	def test_simple_grade_predictor_for_late_assignments(self, mock_ga, mock_gap, mock_get_assignments, mock_is_due):
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._is_due',
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._has_questions')
+	def test_simple_grade_predictor_for_late_assignments(self, 
+														mock_ga, 
+														mock_gap, 
+														mock_get_assignments, 
+														mock_is_due, 
+														mock_has_questions):
 
 		connection = mock_dataserver.current_transaction
 		course = CourseInstance()
@@ -244,6 +254,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		# assignment policies
 		mock_ga.is_callable().with_args().returns(fudge.Fake())
 		mock_is_due.is_callable().with_args().returns(True)
+		mock_has_questions.is_callable().with_args().returns(True)
 		cap = MappingAssignmentPolicies()
 
 		cap['tag:nextthought.com,2011-10:due_and_passed'] = {
@@ -382,4 +393,25 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
 		grade = policy.grade('cald3307')
 		assert_that(grade, is_(0.5))
+		
+	def test_assignment_has_questions(self):
+		
+		assignment = QAssignment()
+		simple_policy = SimpleTotalingGradingPolicy()
+		
+		# This assignment has no questions yet, so it 
+		# should be considered no-submit.
+		no_submit = simple_policy._has_questions(assignment)
+		assert_that(no_submit, is_(False))
+		
+		# If we add a part, a question set, and a question,
+		# it shouldn't be no-submit anymore.
+		part = QAssignmentPart(
+				question_set=QQuestionSet(
+					questions=[QQuestion(
+						parts=[QMathPart()])]))
+		assignment.parts = [part]
+		
+		no_submit = simple_policy._has_questions(assignment)
+		assert_that(no_submit, is_(True))
 		
