@@ -20,6 +20,8 @@ from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotali
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
+from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
@@ -88,6 +90,13 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 			gradebook_assignment_ids.add(grade.AssignmentId)
 			excused = IExcusedGrade.providedBy(grade)
 			if not excused:
+				entry = grade.__parent__
+				name = getattr(entry, 'Name', None)
+				part = getattr(entry, '__parent__', None)
+				if 	part is not None and part.__name__ == NO_SUBMIT_PART_NAME and \
+					name == FINAL_GRADE_NAME:
+					continue
+				
 				ntiid = grade.AssignmentId
 				total_points = self._get_total_points_for_assignment(ntiid,
 																	 assignment_policies)
