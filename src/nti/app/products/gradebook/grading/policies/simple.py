@@ -96,7 +96,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 				if 	part is not None and part.__name__ == NO_SUBMIT_PART_NAME and \
 					name == FINAL_GRADE_NAME:
 					continue
-				
+
 				ntiid = grade.AssignmentId
 				total_points = self._get_total_points_for_assignment(ntiid,
 																	 assignment_policies)
@@ -141,14 +141,14 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 		result = float(total_points_earned) / total_points_available
 		result = min(max(0, result), 1) # results should be bounded to be within [0, 1]
 		return round(result, 2)
-	
+
 	def _has_questions(self, assignment):
 		assignment_parts = assignment.parts or ()
 		for part in assignment_parts:
-			question_set = part.question_set or ()
-			if len(question_set.questions) > 0:
+			question_set = part.question_set
+			if len(question_set.questions or ()) > 0:
 				return True
-			
+
 		return False
 
 	def _get_all_assignments_for_user(self, course, user):
