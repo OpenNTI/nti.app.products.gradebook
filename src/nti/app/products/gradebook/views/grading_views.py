@@ -76,8 +76,9 @@ def is_none(value):
 class CurrentGradeView(AbstractAuthenticatedView):
     """
     Fetch the current (predicted) grade for a user based on the
-    course's `ICourseGradePolicy` (required). If the caller is an
-    instructor, the
+    course's `ICourseGradePolicy` (required). The caller must
+    have `ACT_VIEW_GRADES` permission on the gradebook to view
+    this for others.
     """
 
     def _get_user(self, params):
