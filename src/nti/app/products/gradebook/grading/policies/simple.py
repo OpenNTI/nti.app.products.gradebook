@@ -148,7 +148,6 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 			question_set = part.question_set
 			if len(question_set.questions or ()) > 0:
 				return True
-
 		return False
 
 	def _get_all_assignments_for_user(self, course, user):

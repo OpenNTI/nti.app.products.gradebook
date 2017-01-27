@@ -82,9 +82,8 @@ class Grade(CreatedModDateTrackingObject,
 
 	@Lazy
 	def createdTime(self):
-		# Some old objects in the database won't have
-		# a value for created time; in that case,
-		# default to lastModified.
+		# Some old objects in the database won't have a value for
+		# created time; in that case, default to lastModified.
 		# Some old objects in the database will have a lastModified
 		# of 0, though, nothing we can do about that...
 		return self.lastModified
