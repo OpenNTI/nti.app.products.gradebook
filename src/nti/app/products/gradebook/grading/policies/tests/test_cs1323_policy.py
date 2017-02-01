@@ -33,6 +33,7 @@ from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 
+from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 from nti.app.products.gradebook.gradescheme import IntegerGradeScheme
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
@@ -123,8 +124,9 @@ class TestCS1323GradingPolicy(unittest.TestCase):
 
     @WithMockDSTrans
     @fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
-                 'nti.contenttypes.courses.grading.policies.get_assignment_policies')
-    def test_grade(self, mock_ga, mock_gap):
+                 'nti.contenttypes.courses.grading.policies.get_assignment_policies',
+                 'nti.app.products.gradebook.grading.utils.get_presentation_scheme')
+    def test_grade(self, mock_ga, mock_gap, mock_presentation):
         connection = mock_dataserver.current_transaction
         course = CourseInstance()
         connection.add(course)
@@ -139,6 +141,8 @@ class TestCS1323GradingPolicy(unittest.TestCase):
         cap['a2'] = {'grader': {'group': 'turingscraft', 'points': 10}}
 
         mock_gap.is_callable().with_args().returns(cap)
+        presentation_scheme = NumericGradeScheme()
+        mock_presentation.is_callable().with_args().returns(presentation_scheme)
         policy.validate()
 
         book = IGradeBook(course)
@@ -156,4 +160,6 @@ class TestCS1323GradingPolicy(unittest.TestCase):
             entry['cald3307'] = grade
 
         grade = policy.grade('cald3307')
-        assert_that(grade, is_(0.5))
+        assert_that(grade.correctness, is_(0.5))
+        assert_that(grade.points_available, is_(None))
+        assert_that(grade.points_earned, is_(None))

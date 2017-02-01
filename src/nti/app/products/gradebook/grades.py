@@ -22,6 +22,8 @@ from persistent import Persistent
 
 from nti.app.products.gradebook.interfaces import IGrade
 
+from nti.contenttypes.courses.grading.interfaces import IPredictedGrade
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.authorization import ACT_READ
@@ -169,3 +171,49 @@ from zope.deprecation import deprecated
 deprecated('Grades', 'No longer used')
 class Grades(Persistent):
 	pass
+
+@interface.implementer(IPredictedGrade)
+class PredictedGrade(object):
+	"""
+	Unrelated to Grade and IGrade: this class represents the
+	grade predicted for a student in a course.
+	"""
+	
+	__external_class_name__ = "PredictedGrade"
+	
+	parameters = {}
+	mimeType = mime_type = 'application/vnd.nextthought.predictedgrade'
+	
+	createDirectFieldProperties(IPredictedGrade)
+	
+	correctness = alias('Correctness')
+	points_available = alias('PointsAvailable')
+	points_earned = alias('PointsEarned')
+	raw_value = alias('RawValue')
+	
+	def __init__(self, points_earned=None, points_available=None, correctness=None, presentation_scheme=None):
+		self.points_earned = points_earned
+		self.points_available = points_available
+		
+		# If we can calculate a grade from the points values,
+		# do that. But if we explicitly specify a correctness
+		# value, use that instead.
+
+
+		if correctness is not None:
+			self.raw_value = correctness
+			self.correctness = correctness
+		
+		elif points_available != 0:
+			grade = float(points_earned) / points_available
+			self.raw_value = grade
+			# Correctness should be bounded such that 0 ≤ result ≤ 1, and
+			# rounded to two decimal places. 
+			self.correctness = round(min(max(0, grade), 1), 2)
+			
+		self.presentation = presentation_scheme
+		
+	@property
+	def Grade(self):
+		return self.presentation.fromCorrectness(self.Correctness)
+	

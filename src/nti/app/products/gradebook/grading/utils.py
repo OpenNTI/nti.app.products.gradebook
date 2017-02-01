@@ -20,6 +20,7 @@ from zope.security.interfaces import IPrincipal
 from nti.app.products.gradebook.assignments import create_assignment_part
 
 from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PredictedGrade
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
@@ -30,10 +31,6 @@ from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
-
-PredictedGrade = namedtuple('PredictedGrade',
-                            'Grade RawValue Correctness')
-
 
 def calculate_grades(context,
                      usernames=(),
@@ -95,19 +92,24 @@ def get_presentation_scheme(policy):
         return policy.PresentationGradeScheme
     return None
 
-
 def calculate_predicted_grade(user, policy, scheme=u''):
-    presentation = get_presentation_scheme(policy)
-    if presentation is None:
-        presentation = component.getUtility(IGradeScheme, name=scheme)
-    correctness = policy.grade(user)
-    if correctness is not None:
-        grade = presentation.fromCorrectness(correctness)
-        raw = correctness
-        correctness = int(round(correctness * 100))
-        if grade is not None and grade == correctness:
-            # Don't want to return confusing information if the
-            # grade simply matches the correctness.
-            grade = None
-        return PredictedGrade(grade, raw, correctness)
-    return None
+    
+    if not scheme:
+        scheme = get_presentation_scheme(policy)
+    predicted_grade = policy.grade(user, scheme=scheme)
+    return predicted_grade
+    
+def build_predicted_grade(policy, points_earned=None, points_available=None, correctness=None, scheme=None):
+    
+    presentation_scheme = get_presentation_scheme(policy)
+    if presentation_scheme is None:
+        presentation_scheme = component.getUtility(IGradeScheme, name=scheme)
+    
+    if points_available == 0:
+        return None
+    
+    return PredictedGrade(points_earned=points_earned, 
+                          points_available=points_available, 
+                          correctness=correctness, 
+                          presentation_scheme=presentation_scheme)
+

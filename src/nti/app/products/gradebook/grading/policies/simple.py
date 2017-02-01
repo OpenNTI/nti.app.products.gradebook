@@ -18,10 +18,16 @@ from zope.security.interfaces import IPrincipal
 
 from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
 
+from nti.app.products.gradebook.grades import PredictedGrade
+
+from nti.app.products.gradebook.gradescheme import LetterGradeScheme
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.grading.utils import build_predicted_grade
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
@@ -45,7 +51,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 	__metaclass__ = MetaGradeBookObject
 	createDirectFieldProperties(ISimpleTotalingGradingPolicy)
 
-	PresentationGradeScheme = None
+	PresentationGradeScheme = LetterGradeScheme()
 	presentation = alias('PresentationGradeScheme')
 
 	def __init__(self, *args, **kwargs):
@@ -73,7 +79,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 			return bool(_ending and now > _ending)
 		return False
 
-	def grade(self, principal, *args, **kwargs):
+	def grade(self, principal, scheme=None, *args, **kwargs):
 		now = datetime.utcnow()
 		total_points_earned = 0
 		total_points_available = 0
@@ -137,10 +143,11 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
 			# so just return none because we can't meaningfully
 			# predict any grade for this case.
 			return None
-
-		result = float(total_points_earned) / total_points_available
-		result = min(max(0, result), 1) # results should be bounded to be within [0, 1]
-		return round(result, 2)
+		
+		return build_predicted_grade(self,
+									points_earned=total_points_earned, 
+									points_available=total_points_available, 
+									scheme=scheme)
 
 	def _has_questions(self, assignment):
 		assignment_parts = assignment.parts or ()

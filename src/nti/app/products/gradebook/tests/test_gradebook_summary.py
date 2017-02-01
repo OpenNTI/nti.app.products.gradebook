@@ -24,7 +24,7 @@ from nti.app.products.gradebook.adapters import _as_course
 from nti.app.products.gradebook.gradebook import GradeBook
 from nti.app.products.gradebook.interfaces import IGradeBook
 
-from nti.app.products.gradebook.grading import PredictedGrade
+from nti.app.products.gradebook.grades import PredictedGrade
 
 from nti.app.products.gradebook.views import _get_grade_parts
 from nti.app.products.gradebook.views.summary_views import UserGradeSummary
@@ -62,7 +62,7 @@ class MockSummary( UserGradeSummary ):
 		self.feedback_count = feedback_count
 		self.history_item = history_item
 		self.created_date = created_date
-		self.predicted_grade = predicted_grade or PredictedGrade('F', 0.0, 0)
+		self.predicted_grade = predicted_grade or PredictedGrade(correctness=0.0)
 
 class TestGradeBookSummary( TestCase ):
 
@@ -162,11 +162,11 @@ class TestGradeBookSummary( TestCase ):
 
 		# Sort by predicted_grade
 		summary2 = MockSummary()
-		summary2.predicted_grade = PredictedGrade('-', 0.15, 10)
+		summary2.predicted_grade = PredictedGrade(correctness=.1)
 		summary3 = MockSummary()
-		summary3.predicted_grade = PredictedGrade('-', 0.90, 90)
+		summary3.predicted_grade = PredictedGrade(correctness=0.90)
 		summary4 = MockSummary()
-		summary4.predicted_grade = PredictedGrade('A', 0.55, 55)
+		summary4.predicted_grade = PredictedGrade(correctness=0.55)
 
 		summaries = [ summary4, summary3, summary2, summary ]
 		request.params={ 'sortOn' : 'PREDICTEDgradE', 'sortOrder': 'ascending' }

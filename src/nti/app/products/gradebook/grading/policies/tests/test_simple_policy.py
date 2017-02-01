@@ -22,6 +22,8 @@ import fudge
 
 from zope import interface
 
+from nti.app.products.gradebook.gradescheme import NumericGradeScheme
+
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
@@ -81,8 +83,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 	@WithMockDSTrans
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
 				 'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
-				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user')
-	def test_simple_grade_predictor_policy(self, mock_ga, mock_gap, mock_get_assignments):
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user',
+				 'nti.app.products.gradebook.grading.utils.get_presentation_scheme')
+	def test_simple_grade_predictor_policy(self, mock_ga, mock_gap, mock_get_assignments, mock_presentation):
 
 		connection = mock_dataserver.current_transaction
 		course = CourseInstance()
@@ -103,6 +106,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		set_grading_policy_for_course(course, policy)
 		mock_gap.is_callable().with_args().returns(cap)
 		mock_get_assignments.is_callable().with_args().returns(assignments)
+		
+		# Use the numeric grade scheme to check grades 
+		presentation_scheme = NumericGradeScheme()
+		mock_presentation.is_callable().with_args().returns(presentation_scheme)
 
 		book = IGradeBook(course)
 
@@ -137,7 +144,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
 		# We should have earned 11 points out of a possible 15.
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.73))
+		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(11))
 
 		# Check that an assignment not due and not graded
 		# does not affect the total
@@ -151,7 +160,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.73))
+		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(11))
 
 		# Check that a non-numeric grade gets ignored.
 		part = GradeBookPart()
@@ -165,7 +176,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.73))
+		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(11))
 
 		# Check that an excused grade does not affect the total
 		cap['excused'] = {'auto_grade': {'total_points': 5}}
@@ -181,7 +194,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.73))
+		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(11))
 		
 		# A grade without an entry in the course policy
 		# should be ignored.
@@ -196,7 +211,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.73))
+		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(11))
 
 		# Negative grades are possible, but cannot
 		# make the course grade less than 0.
@@ -212,7 +229,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0))
+		assert_that(grade.correctness, is_(0))
+		assert_that(grade.points_available, is_(20))
+		assert_that(grade.points_earned, is_(-1))
 
 		# Extra credit cannot cause a grade to be
 		# more than 1 (a perfect score)
@@ -228,7 +247,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(1))
+		assert_that(grade.correctness, is_(1))
+		assert_that(grade.points_available, is_(25))
+		assert_that(grade.points_earned, is_(99))
 
 
 	@WithMockDSTrans
@@ -236,13 +257,15 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 				 'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
 				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user',
 				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._is_due',
-				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._has_questions')
+				 'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._has_questions',
+				 'nti.app.products.gradebook.grading.utils.get_presentation_scheme')
 	def test_simple_grade_predictor_for_late_assignments(self, 
 														mock_ga, 
 														mock_gap, 
 														mock_get_assignments, 
 														mock_is_due, 
-														mock_has_questions):
+														mock_has_questions,
+														mock_presentation):
 
 		connection = mock_dataserver.current_transaction
 		course = CourseInstance()
@@ -255,6 +278,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		mock_ga.is_callable().with_args().returns(fudge.Fake())
 		mock_is_due.is_callable().with_args().returns(True)
 		mock_has_questions.is_callable().with_args().returns(True)
+		presentation_scheme = NumericGradeScheme()
+		mock_presentation.is_callable().with_args().returns(presentation_scheme)
 		cap = MappingAssignmentPolicies()
 
 		cap['tag:nextthought.com,2011-10:due_and_passed'] = {
@@ -285,7 +310,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		mock_get_assignments.is_callable().with_args().returns(assignments)
 		
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.0))
+		assert_that(grade.correctness, is_(0))
+		assert_that(grade.points_available, is_(10))
+		assert_that(grade.points_earned, is_(0))
 
 		book = IGradeBook(course)
 		# This should be counted because it's due and not excused,
@@ -305,7 +332,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		# also being counted towards the total possible
 		# points for the course.
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.0))
+		assert_that(grade.correctness, is_(0))
+		assert_that(grade.points_available, is_(10))
+		assert_that(grade.points_earned, is_(0))
+		
 
 		# This should also be counted because it's due.
 		part = GradeBookPart()
@@ -319,7 +349,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 		# We have earned 5 points out of a possible 10.
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.5))
+		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.points_available, is_(10))
+		assert_that(grade.points_earned, is_(5))
 		
 		# If the student has not been graded, but has submitted
 		# the assignment, we ignore it instead of counting as a 0.
@@ -329,7 +361,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry.assignmentId = 'tag:nextthought.com,2011-10:ungraded'
 		part['ungraded'] = entry
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.5))
+		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.points_available, is_(10))
+		assert_that(grade.points_earned, is_(5))
 
 		# Check that an excused grade does not affect
 		# the total, even if it is due.
@@ -348,7 +382,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.5))
+		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.points_available, is_(10))
+		assert_that(grade.points_earned, is_(5))
 
 		# If a student has not submitted an assignment that is
 		# due and for which there is a policy, it should count
@@ -367,7 +403,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		part['unsubmitted'] = entry
 		
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.33))
+		assert_that(grade.correctness, is_(0.33))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(5))
 		
 		# Check that a no-submit grade does not affect
 		# the total if it is not graded.
@@ -382,7 +420,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		part['no-submit'] = entry
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.33))
+		assert_that(grade.correctness, is_(0.33))
+		assert_that(grade.points_available, is_(15))
+		assert_that(grade.points_earned, is_(5))
 		
 		# But if we grade it, it should be counted normally.
 		# We now expect to have earned 10 out of 20 points. 
@@ -392,7 +432,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade, is_(0.5))
+		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.points_available, is_(20))
+		assert_that(grade.points_earned, is_(10))
 		
 	def test_assignment_has_questions(self):
 		

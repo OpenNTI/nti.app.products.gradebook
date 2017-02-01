@@ -124,13 +124,9 @@ class CurrentGradeView(AbstractAuthenticatedView):
         if grade is None:
             is_predicted = True
             scheme = params.get('scheme') or u''
-            predicted = calculate_predicted_grade(user,
+            grade = calculate_predicted_grade(user,
 												  policy,
 												  scheme)
-            if predicted is not None:
-                grade = Grade()  # non persistent
-                grade.value = predicted.Grade
-                grade.username = user.username
 
         if grade is None:
             raise hexc.HTTPNotFound()
@@ -138,7 +134,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         result.update(to_external_object(grade))
         result['IsPredicted'] = is_predicted
-        if predicted is not None:
-            result['RawValue'] = predicted.RawValue
-            result['Correctness'] = predicted.Correctness
+        if is_predicted:
+            result['RawValue'] = grade.RawValue
+            result['Correctness'] = int(grade.Correctness * 100)
         return result

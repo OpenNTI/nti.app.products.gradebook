@@ -29,6 +29,8 @@ from nti.app.products.gradebook.grading.policies.interfaces import ICategoryGrad
 from nti.app.products.gradebook.grading.policies.interfaces import ICS1323EqualGroupGrader
 from nti.app.products.gradebook.grading.policies.interfaces import ICS1323CourseGradingPolicy
 
+from nti.app.products.gradebook.grading.utils import build_predicted_grade
+
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
@@ -297,7 +299,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		# return
 		return result
 
-	def grade(self, principal, verbose=False):
+	def grade(self, principal, verbose=False, scheme=None):
 		"""
 		if an assignment is overdue and there is no submission, the assignment grade is 0
 		if an assignment is submitted and no grades were assigned, the assignment grade
@@ -383,4 +385,5 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		# is not complete
 		result = result / self._total_weight
 		result = round(result, 2)
-		return result
+
+		return build_predicted_grade(self, correctness=result, scheme=scheme)
