@@ -62,7 +62,7 @@ class MockSummary( UserGradeSummary ):
 		self.feedback_count = feedback_count
 		self.history_item = history_item
 		self.created_date = created_date
-		self.predicted_grade = predicted_grade or PredictedGrade(correctness=0.0)
+		self.predicted_grade = predicted_grade or PredictedGrade(raw_value=0.0)
 
 class TestGradeBookSummary( TestCase ):
 
@@ -162,11 +162,11 @@ class TestGradeBookSummary( TestCase ):
 
 		# Sort by predicted_grade
 		summary2 = MockSummary()
-		summary2.predicted_grade = PredictedGrade(correctness=10)
+		summary2.predicted_grade = PredictedGrade(raw_value=0.10)
 		summary3 = MockSummary()
-		summary3.predicted_grade = PredictedGrade(correctness=90)
+		summary3.predicted_grade = PredictedGrade(raw_value=0.90)
 		summary4 = MockSummary()
-		summary4.predicted_grade = PredictedGrade(correctness=55)
+		summary4.predicted_grade = PredictedGrade(raw_value=0.55)
 
 		summaries = [ summary4, summary3, summary2, summary ]
 		request.params={ 'sortOn' : 'PREDICTEDgradE', 'sortOrder': 'ascending' }

@@ -99,7 +99,7 @@ def calculate_predicted_grade(user, policy, scheme=u''):
     predicted_grade = policy.grade(user, scheme=scheme)
     return predicted_grade
     
-def build_predicted_grade(policy, points_earned=None, points_available=None, correctness=None, scheme=None):
+def build_predicted_grade(policy, points_earned=None, points_available=None, raw_value=None, scheme=None):
     
     presentation_scheme = get_presentation_scheme(policy)
     if presentation_scheme is None:
@@ -110,6 +110,6 @@ def build_predicted_grade(policy, points_earned=None, points_available=None, cor
     
     return PredictedGrade(points_earned=points_earned, 
                           points_available=points_available, 
-                          correctness=correctness, 
+                          raw_value=raw_value, 
                           presentation_scheme=presentation_scheme)
 

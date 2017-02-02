@@ -384,6 +384,6 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 		# divide over the total weight in case the policy
 		# is not complete
 		result = result / self._total_weight
-		result = int(round(result, 2) * 100)
+		result = round(result, 2)
 
-		return build_predicted_grade(self, correctness=result, scheme=scheme)
+		return build_predicted_grade(self, raw_value=result, scheme=scheme)

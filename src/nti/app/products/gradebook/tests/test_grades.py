@@ -103,7 +103,7 @@ class TestGrades(unittest.TestCase):
 		assert_that(ext['PointsAvailable'], is_(2))
 		assert_that(ext['PointsEarned'], is_(1))
 		
-		predicted_grade = PredictedGrade(correctness=75)
+		predicted_grade = PredictedGrade(raw_value=0.75)
 		ext = to_external_object(predicted_grade)
 		assert_that(ext['Correctness'], is_(75))
 		assert_that(ext['PointsAvailable'], is_(None))

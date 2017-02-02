@@ -199,28 +199,29 @@ class PredictedGrade(object):
     points_available = alias('PointsAvailable')
 
     def __init__(self, points_earned=None, points_available=None, 
-                 correctness=None, presentation_scheme=None):
+                 raw_value=None, presentation_scheme=None):
         self.PointsEarned = points_earned
         self.PointsAvailable = points_available
-        if correctness is not None:
-            self.Correctness = correctness
+        if raw_value is not None:
+            self.RawValue = raw_value
         self.Presentation = presentation_scheme
     
     @property
     def Grade(self):
-        if self.Correctness is not None and self.Presentation is not None:
-            return self.Presentation.fromCorrectness(self.Correctness)
+        if self.RawValue is not None and self.Presentation is not None:
+            bounded_raw_value = (min(max(0, self.raw_value), 1))
+            return self.Presentation.fromCorrectness(bounded_raw_value)
         else: 
             return None
     
     @Lazy
-    def raw_value(self):
-        if self.PointsAvailable == 0:
+    def RawValue(self):
+        if self.PointsAvailable == 0 or self.PointsAvailable is None or self.PointsEarned is None:
             return None
         return float(self.PointsEarned) / self.PointsAvailable
     
     @Lazy
     def Correctness(self):
-        if self.raw_value is not None:
-            return int(round(min(max(0, self.raw_value), 1), 2) * 100)
+        if self.RawValue is not None:
+            return int(round(min(max(0, self.RawValue), 1), 2) * 100)
         return None
