@@ -79,7 +79,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		factory = find_factory_for(ext)
 		obj = factory()
 		update_from_external_object(obj, ext)
-
+		
 	@WithMockDSTrans
 	@fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
 				 'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
@@ -144,7 +144,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
 		# We should have earned 11 points out of a possible 15.
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.73))
+		temp = grade.correctness
+		assert_that(grade.correctness, is_(73))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(11))
 
@@ -160,7 +161,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.correctness, is_(73))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(11))
 
@@ -176,7 +177,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.correctness, is_(73))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(11))
 
@@ -194,7 +195,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.correctness, is_(73))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(11))
 		
@@ -211,7 +212,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.73))
+		assert_that(grade.correctness, is_(73))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(11))
 
@@ -247,7 +248,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(1))
+		assert_that(grade.correctness, is_(100))
 		assert_that(grade.points_available, is_(25))
 		assert_that(grade.points_earned, is_(99))
 
@@ -349,7 +350,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 		# We have earned 5 points out of a possible 10.
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.correctness, is_(50))
 		assert_that(grade.points_available, is_(10))
 		assert_that(grade.points_earned, is_(5))
 		
@@ -361,7 +362,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry.assignmentId = 'tag:nextthought.com,2011-10:ungraded'
 		part['ungraded'] = entry
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.correctness, is_(50))
 		assert_that(grade.points_available, is_(10))
 		assert_that(grade.points_earned, is_(5))
 
@@ -382,7 +383,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.correctness, is_(50))
 		assert_that(grade.points_available, is_(10))
 		assert_that(grade.points_earned, is_(5))
 
@@ -403,7 +404,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		part['unsubmitted'] = entry
 		
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.33))
+		assert_that(grade.correctness, is_(33))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(5))
 		
@@ -420,7 +421,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		part['no-submit'] = entry
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.33))
+		assert_that(grade.correctness, is_(33))
 		assert_that(grade.points_available, is_(15))
 		assert_that(grade.points_earned, is_(5))
 		
@@ -432,7 +433,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 		entry['cald3307'] = grade
 
 		grade = policy.grade('cald3307')
-		assert_that(grade.correctness, is_(0.5))
+		assert_that(grade.correctness, is_(50))
 		assert_that(grade.points_available, is_(20))
 		assert_that(grade.points_earned, is_(10))
 		

@@ -26,6 +26,7 @@ from nti.wref.interfaces import IWeakRef
 from nti.app.products.gradebook.grades import Grade
 from nti.app.products.gradebook.grades import GradeWeakRef
 from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PredictedGrade
 
 from nti.app.products.gradebook.interfaces import IGrade
 
@@ -33,7 +34,13 @@ from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.testing.matchers import validly_provides
 
+from nti.externalization.externalization import to_external_object
+
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
+
 class TestGrades(unittest.TestCase):
+	
+	layer = SharedConfiguringTestLayer
 
 	def test_implements(self):
 		now = time.time()
@@ -87,7 +94,29 @@ class TestGrades(unittest.TestCase):
 		assert_that( wref(), is_( same_instance( grade )))
 
 		assert_that( pickle.loads(pickle.dumps(wref)), is_(wref))
+		
+	def test_externalization_predicted_grade(self):
+		
+		predicted_grade = PredictedGrade(points_earned=1, points_available=2)
+		ext = to_external_object(predicted_grade)
+		assert_that(ext['Correctness'], is_(50))
+		assert_that(ext['PointsAvailable'], is_(2))
+		assert_that(ext['PointsEarned'], is_(1))
+		
+		predicted_grade = PredictedGrade(correctness=75)
+		ext = to_external_object(predicted_grade)
+		assert_that(ext['Correctness'], is_(75))
+		assert_that(ext['PointsAvailable'], is_(None))
+		assert_that(ext['PointsEarned'], is_(None))
 
+		predicted_grade = PredictedGrade(points_earned=1, points_available=0)
+		ext = to_external_object(predicted_grade)
+		# This situation doesn't make any sense, 
+		# so we just don't predict correctness.
+		assert_that(ext['Correctness'], is_(None))
+		assert_that(ext['PointsAvailable'], is_(0))
+		assert_that(ext['PointsEarned'], is_(1))
+		
 class _GradeBookEntry(GradeBookEntry):
 	
 	def __conform__(self, iface):

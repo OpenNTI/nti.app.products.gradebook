@@ -160,6 +160,6 @@ class TestCS1323GradingPolicy(unittest.TestCase):
             entry['cald3307'] = grade
 
         grade = policy.grade('cald3307')
-        assert_that(grade.correctness, is_(0.5))
+        assert_that(grade.correctness, is_(50))
         assert_that(grade.points_available, is_(None))
         assert_that(grade.points_earned, is_(None))

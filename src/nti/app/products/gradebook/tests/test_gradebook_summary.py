@@ -162,11 +162,11 @@ class TestGradeBookSummary( TestCase ):
 
 		# Sort by predicted_grade
 		summary2 = MockSummary()
-		summary2.predicted_grade = PredictedGrade(correctness=.1)
+		summary2.predicted_grade = PredictedGrade(correctness=10)
 		summary3 = MockSummary()
-		summary3.predicted_grade = PredictedGrade(correctness=0.90)
+		summary3.predicted_grade = PredictedGrade(correctness=90)
 		summary4 = MockSummary()
-		summary4.predicted_grade = PredictedGrade(correctness=0.55)
+		summary4.predicted_grade = PredictedGrade(correctness=55)
 
 		summaries = [ summary4, summary3, summary2, summary ]
 		request.params={ 'sortOn' : 'PREDICTEDgradE', 'sortOrder': 'ascending' }

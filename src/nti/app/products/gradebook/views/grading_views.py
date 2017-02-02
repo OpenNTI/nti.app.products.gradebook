@@ -134,7 +134,4 @@ class CurrentGradeView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         result.update(to_external_object(grade))
         result['IsPredicted'] = is_predicted
-        if is_predicted:
-            result['RawValue'] = grade.RawValue
-            result['Correctness'] = int(grade.Correctness * 100)
         return result
