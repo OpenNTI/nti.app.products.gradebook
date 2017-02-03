@@ -24,48 +24,52 @@ from nti.metadata.predicates import BasePrincipalObjects
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
+
 def gradebook_collector(user):
-	for enrollments in component.subscribers((user,), IPrincipalEnrollments):
-		for enrollment in enrollments.iter_enrollments():
-			course = ICourseInstance(enrollment, None)
-			book = IGradeBook(course, None)
-			if book is not None:
-				yield book
+    for enrollments in component.subscribers((user,), IPrincipalEnrollments):
+        for enrollment in enrollments.iter_enrollments():
+            course = ICourseInstance(enrollment, None)
+            book = IGradeBook(course, None)
+            if book is not None:
+                yield book
+
 
 @component.adapter(IUser)
 class _GradePrincipalObjects(BasePrincipalObjects):
 
-	def iter_objects(self):
-		result = []
-		def _collector():
-			for book in gradebook_collector(self.user):
-				for grade in book.iter_grades(self.user.username):
-					result.append(grade)
-		run_job_in_all_host_sites(_collector)
-		for obj in result:
-			yield obj
+    def iter_objects(self):
+        result = []
+
+        def _collector():
+            for book in gradebook_collector(self.user):
+                for grade in book.iter_grades(self.user.username):
+                    result.append(grade)
+        run_job_in_all_host_sites(_collector)
+        for obj in result:
+            yield obj
+
 
 @component.adapter(ISystemUserPrincipal)
 class _GradeBookPrincipalObjects(BasePrincipalObjects):
 
-	def iter_objects(self):
-		result = []
+    def iter_objects(self):
+        result = []
 
-		def _collector():
-			catalog = component.queryUtility(ICourseCatalog)
-			if catalog is None:
-				return
-			for entry in catalog.iterCatalogEntries():
-				course = ICourseInstance(entry, None)
-				book = ICourseInstance(course, None)
-				if book is None:
-					continue
+        def _collector():
+            catalog = component.queryUtility(ICourseCatalog)
+            if catalog is None or catalog.isEmpty():
+                return
+            for entry in catalog.iterCatalogEntries():
+                course = ICourseInstance(entry, None)
+                book = ICourseInstance(course, None)
+                if book is None:
+                    continue
 
-				for part in book.values():
-					result.append(part)
-					for entry in part.values():
-						result.append(entry)
+                for part in book.values():
+                    result.append(part)
+                    for entry in part.values():
+                        result.append(entry)
 
-		run_job_in_all_host_sites(_collector)
-		for obj in result:
-			yield obj
+        run_job_in_all_host_sites(_collector)
+        for obj in result:
+            yield obj

@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
+from requests.structures import CaseInsensitiveDict
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -22,8 +24,6 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.gradebook import MessageFactory as _
 
-from nti.app.products.gradebook.grades import Grade
-
 from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
 
 from nti.app.products.gradebook.grading.utils import calculate_predicted_grade
@@ -34,8 +34,6 @@ from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.appserver.pyramid_authorization import has_permission
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
@@ -113,7 +111,6 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
         # check for a final grade.
         try:
-            predicted = None
             is_predicted = False
             grade = book[NO_SUBMIT_PART_NAME][
                 FINAL_GRADE_NAME][user.username]
@@ -125,8 +122,8 @@ class CurrentGradeView(AbstractAuthenticatedView):
             is_predicted = True
             scheme = params.get('scheme') or u''
             grade = calculate_predicted_grade(user,
-												  policy,
-												  scheme)
+                                                  policy,
+                                                  scheme)
 
         if grade is None:
             raise hexc.HTTPNotFound()

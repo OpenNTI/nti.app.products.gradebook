@@ -46,7 +46,8 @@ def create_assignment_part(course, part_name, _book=None):
 get_or_create_assignment_part = create_assignment_part
 
 
-def create_assignment_entry(course, assignment, displayName, order=1, _book=None):
+def create_assignment_entry(
+        course, assignment, displayName, order=1, _book=None):
     book = _book if _book is not None else IGradeBook(course)
 
     assignmentId = assignment.__name__
@@ -114,7 +115,7 @@ def synchronize_gradebook(context):
                                 course_ntiid)
                 except TypeError:
                     logger.warning("Failed to remove part %s",
-								   part, exc_info=True)
+                                   part, exc_info=True)
 
         if not part:
             del book[part.__name__]

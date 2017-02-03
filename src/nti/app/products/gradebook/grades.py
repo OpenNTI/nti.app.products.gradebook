@@ -139,7 +139,7 @@ class GradeWeakRef(object):
     def __eq__(self, other):
         try:
             return  self is other or \
-                    (self._username, self._part_wref) == (other._username, other._part_wref)
+                (self._username, self._part_wref) == (other._username, other._part_wref)
         except AttributeError:
             return NotImplemented
 
@@ -198,28 +198,30 @@ class PredictedGrade(object):
     points_earned = alias('PointsEarned')
     points_available = alias('PointsAvailable')
 
-    def __init__(self, points_earned=None, points_available=None, 
+    def __init__(self, points_earned=None, points_available=None,
                  raw_value=None, presentation_scheme=None):
         self.PointsEarned = points_earned
         self.PointsAvailable = points_available
         if raw_value is not None:
             self.RawValue = raw_value
         self.Presentation = presentation_scheme
-    
+
     @property
     def Grade(self):
         if self.RawValue is not None and self.Presentation is not None:
             bounded_raw_value = (min(max(0, self.raw_value), 1))
             return self.Presentation.fromCorrectness(bounded_raw_value)
-        else: 
+        else:
             return None
-    
+
     @Lazy
     def RawValue(self):
-        if self.PointsAvailable == 0 or self.PointsAvailable is None or self.PointsEarned is None:
+        if     self.PointsAvailable == 0 \
+            or self.PointsAvailable is None \
+            or self.PointsEarned is None:
             return None
         return float(self.PointsEarned) / self.PointsAvailable
-    
+
     @Lazy
     def Correctness(self):
         if self.RawValue is not None:
