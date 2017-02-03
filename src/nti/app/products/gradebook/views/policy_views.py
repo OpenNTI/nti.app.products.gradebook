@@ -52,7 +52,8 @@ class GradingPolicyMixin(object):
                request_method='GET',
                name=GRADING_POLICY,
                permission=nauth.ACT_READ)
-class CourseGradingPolicyGetView(AbstractAuthenticatedView, GradingPolicyMixin):
+class CourseGradingPolicyGetView(AbstractAuthenticatedView,
+                                GradingPolicyMixin):
 
     def __call__(self):
         policy = find_grading_policy_for_course(self.course)

@@ -13,6 +13,8 @@ import csv
 import six
 from io import BytesIO
 
+from requests.structures import CaseInsensitiveDict
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
@@ -28,8 +30,6 @@ from nti.app.products.gradebook.interfaces import IGradeScheme
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
 
 from nti.app.products.gradebook.utils import replace_username
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
