@@ -46,15 +46,16 @@ def create_assignment_part(course, part_name, _book=None):
 get_or_create_assignment_part = create_assignment_part
 
 
-def create_assignment_entry(
-        course, assignment, displayName, order=1, _book=None):
+def create_assignment_entry(course, assignment, displayName, 
+                            order=1, _book=None):
     book = _book if _book is not None else IGradeBook(course)
 
     assignmentId = assignment.__name__
 
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is None:
-        part = get_or_create_assignment_part(course, assignment.category_name)
+        part = get_or_create_assignment_part(course, 
+                                             assignment.category_name)
         # Hmm, maybe we should just ask it to create the entry
         part.validateAssignment(assignment)
         entry = part.entryFactory(displayName=displayName,
