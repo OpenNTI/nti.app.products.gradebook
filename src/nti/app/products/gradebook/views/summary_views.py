@@ -501,9 +501,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 		if self.grade_policy:
 			predicted = user_summary.predicted_grade
 			if predicted is not None:
-				user_dict['PredictedGrade'] = { 'Grade': predicted.Grade,
-												'RawValue': predicted.RawValue,
-												'Correctness' : predicted.Correctness }
+				user_dict['PredictedGrade'] = predicted
 			links.append(Link(self.course,
 						  	  rel=VIEW_CURRENT_GRADE,
 						  	  elements=(VIEW_CURRENT_GRADE,),
