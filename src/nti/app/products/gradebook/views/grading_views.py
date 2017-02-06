@@ -83,7 +83,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
         username = params.get('user') or params.get('username')
         user = None
         if username:
-            user = User.get_user( username )
+            user = User.get_user(username)
             if user is None:
                 raise hexc.HTTPUnprocessableEntity(_("User not found."))
         else:
@@ -93,7 +93,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
     def __call__(self):
         course = ICourseInstance(self.request.context)
         if      not is_enrolled(course, self.remoteUser) \
-            and not is_course_instructor(course, self.remoteUser):
+                and not is_course_instructor(course, self.remoteUser):
             raise hexc.HTTPForbidden(_("Must be enrolled in course."))
 
         policy = find_grading_policy_for_course(course)
@@ -106,8 +106,10 @@ class CurrentGradeView(AbstractAuthenticatedView):
         params = CaseInsensitiveDict(self.request.params)
         user = self._get_user(params)
         if      user != self.remoteUser \
-            and not has_permission(ACT_VIEW_GRADES, book):
-                raise hexc.HTTPForbidden(_("Cannot view grades."))
+                and not has_permission(ACT_VIEW_GRADES, book):
+            raise hexc.HTTPForbidden(_("Cannot view grades."))
+
+        result = LocatedExternalDict()
 
         # check for a final grade.
         try:
@@ -115,20 +117,22 @@ class CurrentGradeView(AbstractAuthenticatedView):
             grade = book[NO_SUBMIT_PART_NAME][
                 FINAL_GRADE_NAME][user.username]
             grade = None if is_none(grade.value) else grade
+            if grade is not None:
+                result['FinalGrade'] = to_external_object(grade)
+
         except KeyError:
             grade = None
 
         if grade is None:
             is_predicted = True
-            scheme = params.get('scheme') or u''
-            grade = calculate_predicted_grade(user,
-                                                  policy,
-                                                  scheme)
-
+        scheme = params.get('scheme') or u''
+        grade = calculate_predicted_grade(user,
+                                          policy,
+                                          scheme)
         if grade is None:
             raise hexc.HTTPNotFound()
+        if grade is not None:
+            result['PredictedGrade'] = to_external_object(grade)
 
-        result = LocatedExternalDict()
-        result.update(to_external_object(grade))
         result['IsPredicted'] = is_predicted
         return result
