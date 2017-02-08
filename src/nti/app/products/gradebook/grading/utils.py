@@ -100,8 +100,8 @@ def calculate_predicted_grade(user, policy, scheme=u''):
     return predicted_grade
 
 
-def build_predicted_grade(
-        policy, points_earned=None, points_available=None, raw_value=None, scheme=None):
+def build_predicted_grade(policy, points_earned=None, points_available=None, 
+                          raw_value=None, scheme=None):
 
     presentation_scheme = get_presentation_scheme(policy)
     if presentation_scheme is None:
