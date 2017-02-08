@@ -108,9 +108,7 @@ class ILetterGradeScheme(IGradeScheme):
 
 
 class ILetterNumericGradeScheme(ILetterGradeScheme):
-    """
-
-    """
+    pass
 
 
 class IBooleanGradeScheme(IGradeScheme):
@@ -132,8 +130,10 @@ class IGradeBookEntry(IContainer,
 
     Name = ValidTextLine(title="entry name", required=False)
 
-    GradeScheme = Object(IGradeScheme, description="A :class:`.IGradeScheme`",
-                         title="The grade scheme", required=False)
+    GradeScheme = Object(IGradeScheme, 
+                         description="A :class:`.IGradeScheme`",
+                         title="The grade scheme", 
+                         required=False)
 
     displayName = ValidTextLine(title="Part name", required=False)
 

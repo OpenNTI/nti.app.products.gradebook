@@ -139,7 +139,7 @@ class LetterNumericGradeScheme(LetterGradeScheme):
         letter_grade = LetterGradeScheme.fromCorrectness(self, value)
         numeric_grade = int(value * 100)
         if letter_grade is not None:
-            return letter_grade + ' ' + str(numeric_grade)
+            return "%s %s" % (letter_grade, numeric_grade)
         return numeric_grade
 
 
