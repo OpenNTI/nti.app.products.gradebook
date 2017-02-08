@@ -28,7 +28,10 @@ from nti.app.products.gradebook.interfaces import IGrade
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
+from nti.dataserver.interfaces import IMetadataCatalog
 
+from nti.dataserver.metadata_index import IX_MIMETYPE
+from nti.dataserver.metadata_index import CATALOG_NAME
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):
@@ -73,7 +76,11 @@ def do_evolve(context, generation=generation):
             intids.register(new_index)
             catalog[IX_CREATOR] = new_index
             
-            for uid in old_index.ids() or ():
+            metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+            query = {
+                IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.grade',)}
+            }
+            for uid in metadata.apply(query) or ():
                 grade = intids.queryObject(uid)
                 if IGrade.providedBy(grade):
                     count += 1

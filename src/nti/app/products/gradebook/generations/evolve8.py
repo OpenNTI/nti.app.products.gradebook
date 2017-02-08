@@ -27,6 +27,7 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 from nti.dataserver.interfaces import IMetadataCatalog
 
+from nti.dataserver.metadata_index import IX_MIMETYPE
 from nti.dataserver.metadata_index import CATALOG_NAME
 
 
@@ -65,7 +66,7 @@ def do_evolve(context, generation=generation):
         catalog = install_grade_catalog(ds_folder, intids)
         metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
         query = {
-            'mimeType': {'any_of': ('application/vnd.nextthought.grade',)}
+            IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.grade',)}
         }
         count = 0
         for uid in metadata.apply(query) or ():
