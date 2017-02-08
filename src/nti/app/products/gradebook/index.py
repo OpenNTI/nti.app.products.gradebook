@@ -111,10 +111,10 @@ class ValidatingGradeValueType(object):
     __slots__ = (b'type',)
 
     def __init__(self, obj, default=None):
-        grade = IGrade(obj, default)
-        value = getattr(grade, 'value', None)
-        if value is not None:
-            self.type = to_unicode(value.__class__.__name__)
+        if IGrade.providedBy(obj):
+            value = getattr(obj, 'value', None)
+            if value is not None:
+                self.type = to_unicode(value.__class__.__name__)
 
     def __reduce__(self):
         raise TypeError()
