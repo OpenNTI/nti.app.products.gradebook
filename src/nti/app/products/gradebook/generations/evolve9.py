@@ -61,8 +61,8 @@ def do_evolve(context, generation=generation):
     count = 0
     with site(ds_folder):
         assert 	component.getSiteManager() == ds_folder.getSiteManager(), \
-            "Hooks not installed?"
-
+                "Hooks not installed?"
+        from IPython.core.debugger import Tracer; Tracer()()
         catalog = install_grade_catalog(ds_folder, intids)
         old_index = catalog[IX_CREATOR]
         if not isinstance(old_index, GradeCreatorIndex):

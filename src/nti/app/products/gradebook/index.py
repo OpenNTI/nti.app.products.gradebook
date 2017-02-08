@@ -84,6 +84,7 @@ class GradeUsernameRawIndex(RawValueIndex):
     pass
 UsernameRawIndex = GradeUsernameRawIndex  # BWC
 
+
 def GradeUsernameIndex(family=None):
     return NormalizationWrapper(field_name='Username',
                                 interface=IGrade,
@@ -209,6 +210,7 @@ def install_grade_catalog(site_manager_container, intids=None):
 
 # deprecated
 from zope.deprecation import deprecated
+
 
 deprecated("GradeCatalog", "use MetadataGradeCatalog")
 @interface.implementer(ICatalog)
