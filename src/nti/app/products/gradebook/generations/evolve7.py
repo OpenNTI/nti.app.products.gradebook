@@ -65,7 +65,7 @@ def do_evolve(context, generation=generation):
     component.provideUtility(mock_ds, IDataserver)
 
     with site(ds_folder):
-        assert     component.getSiteManager() == ds_folder.getSiteManager(), \
+        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
                 "Hooks not installed?"
 
         # load library
@@ -89,6 +89,7 @@ def do_evolve(context, generation=generation):
                 if IGrade.providedBy(grade):
                     index.index_doc(uid, grade)
 
+    component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
     logger.info('Gradebook evolution %s done', generation)
 
 

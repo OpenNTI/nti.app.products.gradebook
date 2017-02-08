@@ -60,7 +60,7 @@ def do_evolve(context, generation=generation):
     component.provideUtility(mock_ds, IDataserver)
 
     with site(ds_folder):
-        assert     component.getSiteManager() == ds_folder.getSiteManager(), \
+        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
                 "Hooks not installed?"
 
         catalog = install_grade_catalog(ds_folder, intids)
@@ -75,6 +75,7 @@ def do_evolve(context, generation=generation):
                 count += 1
                 catalog.index_doc(uid, grade)
 
+    component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
     logger.info('Gradebook evolution %s done, %s grade(s) indexed',
                 generation, count)
 

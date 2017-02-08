@@ -65,7 +65,7 @@ def do_evolve(context, generation=generation):
 
     count = 0
     with site(ds_folder):
-        assert     component.getSiteManager() == ds_folder.getSiteManager(), \
+        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
                 "Hooks not installed?"
 
         catalog = install_grade_catalog(ds_folder, intids)
@@ -92,6 +92,7 @@ def do_evolve(context, generation=generation):
             old_index.clear()
             old_index.__parent__ = None
 
+    component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
     logger.info('Gradebook evolution %s done, %s grade(s) indexed',
                 generation, count)
 
