@@ -224,7 +224,5 @@ class PredictedGrade(object):
 from zope.deprecation import deprecated
 
 deprecated('Grades', 'No longer used')
-
-
 class Grades(Persistent):
     pass

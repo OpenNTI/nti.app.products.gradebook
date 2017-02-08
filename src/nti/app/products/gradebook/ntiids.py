@@ -33,7 +33,7 @@ from nti.site.site import get_component_hierarchy_names
 def get_course(key):
     catalog = get_courses_catalog()
     intids = component.getUtility(IIntIds)
-    # XXX: Resolver according to hierarchy
+    # XXX: Resolve according to hierarchy
     for site in  get_component_hierarchy_names():
         query = {
             IX_NAME: {'any_of': key},

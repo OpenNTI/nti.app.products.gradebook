@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from collections import namedtuple
-
 from zope import component
 
 from zope.container.interfaces import INameChooser
@@ -31,6 +29,7 @@ from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
+
 
 def calculate_grades(context,
                      usernames=(),
@@ -92,24 +91,26 @@ def get_presentation_scheme(policy):
         return policy.PresentationGradeScheme
     return None
 
+
 def calculate_predicted_grade(user, policy, scheme=u''):
-    
+
     if not scheme:
         scheme = get_presentation_scheme(policy)
     predicted_grade = policy.grade(user, scheme=scheme)
     return predicted_grade
-    
-def build_predicted_grade(policy, points_earned=None, points_available=None, raw_value=None, scheme=None):
-    
+
+
+def build_predicted_grade(
+        policy, points_earned=None, points_available=None, raw_value=None, scheme=None):
+
     presentation_scheme = get_presentation_scheme(policy)
     if presentation_scheme is None:
         presentation_scheme = component.getUtility(IGradeScheme, name=scheme)
-    
+
     if points_available == 0:
         return None
-    
-    return PredictedGrade(points_earned=points_earned, 
-                          points_available=points_available, 
-                          raw_value=raw_value, 
-                          presentation_scheme=presentation_scheme)
 
+    return PredictedGrade(points_earned=points_earned,
+                          points_available=points_available,
+                          raw_value=raw_value,
+                          presentation_scheme=presentation_scheme)

@@ -24,23 +24,25 @@ from nti.mimetype.mimetype import MIME_BASE
 #: Gradebook Base MimeType
 GRADEBOOK_MIME_BASE = MIME_BASE + b'.gradebook'
 
+
 class MetaGradeBookObject(type):
 
-	def __new__(cls, name, bases, dct):
-		cls = type.__new__(cls, name, bases, dct)
-		ancestor = object
-		for ancestor in cls.mro():
-			if 'mimeType' in ancestor.__dict__:
-				break
-		if ancestor is not cls:
-			clazzname = b'.' + name.encode('ascii').lower()
-			cls.mime_type = cls.mimeType = GRADEBOOK_MIME_BASE + clazzname
-			cls.parameters = dict()
-		return cls
+    def __new__(cls, name, bases, dct):
+        cls = type.__new__(cls, name, bases, dct)
+        ancestor = object
+        for ancestor in cls.mro():
+            if 'mimeType' in ancestor.__dict__:
+                break
+        if ancestor is not cls:
+            clazzname = b'.' + name.encode('ascii').lower()
+            cls.mime_type = cls.mimeType = GRADEBOOK_MIME_BASE + clazzname
+            cls.parameters = dict()
+        return cls
+
 
 def replace_username(username):
-	substituter = component.queryUtility(IUsernameSubstitutionPolicy)
-	if substituter is None:
-		return username
-	result = substituter.replace(username) or username
-	return result
+    substituter = component.queryUtility(IUsernameSubstitutionPolicy)
+    if substituter is None:
+        return username
+    result = substituter.replace(username) or username
+    return result

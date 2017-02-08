@@ -110,7 +110,7 @@ def history_item_for_grade(grade):
     user = IUser(grade)
     course = ICourseInstance(grade)
     history = component.getMultiAdapter((course, user),
-										IUsersCourseAssignmentHistory)
+                                        IUsersCourseAssignmentHistory)
     assg_id = grade.__parent__.AssignmentId # by definition
     try:
         return history[assg_id]
