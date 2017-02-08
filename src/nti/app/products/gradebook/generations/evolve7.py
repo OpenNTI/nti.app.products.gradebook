@@ -47,7 +47,7 @@ class MockDataserver(object):
             logger.warn("Using dataserver without a proper ISiteManager.")
         else:
             return resolver.get_object_by_oid(oid, 
-											  ignore_creator=ignore_creator)
+                                              ignore_creator=ignore_creator)
         return None
 
 
@@ -65,7 +65,7 @@ def do_evolve(context, generation=generation):
     component.provideUtility(mock_ds, IDataserver)
 
     with site(ds_folder):
-        assert 	component.getSiteManager() == ds_folder.getSiteManager(), \
+        assert     component.getSiteManager() == ds_folder.getSiteManager(), \
                 "Hooks not installed?"
 
         # load library
