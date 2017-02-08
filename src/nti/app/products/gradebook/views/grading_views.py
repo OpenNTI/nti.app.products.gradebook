@@ -113,26 +113,23 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
         # check for a final grade.
         try:
-            is_predicted = False
-            grade = book[NO_SUBMIT_PART_NAME][
+            final_grade = book[NO_SUBMIT_PART_NAME][
                 FINAL_GRADE_NAME][user.username]
-            grade = None if is_none(grade.value) else grade
-            if grade is not None:
-                result['FinalGrade'] = to_external_object(grade)
+            final_grade = None if is_none(final_grade.value) else final_grade
+            if final_grade is not None:
+                result['FinalGrade'] = final_grade
 
         except KeyError:
-            grade = None
+            final_grade = None
 
-        if grade is None:
-            is_predicted = True
         scheme = params.get('scheme') or u''
-        grade = calculate_predicted_grade(user,
-                                          policy,
-                                          scheme)
-        if grade is None:
-            raise hexc.HTTPNotFound()
-        if grade is not None:
-            result['PredictedGrade'] = to_external_object(grade)
+        predicted_grade = calculate_predicted_grade(user,
+                                                    policy,
+                                                    scheme)
 
-        result['IsPredicted'] = is_predicted
+        if predicted_grade is None and final_grade is None:
+            raise hexc.HTTPNotFound()
+        if predicted_grade is not None:
+            result['PredictedGrade'] = predicted_grade
+
         return result
