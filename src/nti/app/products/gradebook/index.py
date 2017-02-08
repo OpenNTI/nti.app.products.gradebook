@@ -61,6 +61,27 @@ class AssignmentIdIndex(ValueIndex):
         return super(AssignmentIdIndex, self).index_doc(docid, obj)
 
 
+class ValidatingGradeCreatorType(object):
+
+    __slots__ = (b'creator',)
+
+    def __init__(self, obj, default=None):
+        if IGrade.providedBy(obj):
+            creator = getattr(obj, 'creator', None)
+            creator = getattr(creator, 'username', creator)
+            creator = getattr(creator, 'id', creator)  # in case of a principal
+            if creator:
+                self.creator = to_unicode(creator.lower())
+
+    def __reduce__(self):
+        raise TypeError()
+
+
+class GradeCreatorIndex(ValueIndex):
+    default_field_name = 'creator'
+    default_interface = ValidatingGradeCreatorType
+
+
 class CreatorRawIndex(RawValueIndex):
     pass
 
@@ -202,6 +223,8 @@ def install_grade_catalog(site_manager_container, intids=None):
 from zope.deprecation import deprecated
 
 deprecated("GradeCatalog", "use MetadataGradeCatalog")
+
+
 @interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
     pass
