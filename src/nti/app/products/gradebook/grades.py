@@ -102,8 +102,8 @@ class Grade(CreatedModDateTrackingObject,
         acl = acl_from_aces()
         course = ICourseInstance(self, None)
         if course is not None:
-            acl.extend((ace_allowing(i, ALL_PERMISSIONS)
-                        for i in course.instructors))
+            acl.extend([ace_allowing(i, ALL_PERMISSIONS)
+                        for i in course.instructors or ()])
         # This will become conditional on whether we are published
         if self.Username:
             acl.append(ace_allowing(self.Username, ACT_READ))
@@ -139,7 +139,7 @@ class GradeWeakRef(object):
     def __eq__(self, other):
         try:
             return  self is other or \
-                (self._username, self._part_wref) == (other._username, other._part_wref)
+                    (self._username, self._part_wref) == (other._username, other._part_wref)
         except AttributeError:
             return NotImplemented
 
@@ -173,13 +173,6 @@ class PersistentGrade(Grade, PersistentPropertyHolder):
             return self.__parent__.NTIID
 
 
-from zope.deprecation import deprecated
-
-deprecated('Grades', 'No longer used')
-class Grades(Persistent):
-    pass
-
-
 @interface.implementer(IPredictedGrade, IContentTypeAware)
 class PredictedGrade(object):
     """
@@ -211,8 +204,7 @@ class PredictedGrade(object):
         if self.RawValue is not None and self.Presentation is not None:
             bounded_raw_value = (min(max(0, self.raw_value), 1))
             return self.Presentation.fromCorrectness(bounded_raw_value)
-        else:
-            return None
+        return None
 
     @Lazy
     def RawValue(self):
@@ -227,3 +219,12 @@ class PredictedGrade(object):
         if self.RawValue is not None:
             return int(round(min(max(0, self.RawValue), 1), 2) * 100)
         return None
+
+
+from zope.deprecation import deprecated
+
+deprecated('Grades', 'No longer used')
+
+
+class Grades(Persistent):
+    pass
