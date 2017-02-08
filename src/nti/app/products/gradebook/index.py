@@ -133,10 +133,10 @@ class ValidatingGradeSite(object):
     __slots__ = (b'site',)
 
     def __init__(self, obj, default=None):
-        grade = IGrade(obj, default)
-        folder = find_interface(grade, IHostPolicyFolder, strict=False)
-        if folder is not None:
-            self.site = to_unicode(folder.__name__)
+        if IGrade.providedBy(obj):
+            folder = find_interface(obj, IHostPolicyFolder, strict=False)
+            if folder is not None:
+                self.site = to_unicode(folder.__name__)
 
     def __reduce__(self):
         raise TypeError()
@@ -155,11 +155,11 @@ class ValidatingGradeCatalogEntryID(object):
     __slots__ = (b'ntiid',)
 
     def __init__(self, obj, default=None):
-        grade = IGrade(obj, default)
-        course = find_interface(grade, ICourseInstance, strict=False)
-        entry = ICourseCatalogEntry(course, None)  # entry is an annotation
-        if entry is not None:
-            self.ntiid = to_unicode(entry.ntiid)
+        if IGrade.providedBy(obj):
+            course = find_interface(obj, ICourseInstance, strict=False)
+            entry = ICourseCatalogEntry(course, None)  # entry is an annotation
+            if entry is not None:
+                self.ntiid = to_unicode(entry.ntiid)
 
     def __reduce__(self):
         raise TypeError()
