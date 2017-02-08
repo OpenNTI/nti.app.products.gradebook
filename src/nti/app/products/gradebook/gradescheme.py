@@ -21,6 +21,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.app.products.gradebook.interfaces import ILetterGradeScheme
+from nti.app.products.gradebook.interfaces import ILetterNumericGradeScheme
 from nti.app.products.gradebook.interfaces import IBooleanGradeScheme
 from nti.app.products.gradebook.interfaces import IIntegerGradeScheme
 from nti.app.products.gradebook.interfaces import INumericGradeScheme
@@ -127,6 +128,19 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
                       (77, 79), (73, 76), (70, 72),
                       (67, 69), (63, 66), (60, 62),
                       (57, 59), (50, 56), (0, 49))
+
+
+@interface.implementer(ILetterNumericGradeScheme)
+class LetterNumericGradeScheme(LetterGradeScheme):
+
+    __metaclass__ = MetaGradeBookObject
+
+    def fromCorrectness(self, value):
+        letter_grade = LetterGradeScheme.fromCorrectness(self, value)
+        numeric_grade = int(value * 100)
+        if letter_grade is not None:
+            return letter_grade + ' ' + str(numeric_grade)
+        return numeric_grade
 
 
 @WithRepr
