@@ -19,6 +19,8 @@ from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
+from zope.location import locate
+
 from nti.app.products.gradebook.index import IX_CREATOR
 from nti.app.products.gradebook.index import install_grade_catalog
 
@@ -73,6 +75,7 @@ def do_evolve(context, generation=generation):
             del catalog[IX_CREATOR]
            
             new_index = GradeCreatorIndex()
+            locate(new_index, catalog, IX_CREATOR)
             intids.register(new_index)
             catalog[IX_CREATOR] = new_index
             
