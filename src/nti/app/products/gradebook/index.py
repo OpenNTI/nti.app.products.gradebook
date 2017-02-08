@@ -24,8 +24,6 @@ from nti.common.string import to_unicode
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.dataserver.interfaces import ICreatedUsername
-
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
@@ -82,26 +80,16 @@ class GradeCreatorIndex(ValueIndex):
     default_interface = ValidatingGradeCreatorType
 
 
-class CreatorRawIndex(RawValueIndex):
+class GradeUsernameRawIndex(RawValueIndex):
     pass
+UsernameRawIndex = GradeUsernameRawIndex  # BWC
 
-
-def CreatorIndex(family=None):
-    return NormalizationWrapper(field_name='creator_username',
-                                interface=ICreatedUsername,
-                                index=CreatorRawIndex(family=family),
-                                normalizer=StringTokenNormalizer())
-
-
-class UsernameRawIndex(RawValueIndex):
-    pass
-
-
-def UsernameIndex(family=None):
+def GradeUsernameIndex(family=None):
     return NormalizationWrapper(field_name='Username',
                                 interface=IGrade,
-                                index=UsernameRawIndex(family=family),
+                                index=GradeUsernameRawIndex(family=family),
                                 normalizer=StringTokenNormalizer())
+UsernameIndex = GradeUsernameIndex  # BWC
 
 
 class GradeValueIndex(ValueIndex):
@@ -206,9 +194,9 @@ def install_grade_catalog(site_manager_container, intids=None):
     lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
     for name, clazz in ((IX_SITE, SiteIndex),
-                        (IX_CREATOR, CreatorIndex),
-                        (IX_USERNAME, UsernameIndex),
+                        (IX_CREATOR, GradeCreatorIndex),
                         (IX_GRADE_VALUE, GradeValueIndex),
+                        (IX_USERNAME, GradeUsernameIndex),
                         (IX_GRADE_TYPE, GradeValueTypeIndex),
                         (IX_ASSIGNMENT_ID, AssignmentIdIndex),
                         (IX_GRADE_COURSE, CatalogEntryIDIndex)):
@@ -223,8 +211,16 @@ def install_grade_catalog(site_manager_container, intids=None):
 from zope.deprecation import deprecated
 
 deprecated("GradeCatalog", "use MetadataGradeCatalog")
-
-
 @interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
     pass
+
+
+deprecated("CreatorRawIndex", "No longer used")
+class CreatorRawIndex(RawValueIndex):
+    pass
+
+
+deprecated("CreatorIndex", "No longer used")
+def CreatorIndex(family=None):
+    return None
