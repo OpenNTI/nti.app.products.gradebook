@@ -17,13 +17,14 @@ from zope.security.interfaces import IPrincipal
 
 from nti.app.products.gradebook.assignments import create_assignment_part
 
-from nti.app.products.gradebook.grades import PersistentGrade
 from nti.app.products.gradebook.grades import PredictedGrade
+from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
-from nti.app.products.gradebook.interfaces import IGradeScheme
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.interfaces import IGradeScheme
 
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
@@ -93,7 +94,6 @@ def get_presentation_scheme(policy):
 
 
 def calculate_predicted_grade(user, policy, scheme=u''):
-
     if not scheme:
         scheme = get_presentation_scheme(policy)
     predicted_grade = policy.grade(user, scheme=scheme)
