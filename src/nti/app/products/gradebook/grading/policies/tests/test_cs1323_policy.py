@@ -98,7 +98,7 @@ class TestCS1323GradingPolicy(unittest.TestCase):
         update_from_external_object(obj, ext)
 
         assert_that(obj, has_property('Grader', 
-									  has_property('Groups', has_length(1))))
+                                      has_property('Groups', has_length(1))))
 
     @property
     def cs1323_policy(self):

@@ -59,17 +59,17 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 def main():
     arg_parser = argparse.ArgumentParser(description="Grade calculator")
     arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
-							action='store_true', dest='verbose')
+                            action='store_true', dest='verbose')
     arg_parser.add_argument('ntiid', help="Course NTIID")
 
     arg_parser.add_argument('-s', '--site', dest='site', 
-							help="Request site")
+                            help="Request site")
 
     arg_parser.add_argument('-g', '--grade', dest='scheme',
                             help="Grade scheme class name")
 
     arg_parser.add_argument( '-e', '--entry', dest='entry', 
-							help="Grade entry name")
+                            help="Grade entry name")
 
     arg_parser.add_argument('-u', '--users',
                             dest='usernames',
