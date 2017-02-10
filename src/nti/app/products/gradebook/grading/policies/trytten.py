@@ -60,8 +60,7 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 
 def to_correctness(value, scheme):
-    value = scheme.fromUnicode(value) if isinstance(
-        value, string_types) else value
+    value = scheme.fromUnicode(value) if isinstance(value, string_types) else value
     scheme.validate(value)
     result = scheme.toCorrectness(value)
     return result
@@ -239,14 +238,15 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
             entry = grade.__parent__
             name = getattr(entry, 'Name', None)
             part = getattr(entry, '__parent__', None)
-            if 	part is not None and part.__name__ == NO_SUBMIT_PART_NAME and \
-                    name == FINAL_GRADE_NAME:
+            if      part is not None \
+                and part.__name__ == NO_SUBMIT_PART_NAME \
+                and name == FINAL_GRADE_NAME:
                 continue
 
             weight = self._weights.get(assignmentId)
             if not weight:
-                logger.error(
-                    "Incomplete policy, no weight found for %s", assignmentId)
+                logger.error("Incomplete policy, no weight found for %s",
+                              assignmentId)
                 continue
 
             scheme = self._schemes.get(assignmentId)
@@ -313,16 +313,16 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
         if an assignment is submitted and no grades were assigned, the assignment grade
         is max grade.
         For each category of assignments:
-                1.	ignore/drop the assignments that were marked as excused
+                1. ignore/drop the assignments that were marked as excused
 
-                2.	ignore/drop the assignments that are invalid
-                        (i.e. entered grade is greater than specified max grade)
+                2. ignore/drop the assignments that are invalid
+                   (i.e. entered grade is greater than specified max grade)
 
-                3.	calculate grade percentage: actual grade/max grade
+                3. calculate grade percentage: actual grade/max grade
 
-                4.	ignore/drop the specified N lowest grade assignments
+                4. ignore/drop the specified N lowest grade assignments
 
-                5.	calculate average out of remaining assignments and multiply by category weights.
+                5. calculate average out of remaining assignments and multiply by category weights.
 
         Sum up the result derived from each category and arrive at predictor grade
         """
@@ -367,8 +367,9 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                 if denominator:
                     item_weight = round(1 / float(denominator), 3)
                 else:
-                    logger.error(
-                        "Internal policy error. %s, %s", assignments, drop_count)
+                    logger.error("Internal policy error. %s, %s",
+                                  assignments, 
+                                  drop_count)
                     item_weight = 0
 
                 for grade in grades:
