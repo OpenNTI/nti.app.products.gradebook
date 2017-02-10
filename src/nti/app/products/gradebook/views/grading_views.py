@@ -20,6 +20,8 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.gradebook import MessageFactory as _
@@ -84,7 +86,13 @@ class CurrentGradeView(AbstractAuthenticatedView):
         if username:
             user = User.get_user(username)
             if user is None:
-                raise hexc.HTTPUnprocessableEntity(_("User not found."))
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     u'message': _("User not found."),
+                                     u'code': "UserNotFound",
+                                 },
+                                 None)
         else:
             user = self.remoteUser
         return user
@@ -93,12 +101,24 @@ class CurrentGradeView(AbstractAuthenticatedView):
         course = ICourseInstance(self.request.context)
         if      not is_enrolled(course, self.remoteUser) \
             and not is_course_instructor(course, self.remoteUser):
-            raise hexc.HTTPForbidden(_("Must be enrolled in course."))
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                 u'message': _("Must be enrolled in course."),
+                                 u'code': "MustBeEnrolledInCourse",
+                             },
+                             None)
 
         policy = find_grading_policy_for_course(course)
         if policy is None:
-            raise hexc.HTTPUnprocessableEntity(
-                _("Course does not define a grading policy."))
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("Course does not define a grading policy."),
+                    u'code': "CourseDoesNotDefineGradingPolicy",
+                },
+                None)
 
         course = ICourseInstance(self.context)
         book = IGradeBook(course)
@@ -106,7 +126,13 @@ class CurrentGradeView(AbstractAuthenticatedView):
         user = self._get_user(params)
         if      user != self.remoteUser \
             and not has_permission(ACT_VIEW_GRADES, book):
-            raise hexc.HTTPForbidden(_("Cannot view grades."))
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                 u'message': _("Cannot view grades."),
+                                 u'code': "CannotViewGrades",
+                             },
+                             None)
 
         # check for a final grade.
         result = LocatedExternalDict()
@@ -116,7 +142,6 @@ class CurrentGradeView(AbstractAuthenticatedView):
             final_grade = None if is_none(final_grade.value) else final_grade
             if final_grade is not None:
                 result['FinalGrade'] = final_grade
-
         except KeyError:
             final_grade = None
 
