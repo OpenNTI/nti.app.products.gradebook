@@ -111,8 +111,8 @@ class CurrentGradeView(AbstractAuthenticatedView):
         # check for a final grade.
         result = LocatedExternalDict()
         try:
-            final_grade = book[NO_SUBMIT_PART_NAME][
-                FINAL_GRADE_NAME][user.username]
+            part = book[NO_SUBMIT_PART_NAME]
+            final_grade = part[FINAL_GRADE_NAME][user.username]
             final_grade = None if is_none(final_grade.value) else final_grade
             if final_grade is not None:
                 result['FinalGrade'] = final_grade
@@ -127,6 +127,7 @@ class CurrentGradeView(AbstractAuthenticatedView):
 
         if predicted_grade is None and final_grade is None:
             raise hexc.HTTPNotFound()
+
         if predicted_grade is not None:
             result['PredictedGrade'] = predicted_grade
 
