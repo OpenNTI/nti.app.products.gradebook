@@ -139,7 +139,8 @@ class GradeWeakRef(object):
     def __eq__(self, other):
         try:
             return  self is other or \
-                    (self._username, self._part_wref) == (other._username, other._part_wref)
+                (self._username, self._part_wref) == (
+                    other._username, other._part_wref)
         except AttributeError:
             return NotImplemented
 
@@ -209,8 +210,8 @@ class PredictedGrade(object):
     @Lazy
     def RawValue(self):
         if     self.PointsAvailable == 0 \
-            or self.PointsAvailable is None \
-            or self.PointsEarned is None:
+                or self.PointsAvailable is None \
+                or self.PointsEarned is None:
             return None
         return float(self.PointsEarned) / self.PointsAvailable
 
@@ -220,9 +221,17 @@ class PredictedGrade(object):
             return int(round(min(max(0, self.RawValue), 1), 2) * 100)
         return None
 
+    @property
+    def DisplayableGrade(self):
+        if self.Presentation is not None:
+            return self.Presentation.toDisplayableGrade(self.RawValue)
+        return self.Correctness
+
 
 from zope.deprecation import deprecated
 
 deprecated('Grades', 'No longer used')
+
+
 class Grades(Persistent):
     pass
