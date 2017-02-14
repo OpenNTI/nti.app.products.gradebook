@@ -21,10 +21,10 @@ from zope.mimetype.interfaces import IContentTypeAware
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.app.products.gradebook.interfaces import ILetterGradeScheme
-from nti.app.products.gradebook.interfaces import ILetterNumericGradeScheme
 from nti.app.products.gradebook.interfaces import IBooleanGradeScheme
 from nti.app.products.gradebook.interfaces import IIntegerGradeScheme
 from nti.app.products.gradebook.interfaces import INumericGradeScheme
+from nti.app.products.gradebook.interfaces import ILetterNumericGradeScheme
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
