@@ -17,9 +17,11 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+import BTrees
+
 from nti.app.products.gradebook.interfaces import IGrade
 
-from nti.common.string import to_unicode
+from nti.base._compat import to_unicode
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -173,6 +175,8 @@ class CatalogEntryIDIndex(ValueIndex):
 @interface.implementer(IMetadataCatalog)
 class MetadataGradeCatalog(Catalog):
 
+    family = BTrees.family64
+
     super_index_doc = Catalog.index_doc
 
     def index_doc(self, docid, ob):
@@ -209,20 +213,20 @@ def install_grade_catalog(site_manager_container, intids=None):
     return catalog
 
 # deprecated
-from zope.deprecation import deprecated
+from zope.deprecation import deprecate
 
 
-deprecated("GradeCatalog", "use MetadataGradeCatalog")
+@deprecate("GradeCatalog use MetadataGradeCatalog")
 @interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
     pass
 
 
-deprecated("CreatorRawIndex", "No longer used")
+@deprecate("CreatorRawIndex no longer used")
 class CreatorRawIndex(RawValueIndex):
     pass
 
 
-deprecated("CreatorIndex", "No longer used")
+@deprecate("CreatorIndex no longer used")
 def CreatorIndex(family=None):
     return None
