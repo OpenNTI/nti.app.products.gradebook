@@ -213,20 +213,20 @@ def install_grade_catalog(site_manager_container, intids=None):
     return catalog
 
 # deprecated
-from zope.deprecation import deprecate
+from zope.deprecation import deprecated
 
 
-@deprecate("GradeCatalog use MetadataGradeCatalog")
+deprecated("GradeCatalog', 'No longer used")
 @interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
     pass
 
 
-@deprecate("CreatorRawIndex no longer used")
+deprecated("CreatorRawIndex, 'No longer used")
 class CreatorRawIndex(RawValueIndex):
     pass
 
 
-@deprecate("CreatorIndex no longer used")
+deprecated("CreatorIndex', 'No longer used")
 def CreatorIndex(family=None):
     return None
