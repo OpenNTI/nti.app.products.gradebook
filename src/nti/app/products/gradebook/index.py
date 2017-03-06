@@ -222,7 +222,7 @@ class GradeCatalog(Catalog):
     pass
 
 
-deprecated("CreatorRawIndex, 'No longer used")
+deprecated("CreatorRawIndex', 'No longer used")
 class CreatorRawIndex(RawValueIndex):
     pass
 
