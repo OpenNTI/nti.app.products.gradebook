@@ -222,11 +222,11 @@ class GradeCatalog(Catalog):
     pass
 
 
-deprecated("CreatorRawIndex', 'No longer used")
+deprecated("CreatorRawIndex", "No longer used")
 class CreatorRawIndex(RawValueIndex):
     pass
 
 
-deprecated("CreatorIndex', 'No longer used")
+deprecated("CreatorIndex", "No longer used")
 def CreatorIndex(family=None):
     return None
