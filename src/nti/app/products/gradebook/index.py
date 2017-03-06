@@ -216,7 +216,7 @@ def install_grade_catalog(site_manager_container, intids=None):
 from zope.deprecation import deprecated
 
 
-deprecated("GradeCatalog', 'No longer used")
+deprecated("GradeCatalog", "No longer used")
 @interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
     pass
