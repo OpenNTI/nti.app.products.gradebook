@@ -46,7 +46,7 @@ def create_assignment_part(course, part_name, _book=None):
 get_or_create_assignment_part = create_assignment_part
 
 
-def create_assignment_entry(course, assignment, displayName, 
+def create_assignment_entry(course, assignment, displayName,
                             order=1, _book=None):
     book = _book if _book is not None else IGradeBook(course)
 
@@ -54,7 +54,7 @@ def create_assignment_entry(course, assignment, displayName,
 
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is None:
-        part = get_or_create_assignment_part(course, 
+        part = get_or_create_assignment_part(course,
                                              assignment.category_name)
         # Hmm, maybe we should just ask it to create the entry
         part.validateAssignment(assignment)
@@ -106,8 +106,8 @@ def synchronize_gradebook(context):
 
     # Now drop entries that don't correspond to existing assignments
     # and that don't have grades
-    for part in book.values():
-        for entry in part.values():
+    for part in tuple(book.values()):
+        for entry in tuple(part.values()):
             if entry.assignmentId not in assignment_ids and len(entry) == 0:
                 try:
                     del part[entry.__name__]
