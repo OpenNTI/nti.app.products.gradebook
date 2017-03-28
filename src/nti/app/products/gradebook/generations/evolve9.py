@@ -35,6 +35,7 @@ from nti.dataserver.interfaces import IMetadataCatalog
 from nti.dataserver.metadata_index import IX_MIMETYPE
 from nti.dataserver.metadata_index import CATALOG_NAME
 
+
 @interface.implementer(IDataserver)
 class MockDataserver(object):
 
@@ -45,7 +46,7 @@ class MockDataserver(object):
         if resolver is None:
             logger.warn("Using dataserver without a proper ISiteManager.")
         else:
-            return resolver.get_object_by_oid(oid, 
+            return resolver.get_object_by_oid(oid,
                                               ignore_creator=ignore_creator)
         return None
 
@@ -65,20 +66,20 @@ def do_evolve(context, generation=generation):
 
     count = 0
     with site(ds_folder):
-        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
-                "Hooks not installed?"
+        assert component.getSiteManager() == ds_folder.getSiteManager(), \
+               "Hooks not installed?"
 
         catalog = install_grade_catalog(ds_folder, intids)
         old_index = catalog[IX_CREATOR]
         if not isinstance(old_index, GradeCreatorIndex):
             intids.unregister(old_index)
             del catalog[IX_CREATOR]
-           
+
             new_index = GradeCreatorIndex()
             locate(new_index, catalog, IX_CREATOR)
             intids.register(new_index)
             catalog[IX_CREATOR] = new_index
-            
+
             metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
             query = {
                 IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.grade',)}
@@ -88,7 +89,7 @@ def do_evolve(context, generation=generation):
                 if IGrade.providedBy(grade):
                     count += 1
                     new_index.index_doc(uid, grade)
-            
+
             old_index.clear()
             old_index.__parent__ = None
 
