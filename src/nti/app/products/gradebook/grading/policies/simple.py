@@ -14,6 +14,8 @@ from datetime import datetime
 
 from zope import interface
 
+from zope.cachedescriptors.property import readproperty
+
 from zope.security.interfaces import IPrincipal
 
 from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
@@ -39,7 +41,6 @@ from nti.contenttypes.courses.grading.policies import DefaultCourseGradingPolicy
 from nti.contenttypes.courses.grading.policies import get_assignment_policies
 
 from nti.property.property import alias
-from nti.property.property import readproperty
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 

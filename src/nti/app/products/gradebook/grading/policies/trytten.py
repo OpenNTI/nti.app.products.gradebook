@@ -18,6 +18,9 @@ from collections import defaultdict
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import readproperty
+from zope.cachedescriptors.property import CachedProperty
+
 from zope.security.interfaces import IPrincipal
 
 from ZODB import loglevels
@@ -51,8 +54,6 @@ from nti.externalization.representation import WithRepr
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.property.property import alias
-from nti.property.property import readproperty
-from nti.property.property import CachedProperty
 
 from nti.schema.eqhash import EqHash
 
@@ -368,7 +369,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                     item_weight = round(1 / float(denominator), 3)
                 else:
                     logger.error("Internal policy error. %s, %s",
-                                  assignments, 
+                                  assignments,
                                   drop_count)
                     item_weight = 0
 
