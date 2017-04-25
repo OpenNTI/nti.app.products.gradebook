@@ -15,7 +15,10 @@ from zope import component
 from zope import interface
 
 from zope.annotation import factory as an_factory
+
 from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.container.contained import Contained
 
@@ -48,7 +51,6 @@ from nti.mimetype.mimetype import MIME_BASE
 from nti.ntiids import ntiids
 
 from nti.property.property import alias
-from nti.property.property import CachedProperty
 
 from nti.schema.eqhash import EqHash
 
