@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
 
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -30,8 +32,6 @@ from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import ALL_PERMISSIONS
-
-from nti.property.property import Lazy
 
 
 @component.adapter(IGradeBook)

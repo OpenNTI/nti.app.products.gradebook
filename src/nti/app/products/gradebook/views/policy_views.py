@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import lifecycleevent
 
+from zope.cachedescriptors.property import Lazy
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -32,8 +34,6 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
-
-from nti.property.property import Lazy
 
 GRADING_POLICY = 'GradingPolicy'
 

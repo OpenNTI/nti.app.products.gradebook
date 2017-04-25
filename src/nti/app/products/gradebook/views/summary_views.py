@@ -17,6 +17,8 @@ import nameparser
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -62,8 +64,6 @@ from nti.externalization.externalization import StandardExternalFields
 from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS

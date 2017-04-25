@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
@@ -40,7 +42,6 @@ from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
-from nti.property.property import Lazy
 from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
