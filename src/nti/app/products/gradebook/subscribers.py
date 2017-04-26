@@ -147,8 +147,8 @@ def _assignment_history_item_modified(item, event):
 def _regrade_assignment_history_item(item, event):
     assignmentId = item.assignmentId
     course = ICourseInstance(item, None)
-    policy = find_autograde_policy_for_assignment_in_course(
-        course, assignmentId)
+    policy = find_autograde_policy_for_assignment_in_course(course,
+                                                            assignmentId)
     if policy is not None:
         set_grade_by_assignment_history_item(item)
 
