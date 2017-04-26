@@ -69,9 +69,6 @@ from nti.app.products.gradebook.utils.gradebook import synchronize_gradebook_and
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQEditableEvaluation
 
-from nti.coremetadata.interfaces import IObjectPublishedEvent
-from nti.coremetadata.interfaces import IObjectUnpublishedEvent
-
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.contenttypes.courses import get_enrollment_catalog
@@ -91,6 +88,10 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.users import User
 
 from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
+
+from nti.publishing.interfaces import IObjectPublishedEvent
+from nti.publishing.interfaces import IObjectUnpublishedEvent
+
 
 def raise_error(v, tb=None, factory=hexc.HTTPUnprocessableEntity):
 	request = get_current_request()
