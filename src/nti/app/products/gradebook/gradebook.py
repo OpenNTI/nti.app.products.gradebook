@@ -235,13 +235,17 @@ class GradeBookEntry(SchemaConfigured,
 
 	@property
 	def DueDate(self):
-		try:
-			asg = component.getUtility(IQAssignment, name=self.assignmentId)
-			course = ICourseInstance(self)
+		assignment = component.queryUtility(IQAssignment, 
+											name=self.assignmentId)
+		course = ICourseInstance(self, None)
+		if assignment is not None and course is not None:
 			datecontext = IQAssignmentDateContext(course)
-			return datecontext.of(asg).available_for_submission_ending
-		except (LookupError, TypeError):
-			return None
+			return datecontext.of(assignment).available_for_submission_ending
+		return None
+	
+	@DueDate.setter
+	def DueDate(self, value=None):
+		pass
 
 	def __str__(self):
 		return self.displayName
