@@ -242,10 +242,6 @@ class GradeBookEntry(SchemaConfigured,
 			datecontext = IQAssignmentDateContext(course)
 			return datecontext.of(assignment).available_for_submission_ending
 		return None
-	
-	@DueDate.setter
-	def DueDate(self, value=None):
-		pass
 
 	def __str__(self):
 		return self.displayName
