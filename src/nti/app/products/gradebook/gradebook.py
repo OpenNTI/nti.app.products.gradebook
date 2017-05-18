@@ -235,7 +235,7 @@ class GradeBookEntry(SchemaConfigured,
 
 	@property
 	def DueDate(self):
-		asg = component.queryUtility(IQAssignment, name=self.assignmentId)
+		asg = component.queryUtility(IQAssignment, name=self.assignmentId or '')
 		course = ICourseInstance(self, None)
 		if course is not None and asg is not None:
 			datecontext = IQAssignmentDateContext(course)
