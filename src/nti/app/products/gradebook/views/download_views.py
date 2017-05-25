@@ -104,6 +104,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 	def _get_student_name(self, user):
 		if isinstance(user, six.string_types):
 			user = User.get_user(user)
+		if user is None:
+			return StudentName('', '', str(user), str(user))
 		named_user = IUserProfile(user)
 		if named_user.realname and '@' not in named_user.realname:
 			human_name = nameparser.HumanName(named_user.realname)
