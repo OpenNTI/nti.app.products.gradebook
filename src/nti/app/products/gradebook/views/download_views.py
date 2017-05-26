@@ -101,11 +101,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		result = '%s_%s-%s' % (base_name, filter_name, suffix)
 		return result
 
-	def _get_student_name(self, user):
-		if isinstance(user, six.string_types):
-			user = User.get_user(user)
+	def _get_student_name(self, username):
+		user = User.get_user(username)
 		if user is None:
-			return StudentName('', '', str(user), str(user))
+			return StudentName('', '', username, '')
 		named_user = IUserProfile(user)
 		if named_user.realname and '@' not in named_user.realname:
 			human_name = nameparser.HumanName(named_user.realname)
@@ -128,7 +127,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# to be unique) and the value is the display name
 		usernames_to_assignment_dict = collections.defaultdict(dict)
 		seen_asg_names = dict()
-		
+
 		final_grade_entry = None
 
 		for part in gradebook.values():
@@ -193,7 +192,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 						return _tx_string(value)
 
 		# Sort by last name, then first name, then username
-		for key, user_dict in sorted(usernames_to_assignment_dict.items(), 
+		for key, user_dict in sorted(usernames_to_assignment_dict.items(),
 							key=lambda key: (key[0].lastName, key[0].firstName, key[0].username)):
 			username = key.username
 			user = User.get_user(username)
