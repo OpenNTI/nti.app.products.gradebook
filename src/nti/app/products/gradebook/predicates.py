@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,7 +20,7 @@ from nti.contenttypes.courses.interfaces import IPrincipalEnrollments
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISystemUserPrincipal
 
-from nti.metadata.predicates import BasePrincipalObjects
+from nti.dataserver.metadata.predicates import BasePrincipalObjects
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
