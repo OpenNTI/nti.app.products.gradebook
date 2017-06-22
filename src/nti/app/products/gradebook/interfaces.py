@@ -54,6 +54,13 @@ NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
 
 
 class IGradeScheme(interface.Interface):
+    """
+    A scheme for grades in a course. Supports taking a correctness value
+    (between 0 and 1, inclusive) and interpreting it as a formatted value that
+    can be displayed to students or instructors, or taking a formatted value and 
+    interpreting it as a correctness value. Subclasses define how this translation 
+    is performed.
+    """
 
     def fromUnicode(value):
         pass
@@ -73,16 +80,28 @@ class IGradeScheme(interface.Interface):
 
 
 class INumericGradeScheme(IGradeScheme):
+    """
+    Returns a numeric grade between 0 and 1 (inclusive). 
+    """
     min = Number(title="min value", default=0.0, min=0.0)
     max = Number(title="max value", default=100.0)
 
 
 class IIntegerGradeScheme(INumericGradeScheme):
+    """
+    Returns an integer grade between 0 and 100 (inclusive). 
+    """
     min = Int(title="min value", default=0, min=0)
     max = Int(title="max value", default=100)
 
 
 class ILetterGradeScheme(IGradeScheme):
+    """
+    A grading scheme that interprets correctness on a letter scale. By default
+    it uses the standard ranges of A = [90, 100], B = [80, 89], C = [70, 79],
+    D = [40, 69], and F = [0, 39]. These ranges and letters may be set arbitrarily
+    by specifying the ``grades`` and ``ranges``parameters when creating the scheme.
+    """
 
     grades = ListOrTuple(TextLine(title="the letter",
                                   min_length=1,
@@ -108,11 +127,18 @@ class ILetterGradeScheme(IGradeScheme):
 
 
 class ILetterNumericGradeScheme(ILetterGradeScheme):
-    pass
+    """
+    Like :class: `.ILetterGradeScheme` except that the fromCorrectness method returns both a
+    letter and a number. For example, using the standard ranges, a correctness value
+    of 0.76 would produce a grade of '76 C'. 
+    """
 
 
 class IBooleanGradeScheme(IGradeScheme):
-    pass
+    """
+    Pass/fail grade scheme. A correctness of > 0.999 is considered passing, and anything
+    lower is failing.
+    """
 
 
 class IGradeBookEntry(IContainer,
@@ -130,9 +156,9 @@ class IGradeBookEntry(IContainer,
 
     Name = ValidTextLine(title="entry name", required=False)
 
-    GradeScheme = Object(IGradeScheme, 
+    GradeScheme = Object(IGradeScheme,
                          description="A :class:`.IGradeScheme`",
-                         title="The grade scheme", 
+                         title="The grade scheme",
                          required=False)
 
     displayName = ValidTextLine(title="Part name", required=False)
