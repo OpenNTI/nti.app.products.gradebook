@@ -15,6 +15,7 @@ Conceptual Documentation
 	:maxdepth: 2
 
 	interfaces
+	grading_policies
 
 Tasks
 =====
