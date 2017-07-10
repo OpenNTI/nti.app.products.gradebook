@@ -198,8 +198,8 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
     def __call__(self):
         intids = component.getUtility(IIntIds)
         # clear indexes
-        catalog = get_grade_catalog()
-        for index in catalog.values():
+        grade_catalog = get_grade_catalog()
+        for index in grade_catalog.values():
             index.clear()
         # reindex
         total = 0
@@ -216,7 +216,7 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
                     if doc_id is None or doc_id in seen:
                         continue
                     seen.add(doc_id)
-                    total += self._process_course(course, catalog, intids)
+                    total += self._process_course(course, grade_catalog, intids)
         result = LocatedExternalDict()
         result[ITEM_COUNT] = result[TOTAL] = total
         return result
