@@ -46,8 +46,6 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.gradebook import MessageFactory as _
 
-from nti.app.products.gradebook import get_grade_catalog
-
 from nti.app.products.gradebook.assignments import create_assignment_entry
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
@@ -56,6 +54,7 @@ from nti.app.products.gradebook.index import IX_SITE
 from nti.app.products.gradebook.index import IX_COURSE
 from nti.app.products.gradebook.index import IX_STUDENT
 from nti.app.products.gradebook.index import CATALOG_NAME
+from nti.app.products.gradebook.index import get_grade_catalog
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook

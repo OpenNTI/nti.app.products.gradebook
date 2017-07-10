@@ -4,14 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
-
-from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
 
@@ -21,7 +20,7 @@ import BTrees
 
 from nti.app.products.gradebook.interfaces import IGrade
 
-from nti.base._compat import to_unicode
+from nti.base._compat import text_
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -52,8 +51,8 @@ IX_COURSE = IX_ENTRY = IX_GRADE_COURSE = 'gradeCourse'
 
 
 class AssignmentIdIndex(ValueIndex):
-    default_field_name = 'AssignmentId'
     default_interface = IGrade
+    default_field_name = 'AssignmentId'
 
     def index_doc(self, docid, obj):
         if not self.interface.providedBy(obj):
@@ -63,7 +62,7 @@ class AssignmentIdIndex(ValueIndex):
 
 class ValidatingGradeCreatorType(object):
 
-    __slots__ = (b'creator',)
+    __slots__ = ('creator',)
 
     def __init__(self, obj, default=None):
         if IGrade.providedBy(obj):
@@ -71,7 +70,7 @@ class ValidatingGradeCreatorType(object):
             creator = getattr(creator, 'username', creator)
             creator = getattr(creator, 'id', creator)  # in case of a principal
             if creator:
-                self.creator = to_unicode(creator.lower())
+                self.creator = text_(creator.lower())
 
     def __reduce__(self):
         raise TypeError()
@@ -92,12 +91,14 @@ def GradeUsernameIndex(family=None):
                                 interface=IGrade,
                                 index=GradeUsernameRawIndex(family=family),
                                 normalizer=StringTokenNormalizer())
+
+
 UsernameIndex = GradeUsernameIndex  # BWC
 
 
 class GradeValueIndex(ValueIndex):
-    default_field_name = 'value'
     default_interface = IGrade
+    default_field_name = 'value'
 
     def index_doc(self, docid, obj):
         if not self.interface.providedBy(obj):
@@ -110,13 +111,13 @@ class ValidatingGradeValueType(object):
     The "interface" we adapt to to find the grade value type.
     """
 
-    __slots__ = (b'type',)
+    __slots__ = ('type',)
 
     def __init__(self, obj, default=None):
         if IGrade.providedBy(obj):
             value = getattr(obj, 'value', None)
             if value is not None:
-                self.type = to_unicode(value.__class__.__name__)
+                self.type = text_(value.__class__.__name__)
 
     def __reduce__(self):
         raise TypeError()
@@ -132,13 +133,13 @@ class ValidatingGradeSite(object):
     The "interface" we adapt to to find the grade value course.
     """
 
-    __slots__ = (b'site',)
+    __slots__ = ('site',)
 
     def __init__(self, obj, default=None):
         if IGrade.providedBy(obj):
             folder = find_interface(obj, IHostPolicyFolder, strict=False)
             if folder is not None:
-                self.site = to_unicode(folder.__name__)
+                self.site = text_(folder.__name__)
 
     def __reduce__(self):
         raise TypeError()
@@ -154,14 +155,14 @@ class ValidatingGradeCatalogEntryID(object):
     The "interface" we adapt to to find the grade value course.
     """
 
-    __slots__ = (b'ntiid',)
+    __slots__ = ('ntiid',)
 
     def __init__(self, obj, default=None):
         if IGrade.providedBy(obj):
             course = find_interface(obj, ICourseInstance, strict=False)
             entry = ICourseCatalogEntry(course, None)  # entry is an annotation
             if entry is not None:
-                self.ntiid = to_unicode(entry.ntiid)
+                self.ntiid = text_(entry.ntiid)
 
     def __reduce__(self):
         raise TypeError()
@@ -186,18 +187,13 @@ class MetadataGradeCatalog(Catalog):
         self.super_index_doc(docid, ob)
 
 
-def install_grade_catalog(site_manager_container, intids=None):
-    lsm = site_manager_container.getSiteManager()
-    intids = lsm.getUtility(IIntIds) if intids is None else intids
-    catalog = lsm.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
-    if catalog is not None:
-        return catalog
+def get_grade_catalog(registry=component):
+    return registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
 
-    catalog = MetadataGradeCatalog(family=intids.family)
-    locate(catalog, site_manager_container, CATALOG_NAME)
-    intids.register(catalog)
-    lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
+def create_grade_catalog(catalog=None, family=BTrees.family64):
+    if catalog is None:
+        catalog = MetadataGradeCatalog(family=family)
     for name, clazz in ((IX_SITE, SiteIndex),
                         (IX_CREATOR, GradeCreatorIndex),
                         (IX_GRADE_VALUE, GradeValueIndex),
@@ -205,19 +201,35 @@ def install_grade_catalog(site_manager_container, intids=None):
                         (IX_GRADE_TYPE, GradeValueTypeIndex),
                         (IX_ASSIGNMENT_ID, AssignmentIdIndex),
                         (IX_GRADE_COURSE, CatalogEntryIDIndex)):
-        index = clazz(family=intids.family)
-        intids.register(index)
+        index = clazz(family=family)
         locate(index, catalog, name)
         catalog[name] = index
 
     return catalog
+
+
+def install_grade_catalog(site_manager_container, intids=None):
+    lsm = site_manager_container.getSiteManager()
+    intids = lsm.getUtility(IIntIds) if intids is None else intids
+    catalog = get_grade_catalog(lsm)
+    if catalog is not None:
+        return catalog
+
+    catalog = create_grade_catalog(family=intids.family)
+    locate(catalog, site_manager_container, CATALOG_NAME)
+    intids.register(catalog)
+    lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
+
+    for index in catalog.values():
+        intids.register(index)
+    return catalog
+
 
 # deprecated
 from zope.deprecation import deprecated
 
 
 deprecated("GradeCatalog", "No longer used")
-@interface.implementer(ICatalog)
 class GradeCatalog(Catalog):
     pass
 
@@ -228,5 +240,5 @@ class CreatorRawIndex(RawValueIndex):
 
 
 deprecated("CreatorIndex", "No longer used")
-def CreatorIndex(family=None):
+def CreatorIndex(_=None):
     return None

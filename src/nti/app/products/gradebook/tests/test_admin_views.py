@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import assert_that
@@ -27,14 +28,15 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 
+
 class TestAdminViews(ApplicationLayerTest):
 
     layer = InstructedCourseApplicationTestLayer
 
-    default_origin = b'http://janux.ou.edu'
+    default_origin = 'http://janux.ou.edu'
 
-    course_ntiid = 'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
-                    
+    course_ntiid = u'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
+
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_synchronize_gradebook(self):
         with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
@@ -48,3 +50,10 @@ class TestAdminViews(ApplicationLayerTest):
                               has_entries('default',  [u'Main Title'],
                                           'no_submit', [u'Final Grade'],
                                           'quizzes', [u'Main Title', u'Trivial Test'])))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_rebuild_grade_catalog(self):
+        href = '/dataserver2/CourseAdmin/@@RebuildGradeCatalog'
+        res = self.testapp.post(href, status=200)
+        assert_that(res.json_body,
+                    has_entry('Total', is_(0)))
