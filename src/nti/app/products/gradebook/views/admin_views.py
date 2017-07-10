@@ -204,8 +204,7 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
         # reindex
         total = 0
         seen = set()
-        for host_site in get_all_host_sites():  # check all sites
-            logger.info("Processing site %s", host_site.__name__)
+        for host_site in get_all_host_sites():
             with current_site(host_site):
                 catalog = component.queryUtility(ICourseCatalog)
                 if catalog is None or catalog.isEmpty():
