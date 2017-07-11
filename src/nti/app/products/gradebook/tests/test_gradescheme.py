@@ -88,7 +88,6 @@ class TestGradeScheme(unittest.TestCase):
         grade = PredictedGrade(raw_value=0.3)
         assert_that(lngs.toDisplayableGrade(grade), is_('F 30'))
 
-
         lngs.validate('A')
         lngs.validate('B')
         with self.assertRaises(ValueError):
