@@ -78,6 +78,11 @@ class IGradeScheme(interface.Interface):
         return a grade from the specified correctness value
         """
 
+    def toDisplayableGrade(grade):
+        """
+        return a formatted string for the specified grade
+        """
+
 
 class INumericGradeScheme(IGradeScheme):
     """

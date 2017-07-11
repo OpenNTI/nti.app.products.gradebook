@@ -102,8 +102,8 @@ class LetterGradeScheme(SchemaConfigured):
                 return self.grades[i]
         return None
 
-    def toDisplayableGrade(self, value):
-        return self.fromCorrectness(value)
+    def toDisplayableGrade(self, grade):
+        return self.fromCorrectness(grade.RawValue)
 
     def fromUnicode(self, value):
         self.validate(value)
@@ -138,9 +138,10 @@ class LetterNumericGradeScheme(LetterGradeScheme):
 
     __metaclass__ = MetaGradeBookObject
 
-    def toDisplayableGrade(self, value):
-        letter_grade = LetterGradeScheme.fromCorrectness(self, value)
-        numeric_grade = int(value * 100)
+    def toDisplayableGrade(self, grade):
+        letter_grade = LetterGradeScheme.fromCorrectness(
+            self, grade.RawValue)
+        numeric_grade = int(grade.RawValue * 100)
         if letter_grade is not None:
             return "%s %s" % (letter_grade, numeric_grade)
         return numeric_grade
@@ -178,8 +179,8 @@ class NumericGradeScheme(SchemaConfigured):
         result = round(result, 2)
         return result
 
-    def toDisplayableGrade(self, value):
-        return self.fromCorrectness(value)
+    def toDisplayableGrade(self, grade):
+        return self.fromCorrectness(grade.RawValue)
 
 
 @interface.implementer(INumericGradeScheme)
@@ -251,8 +252,8 @@ class BooleanGradeScheme(SchemaConfigured):
         result = value >= 0.999
         return result
 
-    def toDisplayableGrade(self, value):
-        return self.fromCorrectness(value)
+    def toDisplayableGrade(self, grade):
+        return self.fromCorrectness(grade.RawValue)
 
     def __eq__(self, other):
         return self is other or IBooleanGradeScheme.providedBy(other)

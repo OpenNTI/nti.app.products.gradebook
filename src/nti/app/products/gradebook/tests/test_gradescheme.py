@@ -13,6 +13,7 @@ from hamcrest import assert_that
 import unittest
 
 from nti.app.products.gradebook import gradescheme
+from nti.app.products.gradebook.grades import PredictedGrade
 
 
 class TestGradeScheme(unittest.TestCase):
@@ -74,12 +75,19 @@ class TestGradeScheme(unittest.TestCase):
         assert_that(lngs.fromCorrectness(0.65), is_('D'))
         assert_that(lngs.fromCorrectness(0.3), is_('F'))
 
-        assert_that(lngs.toDisplayableGrade(1.0), is_('A 100'))
-        assert_that(lngs.toDisplayableGrade(0.99), is_('A 99'))
-        assert_that(lngs.toDisplayableGrade(0.85), is_('B 85'))
-        assert_that(lngs.toDisplayableGrade(0.73), is_('C 73'))
-        assert_that(lngs.toDisplayableGrade(0.65), is_('D 65'))
-        assert_that(lngs.toDisplayableGrade(0.3), is_('F 30'))
+        grade = PredictedGrade(raw_value=1.0)
+        assert_that(lngs.toDisplayableGrade(grade), is_('A 100'))
+        grade = PredictedGrade(raw_value=0.99)
+        assert_that(lngs.toDisplayableGrade(grade), is_('A 99'))
+        grade = PredictedGrade(raw_value=0.85)
+        assert_that(lngs.toDisplayableGrade(grade), is_('B 85'))
+        grade = PredictedGrade(raw_value=0.73)
+        assert_that(lngs.toDisplayableGrade(grade), is_('C 73'))
+        grade = PredictedGrade(raw_value=0.65)
+        assert_that(lngs.toDisplayableGrade(grade), is_('D 65'))
+        grade = PredictedGrade(raw_value=0.3)
+        assert_that(lngs.toDisplayableGrade(grade), is_('F 30'))
+
 
         lngs.validate('A')
         lngs.validate('B')
