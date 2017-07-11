@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import unicode_literals, print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
@@ -44,13 +44,13 @@ ACT_VIEW_GRADES = Permission('nti.actions.gradebook.view_grades')
 # NTIID values
 
 #: Gradebook NTIID type
-NTIID_TYPE_GRADE_BOOK = 'gradebook'
+NTIID_TYPE_GRADE_BOOK = u'gradebook'
 
 #: Gradebook part NTIID type
-NTIID_TYPE_GRADE_BOOK_PART = 'gradebookpart'
+NTIID_TYPE_GRADE_BOOK_PART = u'gradebookpart'
 
 #: Gradebook entry NTIID type
-NTIID_TYPE_GRADE_BOOK_ENTRY = 'gradebookentry'
+NTIID_TYPE_GRADE_BOOK_ENTRY = u'gradebookentry'
 
 
 class IGradeScheme(interface.Interface):
@@ -88,16 +88,16 @@ class INumericGradeScheme(IGradeScheme):
     """
     Returns a numeric grade between 0 and 1 (inclusive). 
     """
-    min = Number(title="min value", default=0.0, min=0.0)
-    max = Number(title="max value", default=100.0)
+    min = Number(title=u"min value", default=0.0, min=0.0)
+    max = Number(title=u"max value", default=100.0)
 
 
 class IIntegerGradeScheme(INumericGradeScheme):
     """
     Returns an integer grade between 0 and 100 (inclusive). 
     """
-    min = Int(title="min value", default=0, min=0)
-    max = Int(title="max value", default=100)
+    min = Int(title=u"min value", default=0, min=0)
+    max = Int(title=u"max value", default=100)
 
 
 class ILetterGradeScheme(IGradeScheme):
@@ -108,13 +108,13 @@ class ILetterGradeScheme(IGradeScheme):
     by specifying the ``grades`` and ``ranges``parameters when creating the scheme.
     """
 
-    grades = ListOrTuple(TextLine(title="the letter",
+    grades = ListOrTuple(TextLine(title=u"the letter",
                                   min_length=1,
                                   max_length=1),
                          unique=True,
                          min_length=1)
 
-    ranges = ListOrTuple(ListOrTuple(Number(title="the range value", min=0),
+    ranges = ListOrTuple(ListOrTuple(Number(title=u"the range value", min=0),
                                      min_length=2,
                                      max_length=2),
                          unique=True,
@@ -155,28 +155,30 @@ class IGradeBookEntry(IContainer,
     the corresponding assignment.
     """
 
-    containers(str('.IGradeBookPart'))
-    contains(str('.IGrade'))
+    containers('.IGradeBookPart')
+    contains('.IGrade')
+
     __parent__.required = False
 
-    Name = ValidTextLine(title="entry name", required=False)
+    Name = ValidTextLine(title=u"entry name", required=False)
 
     GradeScheme = Object(IGradeScheme,
-                         description="A :class:`.IGradeScheme`",
-                         title="The grade scheme",
+                         description=u"A :class:`.IGradeScheme`",
+                         title=u"The grade scheme",
                          required=False)
 
-    displayName = ValidTextLine(title="Part name", required=False)
+    displayName = ValidTextLine(title=u"Part name", required=False)
 
-    AssignmentId = ValidTextLine(title="assignment id", required=True)
+    AssignmentId = ValidTextLine(title=u"assignment id", required=True)
 
-    order = Int(title="The entry order", min=1)
+    order = Int(title=u"The entry order", min=1)
 
-    DueDate = Date(title="The date on which the assignment is due", required=False,
+    DueDate = Date(title=u"The date on which the assignment is due", required=False,
                    readonly=True)
 
-    Items = Dict(title="For externalization only, a copy of the {username: grade} contents}",
-                 description="For expedience and while while we expect these to be relatively small, we inline them",
+    Items = Dict(title=u"For externalization only, a copy of the {username: grade} contents}",
+                 description=u"For expedience and while while we expect these to be relatively small, "
+                 u"we inline them",
                  readonly=True)
 
 
@@ -240,28 +242,31 @@ class IGradeBookPart(IContainer,
     A Section of a grade book e.g. Quizzes, Exams, etc..
     """
 
-    containers(str('.IGradeBook'))
+    containers('.IGradeBook')
     contains(IGradeBookEntry)
+
     __parent__.required = False
 
-    entryFactory = interface.Attribute(
-        "A callable used to create the entries that go in this part.")
+    entryFactory = interface.Attribute("A callable used to create the entries that go in this part.")
     entryFactory.setTaggedValue('_ext_excluded_out', True)
 
     def validateAssignment(assignment):
-        "Check that the given assignment is valid to go in this part."
+        """
+        Check that the given assignment is valid to go in this part.
+        """
 
-    Name = ValidTextLine(title="Part name", required=False)
-    displayName = ValidTextLine(title="Part name", required=False)
-    gradeScheme = Object(IGradeScheme, description="A :class:`.IGradeScheme`",
-                         title="The grade scheme for this part", required=False)
+    Name = ValidTextLine(title=u"Part name", required=False)
+    displayName = ValidTextLine(title=u"Part name", required=False)
+    gradeScheme = Object(IGradeScheme, description=u"A :class:`.IGradeScheme`",
+                         title=u"The grade scheme for this part", required=False)
 
-    order = Int(title="The part order", min=1)
+    order = Int(title=u"The part order", min=1)
 
-    #TotalEntryWeight = schema.Float(title="Entry weight sum", readonly=True)
+    #TotalEntryWeight = schema.Float(title=u"Entry weight sum", readonly=True)
 
-    Items = Dict(title="For externalization only, a copy of the {assignmentId: GradeBookEntry} contents}",
-                 description="For expedience and while while we expect these to be relatively small, we inline them",
+    Items = Dict(title=u"For externalization only, a copy of the {assignmentId: GradeBookEntry} contents}",
+                 description=u"For expedience and while while we expect these to be relatively small, "
+                 u"we inline them",
                  readonly=True)
 
     def get_entry_by_assignment(assignmentId):
@@ -302,7 +307,7 @@ class IGradeBook(IContainer,
     """
     contains(IGradeBookPart)
 
-    #TotalPartWeight = schema.Float(title="Part weight sum", readonly=True)
+    #TotalPartWeight = schema.Float(title=u"Part weight sum", readonly=True)
 
     def getColumnForAssignmentId(assignmentId):
         """
@@ -329,16 +334,17 @@ class IGradeBook(IContainer,
         returns an iterator for the specififed user's grades
         """
 
-    Items = Dict(title="For externalization only, a copy of the {category name: GradeBookPart} contents}",
-                 description="For expedience and while while we expect these to be relatively small, we inline them",
+    Items = Dict(title=u"For externalization only, a copy of the {category name: GradeBookPart} contents}",
+                 description=u"For expedience and while while we expect these to be relatively small, "
+                 u"we inline them",
                  readonly=True)
 
 
 def _grade_property():
-    return Variant((Number(title="Number grade"),
-                    Bool(title="Boolean grade"),
-                    ValidTextLine(title="String grade")),
-                   title="The grade",
+    return Variant((Number(title=u"Number grade"),
+                    Bool(title=u"Boolean grade"),
+                    ValidTextLine(title=u"String grade")),
+                   title=u"The grade",
                    required=False)
 
 
@@ -354,16 +360,17 @@ class IGrade(IContained,
     """
 
     containers(IGradeBookEntry)
+
     __parent__.required = False
 
-    Username = ValidTextLine(title="Username",
-                             description="Because grades are stored by username, this is "
-                             "equivalent to __name__",
+    Username = ValidTextLine(title=u"Username",
+                             description=u"Because grades are stored by username, this is "
+                             u"equivalent to __name__",
                              required=True)
 
-    # NTIID = ValidNTIID(title="Grade entry ntiid", required=True)
-    AssignmentId = ValidNTIID(title="The assignment this is for",
-                              description="This comes from the entry containing it.",
+    # NTIID = ValidNTIID(title=u"Grade entry ntiid", required=True)
+    AssignmentId = ValidNTIID(title=u"The assignment this is for",
+                              description=u"This comes from the entry containing it.",
                               required=False)
 
     value = _grade_property()
@@ -399,7 +406,6 @@ class IPendingAssessmentAutoGradePolicy(interface.Interface):
 
         Return None if no autograding is possible.
         """
-
 IUsernameSortSubstitutionPolicy = IUsernameSubstitutionPolicy  # alias BWC
 
 
@@ -409,6 +415,6 @@ class IGradebookSettings(interface.Interface):
     """
     taggedValue(TAG_EXTERNAL_PREFERENCE_GROUP, 'write')
 
-    hide_avatars = Bool(title="Enable/disable showing avatars in the gradebook",
-                        description="Enable/disable showing avatars in the gradebook",
+    hide_avatars = Bool(title=u"Enable/disable showing avatars in the gradebook",
+                        description=u"Enable/disable showing avatars in the gradebook",
                         default=False)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -13,13 +13,14 @@ from hamcrest import raises
 from hamcrest import calling
 from hamcrest import has_entry
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import same_instance
 from hamcrest import greater_than_or_equal_to
 
 import time
+import pickle
 import unittest
-import cPickle as pickle
 
 from nti.wref.interfaces import IWeakRef
 
@@ -48,13 +49,14 @@ class TestGrades(unittest.TestCase):
         now = time.time()
 
         grade = PersistentGrade()
-        grade.__name__ = 'foo@bar'
+        grade.__name__ = u'foo@bar'
 
         assert_that(grade, validly_provides(IGrade))
 
-        assert_that(grade, has_property('createdTime', grade.lastModified))
-        assert_that(
-            grade, has_property('lastModified', greater_than_or_equal_to(now)))
+        assert_that(grade,
+                    has_property('createdTime', grade.lastModified))
+        assert_that(grade,
+                    has_property('lastModified', greater_than_or_equal_to(now)))
 
         grade.createdTime = 1
         assert_that(grade, has_property('createdTime', 1))
@@ -63,7 +65,7 @@ class TestGrades(unittest.TestCase):
 
         for clazz in (Grade, PersistentGrade):
             grade = clazz()
-            grade.__name__ = 'foo@bar'
+            grade.__name__ = u'foo@bar'
 
             state = grade.__dict__.copy()
             del state['createdTime']
@@ -78,7 +80,7 @@ class TestGrades(unittest.TestCase):
                     raises(TypeError))
 
         grade = Grade()
-        grade.__name__ = 'foo@bar'
+        grade.__name__ = u'foo@bar'
         column = grade.__parent__ = _GradeBookEntry()
 
         wref = GradeWeakRef(grade)
@@ -102,26 +104,29 @@ class TestGrades(unittest.TestCase):
 
         predicted_grade = PredictedGrade(points_earned=1, points_available=2)
         ext = to_external_object(predicted_grade)
-        assert_that(ext['Correctness'], is_(50))
-        assert_that(ext['DisplayableGrade'], is_(50))
-        assert_that(ext['PointsAvailable'], is_(2))
-        assert_that(ext['PointsEarned'], is_(1))
+        assert_that(ext, 
+                    has_entries('Correctness', is_(50),
+                                'DisplayableGrade', is_(50),
+                                'PointsAvailable', is_(2),
+                                'PointsEarned', is_(1)))
 
         predicted_grade = PredictedGrade(raw_value=0.75)
         ext = to_external_object(predicted_grade)
-        assert_that(ext['Correctness'], is_(75))
-        assert_that(ext['DisplayableGrade'], is_(75))
-        assert_that(ext['PointsAvailable'], is_(None))
-        assert_that(ext['PointsEarned'], is_(None))
+        assert_that(ext, 
+                    has_entries('Correctness', is_(75),
+                                'DisplayableGrade', is_(75),
+                                'PointsAvailable', is_(none()),
+                                'PointsEarned', is_(none())))
 
         predicted_grade = PredictedGrade(points_earned=1, points_available=0)
         ext = to_external_object(predicted_grade)
         # This situation doesn't make any sense,
         # so we just don't predict correctness.
-        assert_that(ext['Correctness'], is_(None))
-        assert_that(ext['DisplayableGrade'], is_(None))
-        assert_that(ext['PointsAvailable'], is_(0))
-        assert_that(ext['PointsEarned'], is_(1))
+        assert_that(ext, 
+                    has_entries('Correctness', is_(none()),
+                                'DisplayableGrade', is_(none()),
+                                'PointsAvailable', is_(0),
+                                'PointsEarned', is_(1)))
 
         # By default, DisplayableGrade should be the same
         # as Correctness. However, if we're using a grading
@@ -130,13 +135,14 @@ class TestGrades(unittest.TestCase):
         predicted_grade = PredictedGrade(raw_value=0.75)
         predicted_grade.Presentation = LetterNumericGradeScheme()
         ext = to_external_object(predicted_grade)
-        assert_that(ext['DisplayableGrade'], is_('C 75'))
+        assert_that(ext, has_entry('DisplayableGrade', is_('C 75')))
 
 
 class _GradeBookEntry(GradeBookEntry):
 
     def __conform__(self, iface):
         return _CheapWref(self)
+
 
 from zope import interface
 

@@ -6,7 +6,7 @@ Grade schemes
 .. $Id$
 """
 
-from __future__ import unicode_literals, print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -52,7 +52,7 @@ class LetterGradeScheme(SchemaConfigured):
     grades = FP(ILetterGradeScheme['grades'])
     ranges = FP(ILetterGradeScheme['ranges'])
 
-    default_grades = ('A', 'B', 'C', 'D', 'F')
+    default_grades = (u'A', u'B', u'C', u'D', u'F')
     default_ranges = ((90, 100), (80, 89), (70, 79), (40, 69), (0, 39))
 
     def __init__(self, grades=None, ranges=None):
@@ -122,10 +122,10 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
 
     __metaclass__ = MetaGradeBookObject
 
-    default_grades = ('A+', 'A', 'A-',
-                      'B+', 'B', 'B-',
-                      'C+', 'C', 'C-',
-                      'D', 'D', 'F')
+    default_grades = (u'A+', u'A', u'A-',
+                      u'B+', u'B', u'B-',
+                      u'C+', u'C', u'C-',
+                      u'D', u'D', u'F')
 
     default_ranges = ((90, 100), (86, 89), (80, 85),
                       (77, 79), (73, 76), (70, 72),
@@ -139,11 +139,10 @@ class LetterNumericGradeScheme(LetterGradeScheme):
     __metaclass__ = MetaGradeBookObject
 
     def toDisplayableGrade(self, grade):
-        letter_grade = LetterGradeScheme.fromCorrectness(
-            self, grade.RawValue)
+        letter_grade = LetterGradeScheme.fromCorrectness(self, grade.RawValue)
         numeric_grade = int(grade.RawValue * 100)
         if letter_grade is not None:
-            return "%s %s" % (letter_grade, numeric_grade)
+            return u"%s %s" % (letter_grade, numeric_grade)
         return numeric_grade
 
 

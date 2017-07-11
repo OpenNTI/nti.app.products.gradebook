@@ -6,7 +6,7 @@ Grades definition
 .. $Id$
 """
 
-from __future__ import unicode_literals, print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -103,8 +103,8 @@ class Grade(CreatedModDateTrackingObject,
         acl = acl_from_aces()
         course = ICourseInstance(self, None)
         if course is not None:
-            acl.extend([ace_allowing(i, ALL_PERMISSIONS)
-                        for i in course.instructors or ()])
+            acl.extend(ace_allowing(i, ALL_PERMISSIONS)
+                       for i in course.instructors or ())
         # This will become conditional on whether we are published
         if self.Username:
             acl.append(ace_allowing(self.Username, ACT_READ))
@@ -128,7 +128,6 @@ class GradeWeakRef(object):
     def __init__(self, grade):
         if grade.__parent__ is None or not grade.Username:
             raise TypeError("Too soon, grade has no parent or username")
-
         self._username = grade.Username
         self._part_wref = IWeakRef(grade.__parent__)
 
@@ -139,9 +138,8 @@ class GradeWeakRef(object):
 
     def __eq__(self, other):
         try:
-            return  self is other or \
-                (self._username, self._part_wref) == (
-                    other._username, other._part_wref)
+            return self is other \
+                or (self._username, self._part_wref) == (other._username, other._part_wref)
         except AttributeError:
             return NotImplemented
 
@@ -185,8 +183,9 @@ class PredictedGrade(object):
 
     __external_class_name__ = "PredictedGrade"
 
-    parameters = {}
     mimeType = mime_type = 'application/vnd.nextthought.predictedgrade'
+
+    parameters = {}
 
     raw_value = alias('RawValue')
     correctness = alias('Correctness')
@@ -211,8 +210,8 @@ class PredictedGrade(object):
     @Lazy
     def RawValue(self):
         if     self.PointsAvailable == 0 \
-                or self.PointsAvailable is None \
-                or self.PointsEarned is None:
+            or self.PointsAvailable is None \
+            or self.PointsEarned is None:
             return None
         return float(self.PointsEarned) / self.PointsAvailable
 
@@ -232,7 +231,5 @@ class PredictedGrade(object):
 from zope.deprecation import deprecated
 
 deprecated('Grades', 'No longer used')
-
-
 class Grades(Persistent):
     pass
