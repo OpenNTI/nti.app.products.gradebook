@@ -164,7 +164,6 @@ class IGradeBookEntry(IContainer,
 
     containers('.IGradeBookPart')
     contains('.IGrade')
-
     __parent__.required = False
 
     Name = ValidTextLine(title=u"entry name", required=False)
@@ -251,11 +250,9 @@ class IGradeBookPart(IContainer,
 
     containers('.IGradeBook')
     contains(IGradeBookEntry)
-
     __parent__.required = False
 
-    entryFactory = interface.Attribute(
-        "A callable used to create the entries that go in this part.")
+    entryFactory = interface.Attribute("A callable used to create the entries that go in this part.")
     entryFactory.setTaggedValue('_ext_excluded_out', True)
 
     def validateAssignment(assignment):
@@ -368,7 +365,6 @@ class IGrade(IContained,
     """
 
     containers(IGradeBookEntry)
-
     __parent__.required = False
 
     Username = ValidTextLine(title=u"Username",
