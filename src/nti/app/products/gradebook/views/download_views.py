@@ -230,7 +230,6 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 			# End-of-line
 			row.append('#')
-			print(row)
 			rows.append(row)
 
 		# Anyone enrolled but not submitted gets a blank row
