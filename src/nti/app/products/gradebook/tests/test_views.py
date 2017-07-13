@@ -221,6 +221,15 @@ class TestViews(ApplicationLayerTest):
             policy_view_path, extra_environ=instructor_environ)
         res = self.testapp.get(policy_view_path, status=404)
 
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_gradebook_sort(self):
+        instructor_environ = self._make_extra_environ(username='harp4162')
+        path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/contents.csv'
+        res = self.testapp.get(path, extra_environ=instructor_environ)
+#         import pprint
+#         pp = pprint.PrettyPrinter()
+#         pp.pprint(res.json_body)
+
     def test_is_none(self):
         assert_that(is_none(None), is_(True))
         assert_that(is_none(''), is_(True))

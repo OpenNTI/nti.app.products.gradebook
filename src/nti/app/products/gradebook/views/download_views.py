@@ -19,6 +19,8 @@ from zope import component
 
 from pyramid.view import view_config
 
+from nti.app.assessment.common import get_available_for_submission_beginning
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
@@ -38,6 +40,8 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.interfaces import LocatedExternalList
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 StudentName = collections.namedtuple('StudentName', 'firstName lastName username realname')
 
@@ -114,6 +118,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		else:
 			return StudentName('', '', named_user.username, named_user.realname)
 
+	def _get_entry_start_date(self, entry, course):
+		assignment = find_object_with_ntiid(entry.AssignmentId)
+		return get_available_for_submission_beginning(assignment, context=course)
+
 	def __call__(self):
 		gradebook = self.request.context
 		course = ICourseInstance(gradebook)
@@ -135,8 +143,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 				if part.__name__ == NO_SUBMIT_PART_NAME and name == 'Final Grade':
 					final_grade_entry = entry
 					continue
-
-				seen_asg_names[name] = entry.displayName or 'Unknown'
+				
+				seen_asg_names[name] = self._get_entry_start_date(entry, course)
 				for username, grade in entry.items():
 					username_data = self._get_student_name(username)
 					user_dict = usernames_to_assignment_dict[username_data]
@@ -144,10 +152,9 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 						raise ValueError("Two entries in different part with same name")
 					user_dict[name] = grade
 
-		# Now, sort the *display* names, maintaining the
-		# association to the actual part name
-		sorted_asg_names = sorted((v, k) for k, v in seen_asg_names.items())
-
+		# Now, sort by the time first available for submission
+		sorted_asg_names = sorted(seen_asg_names.items(), key=lambda x:x[1])
+		
 		# Now we can build up the rows.
 		rows = LocatedExternalList()
 		rows.__name__ = self.request.view_name
@@ -223,6 +230,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 			# End-of-line
 			row.append('#')
+			print(row)
 			rows.append(row)
 
 		# Anyone enrolled but not submitted gets a blank row
