@@ -135,7 +135,8 @@
 						 .interfaces.ILetterGradeScheme
 						 .interfaces.IBooleanGradeScheme
 						 .interfaces.INumericGradeScheme
-						 .interfaces.IIntegerGradeScheme"
+						 .interfaces.IIntegerGradeScheme
+						 .interfaces.ITotalPointsGradeScheme"
 		modules=".gradebook .grades .gradescheme" />
 
 	<!-- Internalization -->
@@ -253,6 +254,10 @@
 	<utility factory=".gradescheme._default_numeric_grade_scheme"
 			 provides=".interfaces.INumericGradeScheme"
 			 name="float" />
+			 
+	<utility factory=".gradescheme.TotalPointsGradeScheme"
+             provides=".interfaces.ITotalPointsGradeScheme"
+             name="total_points" />
 
 	<!-- Metadata -->
 	<subscriber	factory=".predicates._GradePrincipalObjects"

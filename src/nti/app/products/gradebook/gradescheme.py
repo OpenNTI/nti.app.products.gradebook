@@ -25,6 +25,7 @@ from nti.app.products.gradebook.interfaces import IBooleanGradeScheme
 from nti.app.products.gradebook.interfaces import IIntegerGradeScheme
 from nti.app.products.gradebook.interfaces import INumericGradeScheme
 from nti.app.products.gradebook.interfaces import ILetterNumericGradeScheme
+from nti.app.products.gradebook.interfaces import ITotalPointsGradeScheme
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
@@ -94,7 +95,8 @@ class LetterGradeScheme(SchemaConfigured):
         num = self.toNumber(letter)
         return num / float(dem)
 
-    def fromCorrectness(self, value):
+    def fromCorrectness(self, grade):
+        value = (min(max(0, grade.raw_value), 1))
         dem = float(self._max_in_ranges())
         for i, r in enumerate(self.ranges):
             _min, _max = r
@@ -173,7 +175,8 @@ class NumericGradeScheme(SchemaConfigured):
         result = (value - self.min) / float(self.max - self.min)
         return result if result > 0 else 0.0
 
-    def fromCorrectness(self, value):
+    def fromCorrectness(self, grade):
+        value = (min(max(0, grade.raw_value), 1))
         result = value * (self.max - self.min) + self.min
         result = round(result, 2)
         return result
@@ -203,7 +206,8 @@ class IntegerGradeScheme(NumericGradeScheme):
         self.validate(value)
         return value
 
-    def fromCorrectness(self, value):
+    def fromCorrectness(self, grade):
+        value = (min(max(0, grade.raw_value), 1))
         result = super(IntegerGradeScheme, self).fromCorrectness(value)
         result = int(round(result))
         return result
@@ -247,7 +251,8 @@ class BooleanGradeScheme(SchemaConfigured):
         result = 1.0 if value else 0.0
         return result
 
-    def fromCorrectness(self, value):
+    def fromCorrectness(self, grade):
+        value = (min(max(0, grade.raw_value), 1))
         result = value >= 0.999
         return result
 
@@ -261,3 +266,32 @@ class BooleanGradeScheme(SchemaConfigured):
         xhash = 47
         xhash ^= hash(self.mimeType)
         return xhash
+
+
+@WithRepr
+@interface.implementer(ITotalPointsGradeScheme, IContentTypeAware)
+class TotalPointsGradeScheme(SchemaConfigured):
+
+    __metaclass__ = MetaGradeBookObject
+    createDirectFieldProperties(ITotalPointsGradeScheme)
+
+    _type = numbers.Number
+
+    def validate(self, value):
+        if not isinstance(value, self._type):
+            raise TypeError('wrong type')
+        elif value < 0:
+            raise ValueError("Grade cannot be less than 0")
+
+    def toDisplayableGrade(self, grade):
+        return self.toCorrectness(grade)
+
+    def fromCorrectness(self, grade):
+        return grade.PointsEarned
+
+    def toCorrectness(self, grade):
+        # TODO: What do we need to do here??
+        pass
+
+    def __eq__(self, other):
+        return self is other or ITotalPointsGradeScheme.providedBy(other)

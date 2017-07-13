@@ -203,15 +203,14 @@ class PredictedGrade(object):
     @property
     def Grade(self):
         if self.RawValue is not None and self.Presentation is not None:
-            bounded_raw_value = (min(max(0, self.raw_value), 1))
-            return self.Presentation.fromCorrectness(bounded_raw_value)
+            return self.Presentation.fromCorrectness(self)
         return None
 
     @Lazy
     def RawValue(self):
         if     self.PointsAvailable == 0 \
-            or self.PointsAvailable is None \
-            or self.PointsEarned is None:
+                or self.PointsAvailable is None \
+                or self.PointsEarned is None:
             return None
         return float(self.PointsEarned) / self.PointsAvailable
 
@@ -231,5 +230,7 @@ class PredictedGrade(object):
 from zope.deprecation import deprecated
 
 deprecated('Grades', 'No longer used')
+
+
 class Grades(Persistent):
     pass
