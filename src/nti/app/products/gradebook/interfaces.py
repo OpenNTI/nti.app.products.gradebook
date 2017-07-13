@@ -146,6 +146,13 @@ class IBooleanGradeScheme(IGradeScheme):
     """
 
 
+class ITotalPointsGradeScheme(IGradeScheme):
+    """
+    A grading scheme that returns the total number of points earned by a
+    student, as a number instead of a percentage. The grade is not scaled.
+    """
+
+
 class IGradeBookEntry(IContainer,
                       IContained,
                       IShouldHaveTraversablePath):
@@ -247,7 +254,8 @@ class IGradeBookPart(IContainer,
 
     __parent__.required = False
 
-    entryFactory = interface.Attribute("A callable used to create the entries that go in this part.")
+    entryFactory = interface.Attribute(
+        "A callable used to create the entries that go in this part.")
     entryFactory.setTaggedValue('_ext_excluded_out', True)
 
     def validateAssignment(assignment):
