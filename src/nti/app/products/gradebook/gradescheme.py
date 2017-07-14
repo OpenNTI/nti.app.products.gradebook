@@ -24,8 +24,8 @@ from nti.app.products.gradebook.interfaces import ILetterGradeScheme
 from nti.app.products.gradebook.interfaces import IBooleanGradeScheme
 from nti.app.products.gradebook.interfaces import IIntegerGradeScheme
 from nti.app.products.gradebook.interfaces import INumericGradeScheme
-from nti.app.products.gradebook.interfaces import ILetterNumericGradeScheme
 from nti.app.products.gradebook.interfaces import ITotalPointsGradeScheme
+from nti.app.products.gradebook.interfaces import ILetterNumericGradeScheme
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
@@ -116,7 +116,7 @@ class LetterGradeScheme(SchemaConfigured):
         if value and value.endswith('-'):
             value = value[:-1].strip()
         if not isinstance(value, self._type):
-            raise TypeError('wrong type')
+            raise TypeError('Wrong Type')
         elif not value.upper() in self.grades:
             raise ValueError("Invalid grade value")
 
@@ -169,7 +169,7 @@ class NumericGradeScheme(SchemaConfigured):
 
     def validate(self, value):
         if not isinstance(value, self._type):
-            raise TypeError('wrong type')
+            raise TypeError('Wrong Type')
         elif value < self.min or value > self.max:
             raise ValueError("Invalid grade value")
 
@@ -249,7 +249,7 @@ class BooleanGradeScheme(SchemaConfigured):
     @classmethod
     def validate(cls, value):
         if not isinstance(value, cls._type):
-            raise TypeError('wrong type')
+            raise TypeError('Wrong Type')
 
     def toCorrectness(self, value):
         result = 1.0 if value else 0.0
@@ -284,7 +284,7 @@ class TotalPointsGradeScheme(SchemaConfigured):
 
     def validate(self, value):
         if not isinstance(value, self._type):
-            raise TypeError('Wrong type')
+            raise TypeError('Wrong Type')
         elif value < 0:
             raise ValueError("Grade cannot be less than 0")
 
