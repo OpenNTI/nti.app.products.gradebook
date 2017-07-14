@@ -197,7 +197,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 						return float(value[:-2])
 					except ValueError:
 						return _tx_string(value)
-
+		
 		# Sort by last name, then first name, then username
 		for key, user_dict in sorted(usernames_to_assignment_dict.items(),
 							key=lambda key: (key[0].lastName, key[0].firstName, key[0].username)):
@@ -212,10 +212,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 			data = (username, external_id, firstname, lastname, realname)
 			row = [_tx_string(x) for x in data]
-			for _, assignment in sorted_asg_names:
+			for assignment_name, assignment in sorted_asg_names:
 				grade_val = ""
-				if assignment in user_dict:
-					user_grade = user_dict[assignment]
+				if assignment_name in user_dict:
+					user_grade = user_dict[assignment_name]
 					grade_val = user_grade.value
 					# For CS1323, we need to expose Excused grades. It's not entirely clear
 					# how to do so in a D2L import-compatible way, but we've seen text
