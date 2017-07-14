@@ -126,7 +126,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		
 	def _get_entry_start_date(self, entry, course):
 		assignment = find_object_with_ntiid(entry.AssignmentId)
-		return get_available_for_submission_beginning(assignment, context=course) or datetime.now()
+		return get_available_for_submission_beginning(assignment, context=course)
 
 	def __call__(self):
 		gradebook = self.request.context
