@@ -197,7 +197,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 						return float(value[:-2])
 					except ValueError:
 						return _tx_string(value)
-		print(usernames_to_assignment_dict)
+
 		# Sort by last name, then first name, then username
 		for key, user_dict in sorted(usernames_to_assignment_dict.items(),
 							key=lambda key: (key[0].lastName, key[0].firstName, key[0].username)):
