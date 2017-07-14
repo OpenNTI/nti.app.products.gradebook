@@ -282,17 +282,26 @@ class TotalPointsGradeScheme(SchemaConfigured):
 
     _type = numbers.Number
 
-    def validate(self, value):
-        if not isinstance(value, self._type):
+    @classmethod
+    def validate(cls, value):
+        if not isinstance(value, cls._type):
             raise TypeError('Wrong Type')
         elif value < 0:
             raise ValueError("Grade cannot be less than 0")
+
+    @classmethod
+    def fromUnicode(cls, value):
+        if value and value.endswith('-'):
+            value = value[:-1].strip()
+        value = float(value)
+        cls.validate(value)
+        return value
 
     def toDisplayableGrade(self, grade):
         return self.fromCorrectness(grade)
 
     def fromCorrectness(self, grade):
-        return grade.PointsEarned
+        return getattr(grade, 'PointsEarned', grade)
 
     def toCorrectness(self, grade):
         # TODO: What do we need to do here??
@@ -300,3 +309,8 @@ class TotalPointsGradeScheme(SchemaConfigured):
 
     def __eq__(self, other):
         return self is other or ITotalPointsGradeScheme.providedBy(other)
+    
+    def __hash__(self):
+        xhash = 47
+        xhash ^= hash(self.mimeType)
+        return xhash
