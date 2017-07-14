@@ -140,7 +140,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# it is keyed by the column name (as that's the only thing guaranteed
 		# to be unique) and the value is the display name
 		usernames_to_assignment_dict = collections.defaultdict(dict)
-		seen_asg_names = dict()
+		seen_assignment_names_to_start_time = dict()
 
 		final_grade_entry = None
 
@@ -150,7 +150,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					final_grade_entry = entry
 					continue
 				
-				seen_asg_names[name] = self._get_entry_start_date(entry, course)
+				seen_assignment_names_to_start_time[name] = self._get_entry_start_date(entry, course)
 				for username, grade in entry.items():
 					username_data = self._get_student_name(username)
 					user_dict = usernames_to_assignment_dict[username_data]
@@ -159,7 +159,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					user_dict[name] = grade
 
 		# Now, sort by the time first available for submission
-		sorted_asg_names = sorted(seen_asg_names.items(), key=self._sort_key)
+		sorted_assignment_names_to_start_time = sorted(seen_assignment_names_to_start_time.items(), key=self._sort_key)
 		
 		# Now we can build up the rows.
 		rows = LocatedExternalList()
@@ -178,7 +178,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		# identify students.
 		headers = ['Username', 'External ID', 'First Name', 'Last Name', 'Full Name']
 		# Assignment names could theoretically have non-ascii chars
-		for asg in sorted_asg_names:
+		for asg in sorted_assignment_names_to_start_time:
 			asg_name = _tx_string(asg[0])
 			# Avoid unicode conversion of our already encoded str.
 			asg_name = asg_name + str(' Points Grade')
@@ -218,7 +218,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 			data = (username, external_id, firstname, lastname, realname)
 			row = [_tx_string(x) for x in data]
-			for assignment_name, assignment in sorted_asg_names:
+			for assignment_name, _ in sorted_assignment_names_to_start_time:
 				grade_val = ""
 				if assignment_name in user_dict:
 					user_grade = user_dict[assignment_name]
