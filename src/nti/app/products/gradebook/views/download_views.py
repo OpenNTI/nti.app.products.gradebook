@@ -120,6 +120,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 		else:
 			return StudentName('', '', named_user.username, named_user.realname)
 
+	def _sort_key(self, entry):
+		start_date = entry[1]
+		return (start_date is not None, start_date)
+		
 	def _get_entry_start_date(self, entry, course):
 		assignment = find_object_with_ntiid(entry.AssignmentId)
 		return get_available_for_submission_beginning(assignment, context=course) or datetime.now()
@@ -155,7 +159,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 					user_dict[name] = grade
 
 		# Now, sort by the time first available for submission
-		sorted_asg_names = sorted(seen_asg_names.items(), key=lambda x:x[1])
+		sorted_asg_names = sorted(seen_asg_names.items(), key=self._sort_key)
 		
 		# Now we can build up the rows.
 		rows = LocatedExternalList()
