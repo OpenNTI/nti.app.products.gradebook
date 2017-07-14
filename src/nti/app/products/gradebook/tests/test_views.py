@@ -193,6 +193,28 @@ class TestViews(ApplicationLayerTest):
         assert_that(res.json_body, has_key('FinalGrade'))
         assert_that(res.json_body, not_(has_key('PredictedGrade')))
 
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_download_gradebook_view(self):
+        instructor_environ = self._make_extra_environ(username='harp4162')
+        
+        path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/contents.csv'
+        
+        grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial%20Test/sjohnson@nextthought.com'
+        
+        enroll_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses'
+        
+        self.testapp.post_json(enroll_path,
+                          COURSE_NTIID,
+                          extra_environ=self._make_extra_environ())
+        
+        grade = {'Class': 'Grade'}
+        grade['value'] = 10
+        self.testapp.put_json(
+            grade_path, grade, extra_environ=instructor_environ)
+        
+        res = self.testapp.get(path,
+                               extra_environ=instructor_environ,
+                               status=200)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_policy_views(self):

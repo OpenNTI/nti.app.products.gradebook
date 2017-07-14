@@ -15,6 +15,8 @@ import nameparser
 import collections
 from six import StringIO
 
+from datetime import datetime
+
 from zope import component
 
 from pyramid.view import view_config
@@ -120,7 +122,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
 	def _get_entry_start_date(self, entry, course):
 		assignment = find_object_with_ntiid(entry.AssignmentId)
-		return get_available_for_submission_beginning(assignment, context=course)
+		return get_available_for_submission_beginning(assignment, context=course) or datetime.now()
 
 	def __call__(self):
 		gradebook = self.request.context
@@ -197,7 +199,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 						return float(value[:-2])
 					except ValueError:
 						return _tx_string(value)
-
+		
 		# Sort by last name, then first name, then username
 		for key, user_dict in sorted(usernames_to_assignment_dict.items(),
 							key=lambda key: (key[0].lastName, key[0].firstName, key[0].username)):
