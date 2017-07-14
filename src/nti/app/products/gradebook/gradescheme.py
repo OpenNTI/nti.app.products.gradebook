@@ -96,7 +96,8 @@ class LetterGradeScheme(SchemaConfigured):
         return num / float(dem)
 
     def fromCorrectness(self, grade):
-        value = (min(max(0, grade.raw_value), 1))
+        value = getattr(grade, 'RawValue', grade)
+        value = (min(max(0, value), 1))
         dem = float(self._max_in_ranges())
         for i, r in enumerate(self.ranges):
             _min, _max = r
@@ -141,8 +142,9 @@ class LetterNumericGradeScheme(LetterGradeScheme):
     __metaclass__ = MetaGradeBookObject
 
     def toDisplayableGrade(self, grade):
+        value = getattr(grade, 'RawValue', grade)
         letter_grade = LetterGradeScheme.fromCorrectness(self, grade)
-        numeric_grade = int(grade.RawValue * 100)
+        numeric_grade = int(value * 100)
         if letter_grade is not None:
             return u"%s %s" % (letter_grade, numeric_grade)
         return numeric_grade
@@ -176,7 +178,8 @@ class NumericGradeScheme(SchemaConfigured):
         return result if result > 0 else 0.0
 
     def fromCorrectness(self, grade):
-        value = (min(max(0, grade.raw_value), 1))
+        value = getattr(grade, 'RawValue', grade)
+        value = (min(max(0, value), 1))
         result = value * (self.max - self.min) + self.min
         result = round(result, 2)
         return result
@@ -207,7 +210,8 @@ class IntegerGradeScheme(NumericGradeScheme):
         return value
 
     def fromCorrectness(self, grade):
-        value = (min(max(0, grade.raw_value), 1))
+        value = getattr(grade, 'RawValue', grade)
+        value = (min(max(0, value), 1))
         result = super(IntegerGradeScheme, self).fromCorrectness(value)
         result = int(round(result))
         return result
@@ -252,7 +256,8 @@ class BooleanGradeScheme(SchemaConfigured):
         return result
 
     def fromCorrectness(self, grade):
-        value = (min(max(0, grade.raw_value), 1))
+        value = getattr(grade, 'RawValue', grade)
+        value = (min(max(0, value), 1))
         result = value >= 0.999
         return result
 
@@ -279,12 +284,12 @@ class TotalPointsGradeScheme(SchemaConfigured):
 
     def validate(self, value):
         if not isinstance(value, self._type):
-            raise TypeError('wrong type')
+            raise TypeError('Wrong type')
         elif value < 0:
             raise ValueError("Grade cannot be less than 0")
 
     def toDisplayableGrade(self, grade):
-        return self.toCorrectness(grade)
+        return self.fromCorrectness(grade)
 
     def fromCorrectness(self, grade):
         return grade.PointsEarned

@@ -40,16 +40,22 @@ class TestGradeScheme(unittest.TestCase):
         assert_that(lgs.toCorrectness('D'), is_(0.69))
         assert_that(lgs.toCorrectness('F'), is_(0.39))
 
-        grade = PredictedGrade(raw_value=1.0)
-        assert_that(lgs.fromCorrectness(grade), is_('A'))
+        # test with value
+        assert_that(lgs.fromCorrectness(1.0), is_('A'))
+
+        # test with grades
         grade = PredictedGrade(raw_value=0.99)
         assert_that(lgs.fromCorrectness(grade), is_('A'))
+
         grade = PredictedGrade(raw_value=0.85)
         assert_that(lgs.fromCorrectness(grade), is_('B'))
+
         grade = PredictedGrade(raw_value=0.73)
         assert_that(lgs.fromCorrectness(grade), is_('C'))
+
         grade = PredictedGrade(raw_value=0.65)
         assert_that(lgs.fromCorrectness(grade), is_('D'))
+
         grade = PredictedGrade(raw_value=0.3)
         assert_that(lgs.fromCorrectness(grade), is_('F'))
 
@@ -74,29 +80,40 @@ class TestGradeScheme(unittest.TestCase):
         assert_that(lngs.toNumber('D'), is_(69))
         assert_that(lngs.toNumber('F'), is_(39))
 
-        grade = PredictedGrade(raw_value=1.0)
-        assert_that(lngs.fromCorrectness(grade), is_('A'))
+        # test with value
+        assert_that(lngs.fromCorrectness(1.0), is_('A'))
+
+        # test with grades
         grade = PredictedGrade(raw_value=0.99)
         assert_that(lngs.fromCorrectness(grade), is_('A'))
+
         grade = PredictedGrade(raw_value=0.85)
         assert_that(lngs.fromCorrectness(grade), is_('B'))
+
         grade = PredictedGrade(raw_value=0.73)
         assert_that(lngs.fromCorrectness(grade), is_('C'))
+
         grade = PredictedGrade(raw_value=0.65)
         assert_that(lngs.fromCorrectness(grade), is_('D'))
+
         grade = PredictedGrade(raw_value=0.3)
         assert_that(lngs.fromCorrectness(grade), is_('F'))
 
-        grade = PredictedGrade(raw_value=1.0)
-        assert_that(lngs.toDisplayableGrade(grade), is_('A 100'))
+        # test with value
+        assert_that(lngs.toDisplayableGrade(1.0), is_('A 100'))
+
         grade = PredictedGrade(raw_value=0.99)
         assert_that(lngs.toDisplayableGrade(grade), is_('A 99'))
+
         grade = PredictedGrade(raw_value=0.85)
         assert_that(lngs.toDisplayableGrade(grade), is_('B 85'))
+
         grade = PredictedGrade(raw_value=0.73)
         assert_that(lngs.toDisplayableGrade(grade), is_('C 73'))
+
         grade = PredictedGrade(raw_value=0.65)
         assert_that(lngs.toDisplayableGrade(grade), is_('D 65'))
+
         grade = PredictedGrade(raw_value=0.3)
         assert_that(lngs.toDisplayableGrade(grade), is_('F 30'))
 

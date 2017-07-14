@@ -194,10 +194,10 @@ class PredictedGrade(object):
 
     def __init__(self, points_earned=None, points_available=None,
                  raw_value=None, presentation_scheme=None):
-        self.PointsEarned = points_earned
-        self.PointsAvailable = points_available
         if raw_value is not None:
             self.RawValue = raw_value
+        self.PointsEarned = points_earned
+        self.PointsAvailable = points_available
         self.Presentation = presentation_scheme
 
     @property
@@ -209,8 +209,8 @@ class PredictedGrade(object):
     @Lazy
     def RawValue(self):
         if     self.PointsAvailable == 0 \
-                or self.PointsAvailable is None \
-                or self.PointsEarned is None:
+            or self.PointsAvailable is None \
+            or self.PointsEarned is None:
             return None
         return float(self.PointsEarned) / self.PointsAvailable
 
@@ -230,7 +230,5 @@ class PredictedGrade(object):
 from zope.deprecation import deprecated
 
 deprecated('Grades', 'No longer used')
-
-
 class Grades(Persistent):
     pass
