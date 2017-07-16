@@ -31,7 +31,7 @@ def course_gradebook_objects(course):
             yield part
             for entry in part.values():
                 yield entry
-                for grade in entry.valuues():
+                for grade in entry.values():
                     yield grade
 
 
