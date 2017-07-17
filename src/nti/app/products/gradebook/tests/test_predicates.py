@@ -11,7 +11,6 @@ from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import greater_than
 does_not = is_not
 
 from nti.assessment.submission import QuestionSetSubmission
@@ -65,12 +64,8 @@ class TestPredictes(ApplicationLayerTest):
 
         self.testapp.post_json(submit_href, ext_obj, status=201)
 
-        with mock_dataserver.mock_db_trans(self.ds):
-            user = self._get_user('sjohnson@nextthought.com')
+        with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
+            user = self._get_user('harp4162')
             predicate = predicates._GradePrincipalObjects(user)
             grades = list(predicate.iter_objects())
             assert_that(grades, has_length(1))
-
-            predicate = predicates._GradeBookPrincipalObjects()
-            objects = list(predicate.iter_objects())
-            assert_that(objects, greater_than(70))
