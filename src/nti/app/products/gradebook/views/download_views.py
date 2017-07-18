@@ -123,16 +123,20 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         else:
             return StudentName('', '', named_user.username, named_user.realname)
 
-    def _sort_key(self, entry):
-        start_date = entry[1]
-        return (start_date is not None, start_date)
-
     def _get_entry_start_date(self, entry, course):
         assignment = find_object_with_ntiid(entry.AssignmentId)
         if assignment is not None:
             return get_available_for_submission_beginning(assignment, context=course)
-        logger.warn('Assignment %s does not exists', assignment)
+        logger.warn('Assignment %s does not exist', assignment)
         return None
+
+    def _get_sort_key(self, entry, course):
+        """
+        Sort gradebook entry by StartDate and display name.
+        """
+        start_date = self._get_entry_start_date(entry, course)
+        entry_name = entry.displayName or 'Unknown'
+        return (start_date is not None, start_date, entry_name)
 
     def __call__(self):
         gradebook = self.request.context
@@ -144,20 +148,19 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         # (This is to avoid parsing names more often than we need to.)
         # We keep track of known assignment names so we can sort appropriately;
         # it is keyed by the column name (as that's the only thing guaranteed
-        # to be unique) and the value is the display name
+        # to be unique) and the value is a sortable key.
         usernames_to_assignment_dict = collections.defaultdict(dict)
         seen_assignment_names_to_start_time = dict()
-
         final_grade_entry = None
 
         for part in gradebook.values():
             for name, entry in part.items():
-                if part.__name__ == NO_SUBMIT_PART_NAME and name == 'Final Grade':
+                if	    part.__name__ == NO_SUBMIT_PART_NAME \
+                	and name == 'Final Grade':
                     final_grade_entry = entry
                     continue
-                start_date = self._get_entry_start_date(entry, course)
-                if start_date is not None:
-                    seen_assignment_names_to_start_time[name] = start_date
+                sort_key = self._get_sort_key(entry, course)
+                seen_assignment_names_to_start_time[name] = sort_key
                 for username, grade in entry.items():
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
@@ -165,9 +168,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                         raise ValueError("Two entries in different part with same name")
                     user_dict[name] = grade
 
-        # Now, sort by the time first available for submission
-        sorted_assignment_names_to_start_time = sorted(seen_assignment_names_to_start_time.items(),
-                                                       key=self._sort_key)
+        sorted_assignment_names = sorted(seen_assignment_names_to_start_time,
+										key=seen_assignment_names_to_start_time.get)
 
         # Now we can build up the rows.
         rows = LocatedExternalList()
@@ -175,20 +177,19 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         rows.__parent__ = self.request.context
 
         def _tx_string(val):
-            # At least in python 2, the CSV writer only works
-            # correctly with str objects, implicitly encoding
-            # otherwise
+            # At least in python 2, the CSV writer only works correctly with
+            # str objects, implicitly encoding otherwise.
             if isinstance(val, six.text_type):
                 val = val.encode('utf-8')
             return val
 
-        # First a header row. Note that we are allowed to use multiple columns to
-        # identify students.
+        # First a header row. Note that we are allowed to use multiple columns
+        # to identify students.
         headers = ['Username', 'External ID',
                    'First Name', 'Last Name', 'Full Name']
         # Assignment names could theoretically have non-ascii chars
-        for asg in sorted_assignment_names_to_start_time:
-            asg_name = _tx_string(asg[0])
+        for asg_name in sorted_assignment_names:
+            asg_name = _tx_string(asg_name)
             # Avoid unicode conversion of our already encoded str.
             asg_name = asg_name + str(' Points Grade')
             headers.append(asg_name)
@@ -215,7 +216,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
         # Sort by last name, then first name, then username
         for key, user_dict in sorted(usernames_to_assignment_dict.items(),
-                                     key=lambda key: (key[0].lastName, 
+                                     key=lambda key: (key[0].lastName,
                                                       key[0].firstName,
                                                       key[0].username)):
             username = key.username
@@ -229,7 +230,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
             data = (username, external_id, firstname, lastname, realname)
             row = [_tx_string(x) for x in data]
-            for assignment_name, unused in sorted_assignment_names_to_start_time:
+            for assignment_name in sorted_assignment_names:
                 grade_val = ""
                 if assignment_name in user_dict:
                     user_grade = user_dict[assignment_name]
@@ -245,7 +246,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 row.append(grade_val)
 
             if final_grade_entry:
-                final_grade = final_grade_entry.get(username) 
+                final_grade = final_grade_entry.get(username)
             else:
                 final_grade = None
             row.append(_tx_grade(final_grade.value) if final_grade else 0)
