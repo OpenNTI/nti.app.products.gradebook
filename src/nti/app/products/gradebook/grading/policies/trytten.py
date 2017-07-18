@@ -123,12 +123,6 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 
     presentation = alias('PresentationGradeScheme')
 
-    @property
-    def lastSynchronized(self):
-        self_lastModified = self.lastModified or 0
-        parent_lastSynchronized = getattr(self.course, 'lastSynchronized', None) or 0
-        return max(self_lastModified, parent_lastSynchronized)
-
     @Lazy
     def book(self):
         book = IGradeBook(self.course)
