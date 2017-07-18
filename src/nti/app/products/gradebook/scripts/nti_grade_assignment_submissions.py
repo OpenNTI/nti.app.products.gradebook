@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -89,8 +89,7 @@ def _process_args(args):
 
 
 def main():
-    arg_parser = argparse.ArgumentParser(
-        description="Grade course assignment submissions")
+    arg_parser = argparse.ArgumentParser(description="Grade course assignment submissions")
     arg_parser.add_argument('-v', '--verbose',
                             help="Be Verbose",
                             action='store_true',
@@ -121,8 +120,7 @@ def main():
 
     args = arg_parser.parse_args()
     env_dir = os.getenv('DATASERVER_DIR')
-    if not env_dir or not os.path.exists(
-            env_dir) and not os.path.isdir(env_dir):
+    if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
         raise IOError("Invalid dataserver environment root directory")
 
     if not args.site:
@@ -144,6 +142,7 @@ def main():
                         minimal_ds=True,
                         function=lambda: _process_args(args))
     sys.exit(0)
+
 
 if __name__ == '__main__':
     main()
