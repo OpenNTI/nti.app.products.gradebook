@@ -192,27 +192,6 @@
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest"/>
 
-	<!-- Events -->
-	<subscriber handler=".subscribers._on_user_will_be_removed" />
-	<subscriber handler=".subscribers._create_gradebook_entry_on_publish" />
-	<subscriber handler=".subscribers._on_evalulation_unpublished" />
-	<subscriber handler=".subscribers._on_course_instance_imported" />
-	<subscriber handler=".subscribers._assignment_history_item_added" />
-	<subscriber handler=".subscribers._assignment_history_item_removed" />
-	<subscriber handler=".subscribers._regrade_assignment_history_item" />
-	<subscriber handler=".subscribers._synchronize_gradebook_with_course_instance" />
-
-	<subscriber handler=".subscribers._store_grade_created_event"
-				for=".interfaces.IGrade zope.lifecycleevent.IObjectAddedEvent"/>
-
-	<subscriber handler=".subscribers._store_grade_created_event"
-				for=".interfaces.IGrade zope.lifecycleevent.IObjectModifiedEvent"/>
-
-	<subscriber handler=".subscribers._grade_modified" />
-	<subscriber handler=".subscribers._remove_grade_created_event" />
-
-	<subscriber handler=".subscribers._on_course_instance_removed" />
-
 	<!-- NTIID Resolvers -->
 	<utility factory=".ntiids._GradeBookResolver" name="gradebook" />
 	<utility factory=".ntiids._GradeBookPartResolver" name="gradebookpart" />
@@ -232,6 +211,9 @@
 		title="Gradebook Settings"
 		schema=".interfaces.IGradebookSettings"
 		category="true" />
+
+	<!-- Events -->
+	<include package=".subscribers" />
 
 	<!-- Grading -->
 	<include package=".grading" />

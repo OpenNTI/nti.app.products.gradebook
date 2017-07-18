@@ -1,0 +1,40 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="nti.dataserver">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<!-- history -->
+	<configure zcml:condition="installed nti.app.assessment">
+		<subscriber handler=".history._grade_modified" />
+		<subscriber handler=".history._assignment_history_item_added" />
+		<subscriber handler=".history._assignment_history_item_removed" />
+		<subscriber handler=".history._assignment_history_item_modified" />
+		<subscriber handler=".history._regrade_assignment_history_item" />
+	</configure>
+
+	<!-- grades -->
+	<subscriber handler=".grades._store_grade_created_event"
+				for="..interfaces.IGrade zope.lifecycleevent.IObjectAddedEvent"/>
+
+	<subscriber handler=".grades._store_grade_created_event"
+				for="..interfaces.IGrade zope.lifecycleevent.IObjectModifiedEvent"/>
+
+	<subscriber handler=".grades._remove_grade_event" />
+
+	<!-- evalulations -->
+	<subscriber handler=".evalulations._on_evalulation_published" />
+	<subscriber handler=".evalulations._on_evalulation_unpublished" />
+	
+	<!-- users -->
+	<subscriber handler=".users._on_user_will_be_removed" />
+	
+	<!-- courses -->
+	<subscriber handler=".courses._on_course_instance_removed" />
+	<subscriber handler=".courses._on_course_instance_imported" />
+	<subscriber handler=".courses._synchronize_gradebook_with_course_instance" />
+
+</configure>
