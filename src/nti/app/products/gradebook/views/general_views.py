@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,8 +29,12 @@ from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -73,17 +77,32 @@ class GradeBookPutView(AbstractAuthenticatedView,
 
         user = User.get_user(username)
         if user is None:
-            raise hexec.HTTPNotFound(username)
+            raise_json_error(self.request,
+                             hexec.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"User not found."),
+                             },
+                             None)
 
         assignment = component.queryUtility(IQAssignment,
                                             name=assignment_ntiid)
         if assignment is None:
-            raise hexec.HTTPNotFound(assignment_ntiid)
+            raise_json_error(self.request,
+                             hexec.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Assignment not found."),
+                             },
+                             None)
 
         asg_name = assignment.__name__
         gradebook_entry = gradebook.getColumnForAssignmentId(asg_name)
         if gradebook_entry is None:
-            raise hexec.HTTPNotFound(asg_name)
+            raise_json_error(self.request,
+                             hexec.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Entry not found."),
+                             },
+                             None)
 
         # This will create our grade and assignment history, if necessary.
         record_grade_without_submission(gradebook_entry,
