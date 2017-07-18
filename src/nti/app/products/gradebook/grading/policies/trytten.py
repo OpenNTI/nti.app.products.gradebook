@@ -25,8 +25,8 @@ from zope.security.interfaces import IPrincipal
 
 from ZODB import loglevels
 
-from nti.app.products.gradebook.gradescheme import LetterNumericGradeScheme
 from nti.app.products.gradebook.gradescheme import NumericGradeScheme
+from nti.app.products.gradebook.gradescheme import LetterNumericGradeScheme
 
 from nti.app.products.gradebook.grading.policies.interfaces import ICategoryGradeScheme
 from nti.app.products.gradebook.grading.policies.interfaces import ICS1323EqualGroupGrader
