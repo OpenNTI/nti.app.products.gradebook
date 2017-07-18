@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,8 +18,8 @@ from collections import defaultdict
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
-from zope.cachedescriptors.property import CachedProperty
 
 from zope.security.interfaces import IPrincipal
 
@@ -126,16 +126,15 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
     @property
     def lastSynchronized(self):
         self_lastModified = self.lastModified or 0
-        parent_lastSynchronized = getattr(
-            self.course, 'lastSynchronized', None) or 0
+        parent_lastSynchronized = getattr(self.course, 'lastSynchronized', None) or 0
         return max(self_lastModified, parent_lastSynchronized)
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def book(self):
         book = IGradeBook(self.course)
         return book
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def dateContext(self):
         result = IQAssignmentDateContext(self.course, None)
         return result
@@ -165,7 +164,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
     def groups(self):
         return self.grader.groups
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def _assignments(self):
         result = defaultdict(set)
         for name, items in self.grader._categories.items():
@@ -174,7 +173,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                 result[name].add(assignment)
         return result
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def _points(self):
         result = {}
         for items in self.grader._categories.values():
@@ -185,18 +184,18 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                     result[assignment] = points
         return result
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def _total_weight(self):
         result = 0
         for category in self.groups.values():
             result += category.Weight
         return result
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def _rev_categories(self):
         return self.grader._rev_categories
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def _weights(self):
         result = {}
         for name, data in self._assignments.items():
@@ -206,7 +205,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                 result[name] = item_weight * category.Weight
         return result
 
-    @CachedProperty('lastSynchronized')
+    @Lazy
     def _schemes(self):
         result = {}
         for name, points in self._points.items():
@@ -349,15 +348,17 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                        [x for x in grades if x.excused or x.invalid_grade])
 
             grades = [
-                x for x in grades if not x.excused and not x.invalid_grade]
+                x for x in grades if not x.excused and not x.invalid_grade
+            ]
             drop_count += (grade_count - len(grades))
             grade_count = len(grades)
 
             # drop lowest grades in the category
             # make sure we don't drop excused grades
             if category.DropLowest and category.DropLowest < grade_count:
-                logger.log(
-                    LOGLEVEL, "%s have been dropped", grades[0:category.DropLowest])
+                logger.log(LOGLEVEL, 
+                           "%s have been dropped", 
+                           grades[0:category.DropLowest])
                 grades = grades[category.DropLowest:]
                 drop_count += (grade_count - len(grades))
 

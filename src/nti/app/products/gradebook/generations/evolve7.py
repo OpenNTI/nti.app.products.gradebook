@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -33,7 +33,7 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 from nti.dataserver.interfaces import IMetadataCatalog
 
-from nti.dataserver.metadata_index import CATALOG_NAME
+from nti.dataserver.metadata.index import CATALOG_NAME
 
 
 @interface.implementer(IDataserver)
@@ -46,7 +46,7 @@ class MockDataserver(object):
         if resolver is None:
             logger.warn("Using dataserver without a proper ISiteManager.")
         else:
-            return resolver.get_object_by_oid(oid, 
+            return resolver.get_object_by_oid(oid,
                                               ignore_creator=ignore_creator)
         return None
 
@@ -65,8 +65,8 @@ def do_evolve(context, generation=generation):
     component.provideUtility(mock_ds, IDataserver)
 
     with site(ds_folder):
-        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
-                "Hooks not installed?"
+        assert component.getSiteManager() == ds_folder.getSiteManager(), \
+               "Hooks not installed?"
 
         # load library
         library = component.queryUtility(IContentPackageLibrary)

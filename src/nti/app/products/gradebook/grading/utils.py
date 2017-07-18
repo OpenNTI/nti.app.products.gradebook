@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -37,13 +37,11 @@ def calculate_grades(context,
                      grade_scheme=None,
                      entry_name=None,
                      verbose=False):
-
     result = {}
     course = ICourseInstance(context)
     policy = find_grading_policy_for_course(course)
     if policy is None:
         raise ValueError("Course does not have grading policy")
-
     if entry_name:
         part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
         entry = part.getEntryByAssignment(entry_name)
@@ -55,35 +53,28 @@ def calculate_grades(context,
             part[INameChooser(part).chooseName(entry_name, entry)] = entry
     else:
         entry = None
-
     for record in ICourseEnrollments(course).iter_enrollments():
         principal = IPrincipal(record.Principal, None)
         if principal is None:
             # ignore dup enrollment
             continue
-
         username = principal.id.lower()
         if usernames and username not in usernames:
             continue
-
         # grade correctness
         if IGradeBookGradingPolicy.providedBy(policy):
             value = correctness = policy.grade(principal, verbose=verbose)
         else:
             value = correctness = policy.grade(principal)
-
         # if there is a grade scheme convert value
         if grade_scheme is not None:
             value = grade_scheme.fromCorrectness(correctness)
-
         grade = PersistentGrade(value=value)
         grade.username = username
         result[username] = grade
-
         # if entry is available save it
         if entry is not None:
             entry[username] = grade
-
     return result
 
 
@@ -93,7 +84,7 @@ def get_presentation_scheme(policy):
     return None
 
 
-def calculate_predicted_grade(user, policy, scheme=u''):
+def calculate_predicted_grade(user, policy, scheme=''):
     if not scheme:
         scheme = get_presentation_scheme(policy)
     predicted_grade = policy.grade(user, scheme=scheme)
@@ -106,10 +97,8 @@ def build_predicted_grade(policy, points_earned=None, points_available=None,
     presentation_scheme = get_presentation_scheme(policy)
     if presentation_scheme is None:
         presentation_scheme = component.getUtility(IGradeScheme, name=scheme)
-
     if points_available == 0:
         return None
-
     return PredictedGrade(points_earned=points_earned,
                           points_available=points_available,
                           raw_value=raw_value,

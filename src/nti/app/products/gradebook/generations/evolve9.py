@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -32,8 +32,8 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 from nti.dataserver.interfaces import IMetadataCatalog
 
-from nti.dataserver.metadata_index import IX_MIMETYPE
-from nti.dataserver.metadata_index import CATALOG_NAME
+from nti.dataserver.metadata.index import IX_MIMETYPE
+from nti.dataserver.metadata.index import CATALOG_NAME
 
 
 @interface.implementer(IDataserver)

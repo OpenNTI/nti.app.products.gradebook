@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -72,7 +72,7 @@ class TestCS1323GradingPolicy(unittest.TestCase):
         assert_that(cat, verifiably_provides(ICategoryGradeScheme))
 
         grader = CS1323EqualGroupGrader()
-        grader.groups = {'cat': cat}
+        grader.groups = {u'cat': cat}
 
         policy = CS1323CourseGradingPolicy()
         policy.grader = grader
@@ -84,7 +84,7 @@ class TestCS1323GradingPolicy(unittest.TestCase):
         cat.Weight = 1.0
 
         grader = CS1323EqualGroupGrader()
-        grader.groups = {'category': cat}
+        grader.groups = {u'category': cat}
 
         policy = CS1323CourseGradingPolicy()
         policy.grader = grader
@@ -146,7 +146,7 @@ class TestCS1323GradingPolicy(unittest.TestCase):
         policy.validate()
 
         book = IGradeBook(course)
-        for name, cat in (('a1', 'iclicker'), ('a2', 'turingscraft')):
+        for name, cat in ((u'a1', 'iclicker'), (u'a2', 'turingscraft')):
             part = GradeBookPart()
             book[cat] = part
 
@@ -156,8 +156,8 @@ class TestCS1323GradingPolicy(unittest.TestCase):
 
             grade = PersistentGrade()
             grade.value = 5
-            grade.username = 'cald3307'
-            entry['cald3307'] = grade
+            grade.username = u'cald3307'
+            entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))

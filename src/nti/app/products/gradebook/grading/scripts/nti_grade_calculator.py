@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,6 +20,7 @@ from nti.app.products.gradebook.interfaces import IGradeScheme
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.utils import run_with_dataserver
+
 from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
 
@@ -58,17 +59,17 @@ def _process_args(ntiid, scheme=None, usernames=(), site=None,
 
 def main():
     arg_parser = argparse.ArgumentParser(description="Grade calculator")
-    arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+    arg_parser.add_argument('-v', '--verbose', help="Be verbose",
                             action='store_true', dest='verbose')
     arg_parser.add_argument('ntiid', help="Course NTIID")
 
-    arg_parser.add_argument('-s', '--site', dest='site', 
+    arg_parser.add_argument('-s', '--site', dest='site',
                             help="Request site")
 
     arg_parser.add_argument('-g', '--grade', dest='scheme',
                             help="Grade scheme class name")
 
-    arg_parser.add_argument( '-e', '--entry', dest='entry', 
+    arg_parser.add_argument('-e', '--entry', dest='entry',
                             help="Grade entry name")
 
     arg_parser.add_argument('-u', '--users',
@@ -97,6 +98,7 @@ def main():
                                                        scheme=args.scheme,
                                                        entry_name=args.entry,
                                                        usernames=args.usernames))
+
 
 if __name__ == '__main__':
     main()

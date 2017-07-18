@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -122,7 +122,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = policy.grade('cald3307')
         assert_that(grade, is_(None))
 
-        for name, cat in (('a1', 'iclicker'), ('a2', 'turingscraft')):
+        for name, cat in ((u'a1', 'iclicker'), (u'a2', 'turingscraft')):
             part = GradeBookPart()
             book[cat] = part
 
@@ -132,8 +132,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
             grade = PersistentGrade()
             grade.value = 5.5
-            grade.username = 'cald3307'
-            entry['cald3307'] = grade
+            grade.username = u'cald3307'
+            entry[u'cald3307'] = grade
 
         # If no points available, we return None even
         # if there happen to be grades in the gradebook.
@@ -157,13 +157,13 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # Check that an assignment not due and not graded
         # does not affect the total
         part = GradeBookPart()
-        book['early_and_ungraded'] = part
+        book[u'early_and_ungraded'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'a3'
-        part['early_and_ungraded'] = entry
+        entry.assignmentId = u'a3'
+        part[u'early_and_ungraded'] = entry
         grade = PersistentGrade()
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -172,32 +172,33 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
         # Check that a non-numeric grade gets ignored.
         part = GradeBookPart()
-        book['non_numeric_grade'] = part
+        book[u'non_numeric_grade'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'a4'
-        part['non_numeric_grade'] = entry
+        entry.assignmentId = u'a4'
+        part[u'non_numeric_grade'] = entry
         grade = PersistentGrade()
-        grade.value = 'non-numeric grade, but has 1 number in it'
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.value = u'non-numeric grade, but has 1 number in it'
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
-        grade = policy.grade('cald3307')
+        grade = policy.grade(u'cald3307')
         assert_that(grade.correctness, is_(73))
         assert_that(grade.points_available, is_(15))
         assert_that(grade.points_earned, is_(11))
 
         # Check that an excused grade does not affect the total
         cap['excused'] = {'auto_grade': {'total_points': 5}}
+
         part = GradeBookPart()
-        book['excused'] = part
+        book[u'excused'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'excused'
-        part['excused'] = entry
+        entry.assignmentId = u'excused'
+        part[u'excused'] = entry
         grade = PersistentGrade()
         grade.value = 100
         interface.alsoProvides(grade, IExcusedGrade)
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -207,14 +208,14 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # A grade without an entry in the course policy
         # should be ignored.
         part = GradeBookPart()
-        book['no_policy'] = part
+        book[u'no_policy'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'id_to_missing_assignment'
-        part['excused'] = entry
+        entry.assignmentId = u'id_to_missing_assignment'
+        part[u'excused'] = entry
         grade = PersistentGrade()
         grade.value = 100
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -224,15 +225,16 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # Negative grades are possible, but cannot
         # make the course grade less than 0.
         cap['negative_grade'] = {'auto_grade': {'total_points': 5}}
+
         part = GradeBookPart()
-        book['negative_grade'] = part
+        book[u'negative_grade'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'negative_grade'
-        part['negative_grade'] = entry
+        entry.assignmentId = u'negative_grade'
+        part[u'negative_grade'] = entry
         grade = PersistentGrade()
         grade.value = -12  # We now have -1 points for the course
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(0))
@@ -242,15 +244,16 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # Extra credit cannot cause a grade to be
         # more than 1 (a perfect score)
         cap['extra_credit_grade'] = {'auto_grade': {'total_points': 5}}
+
         part = GradeBookPart()
-        book['extra_credit'] = part
+        book[u'extra_credit'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'extra_credit_grade'
-        part['extra_credit'] = entry
+        entry.assignmentId = u'extra_credit_grade'
+        part[u'extra_credit'] = entry
         grade = PersistentGrade()
         grade.value = 100
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(100))
@@ -299,19 +302,19 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         mock_gap.is_callable().with_args().returns(cap)
         assignments = []
         a2 = QAssignment()
-        a2.ntiid = 'tag:nextthought.com,2011-10:due_and_failed'
+        a2.ntiid = u'tag:nextthought.com,2011-10:due_and_failed'
         assignments.append(a2)
         a3 = QAssignment()
-        a3.ntiid = 'tag:nextthought.com,2011-10:due_and_passed'
+        a3.ntiid = u'tag:nextthought.com,2011-10:due_and_passed'
         assignments.append(a3)
         a4 = QAssignment()
-        a4.ntiid = 'tag:nextthought.com,2011-10:excused'
+        a4.ntiid = u'tag:nextthought.com,2011-10:excused'
         assignments.append(a4)
         a5 = QAssignment()
-        a5.ntiid = 'tag:nextthought.com,2011-10:unsubmitted'
+        a5.ntiid = u'tag:nextthought.com,2011-10:unsubmitted'
         assignments.append(a5)
         a6 = QAssignment()
-        a6.ntiid = 'tag:nextthought.com,2011-10:ungraded'
+        a6.ntiid = u'tag:nextthought.com,2011-10:ungraded'
         assignments.append(a6)
         mock_get_assignments.is_callable().with_args().returns(assignments)
         
@@ -324,14 +327,14 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # This should be counted because it's due and not excused,
         # even though the student earned 0 points on this assignment.
         part = GradeBookPart()
-        book['failed'] = part
+        book[u'failed'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'tag:nextthought.com,2011-10:due_and_failed'
-        part['failed'] = entry
+        entry.assignmentId = u'tag:nextthought.com,2011-10:due_and_failed'
+        part[u'failed'] = entry
         grade = PersistentGrade()
         grade.value = 0
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
         # We have earned 0 points out of a possible 10.
         # While this assignment is only worth 5 points,
         # the unsubmitted assignment (due_and_passed) is
@@ -342,17 +345,16 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         assert_that(grade.points_available, is_(10))
         assert_that(grade.points_earned, is_(0))
         
-
         # This should also be counted because it's due.
         part = GradeBookPart()
-        book['passed'] = part
+        book[u'passed'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'tag:nextthought.com,2011-10:due_and_passed'
-        part['passed'] = entry
+        entry.assignmentId = u'tag:nextthought.com,2011-10:due_and_passed'
+        part[u'passed'] = entry
         grade = PersistentGrade()
         grade.value = 5
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
         # We have earned 5 points out of a possible 10.
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
@@ -362,10 +364,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # If the student has not been graded, but has submitted
         # the assignment, we ignore it instead of counting as a 0.
         part = GradeBookPart()
-        book['ungraded'] = part
+        book[u'ungraded'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'tag:nextthought.com,2011-10:ungraded'
-        part['ungraded'] = entry
+        entry.assignmentId = u'tag:nextthought.com,2011-10:ungraded'
+        part[u'ungraded'] = entry
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
         assert_that(grade.points_available, is_(10))
@@ -377,15 +379,15 @@ class TestSimpleGradingPolicy(unittest.TestCase):
             'auto_grade': {'total_points': 5}
         }
         part = GradeBookPart()
-        book['excused'] = part
+        book[u'excused'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'tag:nextthought.com,2011-10:excused'
-        part['excused'] = entry
+        entry.assignmentId = u'tag:nextthought.com,2011-10:excused'
+        part[u'excused'] = entry
         grade = PersistentGrade()
         grade.value = 100
         interface.alsoProvides(grade, IExcusedGrade)
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
@@ -403,10 +405,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         }
         
         part = GradeBookPart()
-        book['unsubmitted'] = part
+        book[u'unsubmitted'] = part
         entry = GradeBookEntry()
-        entry.assignmentId = 'tag:nextthought.com,2011-10:unsubmitted'
-        part['unsubmitted'] = entry
+        entry.assignmentId = u'tag:nextthought.com,2011-10:unsubmitted'
+        part[u'unsubmitted'] = entry
         
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(33))
@@ -419,11 +421,11 @@ class TestSimpleGradingPolicy(unittest.TestCase):
             'auto_grade': {'total_points': 5}
         }
         part = GradeBookPart()
-        book['no-submit'] = part
+        book[u'no-submit'] = part
         part.no_submit = True
         entry = GradeBookEntry()
-        entry.assignmentId = 'tag:nextthought.com,2011-10:no-submit'
-        part['no-submit'] = entry
+        entry.assignmentId = u'tag:nextthought.com,2011-10:no-submit'
+        part[u'no-submit'] = entry
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(33))
@@ -434,8 +436,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         # We now expect to have earned 10 out of 20 points. 
         grade = PersistentGrade()
         grade.value = 5
-        grade.username = 'cald3307'
-        entry['cald3307'] = grade
+        grade.username = u'cald3307'
+        entry[u'cald3307'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
