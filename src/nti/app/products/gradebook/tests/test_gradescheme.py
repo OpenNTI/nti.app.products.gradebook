@@ -121,3 +121,30 @@ class TestGradeScheme(unittest.TestCase):
         lngs.validate('B')
         with self.assertRaises(ValueError):
             lngs.validate('X')
+
+    def test_total_points_grade_scheme(self):
+
+        tpgs = gradescheme.TotalPointsGradeScheme()
+
+        # We don't support raw_value for this grade scheme,
+        # because it really doesn't make sense.
+        grade = PredictedGrade(raw_value=0.73)
+        assert_that(tpgs.toDisplayableGrade(grade), is_(None))
+
+        grade = PredictedGrade(points_earned=30)
+        assert_that(tpgs.toDisplayableGrade(grade), is_(30))
+
+        # points_available doesn't affect our result at all
+        grade = PredictedGrade(points_earned=30, points_available=100)
+        assert_that(tpgs.toDisplayableGrade(grade), is_(30))
+
+        grade = PredictedGrade(points_earned=30, points_available=10)
+        assert_that(tpgs.toDisplayableGrade(grade), is_(30))
+
+        # Only accept numeric grades
+        with self.assertRaises(TypeError):
+            tpgs.validate('X')
+
+        # Grades cannot be negative
+        with self.assertRaises(TypeError):
+            tpgs.validate('-1')
