@@ -10,11 +10,15 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import not_
 from hamcrest import has_entry
+from hamcrest import has_item
 from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import assert_that
 
 import fudge
+import csv
+
+from six import StringIO
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
@@ -196,25 +200,33 @@ class TestViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_download_gradebook_view(self):
         instructor_environ = self._make_extra_environ(username='harp4162')
-        
+
         path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/contents.csv'
-        
+
         grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial%20Test/sjohnson@nextthought.com'
-        
+
         enroll_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses'
-        
+
         self.testapp.post_json(enroll_path,
-                          COURSE_NTIID,
-                          extra_environ=self._make_extra_environ())
-        
+                               COURSE_NTIID,
+                               extra_environ=self._make_extra_environ())
+
         grade = {'Class': 'Grade'}
         grade['value'] = 10
         self.testapp.put_json(
             grade_path, grade, extra_environ=instructor_environ)
-        
+
         res = self.testapp.get(path,
                                extra_environ=instructor_environ,
                                status=200)
+
+        csv_reader = csv.DictReader(StringIO(res.body))
+        rows = [x for x in csv_reader]
+        assert_that(rows, has_length(1))
+        assert_that(
+            rows, has_item(has_entry('Username', 'sjohnson@nextthought.com')))
+        assert_that(
+            rows, has_item(has_entry('Trivial Test Points Grade', '10')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_policy_views(self):

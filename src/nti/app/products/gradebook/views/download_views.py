@@ -45,7 +45,13 @@ from nti.externalization.interfaces import LocatedExternalList
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-StudentName = collections.namedtuple('StudentName', 'firstName lastName username realname')
+StudentName = collections.namedtuple(
+    'StudentName', 'firstName lastName username realname')
+
+
+def validate_assignment_exists(assignment):
+    obj = find_object_with_ntiid(assignment.AssignmentId)
+    return obj is not None
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -156,8 +162,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         for part in gradebook.values():
             for name, entry in part.items():
                 if	    part.__name__ == NO_SUBMIT_PART_NAME \
-                	and name == 'Final Grade':
+                        and name == 'Final Grade':
                     final_grade_entry = entry
+                    continue
+                if not validate_assignment_exists(entry):
                     continue
                 sort_key = self._get_sort_key(entry, course)
                 seen_assignment_names_to_start_time[name] = sort_key
@@ -165,11 +173,12 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
                     if name in user_dict:
-                        raise ValueError("Two entries in different part with same name")
+                        raise ValueError(
+                            "Two entries in different part with same name")
                     user_dict[name] = grade
 
         sorted_assignment_names = sorted(seen_assignment_names_to_start_time,
-										key=seen_assignment_names_to_start_time.get)
+                                         key=seen_assignment_names_to_start_time.get)
 
         # Now we can build up the rows.
         rows = LocatedExternalList()
