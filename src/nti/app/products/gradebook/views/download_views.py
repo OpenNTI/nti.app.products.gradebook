@@ -12,8 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 import csv
 import six
 import nameparser
-import collections
 from six import StringIO
+from collections import namedtuple
+from collections import defaultdict
 
 from zope import component
 
@@ -45,12 +46,12 @@ from nti.externalization.interfaces import LocatedExternalList
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-StudentName = collections.namedtuple(
-    'StudentName', 'firstName lastName username realname')
+StudentName = namedtuple('StudentName', 
+                         'firstName lastName username realname')
 
 
-def validate_assignment_exists(assignment):
-    obj = find_object_with_ntiid(assignment.AssignmentId)
+def validate_assignment_exists(entry):
+    obj = find_object_with_ntiid(entry.AssignmentId)
     return obj is not None
 
 
@@ -82,7 +83,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
     def _make_enrollment_predicate(self):
         status_filter = self._enrollment_filter
         if not status_filter:
-            return lambda course, user: True
+            return lambda unused_course, unused_user: True
 
         def f(course, user):
             # TODO: Replace this with
@@ -155,14 +156,14 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         # We keep track of known assignment names so we can sort appropriately;
         # it is keyed by the column name (as that's the only thing guaranteed
         # to be unique) and the value is a sortable key.
-        usernames_to_assignment_dict = collections.defaultdict(dict)
+        usernames_to_assignment_dict = defaultdict(dict)
         seen_assignment_names_to_start_time = dict()
         final_grade_entry = None
 
         for part in gradebook.values():
             for name, entry in part.items():
                 if	    part.__name__ == NO_SUBMIT_PART_NAME \
-                        and name == 'Final Grade':
+                    and name == 'Final Grade':
                     final_grade_entry = entry
                     continue
                 if not validate_assignment_exists(entry):
@@ -173,8 +174,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
                     if name in user_dict:
-                        raise ValueError(
-                            "Two entries in different part with same name")
+                        raise ValueError("Two entries in different part with same name")
                     user_dict[name] = grade
 
         sorted_assignment_names = sorted(seen_assignment_names_to_start_time,
@@ -249,7 +249,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                     # exported values (from our system) anyway, which are probably not
                     # imported into D2L.
                     if IExcusedGrade.providedBy(user_grade):
-                        grade_val = _('Excused')
+                        grade_val = _(u'Excused')
                     else:
                         grade_val = _tx_grade(grade_val)
                 row.append(grade_val)
