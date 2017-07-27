@@ -11,9 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.container.interfaces import INameChooser
 
-from nti.app.assessment.common import assignment_comparator
-from nti.app.assessment.common import get_course_assignments
-from nti.app.assessment.common import get_all_course_assignments
+from nti.app.assessment.common.evaluations import assignment_comparator
+from nti.app.assessment.common.evaluations import get_course_assignments
+from nti.app.assessment.common.evaluations import get_all_course_assignments
 
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import NoSubmitGradeBookPart

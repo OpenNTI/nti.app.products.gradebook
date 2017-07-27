@@ -20,7 +20,7 @@ from zope import component
 
 from pyramid.view import view_config
 
-from nti.app.assessment.common import get_available_for_submission_beginning
+from nti.app.assessment.common.utils import get_available_for_submission_beginning
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 

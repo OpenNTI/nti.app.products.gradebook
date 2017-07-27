@@ -20,7 +20,7 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
-from nti.app.assessment.common import get_submissions
+from nti.app.assessment.common.submissions import get_submissions
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
