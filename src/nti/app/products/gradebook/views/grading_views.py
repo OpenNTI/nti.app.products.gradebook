@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -89,8 +89,8 @@ class CurrentGradeView(AbstractAuthenticatedView):
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                     u'message': _("User not found."),
-                                     u'code': "UserNotFound",
+                                     'message': _(u"User not found."),
+                                     'code': "UserNotFound",
                                  },
                                  None)
         else:
@@ -104,21 +104,20 @@ class CurrentGradeView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                 u'message': _("Must be enrolled in course."),
-                                 u'code': "MustBeEnrolledInCourse",
+                                 'message': _(u"Must be enrolled in course."),
+                                 'code': "MustBeEnrolledInCourse",
                              },
                              None)
 
         policy = find_grading_policy_for_course(course)
         if policy is None:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _("Course does not define a grading policy."),
-                    u'code': "CourseDoesNotDefineGradingPolicy",
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Course does not define a grading policy."),
+                                 'code': "CourseDoesNotDefineGradingPolicy",
+                             },
+                             None)
 
         course = ICourseInstance(self.context)
         book = IGradeBook(course)
@@ -129,11 +128,10 @@ class CurrentGradeView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                 u'message': _("Cannot view grades."),
-                                 u'code': "CannotViewGrades",
+                                 'message': _(u"Cannot view grades."),
+                                 'code': "CannotViewGrades",
                              },
                              None)
-
         # check for a final grade.
         result = LocatedExternalDict()
         try:
@@ -149,11 +147,8 @@ class CurrentGradeView(AbstractAuthenticatedView):
         predicted_grade = calculate_predicted_grade(user,
                                                     policy,
                                                     scheme)
-
         if predicted_grade is None and final_grade is None:
             raise hexc.HTTPNotFound()
-
         if predicted_grade is not None:
             result['PredictedGrade'] = predicted_grade
-
         return result

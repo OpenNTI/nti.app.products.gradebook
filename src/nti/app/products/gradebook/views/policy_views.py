@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -53,7 +53,7 @@ class GradingPolicyMixin(object):
                name=GRADING_POLICY,
                permission=nauth.ACT_READ)
 class CourseGradingPolicyGetView(AbstractAuthenticatedView,
-                                GradingPolicyMixin):
+                                 GradingPolicyMixin):
 
     def __call__(self):
         policy = find_grading_policy_for_course(self.course)
@@ -89,15 +89,12 @@ class CourseGradingPolicyPostView(UGDPostView, GradingPolicyMixin):
         policy = self.readCreateUpdateContentObject(creator,
                                                     search_owner=False)
         policy.creator = creator.username
-
         set_grading_policy_for_course(self.course, policy)
         lifecycleevent.created(policy)
-
         try:
             policy.validate()
         except ValueError as e:
             raise hexc.HTTPUnprocessableEntity(str(e))
-
         self.request.response.status_int = 201
         return policy
 

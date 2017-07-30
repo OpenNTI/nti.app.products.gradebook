@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,7 +22,7 @@ from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.mimetype.mimetype import MIME_BASE
 
 #: Gradebook Base MimeType
-GRADEBOOK_MIME_BASE = MIME_BASE + b'.gradebook'
+GRADEBOOK_MIME_BASE = MIME_BASE + '.gradebook'
 
 
 class MetaGradeBookObject(type):
@@ -34,7 +34,7 @@ class MetaGradeBookObject(type):
             if 'mimeType' in ancestor.__dict__:
                 break
         if ancestor is not cls:
-            clazzname = b'.' + name.encode('ascii').lower()
+            clazzname = '.' + name.encode('ascii').lower()
             cls.mime_type = cls.mimeType = GRADEBOOK_MIME_BASE + clazzname
             cls.parameters = dict()
         return cls

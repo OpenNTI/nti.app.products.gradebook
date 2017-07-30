@@ -82,7 +82,7 @@ class Grade(CreatedModDateTrackingObject,
         if 'username' in kwargs and 'Username' not in kwargs:
             kwargs['Username'] = kwargs['username']
             del kwargs['username']
-        super(Grade, self).__init__(**kwargs)
+        super(Grade, self).__init__(*args, **kwargs)
 
     @Lazy
     def createdTime(self):

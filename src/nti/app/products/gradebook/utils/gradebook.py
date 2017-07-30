@@ -3,7 +3,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -118,7 +118,7 @@ def record_grade_without_submission(entry, user, assignmentId=None,
     grade = None
     course = ICourseInstance(entry)
     pending = QAssignmentSubmissionPendingAssessment(assignmentId=assignmentId,
-                                                    parts=[])
+                                                     parts=[])
 
     assignment_history = component.getMultiAdapter((course, submission.creator),
                                                    IUsersCourseAssignmentHistory)
@@ -197,8 +197,7 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         # into the initial grade value
         course = ICourseInstance(item)
         assignmentId = item.Submission.assignmentId
-        policy = find_autograde_policy_for_assignment_in_course(
-            course, assignmentId)
+        policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
         if policy is not None:
             previous = grade.AutoGrade
             autograde = policy.autograde(item.pendingAssessment)

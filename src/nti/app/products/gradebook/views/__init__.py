@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -40,6 +40,6 @@ def _get_grade_parts(grade_value):
 
 @interface.implementer(IPathAdapter)
 @component.adapter(ICourseInstance, IRequest)
-def GradeBookPathAdapter(context, request):
+def GradeBookPathAdapter(context, unused_request):
     result = IGradeBook(context)
     return result
