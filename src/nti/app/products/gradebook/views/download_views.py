@@ -34,6 +34,8 @@ from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.utils import replace_username
 
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
@@ -279,5 +281,5 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         content_disposition = 'attachment; filename="%s"' % filename
         self.request.response.body = buf.getvalue()
         self.request.response.content_disposition = content_disposition
-        self.request.response.content_type = 'application/octet-stream'
+        self.request.response.content_type = DEFAULT_CONTENT_TYPE
         return self.request.response
