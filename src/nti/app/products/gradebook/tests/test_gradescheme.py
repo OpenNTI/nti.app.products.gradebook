@@ -145,6 +145,10 @@ class TestGradeScheme(unittest.TestCase):
         with self.assertRaises(TypeError):
             tpgs.validate('X')
 
-        # Grades cannot be negative
+        # Negative grades are not valid
         with self.assertRaises(TypeError):
             tpgs.validate('-1')
+
+        # Negative points earned are capped at 0.
+        grade = PredictedGrade(points_earned=-30)
+        assert_that(tpgs.toDisplayableGrade(grade), is_(0))
