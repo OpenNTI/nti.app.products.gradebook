@@ -301,7 +301,11 @@ class TotalPointsGradeScheme(SchemaConfigured):
         return self.fromCorrectness(grade)
 
     def fromCorrectness(self, grade):
-        return getattr(grade, 'PointsEarned', grade)
+        result = getattr(grade, 'PointsEarned', grade)
+        # Ensure that we never have a negative grade.
+        if result and result <= 0:
+            result = 0
+        return result
 
     def toCorrectness(self, grade):
         # TODO: What do we need to do here??
@@ -309,7 +313,7 @@ class TotalPointsGradeScheme(SchemaConfigured):
 
     def __eq__(self, other):
         return self is other or ITotalPointsGradeScheme.providedBy(other)
-    
+
     def __hash__(self):
         xhash = 47
         xhash ^= hash(self.mimeType)
