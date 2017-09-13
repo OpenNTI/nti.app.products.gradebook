@@ -298,7 +298,12 @@ class TotalPointsGradeScheme(SchemaConfigured):
         return value
 
     def toDisplayableGrade(self, grade):
-        return self.fromCorrectness(grade)
+        value = self.fromCorrectness(grade)
+        try:
+            value = round(value, 2)
+        except TypeError:
+            pass
+        return value
 
     def fromCorrectness(self, grade):
         result = getattr(grade, 'PointsEarned', grade)

@@ -152,3 +152,7 @@ class TestGradeScheme(unittest.TestCase):
         # Negative points earned are capped at 0.
         grade = PredictedGrade(points_earned=-30)
         assert_that(tpgs.toDisplayableGrade(grade), is_(0))
+
+        # Grades are rounded to two decimal points
+        grade = PredictedGrade(points_earned=30.178888)
+        assert_that(tpgs.toDisplayableGrade(grade), is_(30.18))
