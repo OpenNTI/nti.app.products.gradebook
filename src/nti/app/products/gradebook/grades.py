@@ -24,6 +24,8 @@ from persistent import Persistent
 
 from nti.app.products.gradebook.interfaces import IGrade
 
+from nti.base.interfaces import ICreated
+
 from nti.contenttypes.courses.grading.interfaces import IPredictedGrade
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -35,8 +37,6 @@ from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.dataserver.interfaces import ALL_PERMISSIONS
-
-from nti.dataserver.interfaces import ICreated
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 

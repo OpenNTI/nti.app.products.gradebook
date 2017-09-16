@@ -37,7 +37,7 @@ from nti.dataserver.activitystream_change import Change
 
 from nti.dataserver.interfaces import IUser
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 _CHANGE_KEY = 'nti.app.products.gradebook.subscribers.ENTRY_CHANGE_KEY'
 
@@ -121,7 +121,7 @@ def _store_grade_created_event(grade, event):
 
 
 @component.adapter(IGrade, IObjectRemovedEvent)
-def _remove_grade_event(grade, event):
+def _remove_grade_event(grade, unused_event):
     try:
         storage = _get_entry_change_storage(grade.__parent__)
         del storage[grade.Username]

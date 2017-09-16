@@ -63,7 +63,7 @@ def delete_user_data(user):
 
 
 @component.adapter(IUser, IWillDeleteEntityEvent)
-def _on_user_will_be_removed(user, _):
+def _on_user_will_be_removed(user, unused_event):
     logger.info("Removing gradebook data for user %s", user)
     unindex_grade_data(user.username)
     delete_user_data(user=user)

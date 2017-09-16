@@ -313,7 +313,6 @@ class TotalPointsGradeScheme(SchemaConfigured):
         return result
 
     def toCorrectness(self, grade):
-        # TODO: What do we need to do here??
         pass
 
     def __eq__(self, other):

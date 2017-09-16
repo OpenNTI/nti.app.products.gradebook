@@ -47,7 +47,7 @@ from nti.contenttypes.courses.utils import is_course_instructor
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalDict
 

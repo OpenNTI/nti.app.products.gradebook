@@ -32,11 +32,11 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.interfaces import IUser
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 
 @component.adapter(IGrade, IObjectModifiedEvent)
-def _grade_modified(grade, _):
+def _grade_modified(grade, unused_event):
     """
     When a grade is modified, make sure that the history item that
     conceptually contains it is updated too.

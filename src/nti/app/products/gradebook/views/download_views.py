@@ -41,8 +41,9 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
+
+from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalList
 

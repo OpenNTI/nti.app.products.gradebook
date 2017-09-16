@@ -6,7 +6,7 @@ gradebook adapters
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,7 +31,7 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IStreamChangeEvent
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.traversal.traversal import find_interface
 
@@ -111,7 +111,7 @@ def history_item_for_grade(grade):
     course = ICourseInstance(grade)
     history = component.getMultiAdapter((course, user),
                                         IUsersCourseAssignmentHistory)
-    assg_id = grade.__parent__.AssignmentId # by definition
+    assg_id = grade.__parent__.AssignmentId  # by definition
     try:
         return history[assg_id]
     except KeyError:

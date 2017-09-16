@@ -64,7 +64,7 @@ class ValidatingGradeCreatorType(object):
 
     __slots__ = ('creator',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if IGrade.providedBy(obj):
             creator = getattr(obj, 'creator', None)
             creator = getattr(creator, 'username', creator)
@@ -113,7 +113,7 @@ class ValidatingGradeValueType(object):
 
     __slots__ = ('type',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if IGrade.providedBy(obj):
             value = getattr(obj, 'value', None)
             if value is not None:
@@ -135,7 +135,7 @@ class ValidatingGradeSite(object):
 
     __slots__ = ('site',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if IGrade.providedBy(obj):
             folder = find_interface(obj, IHostPolicyFolder, strict=False)
             if folder is not None:
@@ -157,7 +157,7 @@ class ValidatingGradeCatalogEntryID(object):
 
     __slots__ = ('ntiid',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if IGrade.providedBy(obj):
             course = find_interface(obj, ICourseInstance, strict=False)
             entry = ICourseCatalogEntry(course, None)  # entry is an annotation

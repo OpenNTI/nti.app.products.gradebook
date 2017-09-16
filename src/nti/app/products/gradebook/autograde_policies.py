@@ -46,8 +46,8 @@ class TrivialFixedScaleAutoGradePolicy(object):
         theoretical_best = 0.0
         for assessed_set in item.parts:
             for assessed_question in assessed_set.questions:
-                theoretical_best += 1.0  # scale to the number of questions
                 part_sum = 0.0
+                theoretical_best += 1.0  # scale to the number of questions
                 for assessed_part in assessed_question.parts:
                     if not hasattr(assessed_part, 'assessedValue'):
                         # Almost certainly trying to autograde something

@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -34,7 +34,7 @@ def get_course(key):
     catalog = get_courses_catalog()
     intids = component.getUtility(IIntIds)
     # XXX: Resolve according to hierarchy
-    for site in  get_component_hierarchy_names():
+    for site in get_component_hierarchy_names():
         query = {
             IX_NAME: {'any_of': key},
             IX_SITE: {'any_of': (site,)}

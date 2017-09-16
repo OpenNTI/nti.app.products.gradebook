@@ -127,11 +127,11 @@
 	<include package="nti.externalization" />
 
 	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.IGradeBook
+		root_interfaces=".interfaces.IGrade
+						 .interfaces.IGradeScheme
+						 .interfaces.IGradeBook
 						 .interfaces.IGradeBookPart
 						 .interfaces.IGradeBookEntry
-						 .interfaces.IGrade
-						 .interfaces.IGradeScheme
 						 .interfaces.ILetterGradeScheme
 						 .interfaces.IBooleanGradeScheme
 						 .interfaces.INumericGradeScheme

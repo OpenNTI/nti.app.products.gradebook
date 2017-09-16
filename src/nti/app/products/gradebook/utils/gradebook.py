@@ -143,7 +143,7 @@ def record_grade_without_submission(entry, user, assignmentId=None,
     return grade
 
 
-def synchronize_gradebook_and_verify_policy(course, *args, **kwargs):
+def synchronize_gradebook_and_verify_policy(course, *unused_args, **unused_kwargs):
     synchronize_gradebook(course)
     # CS: We verify the grading policy after
     # the gradebook has been synchronized
@@ -173,8 +173,6 @@ def find_entry_for_item(item):
         entry = book.getColumnForAssignmentId(assignmentId)
     if entry is None:
         # Also typically during tests.
-        # TODO: Fix those tests to properly register assignments
-        # so this branch goes away
         logger.warning("Assignment %s not found in course %s",
                        assignmentId, course)
         return

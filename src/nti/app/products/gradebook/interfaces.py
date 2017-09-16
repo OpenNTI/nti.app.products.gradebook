@@ -261,13 +261,15 @@ class IGradeBookPart(IContainer,
         """
 
     Name = ValidTextLine(title=u"Part name", required=False)
+
     displayName = ValidTextLine(title=u"Part name", required=False)
+
     gradeScheme = Object(IGradeScheme, description=u"A :class:`.IGradeScheme`",
                          title=u"The grade scheme for this part", required=False)
 
     order = Int(title=u"The part order", min=1)
 
-    #TotalEntryWeight = schema.Float(title=u"Entry weight sum", readonly=True)
+    # TotalEntryWeight = schema.Float(title=u"Entry weight sum", readonly=True)
 
     Items = Dict(title=u"For externalization only, a copy of the {assignmentId: GradeBookEntry} contents}",
                  description=u"For expedience and while while we expect these to be relatively small, "

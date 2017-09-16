@@ -50,6 +50,8 @@ from nti.dataserver import authorization as nauth
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.metadata import queue_add as metadata_queue_add
+
 from nti.site.hostpolicy import get_all_host_sites
 
 ITEMS = StandardExternalFields.ITEMS
@@ -174,13 +176,6 @@ class SynchronizeGradebookView(AbstractAuthenticatedView,
                permission=nauth.ACT_NTI_ADMIN)
 class RebuildGradeCatalogView(AbstractAuthenticatedView):
 
-    def _process_meta(self, grade):
-        try:
-            from nti.metadata import queue_add
-            queue_add(grade)
-        except ImportError:
-            pass
-
     def _process_course(self, course, catalog, intids):
         count = 0
         book = IGradeBook(course, None)
@@ -190,8 +185,8 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
                     for grade in list(entry.values()):  # grades
                         doc_id = intids.queryId(grade)
                         if doc_id is not None:
-                            catalog.index_doc(doc_id, grade)
-                            self._process_meta(grade)
+                            catalog.force_index_doc(doc_id, grade)
+                            metadata_queue_add(doc_id, grade)
                             count += 1
         return count
 
@@ -204,8 +199,10 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
         # reindex
         total = 0
         seen = set()
+        items = dict()
         for host_site in get_all_host_sites():
             with current_site(host_site):
+                count = 0
                 catalog = component.queryUtility(ICourseCatalog)
                 if catalog is None or catalog.isEmpty():
                     continue
@@ -215,7 +212,10 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
                     if doc_id is None or doc_id in seen:
                         continue
                     seen.add(doc_id)
-                    total += self._process_course(course, grade_catalog, intids)
+                    count += self._process_course(course, grade_catalog, intids)
+                    total += count
+                items[host_site.__name__] = count
         result = LocatedExternalDict()
+        result[ITEMS] = items
         result[ITEM_COUNT] = result[TOTAL] = total
         return result

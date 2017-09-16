@@ -12,6 +12,7 @@ import os
 import os.path
 
 from zope import component
+
 from zope.component.interfaces import IComponents
 
 import ZODB
@@ -20,7 +21,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 
-from nti.dataserver import users
+from nti.dataserver.users.users import User
 
 from nti.app.products.courseware.tests import publish_ou_course_entries
 
@@ -33,7 +34,7 @@ from nti.dataserver.tests.mock_dataserver import mock_db_trans
 class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
 
     @classmethod
-    def _setup_library(cls, *args, **kwargs):
+    def _setup_library(cls, *unused_args, **unused_kwargs):
         from nti.contentlibrary.filesystem import CachedNotifyingStaticFilesystemLibrary as Library
         lib = Library(
             paths=(os.path.join(os.path.dirname(__file__),
@@ -56,7 +57,7 @@ class InstructedCourseApplicationTestLayer(ApplicationTestLayer):
         @WithMockDS(database=database)
         def _create():
             with mock_db_trans():
-                users.User.create_user(username=u'harp4162', password=u'temp001')
+                User.create_user(username=u'harp4162', password=u'temp001')
                 # Re-enum to pick up instructor
                 publish_ou_course_entries()
         _create()
