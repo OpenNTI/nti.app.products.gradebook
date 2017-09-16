@@ -1,8 +1,3 @@
-.. Dataserver documentation master file, created by
-   sphinx-quickstart on Sat Aug 27 15:30:38 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 ====================================
  Grading policy usage
 ====================================
@@ -67,7 +62,6 @@ The views for the grading policy are defined in ``nti.app.products.gradebook.vie
 	* You may send a DELETE to the GradingPolicy view on the course to delete the current policy, or to the policy itself.
 	* Example: DELETE to ``/dataserver2/%2B%2Betc%2B%2Bhostsites/alpha.nextthought.com/%2B%2Betc%2B%2Bsite/Courses/Alpha/NTI%201000/GradingPolicy`` to delete the existing policy from a course.
 	* Example of DELETEing directly to the policy: send a DELETE to ``/dataserver2/Objects/<ntiid_of_policy>``
-
 
 
 Implementation notes
