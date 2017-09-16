@@ -13,6 +13,7 @@ from hamcrest import assert_that
 import unittest
 
 from nti.app.products.gradebook import gradescheme
+
 from nti.app.products.gradebook.grades import PredictedGrade
 
 

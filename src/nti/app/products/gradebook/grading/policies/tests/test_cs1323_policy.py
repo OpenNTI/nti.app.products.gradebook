@@ -54,10 +54,11 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
-import nti.dataserver.tests.mock_dataserver as mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
 class TestCS1323GradingPolicy(unittest.TestCase):

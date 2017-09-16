@@ -13,8 +13,8 @@ from hamcrest import has_length
 from hamcrest import assert_that
 does_not = is_not
 
-from nti.assessment.submission import QuestionSetSubmission
 from nti.assessment.submission import AssignmentSubmission
+from nti.assessment.submission import QuestionSetSubmission
 
 from nti.app.products.gradebook import predicates
 
@@ -48,14 +48,16 @@ class TestPredictes(ApplicationLayerTest):
         self.testapp.extra_environ = extra_env
 
         qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
-        submission = AssignmentSubmission(assignmentId=self.assignment_id, 
-										  parts=(qs_submission,))
-        submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
+        submission = AssignmentSubmission(assignmentId=self.assignment_id,
+                                          parts=(qs_submission,))
+        
+        data = (self.assignment_id, COURSE_NTIID)
+        submit_href = '/dataserver2/Objects/%s?ntiid=%s' % data
 
         ext_obj = to_external_object(submission)
         del ext_obj['Class']
-        assert_that(ext_obj, 
-					has_entry('MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
+        assert_that(ext_obj,
+                    has_entry('MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
 
         # Make sure we're enrolled
         self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',

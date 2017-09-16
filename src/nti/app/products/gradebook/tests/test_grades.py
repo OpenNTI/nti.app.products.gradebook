@@ -18,25 +18,26 @@ from hamcrest import has_property
 from hamcrest import same_instance
 from hamcrest import greater_than_or_equal_to
 
+from nti.testing.matchers import validly_provides
+
 import time
 import pickle
 import unittest
 
-from nti.wref.interfaces import IWeakRef
+from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.app.products.gradebook.grades import Grade
 from nti.app.products.gradebook.grades import GradeWeakRef
 from nti.app.products.gradebook.grades import PersistentGrade
 from nti.app.products.gradebook.grades import PredictedGrade
+
 from nti.app.products.gradebook.gradescheme import LetterNumericGradeScheme
 
 from nti.app.products.gradebook.interfaces import IGrade
 
-from nti.app.products.gradebook.gradebook import GradeBookEntry
-
-from nti.testing.matchers import validly_provides
-
 from nti.externalization.externalization import to_external_object
+
+from nti.wref.interfaces import IWeakRef
 
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
@@ -104,7 +105,7 @@ class TestGrades(unittest.TestCase):
 
         predicted_grade = PredictedGrade(points_earned=1, points_available=2)
         ext = to_external_object(predicted_grade)
-        assert_that(ext, 
+        assert_that(ext,
                     has_entries('Correctness', is_(50),
                                 'DisplayableGrade', is_(50),
                                 'PointsAvailable', is_(2),
@@ -112,7 +113,7 @@ class TestGrades(unittest.TestCase):
 
         predicted_grade = PredictedGrade(raw_value=0.75)
         ext = to_external_object(predicted_grade)
-        assert_that(ext, 
+        assert_that(ext,
                     has_entries('Correctness', is_(75),
                                 'DisplayableGrade', is_(75),
                                 'PointsAvailable', is_(none()),
@@ -122,7 +123,7 @@ class TestGrades(unittest.TestCase):
         ext = to_external_object(predicted_grade)
         # This situation doesn't make any sense,
         # so we just don't predict correctness.
-        assert_that(ext, 
+        assert_that(ext,
                     has_entries('Correctness', is_(none()),
                                 'DisplayableGrade', is_(none()),
                                 'PointsAvailable', is_(0),
@@ -140,7 +141,7 @@ class TestGrades(unittest.TestCase):
 
 class _GradeBookEntry(GradeBookEntry):
 
-    def __conform__(self, iface):
+    def __conform__(self, unused_iface):
         return _CheapWref(self)
 
 
@@ -156,7 +157,7 @@ class _CheapWref(object):
     def __call__(self):
         return self.gbe
 
-    def __eq__(self, other):
+    def __eq__(self, unused_other):
         return True
 
     def __hash__(self):
