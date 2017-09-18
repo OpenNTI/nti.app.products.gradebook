@@ -101,7 +101,7 @@ def synchronize_gradebook(context):
         if assignment.title:
             displayName = assignment.title
         else:
-            displayName = 'Assignment %s' % ordinal
+            displayName = u'Assignment %s' % ordinal
         create_assignment_entry(course, assignment, displayName, ordinal, book)
 
     # Now drop entries that don't correspond to existing assignments
@@ -127,8 +127,7 @@ def synchronize_gradebook(context):
     for part in book.values():
         for entry in part.values():
             if entry.AssignmentId in entry_aids:
-                raise ValueError(
-                    "An assignment changed categories. Not currently allowed.")
+                raise ValueError("An assignment changed categories. Not currently allowed.")
                 # use svn history to figure out what it used to be and change
                 # it back
             entry_aids.add(entry.AssignmentId)
