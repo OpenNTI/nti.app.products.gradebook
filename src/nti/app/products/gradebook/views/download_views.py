@@ -189,6 +189,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 for username, grade in entry.items():
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
+                    # This should not be possible anymore
                     if assignment_key in user_dict:
                         raise ValueError("Two entries in different part with same name")
                     user_dict[assignment_key] = grade
