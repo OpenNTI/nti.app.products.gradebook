@@ -20,6 +20,8 @@ from zope import component
 
 from pyramid.view import view_config
 
+from nti.app.assessment.common.policy import get_policy_excluded
+
 from nti.app.assessment.common.utils import get_available_for_submission_beginning
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -49,13 +51,20 @@ from nti.externalization.interfaces import LocatedExternalList
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-StudentName = namedtuple('StudentName', 
+StudentName = namedtuple('StudentName',
                          'firstName lastName username realname')
 
 
-def validate_assignment_exists(entry):
-    obj = find_object_with_ntiid(entry.AssignmentId)
-    return obj is not None
+def get_valid_assignment(entry, course):
+    """
+    We only want entries that point to assignments that exist and are not
+    excluded.
+    """
+    assignment = find_object_with_ntiid(entry.AssignmentId)
+    if      assignment is not None \
+        and get_policy_excluded(assignment, course):
+            return None
+    return assignment
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -169,16 +178,19 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                     and name == 'Final Grade':
                     final_grade_entry = entry
                     continue
-                if not validate_assignment_exists(entry):
+                assignment = get_valid_assignment(entry, course)
+                if assignment is None:
                     continue
+                # We always want our assignment display name
+                assigment_name = assignment.title
                 sort_key = self._get_sort_key(entry, course)
-                seen_assignment_names_to_start_time[name] = sort_key
+                seen_assignment_names_to_start_time[assigment_name] = sort_key
                 for username, grade in entry.items():
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
-                    if name in user_dict:
+                    if assigment_name in user_dict:
                         raise ValueError("Two entries in different part with same name")
-                    user_dict[name] = grade
+                    user_dict[assigment_name] = grade
 
         sorted_assignment_names = sorted(seen_assignment_names_to_start_time,
                                          key=seen_assignment_names_to_start_time.get)
