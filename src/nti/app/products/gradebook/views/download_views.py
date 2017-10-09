@@ -169,7 +169,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         # it is keyed by the column name (as that's the only thing guaranteed
         # to be unique) and the value is a sortable key.
         usernames_to_assignment_dict = defaultdict(dict)
-        seen_assignment_names_to_start_time = dict()
+        # (assignment_ntiid, assignment_title) -> data
+        seen_assignment_keys_to_start_time = dict()
         final_grade_entry = None
 
         for part in gradebook.values():
@@ -182,18 +183,18 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 if assignment is None:
                     continue
                 # We always want our assignment display name
-                assigment_name = assignment.title
+                assignment_key = (assignment.ntiid, assignment.title)
                 sort_key = self._get_sort_key(entry, course)
-                seen_assignment_names_to_start_time[assigment_name] = sort_key
+                seen_assignment_keys_to_start_time[assignment_key] = sort_key
                 for username, grade in entry.items():
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
-                    if assigment_name in user_dict:
+                    if assignment_key in user_dict:
                         raise ValueError("Two entries in different part with same name")
-                    user_dict[assigment_name] = grade
+                    user_dict[assignment_key] = grade
 
-        sorted_assignment_names = sorted(seen_assignment_names_to_start_time,
-                                         key=seen_assignment_names_to_start_time.get)
+        sorted_assignment_keys = sorted(seen_assignment_keys_to_start_time,
+                                        key=seen_assignment_keys_to_start_time.get)
 
         # Now we can build up the rows.
         rows = LocatedExternalList()
@@ -212,8 +213,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         headers = ['Username', 'External ID',
                    'First Name', 'Last Name', 'Full Name']
         # Assignment names could theoretically have non-ascii chars
-        for asg_name in sorted_assignment_names:
-            asg_name = _tx_string(asg_name)
+        for asg_tuple in sorted_assignment_keys:
+            asg_name = _tx_string(asg_tuple[1])
             # Avoid unicode conversion of our already encoded str.
             asg_name = asg_name + str(' Points Grade')
             headers.append(asg_name)
@@ -254,10 +255,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
             data = (username, external_id, firstname, lastname, realname)
             row = [_tx_string(x) for x in data]
-            for assignment_name in sorted_assignment_names:
+            for assignment_key in sorted_assignment_keys:
                 grade_val = ""
-                if assignment_name in user_dict:
-                    user_grade = user_dict[assignment_name]
+                if assignment_key in user_dict:
+                    user_grade = user_dict[assignment_key]
                     grade_val = user_grade.value
                     # For CS1323, we need to expose Excused grades. It's not entirely clear
                     # how to do so in a D2L import-compatible way, but we've seen text
