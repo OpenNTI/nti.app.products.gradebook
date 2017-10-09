@@ -61,8 +61,9 @@ def get_valid_assignment(entry, course):
     excluded.
     """
     assignment = find_object_with_ntiid(entry.AssignmentId)
-    if get_policy_excluded(assignment, course):
-        return None
+    if      assignment is not None \
+        and get_policy_excluded(assignment, course):
+            return None
     return assignment
 
 
