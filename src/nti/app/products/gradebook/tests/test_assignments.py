@@ -120,7 +120,7 @@ class TestAssignments(ApplicationLayerTest):
 
             for package in lib.contentPackages:
                 course = ICourseInstance(package)
-                result = assignments.get_course_assignments(course, sort=True, 
+                result = assignments.get_course_assignments(course, sort=True,
                                                             reverse=True)
                 assert_that(result, has_length(4))
                 for a in result:
@@ -155,12 +155,12 @@ class TestAssignments(ApplicationLayerTest):
                     asgs = assignments.get_course_assignments(course)
                     assert_that(asgs, has_length(4))
                     for asg in asgs:
-                        assert_that(asg, 
+                        assert_that(asg,
                                     externalizes(has_entry('GradeSubmittedCount', 0)))
                         ext = to_external_object(asg)
-                        self.require_link_href_with_rel(ext, 
+                        self.require_link_href_with_rel(ext,
                                                         'GradeBookByAssignment')
-                        href = self.require_link_href_with_rel(ext, 
+                        href = self.require_link_href_with_rel(ext,
                                                                'GradeSubmittedAssignmentHistory')
                         title = asg.title
                         title = urllib.quote(title)
@@ -185,7 +185,7 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.extra_environ = extra_env
 
         qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
-        submission = AssignmentSubmission(assignmentId=self.assignment_id, 
+        submission = AssignmentSubmission(assignmentId=self.assignment_id,
                                           parts=(qs_submission,))
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
@@ -217,12 +217,12 @@ class TestAssignments(ApplicationLayerTest):
         instructor_environ['HTTP_ORIGIN'] = 'http://janux.ou.edu'
 
         # First, it should show up in the counter
-        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, 
+        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id,
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('GradeSubmittedCount', 1))
 
         self.require_link_href_with_rel(res.json_body, 'GradeBookByAssignment')
-        sum_link = self.require_link_href_with_rel(res.json_body, 
+        sum_link = self.require_link_href_with_rel(res.json_body,
                                                   'GradeSubmittedAssignmentHistorySummaries')
         assert_that(sum_link,
                     is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main%20Title/SubmittedAssignmentHistorySummaries'))
@@ -273,7 +273,7 @@ class TestAssignments(ApplicationLayerTest):
         grade_edit = self.require_link_href_with_rel(grade, 'edit')
         assert_that(grade, has_entry('value', None))
         grade['value'] = 90
-        self.testapp.put_json(grade_edit, grade, 
+        self.testapp.put_json(grade_edit, grade,
                               extra_environ=instructor_environ)
 
         res = self.testapp.get(bulk_link, extra_environ=instructor_environ)
@@ -314,7 +314,7 @@ class TestAssignments(ApplicationLayerTest):
         final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/'
         path = final_grade_path + 'sjohnson@nextthought.com'
         grade['value'] = "75 -"  # Use a string like the app typically sends
-        res = self.testapp.put_json(path, grade, 
+        res = self.testapp.put_json(path, grade,
                                     extra_environ=instructor_environ)
         __traceback_info__ = res.json_body
         final_assignment_id = res.json_body['AssignmentId']
@@ -333,8 +333,8 @@ class TestAssignments(ApplicationLayerTest):
         # ...as well as the student's history (for both the instructor and professor)
         for env in instructor_environ, {}:
             history_res = self.testapp.get(history_path,  extra_environ=env)
-            assert_that(history_res.json_body, 
-                        has_entry('Items', 
+            assert_that(history_res.json_body,
+                        has_entry('Items',
                                   has_entry(final_assignment_id,
                                             has_entries('Grade',
                                                         has_entry('value', "75 -"),
@@ -354,9 +354,9 @@ class TestAssignments(ApplicationLayerTest):
                                          extra_environ=env,
                                          status=201)
             history_res = self.testapp.get(history_path,  extra_environ=env)
-            assert_that(history_res.json_body, 
+            assert_that(history_res.json_body,
                         has_entry('Items', has_entry(final_assignment_id,
-                                                     has_entry('Feedback', 
+                                                     has_entry('Feedback',
                                                                has_entry('Items', has_item(has_entry('body', ['Some feedback'])))))))
 
         # The instructor cannot do this for users that don't exist...
@@ -377,36 +377,35 @@ class TestAssignments(ApplicationLayerTest):
 
         # Our links are now off of a GradeBook shell in the course
         course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
-        course_res = self.testapp.get(course_path, 
+        course_res = self.testapp.get(course_path,
                                       extra_environ=instructor_environ)
         gradebook_json = course_res.json_body.get('GradeBook')
-        csv_link = self.require_link_href_with_rel(gradebook_json, 
+        csv_link = self.require_link_href_with_rel(gradebook_json,
                                                    'ExportContents')
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        assert_that(res.content_disposition, 
+        assert_that(res.content_disposition,
                     is_('attachment; filename="CLC3403_full-grades.csv"'))
-        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,75,100,#\r\n'
+        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,,75,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # He can filter it to Open and ForCredit subsets
-        res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=Open', 
+        res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=Open',
                                extra_environ=instructor_environ)
-        assert_that(res.content_disposition, 
+        assert_that(res.content_disposition,
                     is_('attachment; filename="CLC3403_Open-grades.csv"'))
         assert_that(res.text, is_(csv_text))
 
-        res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit', 
+        res = self.testapp.get(csv_link + '?LegacyEnrollmentStatus=ForCredit',
                                extra_environ=instructor_environ)
-        assert_that(res.content_disposition, 
+        assert_that(res.content_disposition,
                     is_('attachment; filename="CLC3403_ForCredit-grades.csv"'))
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
         assert_that(res.text, is_(csv_text))
 
     @WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
                                  testapp=True,
                                  default_authenticate=True)
     def test_download_sorting(self):
-
         # This only works in the OU environment because that's where the
         # purchasables are
         extra_env = self.testapp.extra_environ or {}
@@ -437,7 +436,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof)
 
         qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
-        submission = AssignmentSubmission(assignmentId=self.assignment_id, 
+        submission = AssignmentSubmission(assignmentId=self.assignment_id,
                                           parts=(qs_submission,))
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
@@ -462,13 +461,13 @@ class TestAssignments(ApplicationLayerTest):
 
         # Our links are now off of a GradeBook shell in the course
         course_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403'
-        course_res = self.testapp.get(course_path, 
+        course_res = self.testapp.get(course_path,
                                       extra_environ=instructor_environ)
         gradebook_json = course_res.json_body.get('GradeBook')
-        csv_link = self.require_link_href_with_rel(gradebook_json, 
+        csv_link = self.require_link_href_with_rel(gradebook_json,
                                                   'ExportContents')
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson,Steve Johnson,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson,Steve Johnson,,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         #  If we switch names, they should still be sorted correctly.
@@ -484,7 +483,7 @@ class TestAssignments(ApplicationLayerTest):
 
         # download the gradebook again and check that the sorting is correct
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Johnson,Steve Johnson,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Johnson,Steve Johnson,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # If both users have the same last name, should be sorted by first name.
@@ -500,7 +499,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof.__parent__)
             lifecycleevent.modified(prof)
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Madden,Steve Madden,,,0,100,#\r\n'
+        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Madden,Steve Madden,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # Switch names from the above scenario to make sure they're actually
@@ -515,7 +514,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof.__parent__)
             lifecycleevent.modified(prof)
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Madden,Steve Madden,,,0,100,#\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Madden,Steve Madden,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # If both names are identical, they should be sorted by username.
@@ -529,7 +528,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof.__parent__)
             lifecycleevent.modified(prof)
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,0,100,#\r\n'
+        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
     @WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
@@ -567,7 +566,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof)
 
         qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
-        submission = AssignmentSubmission(assignmentId=self.assignment_id, 
+        submission = AssignmentSubmission(assignmentId=self.assignment_id,
                                           parts=(qs_submission,))
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (self.assignment_id, COURSE_NTIID)
 
@@ -587,11 +586,11 @@ class TestAssignments(ApplicationLayerTest):
                                    status=201)
 
         # Before we submit, we have no count
-        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, 
+        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id,
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('GradeSubmittedCount', 0))
 
-        sum_link = self.require_link_href_with_rel(res.json_body, 
+        sum_link = self.require_link_href_with_rel(res.json_body,
                                                    'GradeSubmittedAssignmentHistorySummaries')
         self.testapp.get(sum_link, extra_environ=instructor_environ)
         # We can request it sorted, even with nothing in it, and it works
@@ -614,12 +613,12 @@ class TestAssignments(ApplicationLayerTest):
                                    status=201)
 
         # Check that it should show up in the counter
-        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, 
+        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id,
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('GradeSubmittedCount', 2))
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('GradeAssignmentSubmittedCount', 2))
-        sum_link = self.require_link_href_with_rel(res.json_body, 
+        sum_link = self.require_link_href_with_rel(res.json_body,
                                                   'GradeSubmittedAssignmentHistorySummaries')
         self.testapp.get(sum_link, extra_environ=instructor_environ)
 
@@ -801,7 +800,7 @@ class TestAssignments(ApplicationLayerTest):
                                     'sortOrder': 'descending'},
                                    extra_environ=instructor_environ)
         assert_that(sum_res.json_body, has_entry('Items', has_length(0)))
-        assert_that(sum_res.json_body, 
+        assert_that(sum_res.json_body,
                     has_entry('FilteredTotalItemCount', is_(0)))
 
         # If the instructor deletes a grade for a user, the submission date
@@ -825,10 +824,10 @@ class TestAssignments(ApplicationLayerTest):
         assert_that(sum_res.json_body['Items'][0][1], is_(not_none()))
         assert_that(sum_res.json_body['Items'][1][1], is_(not_none()))
 
-        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id, 
+        res = self.testapp.get('/dataserver2/Objects/' + self.assignment_id,
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('GradeSubmittedCount', 1))
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('GradeAssignmentSubmittedCount', 2))
 
     @WithSharedApplicationMockDS(users=('jason'), testapp=True, default_authenticate=True)
@@ -854,7 +853,7 @@ class TestAssignments(ApplicationLayerTest):
         # Note the bad MimeType, but it doesn't matter
         grade = {"MimeType": "application/vnd.nextthought.courseware.grade",
                  "tags": [], "value": "324 -"}
-        res = self.testapp.put_json(path, grade, 
+        res = self.testapp.put_json(path, grade,
                                     extra_environ=instructor_environ)
         assert_that(res.json_body,
                     has_entry('MimeType', 'application/vnd.nextthought.grade'))
@@ -862,12 +861,12 @@ class TestAssignments(ApplicationLayerTest):
 
         href = res.json_body['href']
         excuse_ref = href + "/excuse"
-        res = self.testapp.post(excuse_ref, extra_environ=instructor_environ, 
+        res = self.testapp.post(excuse_ref, extra_environ=instructor_environ,
                                 status=200)
         assert_that(res.json_body, has_entry('IsExcused', is_(True)))
 
         unexcuse_ref = href + "/unexcuse"
-        res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ, 
+        res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ,
                                 status=200)
         assert_that(res.json_body, has_entry('IsExcused', is_(False)))
 
@@ -880,18 +879,18 @@ class TestAssignments(ApplicationLayerTest):
 
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
 
-        qs1_submission = QuestionSetSubmission(questionSetId=qs_id1, 
+        qs1_submission = QuestionSetSubmission(questionSetId=qs_id1,
                                                questions=(QuestionSubmission(questionId=question_id1, parts=[0]),))
-        qs2_submission = QuestionSetSubmission(questionSetId=qs_id2, 
+        qs2_submission = QuestionSetSubmission(questionSetId=qs_id2,
                                                questions=(QuestionSubmission(questionId=question_id2, parts=[0, 1]),))
 
-        submission = AssignmentSubmission(assignmentId=assignment_id, 
+        submission = AssignmentSubmission(assignmentId=assignment_id,
                                           parts=(qs1_submission, qs2_submission))
 
         ext_obj = to_external_object(submission)
 
         res = self.testapp.post_json(submit_href, ext_obj, status=422)
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('message', "Assignment already submitted"))
         assert_that(res.json_body, has_entry('code', "NotUnique"))
 
@@ -943,12 +942,12 @@ class TestAssignments(ApplicationLayerTest):
         qs2_submission = QuestionSetSubmission(questionSetId=qs_id2,
                                                questions=(QuestionSubmission(questionId=question_id2, parts=[0, 1]),))
 
-        submission = AssignmentSubmission(assignmentId=assignment_id, 
+        submission = AssignmentSubmission(assignmentId=assignment_id,
                                           parts=(qs1_submission, qs2_submission))
 
         ext_obj = to_external_object(submission)
         del ext_obj['Class']
-        assert_that(ext_obj, 
+        assert_that(ext_obj,
                     has_entry('MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
         # Make sure we're enrolled
         self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
@@ -1060,11 +1059,11 @@ class TestAssignments(ApplicationLayerTest):
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
-        grade_res = self.testapp.put_json(path, grade, 
+        grade_res = self.testapp.put_json(path, grade,
                                           extra_environ=instructor_environ)
 
         # he can later delete it
-        self.testapp.delete(grade_res.json_body['href'], 
+        self.testapp.delete(grade_res.json_body['href'],
                             extra_environ=instructor_environ)
 
         # the user has no notable item for it
@@ -1081,7 +1080,7 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
         # and delete again
-        self.testapp.delete(grade_res.json_body['href'], 
+        self.testapp.delete(grade_res.json_body['href'],
                             extra_environ=instructor_environ)
 
     @WithSharedApplicationMockDS(users=('regular_user',), testapp=True, default_authenticate=True)
