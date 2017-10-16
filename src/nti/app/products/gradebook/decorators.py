@@ -9,10 +9,9 @@ Decorators for providing access to the various grades pieces.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -37,6 +36,7 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
 from nti.contenttypes.courses.utils import is_course_instructor
 
 from nti.dataserver.users.users import User
@@ -47,7 +47,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.links.links import Link
 
@@ -58,6 +58,8 @@ from nti.traversal.traversal import find_interface
 LINKS = StandardExternalFields.LINKS
 CLASS = StandardExternalFields.CLASS
 MIME_TYPE = StandardExternalFields.MIMETYPE
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def gradebook_readable(context, interaction=None):
@@ -149,9 +151,7 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 
 
 @interface.implementer(IExternalObjectDecorator)
-class _UsersCourseAssignmentHistoryItemDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class _UsersCourseAssignmentHistoryItemDecorator(Singleton):
 
     def decorateExternalObject(self, item, external):
         grade = IGrade(item, None)
