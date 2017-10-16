@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -24,7 +25,7 @@ does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
 
-import urllib
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -163,7 +164,7 @@ class TestAssignments(ApplicationLayerTest):
                         href = self.require_link_href_with_rel(ext,
                                                                'GradeSubmittedAssignmentHistory')
                         title = asg.title
-                        title = urllib.quote(title)
+                        title = urllib_parse.quote(title)
                         assert_that(href,
                                     is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/%s/SubmittedAssignmentHistory'
                                         % (asg.category_name, title)))
