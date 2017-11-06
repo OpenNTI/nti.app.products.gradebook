@@ -4,12 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
-generation = 7
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -31,9 +28,12 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
-from nti.dataserver.interfaces import IMetadataCatalog
 
-from nti.dataserver.metadata.index import CATALOG_NAME
+from nti.dataserver.metadata.index import get_metadata_catalog
+
+generation = 7
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IDataserver)
@@ -80,7 +80,7 @@ def do_evolve(context, generation=generation):
             locate(index, catalog, IX_SITE)
             catalog[IX_SITE] = index
 
-            metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+            metadata = get_metadata_catalog()
             query = {
                 'mimeType': {'any_of': ('application/vnd.nextthought.grade',)}
             }
