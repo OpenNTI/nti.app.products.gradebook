@@ -4,12 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
-generation = 8
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -25,10 +22,13 @@ from nti.app.products.gradebook.interfaces import IGrade
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
-from nti.dataserver.interfaces import IMetadataCatalog
 
 from nti.dataserver.metadata.index import IX_MIMETYPE
-from nti.dataserver.metadata.index import CATALOG_NAME
+from nti.dataserver.metadata.index import get_metadata_catalog
+
+generation = 8
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IDataserver)
@@ -64,7 +64,7 @@ def do_evolve(context, generation=generation):
                "Hooks not installed?"
 
         catalog = install_grade_catalog(ds_folder, intids)
-        metadata = lsm.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+        metadata = get_metadata_catalog()
         query = {
             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.grade',)}
         }
