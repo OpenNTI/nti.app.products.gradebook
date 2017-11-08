@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -30,12 +29,13 @@ from nti.site.interfaces import IHostPolicyFolder
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
+from nti.zope_catalog.catalog import DeferredCatalog
 
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 
-from nti.zope_catalog.interfaces import IMetadataCatalog
+from nti.zope_catalog.interfaces import IDeferredCatalog
 
 from nti.zope_catalog.string import StringTokenNormalizer
 
@@ -48,6 +48,8 @@ IX_ASSIGNMENT_ID = 'assignmentId'
 IX_STUDENT = IX_USERNAME = 'username'
 IX_CREATOR = IX_INSTRUCTOR = 'creator'
 IX_COURSE = IX_ENTRY = IX_GRADE_COURSE = 'gradeCourse'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class AssignmentIdIndex(ValueIndex):
@@ -173,22 +175,17 @@ class CatalogEntryIDIndex(ValueIndex):
     default_interface = ValidatingGradeCatalogEntryID
 
 
-@interface.implementer(IMetadataCatalog)
-class MetadataGradeCatalog(Catalog):
+@interface.implementer(IDeferredCatalog)
+class MetadataGradeCatalog(DeferredCatalog):
 
     family = BTrees.family64
 
-    super_index_doc = Catalog.index_doc
-
-    def index_doc(self, docid, ob):
-        pass
-
-    def force_index_doc(self, docid, ob):
-        self.super_index_doc(docid, ob)
+    def force_index_doc(self, docid, ob): # BWC
+        return self.index_doc(docid, ob)
 
 
 def get_grade_catalog(registry=component):
-    return registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+    return registry.queryUtility(IDeferredCatalog, name=CATALOG_NAME)
 
 
 def create_grade_catalog(catalog=None, family=BTrees.family64):
@@ -218,7 +215,9 @@ def install_grade_catalog(site_manager_container, intids=None):
     catalog = create_grade_catalog(family=intids.family)
     locate(catalog, site_manager_container, CATALOG_NAME)
     intids.register(catalog)
-    lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
+    lsm.registerUtility(catalog, 
+                        provided=IDeferredCatalog, 
+                        name=CATALOG_NAME)
 
     for index in catalog.values():
         intids.register(index)

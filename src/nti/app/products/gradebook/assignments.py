@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope.container.interfaces import INameChooser
 
@@ -24,6 +23,9 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
+logger = __import__('logging').getLogger(__name__)
+
 
 # BWC
 _assignment_comparator = assignment_comparator
