@@ -181,7 +181,7 @@ class MetadataGradeCatalog(DeferredCatalog):
     family = BTrees.family64
 
     def force_index_doc(self, docid, ob): # BWC
-        self.index_doc(docid, ob)
+        return self.index_doc(docid, ob)
 
 
 def get_grade_catalog(registry=component):
