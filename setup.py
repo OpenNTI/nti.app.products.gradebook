@@ -1,6 +1,7 @@
 import codecs
 import platform
-from setuptools import setup, find_packages
+from setuptools import setup
+from setuptools import find_packages
 
 py_impl = getattr(platform, 'python_implementation', lambda: None)
 IS_PYPY = py_impl() == 'PyPy'
@@ -47,6 +48,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
     ],
     url="https://github.com/NextThought/nti.app.products.gradebook",
     zip_safe=True,
@@ -57,18 +59,57 @@ setup(
     tests_require=TESTS_REQUIRE,
     install_requires=[
         'setuptools',
-        'nti.app.assessment',
-        'nti.contenttypes.courses',
-        'nti.dataserver',
-        'natsort',
+        'BTrees',
         # fastnumbers: from natsort 3.4.1: 'natsort' will now use the
         # 'fastnumbers' module if it is installed. This gives up to an
         # extra 30% boost in speed over the previous performance
         # enhancements.
         'fastnumbers' if not IS_PYPY else '',
+        'natsort',
+        'nti.app.assessment',
+        'nti.app.client_preferences',
+        'nti.assessment',
+        'nti.base',
+        'nti.common',
+        'nti.containers',
+        'nti.contentlibrary',
+        'nti.contenttypes.courses',
+        'nti.dublincore',
+        'nti.externalization',
+        'nti.links',
+        'nti.mimetype',
+        'nti.ntiids',
+        'nti.property',
+        'nti.site',
+        'nti.traversal',
+        'nti.schema',
+        'nti.wref',
+        'nti.zodb',
+        'nti.zope_catalog',
+        'persistent',
+        'pyramid',
+        'requests',
+        'six',
+        'zope.cachedescriptors',
+        'zope.component',
+        'zope.container',
+        'zope.i18nmessageid',
+        'zope.interface',
+        'zope.intid',
+        'zope.lifecycleevent',
+        'zope.location',
+        'zope.mimetype',
+        'zope.schema',
+        'zope.security',
+        'zope.traversing',
     ],
     extras_require={
         'test': TESTS_REQUIRE,
+        'docs': [
+            'Sphinx',
+            'repoze.sphinx.autointerface',
+            'sphinx_rtd_theme',
+        ],
     },
     entry_points=entry_points
 )
