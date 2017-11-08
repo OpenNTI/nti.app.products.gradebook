@@ -6,10 +6,9 @@ gradebook internalization
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import operator
@@ -31,6 +30,8 @@ from nti.app.products.gradebook.interfaces import ILetterGradeScheme
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import IInternalObjectUpdater
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def raise_field_error(request, field, message):
