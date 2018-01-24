@@ -221,8 +221,9 @@ class UserGradeBookSummary(UserGradeSummary):
                     and (user_grade is None or user_grade.value is None):
                     ungraded_count += 1
 
-                # No submission and past due
-                if history_item is None:
+                # No submission (and we expect one) and past due
+                no_submit = assignment.no_submit or not assignment.parts
+                if not no_submit and history_item is None:
                     context = IQAssignmentDateContext(course)
                     due_date = context.of(assignment).available_for_submission_ending
                     if due_date and today > due_date:
@@ -580,7 +581,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
         user_summaries = self._do_get_user_summaries()
 
         if search_param:
-            user_summaries = self._search_summaries(search_param, 
+            user_summaries = self._search_summaries(search_param,
 												    user_summaries)
 
         result_dict['TotalItemCount'] = len(user_summaries)
