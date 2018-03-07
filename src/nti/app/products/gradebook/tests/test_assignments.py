@@ -9,6 +9,7 @@ from __future__ import absolute_import
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import contains
@@ -43,6 +44,9 @@ from nti.assessment.submission import AssignmentSubmission
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
+from nti.contenttypes.completion.interfaces import IProgress
+from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users.users import User
@@ -56,6 +60,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.externalization.tests import externalizes
 
@@ -933,6 +939,24 @@ class TestAssignments(ApplicationLayerTest):
         question_id1 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
         question_id2 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
+        with mock_dataserver.mock_db_trans(self.ds):
+            course = find_object_with_ntiid(COURSE_NTIID)
+            course = ICourseInstance(course)
+            assignment = find_object_with_ntiid(assignment_id)
+            user = User.get_user('sjohnson@nextthought.com')
+            progress = component.queryMultiAdapter((user, assignment, course),
+                                                   IProgress)
+            assert_that(progress, not_none())
+            assert_that(progress.AbsoluteProgress, none())
+            assert_that(progress.MaxPossibleProgress, none())
+            assert_that(progress.LastModified, none())
+            assert_that(progress.HasProgress, is_(False))
+
+            principal_container = component.queryMultiAdapter((user, course),
+                                                              IPrincipalCompletedItemContainer)
+            assert_that(principal_container, not_none())
+            assert_that(principal_container, has_length(0))
+
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
 
         # Get one correct and one incorrect
@@ -972,6 +996,30 @@ class TestAssignments(ApplicationLayerTest):
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 1))
         assert_that(notable_res.json_body['Items'][0]['Item'],
                     has_entry('Creator', 'harp4162'))
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            course = find_object_with_ntiid(COURSE_NTIID)
+            course = ICourseInstance(course)
+            assignment = find_object_with_ntiid(assignment_id)
+            user = User.get_user('sjohnson@nextthought.com')
+            progress = component.queryMultiAdapter((user, assignment, course),
+                                                   IProgress)
+            assert_that(progress, not_none())
+            assert_that(progress.AbsoluteProgress, is_(10.0))
+            assert_that(progress.MaxPossibleProgress, none())
+            assert_that(progress.LastModified, not_none())
+            assert_that(progress.HasProgress, is_(True))
+
+            principal_container = component.queryMultiAdapter((user, course),
+                                                              IPrincipalCompletedItemContainer)
+            assert_that(principal_container, not_none())
+            assert_that(principal_container, has_length(1))
+            assert_that(principal_container.get_completed_item_count(), is_(1))
+            completed_item = principal_container.get_completed_item(assignment)
+            assert_that(completed_item, not_none())
+            assert_that(completed_item.Item, is_(assignment))
+            assert_that(completed_item.Principal.id, is_(user.username))
+            assert_that(completed_item.CompletedDate, not_none())
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_instructor_grade_is_ugd_notable_to_student(self):

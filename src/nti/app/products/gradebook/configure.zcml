@@ -122,6 +122,14 @@
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
+    <!-- Completion -->
+    <adapter factory=".completion._assignment_progress"
+             for="nti.dataserver.interfaces.IUser
+                  nti.assessment.interfaces.IQAssignment
+                  nti.contenttypes.courses.interfaces.ICourseInstance"
+             provides="nti.contenttypes.completion.interfaces.IProgress" />
+
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
@@ -236,7 +244,7 @@
 	<utility factory=".gradescheme._default_numeric_grade_scheme"
 			 provides=".interfaces.INumericGradeScheme"
 			 name="float" />
-			 
+
 	<utility factory=".gradescheme.TotalPointsGradeScheme"
              provides=".interfaces.ITotalPointsGradeScheme"
              name="total_points" />
