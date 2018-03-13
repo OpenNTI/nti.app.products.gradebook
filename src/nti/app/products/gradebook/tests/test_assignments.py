@@ -946,11 +946,7 @@ class TestAssignments(ApplicationLayerTest):
             user = User.get_user('sjohnson@nextthought.com')
             progress = component.queryMultiAdapter((user, assignment, course),
                                                    IProgress)
-            assert_that(progress, not_none())
-            assert_that(progress.AbsoluteProgress, none())
-            assert_that(progress.MaxPossibleProgress, none())
-            assert_that(progress.LastModified, none())
-            assert_that(progress.HasProgress, is_(False))
+            assert_that(progress, none())
 
             principal_container = component.queryMultiAdapter((user, course),
                                                               IPrincipalCompletedItemContainer)
