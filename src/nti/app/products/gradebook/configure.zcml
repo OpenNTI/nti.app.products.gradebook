@@ -129,7 +129,6 @@
                   nti.contenttypes.courses.interfaces.ICourseInstance"
              provides="nti.contenttypes.completion.interfaces.IProgress" />
 
-
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
