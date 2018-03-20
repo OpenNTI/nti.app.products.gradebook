@@ -87,6 +87,8 @@ def _assignment_progress(user, assignment, course):
                         AbsoluteProgress=grade_val,
                         MaxPossibleProgress=total_points,
                         LastModified=submitted_date,
+                        User=user,
+                        Item=assignment,
                         HasProgress=True)
     return progress
 
