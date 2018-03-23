@@ -32,6 +32,7 @@ from nti.app.products.gradebook.interfaces import IGrade
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
+from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
 from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
@@ -149,3 +150,19 @@ def update_grade_progress(grade, unused_event):
     notify(UserProgressUpdatedEvent(assignment,
                                     user,
                                     course))
+
+
+@component.adapter(IGrade, IObjectRemovedEvent)
+def _on_grade_removed(grade, unused_event):
+    if queryInteraction() is None:
+        return
+    user = IUser(grade, None)
+    # Tests
+    if user is None:
+        return
+    assignment = find_object_with_ntiid(grade.AssignmentId)
+    course = ICourseInstance(grade)
+    notify(UserProgressRemovedEvent(assignment,
+                                    user,
+                                    course))
+
