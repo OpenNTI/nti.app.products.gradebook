@@ -26,9 +26,13 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.securitypolicy.interfaces import Allow
 from zope.securitypolicy.interfaces import IPrincipalRoleMap
 
+from zope.security.management import queryInteraction
+
 from nti.app.products.gradebook.interfaces import IGrade
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
+
+from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -38,6 +42,8 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.users import User
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 _CHANGE_KEY = 'nti.app.products.gradebook.subscribers.ENTRY_CHANGE_KEY'
 
@@ -127,3 +133,19 @@ def _remove_grade_event(grade, unused_event):
         del storage[grade.Username]
     except KeyError:
         pass
+
+
+@component.adapter(IGrade, IObjectAddedEvent)
+@component.adapter(IGrade, IObjectModifiedEvent)
+def update_grade_progress(grade, unused_event):
+    if queryInteraction() is None:
+        return
+    user = IUser(grade, None)
+    # Tests
+    if user is None:
+        return
+    assignment = find_object_with_ntiid(grade.AssignmentId)
+    course = ICourseInstance(grade)
+    notify(UserProgressUpdatedEvent(assignment,
+                                    user,
+                                    course))

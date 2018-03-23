@@ -20,7 +20,7 @@ from nti.app.assessment.common.policy import get_auto_grade_policy
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
-from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.assessment.interfaces import IQAssignment
 
@@ -62,17 +62,27 @@ def _assignment_progress(user, assignment, course):
     """
     histories = component.queryMultiAdapter((course, user),
                                             IUsersCourseAssignmentHistory)
-    item = submitted_date = None
+    item = None
+    progress_date = None
     try:
         item = histories[assignment.ntiid]
-        submitted_date = item.created
+        progress_date = item.created
     except KeyError:
         pass
 
-    if item is None:
+    gradebook = IGradeBook(course)
+    grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
+    grade = grade.get(user.username) if grade is not None else None
+
+    # No progress if no grade on a no_submit or no submission on a
+    # submittable assignment.
+    if     (item is None and not assignment.no_submit) \
+        or (grade is None and assignment.no_submit):
         return
 
-    grade = IGrade(item, None)
+    if progress_date is None:
+        progress_date = grade.created
+
     grade_val = getattr(grade, 'value', None)
     grade_val = _numeric_grade_val(grade_val)
 
@@ -83,13 +93,13 @@ def _assignment_progress(user, assignment, course):
             total_points = policy.get('total_points') or None
         except AttributeError:
             pass
+
     progress = Progress(NTIID=assignment.ntiid,
                         AbsoluteProgress=grade_val,
                         MaxPossibleProgress=total_points,
-                        LastModified=submitted_date,
+                        LastModified=progress_date,
                         User=user,
                         Item=assignment,
                         CompletionContext=course,
                         HasProgress=True)
     return progress
-
