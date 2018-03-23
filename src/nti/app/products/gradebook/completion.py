@@ -89,6 +89,7 @@ def _assignment_progress(user, assignment, course):
                         LastModified=submitted_date,
                         User=user,
                         Item=assignment,
+                        CompletionContext=course,
                         HasProgress=True)
     return progress
 
