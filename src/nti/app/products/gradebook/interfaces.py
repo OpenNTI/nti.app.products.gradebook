@@ -18,15 +18,24 @@ from zope.container.interfaces import IContained
 
 from zope.interface.interface import taggedValue
 
+from zope.interface.interfaces import ObjectEvent
+from zope.interface.interfaces import IObjectEvent
+
 from zope.security.permission import Permission
 
 from nti.app.client_preferences.interfaces import TAG_EXTERNAL_PREFERENCE_GROUP
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
+from nti.coremetadata.interfaces import IUser
 
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
 from nti.ntiids.schema import ValidNTIID
+
+from nti.property.property import alias
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
@@ -58,8 +67,8 @@ class IGradeScheme(interface.Interface):
     """
     A scheme for grades in a course. Supports taking a correctness value
     (between 0 and 1, inclusive) and interpreting it as a formatted value that
-    can be displayed to students or instructors, or taking a formatted value and 
-    interpreting it as a correctness value. Subclasses define how this translation 
+    can be displayed to students or instructors, or taking a formatted value and
+    interpreting it as a correctness value. Subclasses define how this translation
     is performed.
     """
 
@@ -87,7 +96,7 @@ class IGradeScheme(interface.Interface):
 
 class INumericGradeScheme(IGradeScheme):
     """
-    Returns a numeric grade between 0 and 1 (inclusive). 
+    Returns a numeric grade between 0 and 1 (inclusive).
     """
     min = Number(title=u"min value", default=0.0, min=0.0)
     max = Number(title=u"max value", default=100.0)
@@ -95,7 +104,7 @@ class INumericGradeScheme(IGradeScheme):
 
 class IIntegerGradeScheme(INumericGradeScheme):
     """
-    Returns an integer grade between 0 and 100 (inclusive). 
+    Returns an integer grade between 0 and 100 (inclusive).
     """
     min = Int(title=u"min value", default=0, min=0)
     max = Int(title=u"max value", default=100)
@@ -136,7 +145,7 @@ class ILetterNumericGradeScheme(ILetterGradeScheme):
     """
     Like :class: `.ILetterGradeScheme` except that the fromCorrectness method returns both a
     letter and a number. For example, using the standard ranges, a correctness value
-    of 0.76 would produce a grade of '76 C'. 
+    of 0.76 would produce a grade of '76 C'.
     """
 
 
@@ -425,3 +434,30 @@ class IGradebookSettings(interface.Interface):
     hide_avatars = Bool(title=u"Enable/disable showing avatars in the gradebook",
                         description=u"Enable/disable showing avatars in the gradebook",
                         default=False)
+
+
+class IGradeRemovedEvent(IObjectEvent):
+    """
+    An event sent after the grade is removed from the gradebook.
+    """
+
+    user = Object(IUser, title=u"user", required=True)
+
+    context = Object(ICourseInstance,
+                     title=u"Course",
+                     required=True)
+
+    assignment_ntiid = ValidNTIID(title=u"The assignment this is for",
+                                  required=False)
+
+
+@interface.implementer(IGradeRemovedEvent)
+class GradeRemovedEvent(ObjectEvent):
+
+    grade = alias('object')
+
+    def __init__(self, obj, user, course, assignment_ntiid):
+        super(GradeRemovedEvent, self).__init__(obj)
+        self.user = user
+        self.course = course
+        self.assignment_ntiid = assignment_ntiid
