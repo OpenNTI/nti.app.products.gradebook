@@ -93,7 +93,7 @@ def remove_from_container(container, key, event=False):
     grade = container.get(key)
     user = IUser(grade, None)
     course = ICourseInstance(grade, None)
-    assignment_id = grade.AssignmentId
+    assignment_id = getattr(grade, 'AssignmentId', None)
     if event:
         del container[key]
     else:
