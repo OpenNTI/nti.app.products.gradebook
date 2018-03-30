@@ -29,6 +29,7 @@ from zope.securitypolicy.interfaces import IPrincipalRoleMap
 from zope.security.management import queryInteraction
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
@@ -152,17 +153,16 @@ def update_grade_progress(grade, unused_event):
                                     course))
 
 
-@component.adapter(IGrade, IObjectRemovedEvent)
-def _on_grade_removed(grade, unused_event):
+@component.adapter(IGrade, IGradeRemovedEvent)
+def _on_grade_removed(unused_grade, event):
+    # Specific event because we want item out of container at this point
     if queryInteraction() is None:
         return
-    user = IUser(grade, None)
     # Tests
-    if user is None:
+    if event.user is None:
         return
-    assignment = find_object_with_ntiid(grade.AssignmentId)
-    course = ICourseInstance(grade)
+    assignment = find_object_with_ntiid(event.assignment_ntiid)
     notify(UserProgressRemovedEvent(assignment,
-                                    user,
-                                    course))
+                                    event.user,
+                                    event.course))
 

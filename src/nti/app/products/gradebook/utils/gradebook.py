@@ -12,6 +12,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.event import notify
+
 from zope.lifecycleevent import added
 
 from zope.location.location import locate
@@ -32,6 +34,7 @@ from nti.app.products.gradebook.grades import PersistentGrade
 from nti.app.products.gradebook.grading import IGradeBookGradingPolicy
 
 from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import GradeRemovedEvent
 
 from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
 
@@ -87,6 +90,10 @@ def save_in_container(container, key, value, event=False):
 
 
 def remove_from_container(container, key, event=False):
+    grade = container.get(key)
+    user = IUser(grade, None)
+    course = ICourseInstance(grade, None)
+    assignment_id = grade.AssignmentId
     if event:
         del container[key]
     else:
@@ -97,6 +104,8 @@ def remove_from_container(container, key, event=False):
         except AttributeError:
             pass
         container._p_changed = True
+    if grade is not None:
+        notify(GradeRemovedEvent(grade, user, course, assignment_id))
 
 
 def record_grade_without_submission(entry, user, assignmentId=None,
