@@ -1137,8 +1137,9 @@ class TestAssignments(ApplicationLayerTest):
                                      COURSE_NTIID,
                                      status=201,
                                      extra_environ=normal_environ)
-
-        course_instance_href = res.json_body['CourseInstance']['href']
+        course_rel = self.require_link_href_with_rel(res.json_body, 'CourseInstance')
+        course_res = self.testapp.get(course_rel, extra_environ=normal_environ).json_body
+        course_instance_href = course_res['href']
 
         res = self.testapp.get(course_instance_href,
                                extra_environ=normal_environ)
