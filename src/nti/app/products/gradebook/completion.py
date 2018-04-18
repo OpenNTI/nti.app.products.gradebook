@@ -21,6 +21,7 @@ from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
 from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IExcusedGrade
 
 from nti.assessment.interfaces import IQAssignment
 
@@ -73,11 +74,13 @@ def _assignment_progress(user, assignment, course):
     gradebook = IGradeBook(course)
     grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
     grade = grade.get(user.username) if grade is not None else None
+    excused_grade = IExcusedGrade.providedBy(grade)
 
     # No progress if no grade on a no_submit or no submission on a
-    # submittable assignment.
-    if     (item is None and not assignment.no_submit) \
-        or (grade is None and assignment.no_submit):
+    # submittable assignment (and not an excused grade).
+    if     (   (item is None and not assignment.no_submit) \
+            or (grade is None and assignment.no_submit)) \
+        and not excused_grade:
         return
 
     if progress_date is None:
