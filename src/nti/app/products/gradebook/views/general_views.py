@@ -181,6 +181,7 @@ class ExcuseGradeView(AbstractAuthenticatedView,
         if not IExcusedGrade.providedBy(theObject):
             interface.alsoProvides(theObject, IExcusedGrade)
             theObject.updateLastMod()
+            notify(ObjectModifiedEvent(theObject))
         return theObject
 
 
@@ -231,6 +232,7 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
         if IExcusedGrade.providedBy(theObject):
             interface.noLongerProvides(theObject, IExcusedGrade)
             theObject.updateLastMod()
+            notify(ObjectModifiedEvent(theObject))
         return theObject
 
 
