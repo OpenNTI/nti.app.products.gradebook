@@ -24,6 +24,7 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 
 from nti.assessment.interfaces import IQAssignment
+from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
 
 from nti.contenttypes.completion.progress import Progress
 
@@ -63,11 +64,15 @@ def _assignment_progress(user, assignment, course):
     """
     histories = component.queryMultiAdapter((course, user),
                                             IUsersCourseAssignmentHistory)
-    item = None
+    submission = None
     progress_date = None
+    is_synth = False
     try:
         item = histories[assignment.ntiid]
-        progress_date = item.created
+        is_synth = IPlaceholderAssignmentSubmission.providedBy(submission)
+        if not is_synth:
+            submission = item.Submission
+            progress_date = item.created
     except KeyError:
         pass
 
@@ -78,13 +83,14 @@ def _assignment_progress(user, assignment, course):
 
     # No progress if no grade on a no_submit or no submission on a
     # submittable assignment (and not an excused grade).
-    if     (   (item is None and not assignment.no_submit) \
+    if     (   (submission is None and not assignment.no_submit) \
             or (grade is None and assignment.no_submit)) \
         and not excused_grade:
         return
 
     if progress_date is None:
-        progress_date = grade.created
+        # We're here because of grade value or excused grade.
+        progress_date = grade.lastModified
 
     grade_val = getattr(grade, 'value', None)
     grade_val = _numeric_grade_val(grade_val)
