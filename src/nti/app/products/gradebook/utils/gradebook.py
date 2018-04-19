@@ -123,6 +123,7 @@ def record_grade_without_submission(entry, user, assignmentId=None,
     submission = AssignmentSubmission()
     submission.assignmentId = assignmentId
     submission.creator = user
+    interface.alsoProvides(submission, IPlaceholderAssignmentSubmission)
 
     grade = None
     course = ICourseInstance(entry)
@@ -144,7 +145,6 @@ def record_grade_without_submission(entry, user, assignmentId=None,
         grade = clazz()
         save_in_container(entry, username, grade)
     else:
-        interface.alsoProvides(submission, IPlaceholderAssignmentSubmission)
         # We don't want this phony-submission showing up as course activity
         # See nti.app.assessment.subscribers
         activity = ICourseInstanceActivity(course)
