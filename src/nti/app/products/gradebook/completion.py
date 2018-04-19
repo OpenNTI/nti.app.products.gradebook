@@ -69,7 +69,7 @@ def _assignment_progress(user, assignment, course):
     is_synth = False
     try:
         item = histories[assignment.ntiid]
-        is_synth = IPlaceholderAssignmentSubmission.providedBy(submission)
+        is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
         if not is_synth:
             submission = item.Submission
             progress_date = item.created
