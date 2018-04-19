@@ -939,20 +939,57 @@ class TestAssignments(ApplicationLayerTest):
         question_id1 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
         question_id2 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
-        with mock_dataserver.mock_db_trans(self.ds):
-            course = find_object_with_ntiid(COURSE_NTIID)
-            course = ICourseInstance(course)
-            assignment = find_object_with_ntiid(assignment_id)
-            user = User.get_user('sjohnson@nextthought.com')
-            progress = component.queryMultiAdapter((user, assignment, course),
-                                                   IProgress)
-            assert_that(progress, none())
+        def validate_completion(complete=True):
+            progress_check = not_none if complete else none
+            completed_length = 1 if complete else 0
+            with mock_dataserver.mock_db_trans(self.ds):
+                course = find_object_with_ntiid(COURSE_NTIID)
+                course = ICourseInstance(course)
+                assignment = find_object_with_ntiid(assignment_id)
+                user = User.get_user('sjohnson@nextthought.com')
+                progress = component.queryMultiAdapter((user, assignment, course),
+                                                       IProgress)
+                assert_that(progress, progress_check())
 
-            principal_container = component.queryMultiAdapter((user, course),
-                                                              IPrincipalCompletedItemContainer)
-            assert_that(principal_container, not_none())
-            assert_that(principal_container, has_length(0))
+                principal_container = component.queryMultiAdapter((user, course),
+                                                                  IPrincipalCompletedItemContainer)
+                assert_that(principal_container, not_none())
+                assert_that(principal_container, has_length(completed_length))
 
+        def validate_incompletion():
+            validate_completion(complete=False)
+
+        validate_incompletion()
+
+        # Grades/excused
+        instructor_environ = self._make_extra_environ(username='harp4162')
+        grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/SetGrade'
+        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+        path = trivial_grade_path + 'sjohnson@nextthought.com'
+        excuse_path = '%s/excuse' % path
+        unexcuse_path = '%s/unexcuse' % path
+        grade = {'Username': 'sjohnson@nextthought.com',
+                 'AssignmentId': assignment_id,
+                 'value': 10}
+        grade_res = self.testapp.post_json(grade_path, grade, extra_environ=instructor_environ)
+        item_rel = self.require_link_href_with_rel(grade_res.json_body, 'edit')
+
+        # Grade without submission is incomplete
+        validate_incompletion()
+
+        # Excusing does so
+        self.testapp.post(excuse_path, extra_environ=instructor_environ)
+        validate_completion()
+
+        # Unexcusing reverts
+        self.testapp.post(unexcuse_path, extra_environ=instructor_environ)
+        validate_incompletion()
+
+        # Now reset
+        self.testapp.delete(item_rel, extra_environ=instructor_environ)
+        validate_incompletion()
+
+        # Submitting is complete
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
 
         # Get one correct and one incorrect
