@@ -48,9 +48,17 @@ from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.assessment.interfaces import IQAssignment
 
+from nti.coremetadata.interfaces import IUser
+
+from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -233,6 +241,16 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
             interface.noLongerProvides(theObject, IExcusedGrade)
             theObject.updateLastMod()
             notify(ObjectModifiedEvent(theObject))
+
+            user = IUser(theObject, None)
+            # Tests
+            if user is None:
+                return
+            assignment = find_object_with_ntiid(theObject.AssignmentId)
+            course = ICourseInstance(theObject)
+            notify(UserProgressRemovedEvent(assignment,
+                                            user,
+                                            course))
         return theObject
 
 
