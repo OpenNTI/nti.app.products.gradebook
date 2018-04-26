@@ -61,6 +61,7 @@ def _is_assignment_no_submit(assignment):
     if not result:
         # We are not a no_submit, do we have questions? These are probably
         # api created assignments that we cannot trust the category_name.
+        result = True
         for part in assignment.parts or ():
             result = not bool(part.question_set.question_count)
     return result
