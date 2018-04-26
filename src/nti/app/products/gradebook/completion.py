@@ -56,6 +56,16 @@ def _numeric_grade_val(grade_val):
     return result
 
 
+def _is_assignment_no_submit(assignment):
+    result = assignment.no_submit
+    if not result:
+        # We are not a no_submit, do we have questions? These are probably
+        # api created assignments that we cannot trust the category_name.
+        for part in assignment.parts or ():
+            result = bool(part.question_set.question_count)
+    return result
+
+
 @component.adapter(IUser, IQAssignment, ICourseInstance)
 @interface.implementer(IProgress)
 def _assignment_progress(user, assignment, course):
@@ -83,8 +93,9 @@ def _assignment_progress(user, assignment, course):
 
     # No progress if no grade on a no_submit or no submission on a
     # submittable assignment (and not an excused grade).
-    if     (   (submission is None and not assignment.no_submit) \
-            or (grade is None and assignment.no_submit)) \
+    is_no_submit = _is_assignment_no_submit(assignment)
+    if     (   (submission is None and not is_no_submit) \
+            or (grade is None and is_no_submit)) \
         and not excused_grade:
         return
 

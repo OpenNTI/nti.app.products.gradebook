@@ -24,6 +24,8 @@ from hamcrest import greater_than
 from hamcrest import contains_inanyorder
 does_not = is_not
 
+import fudge
+
 from nti.testing.time import time_monotonically_increases
 
 from six.moves import urllib_parse
@@ -921,7 +923,8 @@ class TestAssignments(ApplicationLayerTest):
         self.fetch_by_ntiid(ntiid)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-    def test_20_autograde_policy(self):
+    @fudge.patch('nti.app.products.gradebook.completion._is_assignment_no_submit')
+    def test_20_autograde_policy(self, mock_is_no_submit):
         # This only works in the OU environment because that's where the
         # purchasables are
         extra_env = self.testapp.extra_environ or {}
@@ -959,6 +962,7 @@ class TestAssignments(ApplicationLayerTest):
         def validate_incompletion():
             validate_completion(complete=False)
 
+        mock_is_no_submit.is_callable().returns(False)
         validate_incompletion()
 
         # Grades/excused
