@@ -59,8 +59,8 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
 
-from nti.externalization.externalization import LocatedExternalDict
-from nti.externalization.externalization import StandardExternalFields
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.links import Link
 
