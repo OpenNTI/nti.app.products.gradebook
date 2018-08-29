@@ -12,21 +12,19 @@ logger = __import__('logging').getLogger(__name__)
 import time
 import operator
 
-from six import string_types
-
-from zope import component
+from natsort import natsort_key
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 
-from natsort import natsort_key
+from six import string_types
+
+from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
-
-from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
 
@@ -54,7 +52,7 @@ from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.externalization.externalization import StandardExternalFields
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.interfaces import LocatedExternalDict
 
