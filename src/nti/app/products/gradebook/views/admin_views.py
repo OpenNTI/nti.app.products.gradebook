@@ -4,16 +4,21 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import csv
-import six
 from io import BytesIO
 
+from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from requests.structures import CaseInsensitiveDict
+
+import six
 
 from zope import component
 
@@ -21,15 +26,16 @@ from zope.component.hooks import site as current_site
 
 from zope.intid.interfaces import IIntIds
 
-from pyramid.view import view_config
-from pyramid.view import view_defaults
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.products.courseware.views import CourseAdminPathAdapter
+
+from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 
@@ -57,6 +63,8 @@ from nti.site.hostpolicy import get_all_host_sites
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -123,6 +131,7 @@ class CourseGradesView(AbstractAuthenticatedView):
         csv_writer.writerow(header)
 
         book = IGradeBook(course)
+        # pylint: disable=too-many-function-args
         for part_name, part in list(book.items()):
             for name, entry in list(part.items()):
                 for username, grade in list(entry.items()):
@@ -160,12 +169,48 @@ class SynchronizeGradebookView(AbstractAuthenticatedView,
         items = result[ITEMS] = {}
         book = IGradeBook(course, None)
         if book is not None:
+            # pylint: disable=too-many-function-args
             for part_name, part in book.items():
                 items.setdefault(part_name, [])
                 for entry_name in part.keys():
                     items[part_name].append(entry_name)
         result[ITEM_COUNT] = result[TOTAL] = len(items)
         return result
+
+
+@view_config(context=ICourseInstance)
+@view_config(context=ICourseCatalogEntry)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN,
+               request_method='POST',
+               name='RemoveUserCourseGradeData')
+class RemoveUserCourseGradeDataView(AbstractAuthenticatedView,
+                                    ModeledContentUploadRequestUtilsMixin):
+
+    def readInput(self, value=None):
+        result = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+        return CaseInsensitiveDict(result)
+
+    def __call__(self):
+        values = self.readInput()
+        usernames = values.get('username') or values.get('usernames')
+        if isinstance(usernames, six.string_types):
+            usernames = usernames.split(',')
+        if not usernames:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Must specify a username."),
+                             },
+                             None)
+        course = ICourseInstance(self.context)
+        book = IGradeBook(course)
+        for username in usernames:
+            logger.warning("Deleting course grade data for user %s", username)
+            # pylint: disable=too-many-function-args
+            book.remove_user(username)
+        return hexc.HTTPNoContent()
 
 
 @view_config(context=CourseAdminPathAdapter)
@@ -179,13 +224,14 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
     def _process_course(self, course, catalog, intids):
         count = 0
         book = IGradeBook(course, None)
+        # pylint: disable=too-many-function-args
         if book is not None:
             for part in list(book.values()):  # parts
                 for entry in list(part.values()):  # entries
                     for grade in list(entry.values()):  # grades
                         doc_id = intids.queryId(grade)
                         if doc_id is not None:
-                            catalog.force_index_doc(doc_id, grade)
+                            catalog.index_doc(doc_id, grade)
                             metadata_queue_add(doc_id, grade)
                             count += 1
         return count
