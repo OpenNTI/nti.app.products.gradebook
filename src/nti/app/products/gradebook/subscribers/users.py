@@ -1,24 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
-
-from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
 
 from nti.app.products.gradebook.index import IX_STUDENT
-from nti.app.products.gradebook.index import CATALOG_NAME
+from nti.app.products.gradebook.index import get_grade_catalog
 
 from nti.app.products.gradebook.interfaces import IGradeBook
+
+from nti.base._compat import text_
 
 from nti.contenttypes.courses import get_enrollment_catalog
 
@@ -30,20 +29,21 @@ from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.interfaces import IWillDeleteEntityEvent
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def unindex_grade_data(username):
     result = 0
-    catalog = component.queryUtility(ICatalog, name=CATALOG_NAME)
+    catalog = get_grade_catalog()
     if catalog is not None:
         index = catalog[IX_STUDENT]
         # normalize
-        if isinstance(username, bytes):
-            username = username.decode('utf-8')
+        username = text_(username)
         username = username.lower().strip()
         # get all doc ids (it's a wrapper)
         values_to_documents = index.index.values_to_documents
-        docs = values_to_documents.get(username) or ()
-        for uid in tuple(docs):
+        docs = values_to_documents.get(username)
+        for uid in tuple(docs or ()):
             catalog.unindex_doc(uid)
             result += 1
     return result
@@ -59,6 +59,7 @@ def delete_user_data(user):
         course = ICourseInstance(context, None)
         book = IGradeBook(course, None)
         if book is not None:
+            # pylint: disable=too-many-function-args
             book.remove_user(username)
 
 
