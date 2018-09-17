@@ -39,6 +39,8 @@ from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.coremetadata.interfaces import SYSTEM_USER_ID
+
 from nti.dataserver.activitystream_change import Change
 
 from nti.dataserver.interfaces import IUser
@@ -84,20 +86,11 @@ def _do_store_grade_created_event(grade, _):
     change.lastModified = now
     change.createdTime = now
     if grade.creator is not None:
-        change.creator = _get_user(grade.creator)
+        change.creator = _get_user(grade.creator) if grade.creator != SYSTEM_USER_ID else SYSTEM_USER_ID
     else:
-        # If we can get to a course, we arbitrarily assume
-        # it's from the first instructor in the list
-        try:
-            instance = ICourseInstance(grade)
-            roles = IPrincipalRoleMap(instance)
-            for instructor in instance.instructors:
-                if roles.getSetting(RID_INSTRUCTOR, instructor.id) is Allow:
-                    grade.creator = instructor.id
-                    change.creator = IUser(instructor)
-                    break
-        except (TypeError, IndexError, AttributeError):
-            pass
+        change.creator = SYSTEM_USER_ID
+        grade.creator = SYSTEM_USER_ID
+
     # Give the change a sharedWith value of the target
     # username; that way it gets indexed cheaply as directed
     # to the user.

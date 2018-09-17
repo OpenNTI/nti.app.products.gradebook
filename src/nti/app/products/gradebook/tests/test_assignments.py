@@ -1028,7 +1028,7 @@ class TestAssignments(ApplicationLayerTest):
         notable_res = self.fetch_user_recursive_notable_ugd()
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 1))
         assert_that(notable_res.json_body['Items'][0]['Item'],
-                    has_entry('Creator', 'harp4162'))
+                    has_entry('Creator', 'zope.security.management.system_user'))
 
         with mock_dataserver.mock_db_trans(self.ds):
             course = find_object_with_ntiid(COURSE_NTIID)

@@ -47,6 +47,8 @@ from nti.contenttypes.courses.grading import find_grading_policy_for_course
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
+from nti.coremetadata.interfaces import SYSTEM_USER_ID
+
 from nti.dataserver.interfaces import IUser
 
 
@@ -214,8 +216,7 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
                 grade.value = grade.AutoGrade
 
         if not getattr(grade, 'creator', None):
-            instructors = course.instructors  # principals
-            grade.creator = instructors[0].id if instructors else None
+            grade.creator = SYSTEM_USER_ID
 
         if username in entry:
             lifecycleevent.modified(grade)
