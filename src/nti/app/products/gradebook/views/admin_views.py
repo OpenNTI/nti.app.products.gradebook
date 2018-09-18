@@ -53,6 +53,10 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.users.users import User
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -132,17 +136,17 @@ class CourseGradesView(AbstractAuthenticatedView):
 
         book = IGradeBook(course)
         # pylint: disable=too-many-function-args
-        for part_name, part in list(book.items()):
-            for name, entry in list(part.items()):
-                for username, grade in list(entry.items()):
+        for part_name, part in tuple(book.items()):
+            for name, entry in tuple(part.items()):
+                for username, grade in tuple(entry.items()):
                     username = username.lower()
                     if usernames and username not in usernames:
                         continue
                     assignmentId = grade.assignmentId
                     value = _tx_grade(grade.value)
                     value = value if value is not None else ''
-                    row_data = [replace_username(username), 
-								part_name, name,
+                    row_data = [replace_username(username),
+                                part_name, name,
                                 assignmentId, value]
                     csv_writer.writerow([_tx_string(x) for x in row_data])
 
@@ -216,6 +220,48 @@ class RemoveUserCourseGradeDataView(AbstractAuthenticatedView,
 @view_config(context=CourseAdminPathAdapter)
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN,
+               request_method='POST',
+               name='RemoveGhostCourseGradeData')
+class RemoveGhostCourseGradeDataView(AbstractAuthenticatedView):
+
+    def _process_course(self, course):
+        result = set()
+        book = IGradeBook(course, None)
+        # pylint: disable=too-many-function-args
+        if book is not None:
+            for username in tuple(book.iter_usernames()):
+                user = User.get_user(username)
+                if not IUser.providedBy(user):
+                    result.add(username)
+                    book.remove_user(username)
+        return result
+
+    def __call__(self):
+        seen = set()
+        items = set()
+        intids = component.getUtility(IIntIds)
+        for host_site in get_all_host_sites():
+            with current_site(host_site):
+                catalog = component.queryUtility(ICourseCatalog)
+                if catalog is None or catalog.isEmpty():
+                    continue
+                for entry in catalog.iterCatalogEntries():
+                    course = ICourseInstance(entry)
+                    doc_id = intids.queryId(course)
+                    if doc_id is None or doc_id in seen:
+                        continue
+                    seen.add(doc_id)
+                    items.update(self._process_course(course))
+        result = LocatedExternalDict()
+        result[ITEMS] = sorted(items)
+        result[ITEM_COUNT] = result[TOTAL] = len(items)
+        return result
+
+
+@view_config(context=CourseAdminPathAdapter)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
                request_method='POST',
                name="RebuildGradeCatalog",
                permission=nauth.ACT_NTI_ADMIN)
@@ -224,16 +270,17 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
     def _process_course(self, course, catalog, intids):
         count = 0
         book = IGradeBook(course, None)
+        if not book:
+            return count
         # pylint: disable=too-many-function-args
-        if book is not None:
-            for part in list(book.values()):  # parts
-                for entry in list(part.values()):  # entries
-                    for grade in list(entry.values()):  # grades
-                        doc_id = intids.queryId(grade)
-                        if doc_id is not None:
-                            catalog.index_doc(doc_id, grade)
-                            metadata_queue_add(doc_id, grade)
-                            count += 1
+        for part in tuple(book.values()):  # parts
+            for entry in tuple(part.values()):  # entries
+                for grade in tuple(entry.values()):  # grades
+                    doc_id = intids.queryId(grade)
+                    if doc_id is not None:
+                        catalog.index_doc(doc_id, grade)
+                        metadata_queue_add(doc_id, grade)
+                        count += 1
         return count
 
     def __call__(self):
@@ -258,7 +305,8 @@ class RebuildGradeCatalogView(AbstractAuthenticatedView):
                     if doc_id is None or doc_id in seen:
                         continue
                     seen.add(doc_id)
-                    count += self._process_course(course, grade_catalog, intids)
+                    count += self._process_course(course,
+                                                  grade_catalog, intids)
                     total += count
                 items[host_site.__name__] = count
         result = LocatedExternalDict()
