@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -34,9 +33,11 @@ from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.users import User
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @component.adapter(IGrade, IObjectModifiedEvent)
-def _grade_modified(grade, unused_event):
+def _grade_modified(grade, unused_event=None):
     """
     When a grade is modified, make sure that the history item that
     conceptually contains it is updated too.
@@ -60,17 +61,17 @@ def _grade_modified(grade, unused_event):
 
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)
-def _assignment_history_item_added(item, _):
+def _assignment_history_item_added(item, unused_event=None):
     set_grade_by_assignment_history_item(item)
 
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectModifiedEvent)
-def _assignment_history_item_modified(item, _):
+def _assignment_history_item_modified(item, unused_event=None):
     set_grade_by_assignment_history_item(item)
 
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRemovedEvent)
-def _assignment_history_item_removed(item, _):
+def _assignment_history_item_removed(item, unused_event=None):
     entry = find_entry_for_item(item)
     if entry is not None:
         user = IUser(item, None)
@@ -82,7 +83,7 @@ def _assignment_history_item_removed(item, _):
 
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectRegradeEvent)
-def _regrade_assignment_history_item(item, _):
+def _regrade_assignment_history_item(item, unused_event=None):
     assignmentId = item.assignmentId
     course = ICourseInstance(item, None)
     policy = find_autograde_policy(course, assignmentId)

@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 
@@ -49,10 +48,12 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 _CHANGE_KEY = 'nti.app.products.gradebook.subscribers.ENTRY_CHANGE_KEY'
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def _get_user(user):
     if not IUser.providedBy(user) and user:
-        result = User.get_user(str(user))
+        result = User.get_user(user)
     else:
         result = user
     return user if result is None else user
@@ -91,7 +92,8 @@ def _do_store_grade_created_event(grade, _):
         try:
             instance = ICourseInstance(grade)
             roles = IPrincipalRoleMap(instance)
-            for instructor in instance.instructors:
+            # pylint: disable=not-an-iterable
+            for instructor in instance.instructors or ():
                 if roles.getSetting(RID_INSTRUCTOR, instructor.id) is Allow:
                     grade.creator = instructor.id
                     change.creator = IUser(instructor)
@@ -129,7 +131,7 @@ def _store_grade_created_event(grade, event):
 
 
 @component.adapter(IGrade, IObjectRemovedEvent)
-def _remove_grade_event(grade, unused_event):
+def _remove_grade_event(grade, unused_event=None):
     try:
         storage = _get_entry_change_storage(grade.__parent__)
         del storage[grade.Username]
@@ -139,7 +141,7 @@ def _remove_grade_event(grade, unused_event):
 
 @component.adapter(IGrade, IObjectAddedEvent)
 @component.adapter(IGrade, IObjectModifiedEvent)
-def update_grade_progress(grade, unused_event):
+def update_grade_progress(grade, unused_event=None):
     if queryInteraction() is None:
         return
     user = IUser(grade, None)
