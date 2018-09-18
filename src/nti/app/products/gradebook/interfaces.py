@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class,no-value-for-parameter
+
 from zope import interface
 
 from zope.container.constraints import contains
@@ -306,6 +308,11 @@ class IGradeBookPart(IContainer,
         returns an iterator for the specififed user's grades
         """
 
+    def iter_usernames():
+        """
+        returns an iterator with the usernames in this part
+        """
+
 #: This is a special category name for assignments that are
 #: only ever given grades by the professor; no submission
 #: of them is possible. Examples include midterm and final
@@ -324,7 +331,7 @@ class IGradeBook(IContainer,
     """
     contains(IGradeBookPart)
 
-    #TotalPartWeight = schema.Float(title=u"Part weight sum", readonly=True)
+    # TotalPartWeight = schema.Float(title=u"Part weight sum", readonly=True)
 
     def getColumnForAssignmentId(assignmentId):
         """
@@ -349,6 +356,11 @@ class IGradeBook(IContainer,
     def iter_grades(username):
         """
         returns an iterator for the specififed user's grades
+        """
+
+    def iter_usernames():
+        """
+        returns an iterator with the usernames in this book
         """
 
     Items = Dict(title=u"For externalization only, a copy of the {category name: GradeBookPart} contents}",
