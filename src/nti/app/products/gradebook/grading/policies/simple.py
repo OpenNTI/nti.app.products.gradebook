@@ -4,13 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
-from six import string_types
 from datetime import datetime
+
+import six
 
 from zope import interface
 
@@ -44,10 +44,12 @@ from nti.property.property import alias
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+logger = __import__('logging').getLogger(__name__)
 
+
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ISimpleTotalingGradingPolicy)
 class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(ISimpleTotalingGradingPolicy)
 
     PresentationGradeScheme = LetterGradeScheme()
@@ -68,17 +70,19 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
         if self.grader is not None:
             self.grader.validate()
 
-    def verify(self, book=None):
+    def verify(self, unused_book=None):
         return True
 
     def _is_due(self, assignment, now):
         dates = self.dateContext
         if assignment is not None and dates is not None:
+            # pylint: disable=no-member
             _ending = dates.of(assignment).available_for_submission_ending
             return bool(_ending and now > _ending)
         return False
 
-    def grade(self, principal, scheme=None, *args, **kwargs):
+    # pylint: disable=arguments-differ,keyword-arg-before-vararg
+    def grade(self, principal, scheme=None, *unused_args, **unused_kwargs):
         now = datetime.utcnow()
         total_points_earned = 0
         total_points_available = 0
@@ -90,8 +94,8 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
         # First we look through all grades for a certain username
         # in the gradebook. These are all the grades a student
         # has been assigned.
+        # pylint: disable=no-member
         for grade in self.book.iter_grades(username):
-
             gradebook_assignment_ids.add(grade.AssignmentId)
             excused = IExcusedGrade.providedBy(grade)
             if not excused:
@@ -161,7 +165,8 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
         catalog = ICourseAssignmentCatalog(course)
         uber_filter = get_course_assessment_predicate_for_user(user, course)
         # Must grab all assignments in our parent
-        assignments = catalog.iter_assignments(course_lineage=True)
+        # pylint: disable=too-many-function-args
+        assignments = catalog.iter_assignments(True)
         return tuple(x for x in assignments if uber_filter(x))
 
     def _get_total_points_for_assignment(self, assignment_id, assignment_policies):
@@ -179,7 +184,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
                 # or if no autograde entry exists, we return 0.
                 result = autograde_policy.get('total_points', None)
         if not result:
-            logger.warn(
+            logger.warning(
                 'Assignment without total_points cannot be part of grade policy (%s) (%s)',
                 assignment_id,
                 result)
@@ -188,13 +193,13 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
     def _get_earned_points_for_assignment(self, grade):
         try:
             value = grade.value
-            if isinstance(value, string_types):
+            if isinstance(value, six.string_types):
                 value = value.strip()
                 if value.endswith('-'):
                     value = value[:-1]
             return float(value)
         except (ValueError, TypeError):
-            logger.warn('Gradebook entry without valid point value (%s) (%s)',
-                        grade.value,
-                        grade.AssignmentId)
+            logger.warning('Gradebook entry without valid point value (%s) (%s)',
+                           grade.value,
+                           grade.AssignmentId)
             return None

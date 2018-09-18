@@ -3,10 +3,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+from ZODB.interfaces import IConnection
 
 from zope import component
 from zope import interface
@@ -14,11 +15,7 @@ from zope import lifecycleevent
 
 from zope.event import notify
 
-from zope.lifecycleevent import added
-
 from zope.location.location import locate
-
-from ZODB.interfaces import IConnection
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
@@ -49,13 +46,16 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.interfaces import IUser
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def mark_btree_bucket_as_changed(grade):
     # Now, because grades are not persistent objects,
     # the btree bucket containing this grade has to be
     # manually told that its contents have changed.
-    # XXX: Note that this is very expensive,
+    # Note that this is very expensive,
     # waking up each bucket of the tree.
+    # pylint: disable=protected-access
     column = grade.__parent__
     btree = column._SampleContainer__data
     bucket = btree._firstbucket
@@ -75,13 +75,14 @@ def mark_btree_bucket_as_changed(grade):
 
 
 def save_in_container(container, key, value, event=False):
+    # pylint: disable=protected-access,too-many-function-args
     if event:
         container[key] = value
     else:
         container._setitemf(key, value)
         locate(value, parent=container, name=key)
         IConnection(container).add(value)
-        added(value, container, key)
+        lifecycleevent.added(value, container, key)
         try:
             container.updateLastMod()
         except AttributeError:
@@ -90,6 +91,7 @@ def save_in_container(container, key, value, event=False):
 
 
 def remove_from_container(container, key, event=False):
+    # pylint: disable=protected-access
     grade = container.get(key)
     user = IUser(grade, None)
     course = ICourseInstance(grade, None)
@@ -116,9 +118,9 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 
     # We insert the history item, which the user himself normally does
     # but cannot in this case. This implicitly creates the grade.
-    # TODO: This is very similar to what nti.app.assessment.adapters
+    # This is very similar to what nti.app.assessment.adapters
     # does for the student, just with fewer constraints...
-    # TODO: The handling for a previously deleted grade is
+    # The handling for a previously deleted grade is
     # what the subscriber does...this whole thing should be simplified
     submission = AssignmentSubmission()
     submission.assignmentId = assignmentId
@@ -148,6 +150,7 @@ def record_grade_without_submission(entry, user, assignmentId=None,
         # We don't want this phony-submission showing up as course activity
         # See nti.app.assessment.subscribers
         activity = ICourseInstanceActivity(course)
+        # pylint: disable=too-many-function-args
         activity.remove(submission)
     return grade
 
@@ -173,7 +176,7 @@ def find_entry_for_item(item):
         # Typically during tests
         logger.warning("Assignment %s has no course", assignmentId)
         return None
-
+    # pylint: disable=too-many-function-args
     book = IGradeBook(course)
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is None:
@@ -214,6 +217,7 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
                 grade.value = grade.AutoGrade
 
         if not getattr(grade, 'creator', None):
+            # pylint: disable=unsubscriptable-object
             instructors = course.instructors  # principals
             grade.creator = instructors[0].id if instructors else None
 

@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -31,6 +30,8 @@ from nti.contenttypes.courses.grading import find_grading_policy_for_course
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def calculate_grades(context,
                      usernames=(),
@@ -42,6 +43,7 @@ def calculate_grades(context,
     policy = find_grading_policy_for_course(course)
     if policy is None:
         raise ValueError("Course does not have grading policy")
+    # pylint: disable=too-many-function-args
     if entry_name:
         part = create_assignment_part(course, NO_SUBMIT_PART_NAME)
         entry = part.getEntryByAssignment(entry_name)
@@ -58,11 +60,13 @@ def calculate_grades(context,
         if principal is None:
             # ignore dup enrollment
             continue
+        # pylint: disable=no-member
         username = principal.id.lower()
         if usernames and username not in usernames:
             continue
         # grade correctness
         if IGradeBookGradingPolicy.providedBy(policy):
+            # pylint: disable=unexpected-keyword-arg
             value = correctness = policy.grade(principal, verbose=verbose)
         else:
             value = correctness = policy.grade(principal)
