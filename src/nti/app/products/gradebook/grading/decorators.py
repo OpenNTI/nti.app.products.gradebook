@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -26,11 +25,13 @@ from nti.links.links import Link
 
 LINKS = StandardExternalFields.LINKS
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @interface.implementer(IExternalMappingDecorator)
 class _CurrentGradeLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result=None):
         result = self._is_authenticated and is_enrolled(context, self.remoteUser)
         if result:
             result = find_grading_policy_for_course(context) is not None

@@ -4,16 +4,18 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import logging
 
-from six import string_types
 from datetime import datetime
 from collections import defaultdict
+
+import six
+
+from ZODB import loglevels
 
 from zope import component
 from zope import interface
@@ -22,8 +24,6 @@ from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
 
 from zope.security.interfaces import IPrincipal
-
-from ZODB import loglevels
 
 from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 from nti.app.products.gradebook.gradescheme import LetterNumericGradeScheme
@@ -59,9 +59,11 @@ from nti.schema.eqhash import EqHash
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def to_correctness(value, scheme):
-    value = scheme.fromUnicode(value) if isinstance(value, string_types) else value
+    value = scheme.fromUnicode(value) if isinstance(value, six.string_types) else value
     scheme.validate(value)
     result = scheme.toCorrectness(value)
     return result
@@ -96,10 +98,10 @@ class GradeProxy(object):
 
 
 @WithRepr
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ICategoryGradeScheme)
 @EqHash('Weight', 'DropLowest', 'LatePenalty')
 class CategoryGradeScheme(BaseCategoryGradeScheme):
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(ICategoryGradeScheme)
 
     LatePenalty = 1
@@ -107,16 +109,15 @@ class CategoryGradeScheme(BaseCategoryGradeScheme):
     dropLowest = alias('DropLowest')
 
 
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ICS1323EqualGroupGrader)
 class CS1323EqualGroupGrader(EqualGroupGrader):
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(ICS1323EqualGroupGrader)
 
 
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ICS1323CourseGradingPolicy)
 class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
-
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(ICS1323CourseGradingPolicy)
 
     PresentationGradeScheme = LetterNumericGradeScheme()
@@ -139,6 +140,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 
     def validate(self):
         super(CS1323CourseGradingPolicy, self).validate()
+        # pylint: disable=protected-access,no-member
         for assignment in self.grader._raw_assignments():
             points = self._points.get(assignment)
             assert points, "Could not find points for %s" % assignment
@@ -146,6 +148,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
     def verify(self, book=None):
         result = True
         book = self.book if book is None else book
+        # pylint: disable=protected-access
         for name in self.grader._raw_assignments():
             if is_valid_ntiid_string(name):
                 entry = book.getEntryByAssignment(name)
@@ -161,6 +164,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
     @Lazy
     def _assignments(self):
         result = defaultdict(set)
+        # pylint: disable=protected-access
         for name, items in self.grader._categories.items():
             for data in items:
                 assignment = data['assignment']
@@ -170,6 +174,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
     @Lazy
     def _points(self):
         result = {}
+        # pylint: disable=protected-access
         for items in self.grader._categories.values():
             for data in items:
                 assignment = data['assignment']
@@ -187,21 +192,24 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 
     @Lazy
     def _rev_categories(self):
+        # pylint: disable=protected-access
         return self.grader._rev_categories
 
     @Lazy
     def _weights(self):
         result = {}
+        # pylint: disable=no-member
         for name, data in self._assignments.items():
             category = self.groups[name]
             item_weight = round(1 / float(len(data)), 3)
-            for name in data:
-                result[name] = item_weight * category.Weight
+            for item in data:
+                result[item] = item_weight * category.Weight
         return result
 
     @Lazy
     def _schemes(self):
         result = {}
+        # pylint: disable=no-member
         for name, points in self._points.items():
             scheme = NumericGradeScheme(min=0, max=points)
             result[name] = scheme
@@ -210,6 +218,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
     def _is_late(self, assignmentId, now=None):
         dates = self.dateContext
         now = now or datetime.utcnow()
+        # pylint: disable=no-member
         assignment = component.queryUtility(IQAssignment, name=assignmentId)
         if assignment is not None and dates is not None:
             _ending = dates.of(assignment).available_for_submission_ending
@@ -224,7 +233,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
         now = datetime.utcnow()
         result = defaultdict(list)
         entered = defaultdict(set)
-
+        # pylint: disable=no-member
         # parse all grades and bucket them by category
         for grade in self.book.iter_grades(username):
             assignmentId = grade.AssignmentId
@@ -262,7 +271,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
             proxy = GradeProxy(assignmentId, value, weight, scheme, excused)
             if correctness is not None:
                 proxy.correctness = correctness
-
+            # pylint: disable=unsubscriptable-object
             cat_name = self._rev_categories[assignmentId]
             result[cat_name].append(proxy)
             entered[cat_name].add(assignmentId)
@@ -301,7 +310,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
         # return
         return result
 
-    def grade(self, principal, verbose=False, scheme=None):
+    def grade(self, principal, verbose=False, scheme=None):  # pylint: disable=arguments-differ
         """
         if an assignment is overdue and there is no submission, the assignment grade is 0
         if an assignment is submitted and no grades were assigned, the assignment grade
@@ -358,6 +367,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
 
             # if we drop any rebalance weights equally
             if drop_count and grades:
+                # pylint: disable=no-member
                 assignments = len(self._assignments.get(name) or ())
                 denominator = assignments - drop_count
                 if denominator:
