@@ -87,12 +87,12 @@ def grade_for_history_item(item):
     course = ICourseInstance(item, None)
     if course is None:  # during tests
         return
-    user = IUser(item)  # Can we do this with just the item? item.creator?
+    user = IUser(item, None)  # Can we do this with just the item? item.creator?
     book = IGradeBook(course)
     assignmentId = item.Submission.assignmentId
     # pylint: disable=too-many-function-args
     entry = book.getColumnForAssignmentId(assignmentId)
-    if entry is not None:
+    if entry is not None and user is not None:
         grade = entry.get(user.username)
         if grade is None:
             # Always dummy up a grade (at the right location in
@@ -104,21 +104,21 @@ def grade_for_history_item(item):
             grade.__parent__ = entry
             grade.__name__ = user.username
         return grade
-    return None
 
 
 @component.adapter(IGrade)
 @interface.implementer(IUsersCourseAssignmentHistoryItem)
 def history_item_for_grade(grade):
-    user = IUser(grade)
-    course = ICourseInstance(grade)
-    history = component.getMultiAdapter((course, user),
-                                        IUsersCourseAssignmentHistory)
-    assg_id = grade.__parent__.AssignmentId  # by definition
-    try:
-        return history[assg_id]
-    except KeyError:
-        raise TypeError("No history for grade")
+    user = IUser(grade, None)
+    course = ICourseInstance(grade, None)
+    history = component.queryMultiAdapter((course, user),
+                                          IUsersCourseAssignmentHistory)
+    if history is not None:
+        assg_id = grade.__parent__.AssignmentId  # by definition
+        try:
+            return history[assg_id]
+        except KeyError:
+            raise TypeError("No history for grade")
 
 
 @component.adapter(IGrade)
