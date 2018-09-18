@@ -42,7 +42,7 @@ def create_assignment_part(course, part_name, _book=None):
 
         part = factory(displayName=part_name,
                        order=1)  # Order makes very little sense here...
-
+        # pylint: disable=too-many-function-args
         book[INameChooser(book).chooseName(part_name, part)] = part
     return book[part_name]
 get_or_create_assignment_part = create_assignment_part
@@ -63,6 +63,7 @@ def create_assignment_entry(course, assignment, displayName,
         entry = part.entryFactory(displayName=displayName,
                                   order=order,
                                   AssignmentId=assignmentId)
+        # pylint: disable=too-many-function-args
         part[INameChooser(part).chooseName(displayName, entry)] = entry
     elif entry.displayName != displayName:
         entry.displayName = displayName
@@ -91,11 +92,12 @@ def synchronize_gradebook(context):
     assignments = get_all_course_assignments(course)
 
     category_map = {}
+    # pylint: disable=too-many-function-args
     for part in book.values():
         for entry in part.values():
             category_map[entry.assignmentId] = part.__name__
 
-    # FIXME: What if an assignment changes parts (category_name)?
+    # Warning !!! What if an assignment changes parts (category_name)?
     # We'll need to move them
     for idx, assignment in enumerate(assignments):
         ordinal = idx + 1

@@ -51,6 +51,7 @@ def _AssignmentHistoryItem2GradeBookEntry(item):
     # get gradebook entry definition
     gradebook = IGradeBook(course, None)
     if gradebook is not None:
+        # pylint: disable=too-many-function-args
         return gradebook.getColumnForAssignmentId(assignmentId)
     return None
 
@@ -74,7 +75,7 @@ def _as_catalog_entry(context):
     return ICourseCatalogEntry(course, None)
 
 
-def _no_pickle(*args):
+def _no_pickle(*unused_args):
     raise TypeError("This object cannot be pickled")
 
 
@@ -89,6 +90,7 @@ def grade_for_history_item(item):
     user = IUser(item)  # Can we do this with just the item? item.creator?
     book = IGradeBook(course)
     assignmentId = item.Submission.assignmentId
+    # pylint: disable=too-many-function-args
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is not None:
         grade = entry.get(user.username)

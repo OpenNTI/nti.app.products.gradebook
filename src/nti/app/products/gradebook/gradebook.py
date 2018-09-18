@@ -10,6 +10,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.traversal import lineage
+
+import six
+
 from zope import component
 from zope import interface
 
@@ -22,8 +26,6 @@ from zope.cachedescriptors.property import CachedProperty
 from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
-
-from pyramid.traversal import lineage
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
@@ -41,6 +43,8 @@ from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.dataserver.interfaces import IUser
+
 from nti.dataserver.users.users import User
 
 from nti.externalization.representation import WithRepr
@@ -53,9 +57,9 @@ from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
-from nti.schema.field import SchemaConfigured
-
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 from nti.traversal.traversal import find_interface
 
@@ -115,8 +119,8 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 
     def getColumnForAssignmentId(self, assignmentId, check_name=False):
         for part in self.values():
-            entry = part.get_entry_by_assignment(
-                assignmentId, check_name=check_name)
+            entry = part.get_entry_by_assignment(assignmentId,
+                                                 check_name=check_name)
             if entry is not None:
                 return entry
         return None
@@ -155,6 +159,13 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
             for grade in part.iter_grades(username):
                 yield grade
 
+    def iter_usernames(self):
+        seen = set()
+        for part in tuple(self.values()):
+            for username in part.iter_usernames():
+                if username not in seen:
+                    seen.add(username)
+                    yield username
 
 _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 
@@ -163,7 +174,7 @@ _GradeBookFactory = an_factory(GradeBook, 'GradeBook')
 @EqHash('NTIID',)
 @interface.implementer(IGradeBookEntry, IAttributeAnnotatable)
 class GradeBookEntry(SchemaConfigured,
-                     # XXX: FIXME: This is wrong, this should be a Case/INSENSITIVE/ btree,
+                     # Warning !!!! This is wrong, this should be a Case/INSENSITIVE/ btree,
                      # usernames are case insensitive. Everyone that uses this this
                      # has to be aware and can't do the usual thing of lower-casing for their
                      # own comparisons. Until we do a database migration we partially
@@ -211,8 +222,9 @@ class GradeBookEntry(SchemaConfigured,
 
     def __contains__(self, key):
         result = super(GradeBookEntry, self).__contains__(key)
-        if not result and key and isinstance(key, basestring):
+        if not result and key and isinstance(key, six.string_types):
             # Sigh, long expensive path
+            # pylint: disable=unsupported-membership-test
             result = key.lower() in self._lower_keys_to_upper_key
         return result
     has_key = __contains__
@@ -221,9 +233,10 @@ class GradeBookEntry(SchemaConfigured,
         try:
             return super(GradeBookEntry, self).__getitem__(key)
         except KeyError:
-            if not key or not isinstance(key, basestring):
+            if not key or not isinstance(key, six.string_types):
                 raise
             # Sigh, long expensive path
+            # pylint: disable=no-member
             upper = self._lower_keys_to_upper_key.get(key.lower())
             if upper and upper != key:  # careful not to infinite recurse
                 return self.__getitem__(upper)
@@ -246,6 +259,7 @@ class GradeBookEntry(SchemaConfigured,
         course = ICourseInstance(self, None)
         if course is not None and asg is not None:
             datecontext = IQAssignmentDateContext(course)
+            # pylint: disable=too-many-function-args
             return datecontext.of(asg).available_for_submission_ending
         return None
 
@@ -294,7 +308,7 @@ class GradeBookPart(SchemaConfigured,
     def remove_user(self, username):
         result = 0
         username = username.lower()
-        for entry in list(self.values()):
+        for entry in tuple(self.values()):
             if username in entry:
                 del entry[username]
                 result += 1
@@ -306,13 +320,13 @@ class GradeBookPart(SchemaConfigured,
         return dict(self)
 
     def has_grades(self, username):
-        for entry in list(self.values()):
+        for entry in tuple(self.values()):
             if username in entry:
                 return True
         return False
 
     def iter_grades(self, username):
-        for entry in list(self.values()):
+        for entry in tuple(self.values()):
             if username in entry:
                 try:
                     grade = entry[username]
@@ -322,6 +336,14 @@ class GradeBookPart(SchemaConfigured,
                     # the membership check has been made
                     logger.exception("Could not find grade for %s in entry %s",
                                      username, entry.__name__)
+
+    def iter_usernames(self):
+        seen = set()
+        for entry in tuple(self.values()):
+            for username in tuple(entry.keys()):
+                if username not in seen:
+                    seen.add(username)
+                    yield username
 
     def __str__(self):
         return self.displayName
@@ -379,7 +401,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
     with traversal.
     """
 
-    def traverse(self, name, furtherPath):
+    def traverse(self, name, furtherPath):  # pylint: disable=arguments-differ
         try:
             return super(GradeBookEntryWithoutSubmissionTraversable, self).traverse(name, furtherPath)
         except KeyError:
@@ -392,6 +414,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
                 raise
             course = ICourseInstance(self.context)
             course_enrollments = ICourseEnrollments(course)
+            # pylint: disable=too-many-function-args
             if course_enrollments.get_enrollment_for_principal(user):
                 result = GradeWithoutSubmission()
                 result.__parent__ = self.context
@@ -416,6 +439,7 @@ class NoSubmitGradeBookPart(GradeBookPart):
     entryFactory = GradeBookEntryWithoutSubmission
 
     def validateAssignment(self, assignment):
+        # pylint: disable=unused-variable
         __traceback_info__ = assignment
         if not assignment.no_submit:
             raise ValueError(assignment.category_name)
@@ -527,7 +551,7 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
                 continue
 
             user = User.get_user(username_that_submitted)
-            if not user:
+            if not IUser.providedBy(user):
                 continue
             username_that_submitted = user.username  # go back to canonical
             history = _history_for_user_in_course(course, user, create=False)

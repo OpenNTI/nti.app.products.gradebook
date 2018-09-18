@@ -8,14 +8,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import BTrees
+
 from zope import component
 from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
-
-import BTrees
 
 from nti.app.products.gradebook.interfaces import IGrade
 
@@ -56,7 +56,7 @@ class AssignmentIdIndex(ValueIndex):
     default_interface = IGrade
     default_field_name = 'AssignmentId'
 
-    def index_doc(self, docid, obj):
+    def index_doc(self, docid, obj):  # pylint: disable=arguments-differ
         if not self.interface.providedBy(obj):
             return None
         return super(AssignmentIdIndex, self).index_doc(docid, obj)
@@ -102,7 +102,7 @@ class GradeValueIndex(ValueIndex):
     default_interface = IGrade
     default_field_name = 'value'
 
-    def index_doc(self, docid, obj):
+    def index_doc(self, docid, obj):  # pylint: disable=arguments-differ
         if not self.interface.providedBy(obj):
             return None
         return super(GradeValueIndex, self).index_doc(docid, obj)
