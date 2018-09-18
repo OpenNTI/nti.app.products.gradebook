@@ -74,8 +74,7 @@ def grades_readable(grades, unused_interaction=None):
     # We use check permission here specifically to avoid the ACLs
     # which could get in our way if we climebed the parent tree
     # up through legacy courses. We want this all to come from the gradebook
-    grades = ICourseInstance(
-        grades) if ICourseCatalogEntry.providedBy(grades) else grades
+    grades = ICourseInstance(grades) if ICourseCatalogEntry.providedBy(grades) else grades
     return gradebook_readable(grades)
 _grades_readable = grades_readable  # BWC
 
@@ -256,7 +255,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
         # across multiple sections; it does fall down though if the
         # assignment actually isn't in that course...but I don't know
         # how that could happen
-        # XXX Need a specific unit test for this
+        # Need a specific unit test for this !!!
         self.course = find_interface(self.request.context, ICourseInstance,
                                      strict=False)
         if self.course is None:
@@ -267,6 +266,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
         """
         The number of students who could possibly take this assignment.
         """
+        # pylint: disable=too-many-function-args
         enrollments = ICourseEnrollments(course)
         if assignment.is_non_public:
             result = enrollments.count_legacy_forcredit_enrollments()
@@ -274,10 +274,11 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
             result = enrollments.count_enrollments()
         return result
 
-    def _do_decorate_external(self, assignment, external):
+    def _do_decorate_external(self, assignment, external): # pylint: disable=arguments-differ
         course = self.course
 
         book = IGradeBook(course)
+        # pylint: disable=too-many-function-args
         column = book.getColumnForAssignmentId(assignment.__name__)
         if column is None:  # pragma: no cover
             # mostly tests

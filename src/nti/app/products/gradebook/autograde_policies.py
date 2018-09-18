@@ -56,7 +56,9 @@ class TrivialFixedScaleAutoGradePolicy(object):
                         # file response.
                         # We can now be lenient with this case; so allow the
                         # submission and this can be re-graded as necessary.
-                        logger.warn('Non-autogradable type submitted to auto-gradable assignment')
+                        logger.warning(
+                            'Non-autogradable type submitted to auto-gradable assignment'
+                        )
                         return None
 
                     if not assessed_part.assessedValue:
@@ -104,8 +106,10 @@ class PointBasedAutoGradePolicy(object):
         practical_best = self.assignment_points(item)
         theoretical_best = self.auto_grade.get('total_points')
         if practical_best != theoretical_best:
-            logger.warn("Policy total points %s is different from sum of questions points %s",
-                        theoretical_best, practical_best)
+            logger.warning(
+                "Policy total points %s is different from sum of questions points %s",
+                theoretical_best, practical_best
+            )
         for assessed_set in item.parts:
             for assessed_question in assessed_set.questions:
                 part_sum = 0.0
@@ -113,7 +117,9 @@ class PointBasedAutoGradePolicy(object):
                 for assessed_part in assessed_question.parts:
                     if not hasattr(assessed_part, 'assessedValue'):
                         # See note in fixed policy.
-                        logger.warn('Non-autogradable type submitted to auto-gradable assignment')
+                        logger.warning(
+                            'Non-autogradable type submitted to auto-gradable assignment'
+                        )
                         return None
                     if not assessed_part.assessedValue:
                         # WRONG part, whole question is toast
@@ -138,6 +144,7 @@ class PointBasedAutoGradePolicy(object):
 def _policy_based_autograde_policy(course, assignmentId):
     policies = IQAssignmentPolicies(course, None)
     if policies is not None:
+        # pylint: disable=too-many-function-args
         policy = policies.getPolicyForAssignment(assignmentId)
     else:
         policy = None
@@ -165,7 +172,7 @@ def _policy_based_autograde_policy(course, assignmentId):
 
 
 def find_autograde_policy(course, assignmentId):
-    # XXX: We don't *really* need to be taking the assignmentId, it's
+    # We don't *really* need to be taking the assignmentId, it's
     # part of the item submitted for autograding. We could wrap the logic
     # all up in the policy itself. But this makes the API intent fairly
     # clear...
@@ -195,7 +202,7 @@ def find_autograde_policy(course, assignmentId):
         # If it isn't we need a named utility
         # We look for a bunch of different names, depending on the
         # kind of course.
-        # XXX: We probably want to replace this with an adapter
+        # We probably want to replace this with an adapter
         # that we can setup at course sync time as an annotation?
         names = list()
         try:

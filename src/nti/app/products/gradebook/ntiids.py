@@ -34,7 +34,7 @@ logger = __import__('logging').getLogger(__name__)
 def get_course(key):
     catalog = get_courses_catalog()
     intids = component.getUtility(IIntIds)
-    # XXX: Resolve according to hierarchy
+    # Resolve according to hierarchy
     for site in get_component_hierarchy_names():
         query = {
             IX_NAME: {'any_of': key},

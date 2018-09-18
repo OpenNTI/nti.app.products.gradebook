@@ -13,12 +13,12 @@ from __future__ import absolute_import
 import sys
 import operator
 
-from zope import component
-from zope import interface
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
+
+from zope import component
+from zope import interface
 
 from nti.app.externalization.error import raise_json_error
 
@@ -89,7 +89,7 @@ class _LetterGradeSchemeObjectUpdater(object):
                               "ranges",
                               _(u"Must specify equal number of ranges to grades"))
 
-        # XXX: If we wanted to localize these messages, we must
+        # If we wanted to localize these messages, we must
         # take the explicit string formatting out
         for idx, r in enumerate(ranges):
             if not r or len(r) != 2:

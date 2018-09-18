@@ -88,6 +88,7 @@ def _assignment_progress(user, assignment, course):
         pass
 
     gradebook = IGradeBook(course)
+    # pylint: disable=too-many-function-args
     grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
     grade = grade.get(user.username) if grade is not None else None
     excused_grade = IExcusedGrade.providedBy(grade)
