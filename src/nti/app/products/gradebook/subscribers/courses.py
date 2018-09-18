@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -26,14 +25,16 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseInstanceImportedEvent
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @component.adapter(ICourseInstance, ICourseInstanceAvailableEvent)
-def _synchronize_gradebook_with_course_instance(course, _):
+def _synchronize_gradebook_with_course_instance(course, unused_event=True):
     synchronize_gradebook_and_verify_policy(course)
 
 
 @component.adapter(ICourseInstance, ICourseInstanceImportedEvent)
-def _on_course_instance_imported(course, _):
+def _on_course_instance_imported(course, unused_event=True):
     synchronize_gradebook_and_verify_policy(course)
 
 
@@ -50,5 +51,5 @@ def unindex_course_data(course):
 
 
 @component.adapter(ICourseInstance, IIntIdRemovedEvent)
-def _on_course_instance_removed(course, _):
+def _on_course_instance_removed(course, unused_event=True):
     unindex_course_data(course)
