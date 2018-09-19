@@ -29,8 +29,6 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.contenttypes.courses.legacy_catalog import ILegacyCourseInstance
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
@@ -119,8 +117,6 @@ def check_grades(intids):
         if not IGrade.providedBy(grade):
             continue
         course = find_interface(grade, ICourseInstance, strict=False)
-        if ILegacyCourseInstance.providedBy(course):
-            continue
         doc_id = intids.queryId(course)
         if doc_id is None:  # invalid course
             logger.warning("Removing invalid grade %s", grade)
