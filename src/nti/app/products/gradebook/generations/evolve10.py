@@ -73,7 +73,7 @@ def check_tree(btree):
 
 def process_course(course):
     book = gradebook_for_course(course, False)
-    if not book:
+    if book is None:
         return
     # check trees
     check_tree(book)
