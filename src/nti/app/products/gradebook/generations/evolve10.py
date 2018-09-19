@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 from zope import component
 from zope import interface
-from zope import lifecycleevent 
+from zope import lifecycleevent
 
 from zope.component.hooks import setHooks
 from zope.component.hooks import site as current_site
@@ -23,6 +23,8 @@ from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contenttypes.courses.interfaces import ICourseCatalog
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -57,8 +59,7 @@ class MockDataserver(object):
         if resolver is None:
             logger.warning("Using dataserver without a proper ISiteManager.")
         else:
-            return resolver.get_object_by_oid(oid,
-                                              ignore_creator=ignore_creator)
+            return resolver.get_object_by_oid(oid, ignore_creator)
         return None
 
 
@@ -86,6 +87,18 @@ def process_course(course):
         user = User.get_user(username)
         if not IUser.providedBy(user):
             book.remove_user(username)
+
+
+def process_catalog(catalog, intids, seen):
+    if catalog is None or catalog.isEmpty():
+        return
+    for entry in catalog.iterCatalogEntries():
+        course = ICourseInstance(entry)
+        doc_id = intids.queryId(course)
+        if doc_id is None or doc_id in seen:
+            continue
+        seen.add(doc_id)
+        process_course(course)
 
 
 def clear_container(container):
@@ -141,18 +154,21 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
 
+        # load library
+        library = component.queryUtility(IContentPackageLibrary)
+        if library is not None:
+            library.syncContentPackages()
+
+        # global site
+        catalog = component.queryUtility(ICourseCatalog)
+        process_catalog(catalog, intids, seen)
+
+        # all sites
         for host_site in get_all_host_sites():
             with current_site(host_site):
                 catalog = component.queryUtility(ICourseCatalog)
-                if catalog is None or catalog.isEmpty():
-                    continue
-                for entry in catalog.iterCatalogEntries():
-                    course = ICourseInstance(entry)
-                    doc_id = intids.queryId(course)
-                    if doc_id is None or doc_id in seen:
-                        continue
-                    seen.add(doc_id)
-                    process_course(course)
+                process_catalog(catalog, intids, seen)
+
         # check invalid grades
         check_grades(intids)
 
