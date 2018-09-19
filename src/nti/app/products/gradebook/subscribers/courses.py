@@ -14,6 +14,8 @@ from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIdRemovedEvent
 
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+
 from nti.app.products.gradebook.index import IX_SITE
 from nti.app.products.gradebook.index import IX_COURSE
 from nti.app.products.gradebook.index import get_grade_catalog
@@ -24,6 +26,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseInstanceImportedEvent
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
+from nti.app.products.gradebook.gradebook import gradebook_for_course
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -51,5 +54,12 @@ def unindex_course_data(course):
 
 
 @component.adapter(ICourseInstance, IIntIdRemovedEvent)
-def _on_course_instance_removed(course, unused_event=True):
+def _on_course_instance_intid_removed(course, unused_event=True):
     unindex_course_data(course)
+
+
+@component.adapter(ICourseInstance, IObjectRemovedEvent)
+def _on_course_instance_removed(course, unused_event=True):
+    book = gradebook_for_course(course, False)
+    if book is not None:
+        book.clear()
