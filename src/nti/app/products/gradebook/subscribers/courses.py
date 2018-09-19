@@ -16,6 +16,8 @@ from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
+from nti.app.products.gradebook.gradebook import gradebook_for_course
+
 from nti.app.products.gradebook.index import IX_SITE
 from nti.app.products.gradebook.index import IX_COURSE
 from nti.app.products.gradebook.index import get_grade_catalog
@@ -26,7 +28,6 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseInstanceImportedEvent
 from nti.contenttypes.courses.interfaces import ICourseInstanceAvailableEvent
-from nti.app.products.gradebook.gradebook import gradebook_for_course
 
 logger = __import__('logging').getLogger(__name__)
 
