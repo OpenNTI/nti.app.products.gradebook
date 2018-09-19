@@ -10,7 +10,6 @@ from __future__ import absolute_import
 
 from zope import component
 from zope import interface
-from zope import lifecycleevent
 
 from zope.component.hooks import setHooks
 from zope.component.hooks import site as current_site
@@ -37,6 +36,8 @@ from nti.dataserver.metadata.index import IX_MIMETYPE
 from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.users import User
+
+from nti.intid.common import removeIntId
 
 from nti.site.hostpolicy import get_all_host_sites
 
@@ -74,7 +75,9 @@ def process_course(course):
     book = gradebook_for_course(course, False)
     if book is None:
         return
-    # check trees
+    # check trees. if alpha we have seen KeyError
+    # want to make sure the tree Length object value
+    # is the same as its keys
     check_tree(book)
     for part in book.values():
         check_tree(part)
@@ -108,6 +111,9 @@ def clear_container(container):
 
 
 def check_grades(intids):
+    """
+    Check all grades to make sure the are found in a valid course
+    """
     metadata = get_metadata_catalog()
     query = {
         IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.grade',)}
@@ -120,17 +126,18 @@ def check_grades(intids):
         doc_id = intids.queryId(course)
         if doc_id is None:  # invalid course
             logger.warning("Removing invalid grade %s", grade)
-            clear_container(
-                find_interface(grade, IGradeBookEntry, strict=False)
-            )
-            clear_container(
-                find_interface(grade, IGradeBookPart, strict=False)
-            )
-            clear_container(
-                find_interface(grade, IGradeBook, strict=False)
-            )
-            lifecycleevent.removed(grade)
-
+            # if we cannot find a course then try to clear as much
+            # as possible in the lineage
+            book = find_interface(grade, IGradeBook, strict=False)
+            part = find_interface(grade, IGradeBookPart, strict=False)
+            entry = find_interface(grade, IGradeBookEntry, strict=False)
+            clear_container(entry)
+            clear_container(part)
+            clear_container(book)
+            # check removal
+            if intids.queryId(grade) is not None:
+                removeIntId(grade)
+                
 
 def do_evolve(context, generation=generation):  # pylint: disable=redefined-outer-name
     logger.info("Gradebook evolution %s started", generation)
