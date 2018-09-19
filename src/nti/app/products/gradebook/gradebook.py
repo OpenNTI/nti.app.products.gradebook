@@ -264,6 +264,19 @@ class GradeBookEntry(SchemaConfigured,
                 return self.__getitem__(upper)
             raise
 
+    def __delitem__(self, key):
+        try:
+            return super(GradeBookEntry, self).__delitem__(key)
+        except KeyError:
+            if not key or not isinstance(key, six.string_types):
+                raise
+            # Sigh, long expensive path
+            # pylint: disable=no-member
+            upper = self._lower_keys_to_upper_key.get(key.lower())
+            if upper and upper != key:  # careful not to infinite recurse
+                return self.__delitem__(upper)
+            raise
+
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
