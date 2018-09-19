@@ -14,11 +14,12 @@ from pyramid.traversal import lineage
 
 import six
 
+from ZODB.interfaces import IConnection
+
 from zope import component
 from zope import interface
 
-from zope.annotation import factory as an_factory
-
+from zope.annotation.interfaces import IAnnotations
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import CachedProperty
@@ -167,7 +168,28 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
                     seen.add(username)
                     yield username
 
-_GradeBookFactory = an_factory(GradeBook, 'GradeBook')
+
+@interface.implementer(IGradeBook)
+@component.adapter(ICourseInstance)
+def gradebook_for_course(course, create=True):
+    result = None
+    KEY = u'GradeBook'
+    annotations = IAnnotations(course)
+    try:
+        result = annotations[KEY]
+    except KeyError:
+        if create:
+            result = GradeBook()
+            annotations[KEY] = result
+            result.__name__ = KEY
+            result.__parent__ = course
+            # Deterministically add to our course db.
+            # pylint: disable=too-many-function-args
+            connection = IConnection(course, None)
+            if connection is not None:
+                connection.add(result)
+    return result
+_gradebook_for_course = gradebook_for_course
 
 
 @WithRepr
@@ -310,8 +332,14 @@ class GradeBookPart(SchemaConfigured,
         username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
-                del entry[username]
-                result += 1
+                try:
+                    del entry[username]
+                    result += 1
+                except KeyError:
+                    # in alpha we have seen key errors even though
+                    # the membership check has been made
+                    logger.exception("Error deleting grade for %s in entry %s",
+                                     username, entry.__name__)
         return result
     removeUser = remove_user
 
@@ -320,12 +348,14 @@ class GradeBookPart(SchemaConfigured,
         return dict(self)
 
     def has_grades(self, username):
+        username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
                 return True
         return False
 
     def iter_grades(self, username):
+        username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
                 try:
