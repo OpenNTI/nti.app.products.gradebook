@@ -36,7 +36,6 @@ generation = 9
 logger = __import__('logging').getLogger(__name__)
 
 
-
 @interface.implementer(IDataserver)
 class MockDataserver(object):
 
@@ -47,8 +46,7 @@ class MockDataserver(object):
         if resolver is None:
             logger.warning("Using dataserver without a proper ISiteManager.")
         else:
-            return resolver.get_object_by_oid(oid,
-                                              ignore_creator=ignore_creator)
+            return resolver.get_object_by_oid(oid, ignore_creator)
         return None
 
 
