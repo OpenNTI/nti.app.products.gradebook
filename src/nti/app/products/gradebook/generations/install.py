@@ -16,7 +16,7 @@ from zope.generations.generations import SchemaManager
 
 from nti.app.products.gradebook.index import install_grade_catalog
 
-generation = 9
+generation = 10
 
 logger = __import__('logging').getLogger(__name__)
 
