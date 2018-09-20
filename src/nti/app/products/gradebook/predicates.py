@@ -25,6 +25,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 def course_gradebook_objects(course):
+    # pylint: disable=too-many-function-args
     book = IGradeBook(ICourseInstance(course, None), None)
     if book is not None:
         yield book

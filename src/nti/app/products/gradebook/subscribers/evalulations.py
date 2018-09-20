@@ -4,16 +4,15 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
-from zope import component
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
+
+from zope import component
 
 from nti.app.externalization.error import raise_json_error
 
@@ -31,23 +30,26 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.publishing.interfaces import IObjectPublishedEvent
 from nti.publishing.interfaces import IObjectUnpublishedEvent
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @component.adapter(IQEditableEvaluation, IObjectPublishedEvent)
-def _on_evalulation_published(item, unused_event):
+def _on_evalulation_published(item, unused_event=None):
     if IQAssignment.providedBy(item):
         course = ICourseInstance(item, None)
         book = IGradeBook(course, None)
         if book is not None:
-            displayName = item.title or 'Assignment'
+            displayName = item.title or _(u'Assignment')
             create_assignment_entry(course, item, displayName, _book=book)
 
 
 @component.adapter(IQEditableEvaluation, IObjectUnpublishedEvent)
-def _on_evalulation_unpublished(item, unused_event):
+def _on_evalulation_unpublished(item, unused_event=None):
     if IQAssignment.providedBy(item):
         course = ICourseInstance(item, None)
         book = IGradeBook(course, None)
         if book is not None:
+            # pylint: disable=too-many-function-args 
             entry = book.getColumnForAssignmentId(item.ntiid)
             if entry:
                 request = get_current_request()

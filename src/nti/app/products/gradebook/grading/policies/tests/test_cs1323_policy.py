@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -22,9 +22,10 @@ from nti.testing.matchers import verifiably_provides
 import os
 import codecs
 import unittest
-import simplejson
 
 import fudge
+
+import simplejson
 
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
@@ -45,20 +46,20 @@ from nti.app.products.gradebook.grading.policies.trytten import CategoryGradeSch
 from nti.app.products.gradebook.grading.policies.trytten import CS1323EqualGroupGrader
 from nti.app.products.gradebook.grading.policies.trytten import CS1323CourseGradingPolicy
 
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
+
 from nti.contenttypes.courses.assignment import MappingAssignmentPolicies
 
 from nti.contenttypes.courses.courses import CourseInstance
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.externalization.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
-
-from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
 class TestCS1323GradingPolicy(unittest.TestCase):

@@ -10,8 +10,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import numbers
+
+import six
 
 from zope import interface
 
@@ -35,19 +36,18 @@ from nti.externalization.representation import WithRepr
 
 from nti.schema.eqhash import EqHash
 
-from nti.schema.field import SchemaConfigured
-
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 logger = __import__('logging').getLogger(__name__)
 
 
 @WithRepr
 @EqHash('grades', 'ranges')
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ILetterGradeScheme, IContentTypeAware)
 class LetterGradeScheme(SchemaConfigured):
-
-    __metaclass__ = MetaGradeBookObject
 
     _type = six.string_types
 
@@ -122,9 +122,8 @@ class LetterGradeScheme(SchemaConfigured):
             raise ValueError("Invalid grade value")
 
 
+@six.add_metaclass(MetaGradeBookObject)
 class ExtendedLetterGradeScheme(LetterGradeScheme):
-
-    __metaclass__ = MetaGradeBookObject
 
     default_grades = (u'A+', u'A', u'A-',
                       u'B+', u'B', u'B-',
@@ -137,10 +136,9 @@ class ExtendedLetterGradeScheme(LetterGradeScheme):
                       (57, 59), (50, 56), (0, 49))
 
 
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ILetterNumericGradeScheme)
 class LetterNumericGradeScheme(LetterGradeScheme):
-
-    __metaclass__ = MetaGradeBookObject
 
     def toDisplayableGrade(self, grade):
         value = getattr(grade, 'RawValue', grade)
@@ -153,10 +151,9 @@ class LetterNumericGradeScheme(LetterGradeScheme):
 
 @WithRepr
 @EqHash('min', 'max')
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(INumericGradeScheme, IContentTypeAware)
 class NumericGradeScheme(SchemaConfigured):
-
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(INumericGradeScheme)
 
     _type = numbers.Number
@@ -169,16 +166,19 @@ class NumericGradeScheme(SchemaConfigured):
         return value
 
     def validate(self, value):
+        # pylint: disable=no-member
         if not isinstance(value, self._type):
             raise TypeError('Wrong Type')
         elif value < self.min or value > self.max:
             raise ValueError("Invalid grade value")
 
     def toCorrectness(self, value):
+        # pylint: disable=no-member
         result = (value - self.min) / float(self.max - self.min)
         return result if result > 0 else 0.0
 
     def fromCorrectness(self, grade):
+        # pylint: disable=no-member
         value = getattr(grade, 'RawValue', grade)
         value = (min(max(0, value), 1))
         result = value * (self.max - self.min) + self.min
@@ -195,10 +195,9 @@ def _default_numeric_grade_scheme():
     return result
 
 
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(IIntegerGradeScheme, IContentTypeAware)
 class IntegerGradeScheme(NumericGradeScheme):
-
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(IIntegerGradeScheme)
 
     _type = (int, long)
@@ -225,10 +224,9 @@ def _default_integer_grade_scheme():
 
 
 @WithRepr
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(IBooleanGradeScheme, IContentTypeAware)
 class BooleanGradeScheme(SchemaConfigured):
-
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(IBooleanGradeScheme)
 
     _type = bool
@@ -270,15 +268,15 @@ class BooleanGradeScheme(SchemaConfigured):
 
     def __hash__(self):
         xhash = 47
+        # pylint: disable=no-member
         xhash ^= hash(self.mimeType)
         return xhash
 
 
 @WithRepr
+@six.add_metaclass(MetaGradeBookObject)
 @interface.implementer(ITotalPointsGradeScheme, IContentTypeAware)
 class TotalPointsGradeScheme(SchemaConfigured):
-
-    __metaclass__ = MetaGradeBookObject
     createDirectFieldProperties(ITotalPointsGradeScheme)
 
     _type = numbers.Number
@@ -321,5 +319,6 @@ class TotalPointsGradeScheme(SchemaConfigured):
 
     def __hash__(self):
         xhash = 47
+        # pylint: disable=no-member
         xhash ^= hash(self.mimeType)
         return xhash

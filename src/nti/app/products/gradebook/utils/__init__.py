@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -23,6 +22,8 @@ from nti.mimetype.mimetype import MIME_BASE
 
 #: Gradebook Base MimeType
 GRADEBOOK_MIME_BASE = MIME_BASE + '.gradebook'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class MetaGradeBookObject(type):

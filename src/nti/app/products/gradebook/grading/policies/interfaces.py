@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
@@ -20,7 +19,7 @@ from nti.contenttypes.courses.grading.interfaces import ICategoryGradeScheme as 
 from nti.schema.field import Int
 from nti.schema.field import Dict
 from nti.schema.field import Object
-from nti.schema.field import ValidTextLine
+from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
 class ICategoryGradeScheme(IBaseCategoryGradeScheme):

@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_entry
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 does_not = is_not
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.app.products.gradebook.gradebook import GradeBookPart
+from nti.app.products.gradebook.gradebook import GradeBookEntry
 
-from nti.ntiids.ntiids import find_object_with_ntiid
+from nti.app.products.gradebook.grades import PersistentGrade as Grade
 
-from nti.ntiids.oids import to_external_ntiid_oid
+from nti.app.products.gradebook.interfaces import IGradeBook
 
 from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLayer
 
@@ -26,7 +28,13 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
 from nti.dataserver.tests import mock_dataserver
+
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 class TestAdminViews(ApplicationLayerTest):
@@ -57,3 +65,22 @@ class TestAdminViews(ApplicationLayerTest):
         res = self.testapp.post(href, status=200)
         assert_that(res.json_body,
                     has_entry('Total', is_(0)))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_remove_ghost_data(self):
+        with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
+            obj = find_object_with_ntiid(self.course_ntiid)
+            book = IGradeBook(ICourseInstance(obj))
+            # add fake a grade
+            gbp = GradeBookPart()
+            book[u'fakepart'] = gbp
+            entry = GradeBookEntry()
+            gbp[u'myquestion'] = entry
+            entry.assignmentId = u'myquestion'
+            g = Grade(username=u'ichigo', grade=85.0)
+            entry[u'ichigo'] = g
+
+        href = '/dataserver2/CourseAdmin/@@RemoveGhostCourseGradeData'
+        res = self.testapp.post(href, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items', has_length(1)))

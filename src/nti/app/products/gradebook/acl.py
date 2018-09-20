@@ -57,6 +57,7 @@ class _GradeBookACLProvider(object):
         acl.append(ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)))
         course = ICourseInstance(self.context, None)
         if course is not None:
+            # pylint: disable=not-an-iterable
             for i in course.instructors or ():
                 acl.append(ace_allowing(i, ACT_READ, type(self)))
                 acl.append(ace_allowing(i, ACT_UPDATE, type(self)))

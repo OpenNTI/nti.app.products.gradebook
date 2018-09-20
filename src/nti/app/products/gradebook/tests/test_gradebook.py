@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import is_in
@@ -86,6 +86,10 @@ class TestGradebook(unittest.TestCase):
         entry['ichigo'] = grade
 
         assert_that(entry, has_key('ichigo'))
+        assert_that(list(part.iter_usernames()), is_(['ichigo']))
+        assert_that(list(book.iter_usernames()), is_(['ichigo']))
 
         book.remove_user('ichigo')
         assert_that(entry, does_not(has_key('ichigo')))
+        assert_that(list(part.iter_usernames()), is_([]))
+        assert_that(list(book.iter_usernames()), is_([]))

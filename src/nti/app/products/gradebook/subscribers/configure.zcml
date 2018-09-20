@@ -19,23 +19,22 @@
 	<!-- grades -->
 	<subscriber handler=".grades._store_grade_created_event"
 				for="..interfaces.IGrade
-				     zope.lifecycleevent.IObjectAddedEvent"/>
+					 zope.lifecycleevent.IObjectAddedEvent"/>
 
 	<subscriber handler=".grades._store_grade_created_event"
 				for="..interfaces.IGrade
-				     zope.lifecycleevent.IObjectModifiedEvent"/>
+					 zope.lifecycleevent.IObjectModifiedEvent"/>
 
 	<!-- completion -->
 	<subscriber handler=".grades.update_grade_progress"
-                for="..interfaces.IGrade
-                     zope.lifecycleevent.IObjectAddedEvent"/>
+				for="..interfaces.IGrade
+					 zope.lifecycleevent.IObjectAddedEvent"/>
 
-    <subscriber handler=".grades.update_grade_progress"
-                for="..interfaces.IGrade
-                     zope.lifecycleevent.IObjectModifiedEvent"/>
+	<subscriber handler=".grades.update_grade_progress"
+				for="..interfaces.IGrade
+					 zope.lifecycleevent.IObjectModifiedEvent"/>
 
-    <subscriber handler=".grades._on_grade_removed" />
-
+	<subscriber handler=".grades._on_grade_removed" />
 	<subscriber handler=".grades._remove_grade_event" />
 
 	<!-- evalulations -->
@@ -48,6 +47,7 @@
 	<!-- courses -->
 	<subscriber handler=".courses._on_course_instance_removed" />
 	<subscriber handler=".courses._on_course_instance_imported" />
+	<subscriber handler=".courses._on_course_instance_intid_removed" />
 	<subscriber handler=".courses._synchronize_gradebook_with_course_instance" />
 
 </configure>

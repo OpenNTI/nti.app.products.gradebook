@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from persistent import Persistent
+
 from zope import component
 from zope import interface
 
@@ -18,8 +20,6 @@ from zope.cachedescriptors.property import Lazy
 from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
-
-from persistent import Persistent
 
 from nti.app.products.gradebook.interfaces import IGrade
 
@@ -45,8 +45,9 @@ from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
-from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 from nti.wref.interfaces import IWeakRef
 
@@ -86,7 +87,7 @@ class Grade(CreatedModDateTrackingObject,
         super(Grade, self).__init__(*args, **kwargs)
 
     @Lazy
-    def createdTime(self):
+    def createdTime(self):  # pylint: disable=method-hidden
         # Some old objects in the database won't have a value for
         # created time; in that case, default to lastModified.
         # Some old objects in the database will have a lastModified
@@ -104,6 +105,7 @@ class Grade(CreatedModDateTrackingObject,
         acl = acl_from_aces()
         course = ICourseInstance(self, None)
         if course is not None:
+            # pylint: disable=not-an-iterable
             acl.extend(ace_allowing(i, ALL_PERMISSIONS)
                        for i in course.instructors or ())
         # This will become conditional on whether we are published
@@ -138,6 +140,7 @@ class GradeWeakRef(object):
             return part.get(self._username)
 
     def __eq__(self, other):
+        # pylint: disable=protected-access
         try:
             return self is other \
                 or (self._username, self._part_wref) == (other._username, other._part_wref)
@@ -208,7 +211,7 @@ class PredictedGrade(object):
         return None
 
     @Lazy
-    def RawValue(self):
+    def RawValue(self):  # pylint: disable=method-hidden
         if     self.PointsAvailable == 0 \
             or self.PointsAvailable is None \
             or self.PointsEarned is None:

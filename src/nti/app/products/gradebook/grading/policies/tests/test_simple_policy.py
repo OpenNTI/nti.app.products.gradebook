@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -16,8 +16,9 @@ does_not = is_not
 from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
 
-import fudge
 import unittest
+
+import fudge
 
 from zope import interface
 
@@ -35,6 +36,8 @@ from nti.app.products.gradebook.grading.policies.simple import SimpleTotalingGra
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 
+from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
+
 from nti.assessment.assignment import QAssignment
 from nti.assessment.assignment import QAssignmentPart
 
@@ -49,16 +52,14 @@ from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.contenttypes.courses.grading import set_grading_policy_for_course
 
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
 from nti.externalization.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
-
-from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
 class TestSimpleGradingPolicy(unittest.TestCase):
@@ -150,7 +151,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
         # We should have earned 11 points out of a possible 15.
         grade = policy.grade('cald3307')
-        unused = grade.correctness
+
         assert_that(grade.correctness, is_(73))
         assert_that(grade.points_available, is_(15))
         assert_that(grade.points_earned, is_(11))
