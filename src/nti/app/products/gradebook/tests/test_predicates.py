@@ -22,6 +22,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.externalization.externalization import to_external_object
 
+from nti.coremetadata.interfaces import SYSTEM_USER_ID
+
 from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLayer
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -67,7 +69,8 @@ class TestPredictes(ApplicationLayerTest):
         self.testapp.post_json(submit_href, ext_obj, status=201)
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
+            # Now for newly created grade, the creator of grade become the system user.
             user = self._get_user('harp4162')
             predicate = predicates._GradePrincipalObjects(user)
             grades = list(predicate.iter_objects())
-            assert_that(grades, has_length(1))
+            assert_that(grades, has_length(0))
