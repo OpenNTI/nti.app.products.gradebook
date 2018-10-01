@@ -20,7 +20,7 @@ from zope.security.interfaces import IPrincipal
 
 from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
 
-from nti.app.products.gradebook.gradescheme import LetterGradeScheme
+from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
@@ -52,7 +52,7 @@ logger = __import__('logging').getLogger(__name__)
 class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
     createDirectFieldProperties(ISimpleTotalingGradingPolicy)
 
-    PresentationGradeScheme = LetterGradeScheme()
+    PresentationGradeScheme = NumericGradeScheme()
     presentation = alias('PresentationGradeScheme')
 
     def __init__(self, *args, **kwargs):
