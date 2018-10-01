@@ -60,6 +60,12 @@ class TestGradeScheme(unittest.TestCase):
         grade = PredictedGrade(raw_value=0.3)
         assert_that(lgs.fromCorrectness(grade), is_('F'))
 
+        grade = PredictedGrade(raw_value=0.79333333333)
+        assert_that(lgs.fromCorrectness(grade), is_('C'))
+
+        grade = PredictedGrade(raw_value=0.79666666666)
+        assert_that(lgs.fromCorrectness(grade), is_('B'))
+
         lgs.validate('A')
         lgs.validate('B')
         with self.assertRaises(ValueError):

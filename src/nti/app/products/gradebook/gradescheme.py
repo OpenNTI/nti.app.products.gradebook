@@ -99,6 +99,7 @@ class LetterGradeScheme(SchemaConfigured):
     def fromCorrectness(self, grade):
         value = getattr(grade, 'RawValue', grade)
         value = (min(max(0, value), 1))
+        value = round(value, 2)
         dem = float(self._max_in_ranges())
         for i, r in enumerate(self.ranges):
             _min, _max = r
