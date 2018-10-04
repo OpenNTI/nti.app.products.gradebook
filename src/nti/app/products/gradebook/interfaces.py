@@ -12,6 +12,8 @@ from __future__ import absolute_import
 
 from zope import interface
 
+from zope.configuration.fields import Bool
+
 from zope.container.constraints import contains
 from zope.container.constraints import containers
 
@@ -22,6 +24,8 @@ from zope.interface.interface import taggedValue
 
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
+
+from zope.schema import Number
 
 from zope.security.permission import Permission
 
@@ -40,10 +44,8 @@ from nti.ntiids.schema import ValidNTIID
 from nti.property.property import alias
 
 from nti.schema.field import Int
-from nti.schema.field import Bool
 from nti.schema.field import Date
 from nti.schema.field import Dict
-from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import TextLine

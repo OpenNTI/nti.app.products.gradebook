@@ -59,14 +59,14 @@ class TestViews(ApplicationLayerTest):
         gradebook_href = path = href + '/GradeBook'
 
         res = self.testapp.get(path, extra_environ=environ)
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
         assert_that(res.json_body, has_entry('Items', has_length(3)))
 
         # As an admin, we can delete it...it will be reset on startup
         self.testapp.delete(gradebook_href, extra_environ=environ)
         res = self.testapp.get(path, extra_environ=environ)
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
         assert_that(res.json_body, has_entry('Items', has_length(0)))
 
@@ -85,7 +85,7 @@ class TestViews(ApplicationLayerTest):
 
         # We don't have a grade yet, so this returns a placeholder grade
         # without a value.
-        res = self.testapp.get(path + 'sjohnson@nextthought.com/', 
+        res = self.testapp.get(path + 'sjohnson@nextthought.com/',
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('value', None))
 
@@ -93,9 +93,9 @@ class TestViews(ApplicationLayerTest):
         # be able to excuse the grade. A placeholder grade gets created
         # and excused, and we can verify the returned object is excused.
         # The value is still None.
-        self.testapp.post(path + 'sjohnson@nextthought.com/excuse', 
+        self.testapp.post(path + 'sjohnson@nextthought.com/excuse',
                           extra_environ=instructor_environ)
-        res = self.testapp.get(path + 'sjohnson@nextthought.com', 
+        res = self.testapp.get(path + 'sjohnson@nextthought.com',
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('IsExcused', True))
         assert_that(res.json_body, has_entry('value', None))
@@ -103,15 +103,15 @@ class TestViews(ApplicationLayerTest):
         # We can also unexcuse this placeholder grade.
         self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse',
                           extra_environ=instructor_environ)
-        res = self.testapp.get(path + 'sjohnson@nextthought.com', 
+        res = self.testapp.get(path + 'sjohnson@nextthought.com',
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('IsExcused', False))
         assert_that(res.json_body, has_entry('value', None))
 
         # A non-instructor should not be able to excuse or unexcuse a grade.
-        res = self.testapp.post(path + 'sjohnson@nextthought.com/excuse', 
+        res = self.testapp.post(path + 'sjohnson@nextthought.com/excuse',
                                 extra_environ=environ, status=403)
-        res = self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse', 
+        res = self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse',
                                 extra_environ=environ, status=403)
 
         # Even though we have a placeholder grade in place, we should be able to
@@ -119,9 +119,9 @@ class TestViews(ApplicationLayerTest):
         grade_path = path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
-        self.testapp.put_json(grade_path, grade, 
+        self.testapp.put_json(grade_path, grade,
                               extra_environ=instructor_environ)
-        res = self.testapp.get(path + 'sjohnson@nextthought.com', 
+        res = self.testapp.get(path + 'sjohnson@nextthought.com',
                                extra_environ=instructor_environ)
         assert_that(res.json_body, has_entry('IsExcused', False))
         assert_that(res.json_body, has_entry('value', 10))
@@ -150,7 +150,7 @@ class TestViews(ApplicationLayerTest):
         # define a grading policy.
         self.testapp.get(current_grade_path, status=422)
         # Add the simple grading policy to use for the rest of this test.
-        self.testapp.post_json(policy_view_path, policy, 
+        self.testapp.post_json(policy_view_path, policy,
                                extra_environ=instructor_environ, status=201)
 
         # Should 404 if we have no grades yet.
@@ -163,10 +163,10 @@ class TestViews(ApplicationLayerTest):
                  'value': 10}
         self.testapp.put_json(grade_entry_path, grade,
                               extra_environ=instructor_environ)
-    
+
         res = self.testapp.get(current_grade_path)
         assert_that(res.json_body, has_key('PredictedGrade'))
-        assert_that(res.json_body['PredictedGrade'], 
+        assert_that(res.json_body['PredictedGrade'],
                     has_entry('PointsEarned', 10))
         assert_that(res.json_body, not_(has_key('FinalGrade')))
 
@@ -179,7 +179,7 @@ class TestViews(ApplicationLayerTest):
                               extra_environ=instructor_environ)
         res = self.testapp.get(current_grade_path)
         assert_that(res.json_body, has_key('PredictedGrade'))
-        assert_that(res.json_body['PredictedGrade'], 
+        assert_that(res.json_body['PredictedGrade'],
                     has_entry('PointsEarned', 10))
         assert_that(res.json_body, has_key('FinalGrade'))
 
@@ -215,9 +215,9 @@ class TestViews(ApplicationLayerTest):
         csv_reader = csv.DictReader(StringIO(res.body))
         rows = [x for x in csv_reader]
         assert_that(rows, has_length(1))
-        assert_that(rows, 
+        assert_that(rows,
                     has_item(has_entry('Username', 'sjohnson@nextthought.com')))
-        assert_that(rows, 
+        assert_that(rows,
                     has_item(has_entry('Trivial Test Points Grade', '10')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -237,14 +237,14 @@ class TestViews(ApplicationLayerTest):
                                policy, status=403)
 
         # Adding the policy correctly should work
-        self.testapp.post_json(policy_view_path, policy, 
+        self.testapp.post_json(policy_view_path, policy,
                                extra_environ=instructor_environ, status=201)
         res = self.testapp.get(policy_view_path)
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('Class', 'SimpleTotalingGradingPolicy'))
 
         # Deleting the policy
-        self.testapp.delete(policy_view_path, 
+        self.testapp.delete(policy_view_path,
                             extra_environ=instructor_environ)
         res = self.testapp.get(policy_view_path, status=404)
 
