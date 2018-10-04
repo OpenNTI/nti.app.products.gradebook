@@ -25,6 +25,8 @@ from zope.interface.interface import taggedValue
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
+from zope.schema import Number
+
 from zope.security.permission import Permission
 
 from nti.app.client_preferences.interfaces import TAG_EXTERNAL_PREFERENCE_GROUP
@@ -44,7 +46,6 @@ from nti.property.property import alias
 from nti.schema.field import Int
 from nti.schema.field import Date
 from nti.schema.field import Dict
-from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import TextLine
