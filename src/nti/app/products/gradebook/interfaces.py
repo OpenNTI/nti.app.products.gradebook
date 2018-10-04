@@ -25,7 +25,7 @@ from zope.interface.interface import taggedValue
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
-from zope.schema import Number
+from zope.schema import Real
 
 from zope.security.permission import Permission
 
@@ -102,8 +102,8 @@ class INumericGradeScheme(IGradeScheme):
     """
     Returns a numeric grade between 0 and 1 (inclusive).
     """
-    min = Number(title=u"min value", default=0.0, min=0.0)
-    max = Number(title=u"max value", default=100.0)
+    min = Real(title=u"min value", default=0.0, min=0.0)
+    max = Real(title=u"max value", default=100.0)
 
 
 class IIntegerGradeScheme(INumericGradeScheme):
@@ -128,7 +128,7 @@ class ILetterGradeScheme(IGradeScheme):
                          unique=True,
                          min_length=1)
 
-    ranges = ListOrTuple(ListOrTuple(Number(title=u"the range value", min=0),
+    ranges = ListOrTuple(ListOrTuple(Real(title=u"the range value", min=0),
                                      min_length=2,
                                      max_length=2),
                          unique=True,
@@ -372,7 +372,7 @@ class IGradeBook(IContainer,
 
 
 def _grade_property():
-    return Variant((Number(title=u"Number grade"),
+    return Variant((Real(title=u"Number grade"),
                     Bool(title=u"Boolean grade"),
                     ValidTextLine(title=u"String grade")),
                    title=u"The grade",
