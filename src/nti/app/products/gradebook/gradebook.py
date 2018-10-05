@@ -292,11 +292,7 @@ class GradeBookEntry(SchemaConfigured,
         asg = component.queryUtility(IQAssignment, 
                                      name=self.assignmentId or '')
         course = ICourseInstance(self, None)
-        if course is not None and asg is not None:
-            datecontext = IQAssignmentDateContext(course)
-            # pylint: disable=too-many-function-args
-            return datecontext.of(asg).available_for_submission_ending
-        return None
+        return get_assignment_due_date(asg, course)
 
     @DueDate.setter
     def DueDate(self, value=None):
@@ -304,6 +300,14 @@ class GradeBookEntry(SchemaConfigured,
 
     def __str__(self):
         return self.displayName
+
+
+def get_assignment_due_date(assignment, course):
+    if course is not None and assignment is not None:
+        datecontext = IQAssignmentDateContext(course)
+        # pylint: disable=too-many-function-args
+        return datecontext.of(assignment).available_for_submission_ending
+    return None
 
 
 @WithRepr
