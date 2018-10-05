@@ -207,10 +207,10 @@ class TestAssignments(ApplicationLayerTest):
                                status=201)
 
         # submit
-        self.testapp.post_json(submit_href, ext_obj, status=201)
+        res = self.testapp.post_json(submit_href, ext_obj, status=201)
+        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # The student has no edit link for the grade
-        history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
         history_res = self.testapp.get(history_path)
         assert_that(history_res.json_body['Items'].values(),
                     contains(has_entry('Grade', has_entry('Links', has_length(1)))))

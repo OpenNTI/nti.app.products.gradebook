@@ -20,8 +20,6 @@ from nti.app.assessment.common.history import get_most_recent_history_item
 
 from nti.app.assessment.common.policy import get_auto_grade_policy
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
 
@@ -75,18 +73,16 @@ def _assignment_progress(user, assignment, course):
     """
     Calculate the :class:`IProgress` for this user, assignment, course.
     """
-    histories = component.queryMultiAdapter((course, user),
-                                            IUsersCourseAssignmentHistory)
     submission = None
     progress_date = None
     is_synth = False
     try:
-        items = histories[assignment.ntiid]
-        item = get_most_recent_history_item(items)
-        is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
-        if not is_synth:
-            submission = item.Submission
-            progress_date = item.created
+        item = get_most_recent_history_item(user, course, assignment.ntiid)
+        if item is not None:
+            is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
+            if not is_synth:
+                submission = item.Submission
+                progress_date = item.created
     except KeyError:
         pass
 
