@@ -17,6 +17,8 @@ from zope.event import notify
 
 from zope.location.location import locate
 
+from nti.app.assessment.common.policy import is_most_recent_submission_priority
+
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
@@ -194,6 +196,20 @@ def find_entry_for_item(item):
 
 
 def set_grade_by_assignment_history_item(item, overwrite=False):
+    """
+    For the given :class:`IUsersCourseAssignmentHistoryItem`, set the grade in
+    the gradebook. If we are configured to auto_grade, auto_grade and either
+    store that value in the gradebook (if the policy specifies we accept the
+    `most_recent` submission) or compare it versus the current gradebook value
+    if it exists (if the policy specifies we accept the `highest_grade`
+    submission).
+
+    # FIXME: what do we want overwrite to do here for multi_submissions? I think
+    # this arg is no longer relevant (nti_grade_assignments) or only relevant for
+    # single submissions.
+
+    :returns the grade object if exists
+    """
     entry = find_entry_for_item(item)
     if entry is not None:
         user = IUser(item)
@@ -211,11 +227,15 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         assignmentId = item.Submission.assignmentId
         policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
         if policy is not None:
+            most_recent = is_most_recent_submission_priority(assignmentId, course)
             previous = grade.AutoGrade
-            autograde = policy.autograde(item.pendingAssessment)
-            if autograde is not None:
-                grade.AutoGrade, grade.AutoGradeMax = autograde
-            if grade.value is None or grade.value == previous or overwrite:
+            autograde_res = policy.autograde(item.pendingAssessment)
+            if autograde_res is not None:
+                grade.AutoGrade, grade.AutoGradeMax = autograde_res
+            if grade.value is None or grade.value == previous or overwrite or most_recent:
+                grade.value = grade.AutoGrade
+            elif not most_recent and grade.AutoGrade and grade.AutoGrade > grade.value:
+                # We're configured to only override if our new grade is higher
                 grade.value = grade.AutoGrade
 
         if not getattr(grade, 'creator', None):

@@ -16,6 +16,8 @@ from six import integer_types
 from zope import component
 from zope import interface
 
+from nti.app.assessment.common.history import get_most_recent_history_item
+
 from nti.app.assessment.common.policy import get_auto_grade_policy
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
@@ -79,7 +81,8 @@ def _assignment_progress(user, assignment, course):
     progress_date = None
     is_synth = False
     try:
-        item = histories[assignment.ntiid]
+        items = histories[assignment.ntiid]
+        item = get_most_recent_history_item(items)
         is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
         if not is_synth:
             submission = item.Submission
