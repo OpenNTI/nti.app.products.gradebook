@@ -312,7 +312,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
     def assignments(self):
         assignment_catalog = ICourseAssignmentCatalog(self.course)
         assignments = tuple(
-            asg for asg in assignment_catalog.iter_assignments()
+            asg for asg in assignment_catalog.iter_assignments(course_lineage=True)
         )
         return assignments
 
