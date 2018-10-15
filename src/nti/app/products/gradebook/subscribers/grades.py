@@ -22,9 +22,6 @@ from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
-from zope.securitypolicy.interfaces import Allow
-from zope.securitypolicy.interfaces import IPrincipalRoleMap
-
 from zope.security.management import queryInteraction
 
 from nti.app.products.gradebook.interfaces import IGrade
@@ -35,7 +32,6 @@ from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
 from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
-from nti.contenttypes.courses.interfaces import RID_INSTRUCTOR
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME

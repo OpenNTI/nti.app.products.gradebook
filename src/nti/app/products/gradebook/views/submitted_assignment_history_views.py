@@ -75,7 +75,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
                                         BatchingUtilsMixin):
     """
     Support retrieving the submitted assignment history (and summaries)
-    typically for a particular column of the gradebok.
+    typically for a particular column of the gradebook.
 
     The return dictionary will have the following entries:
 
@@ -199,7 +199,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
             # 'creator' is the same as the username for all cases
             batch_around = self.request.params['batchAroundCreator'].lower()
 
-            def test(x): 
+            def test(x):
                 return x.lower() == batch_around
 
             # While this returns a value, we're interested in its side effect
@@ -322,7 +322,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
         else:
             missing_value = 10000  # improbably large
 
-        def key(x): 
+        def key(x):
             return x[1].FeedbackCount if x[1] else missing_value
 
         # Using batches and heapq.nlargest/smallest has only a very tiny
@@ -391,7 +391,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
         else:
             missing_value = time.time() + 10000  # improbably large
 
-        def key(x): 
+        def key(x):
             return x[1].createdTime if x[1] else missing_value
 
         items_iter = sorted(all_items,
@@ -516,8 +516,7 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
                     filter_usernames = users_without_grades
 
             # XXX: This is a lie unless we also sort (which for all practical use
-            # cases, we do) because it depends on placeholders for missing
-            # items
+            # cases, we do) because it depends on placeholders for missing items
             result['TotalItemCount'] = ICourseEnrollments(course).count_enrollments()
             result['FilteredTotalItemCount'] = len(filter_usernames)
 
@@ -574,14 +573,14 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
             if self.request.params.get('batchAround', ''):
                 batchAround = self.request.params.get('batchAround')
 
-                def batchAroundTest(key_value): 
+                def batchAroundTest(key_value):
                     return to_external_ntiid_oid(key_value[1]) == batchAround
             elif self.request.params.get('batchAroundCreator', ''):
                 # This branch is often handled during sorting, but sometimes
                 # we have to defer it until now.
                 batchAround = self.request.params.get('batchAroundCreator').lower()
 
-                def batchAroundTest(key_value): 
+                def batchAroundTest(key_value):
                     return key_value[0].lower() == batchAround
 
             if batchAroundTest:

@@ -213,7 +213,7 @@ class ISubmittedAssignmentHistoryBase(IShouldHaveTraversablePath):
 
     def __iter__():
         """
-        Iterating across this object iterates across (username, historyitem)
+        Iterating across this object iterates across (username, submission_container)
         pairs, like iterating across a dictionary.
         """
 
@@ -226,7 +226,7 @@ class ISubmittedAssignmentHistoryBase(IShouldHaveTraversablePath):
 
     def items(usernames=None, placeholder=None):
         """
-        Return an iterator over the items (username, historyitem)
+        Return an iterator over the items (username, submission_container)
         that make up this object. This is just like iterating over
         this object normally, except the option of filtering.
 
