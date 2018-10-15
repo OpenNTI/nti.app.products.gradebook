@@ -28,6 +28,8 @@ from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.app.assessment.common.history import get_most_recent_history_item
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
@@ -63,7 +65,6 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import SchemaConfigured
 
 from nti.traversal.traversal import find_interface
-from nti.app.assessment.common.history import get_most_recent_history_item
 
 logger = __import__('logging').getLogger(__name__)
 
