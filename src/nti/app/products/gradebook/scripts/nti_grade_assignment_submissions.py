@@ -67,23 +67,27 @@ def _process_args(args):
         history = histories[username]
         if assignmentId not in history:
             continue
-        item = history[assignmentId]
-        submission = item.Submission
-        if not submission:  # empty -> manual grades
-            logger.info("Ignoring empty submission for user %s", username)
-            continue
-        grade = set_grade_by_assignment_history_item(item,
-                                                     overwrite=args.overwrite)
-        if grade is None:
-            logger.warn("Could not set grade for submission for user %s. Empty Gradebook?",
-                        username)
-        else:
-            count += 1
-            if args.verbose:
-                logger.info(
-                    "Setting grade for user %s to %s",
-                    username,
-                    grade.value)
+        submission_container = history[assignmentId]
+        # These are ordered
+        for item in submission_container.values():
+            submission = item.Submission
+            if not submission:  # empty -> manual grades
+                logger.info("Ignoring empty submission for user %s", username)
+                continue
+            # Our policy will determine which grade we want to accept
+            # `overwrite` will force this to most_recent
+            grade = set_grade_by_assignment_history_item(item,
+                                                         overwrite=args.overwrite)
+            if grade is None:
+                logger.warn("Could not set grade for submission for user %s. Empty Gradebook?",
+                            username)
+            else:
+                # WIth multiple submissions, not sure how useful these stats are.
+                count += 1
+                if args.verbose:
+                    logger.info("Setting grade for user %s to %s",
+                                username,
+                                grade.value)
 
     logger.info("%s grade(s) updated", count)
 
