@@ -54,6 +54,7 @@ from nti.links.links import Link
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.traversal.traversal import find_interface
+from nti.app.assessment.common.history import get_most_recent_history_item
 
 LINKS = StandardExternalFields.LINKS
 CLASS = StandardExternalFields.CLASS
@@ -158,8 +159,6 @@ class _UsersCourseAssignmentHistoryItemDecorator(Singleton):
             external['Grade'] = to_external_object(grade)
 
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
-
 
 @component.adapter(IGrade)
 @interface.implementer(IExternalMappingDecorator)
@@ -171,16 +170,14 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
     def _do_decorate_external(self, context, result):
         user = User.get_user(context.Username) if context.Username else None
         course = find_interface(context, ICourseInstance, strict=False)
-        user_history = component.queryMultiAdapter((course, user),
-                                                   IUsersCourseAssignmentHistory)
-        if not user_history:
-            return
-        for item in user_history.values():
-            if item.assignmentId == context.AssignmentId:
-                links = result.setdefault(LINKS, [])
-                link = Link(item, rel='AssignmentHistoryItem')
-                links.append(link)
-                return
+        # FIXME: We probably need a way to get from a accepted grade to a
+        # submission
+        # This should currently work for bwc.
+        item = get_most_recent_history_item(user, course, context.AssignmentId)
+        if item is not None:
+            links = result.setdefault(LINKS, [])
+            link = Link(item, rel='AssignmentHistoryItem')
+            links.append(link)
 
 
 @component.adapter(IGrade)
@@ -299,7 +296,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
                                     rel='GradeSubmittedAssignmentHistorySummaries')
 
         gradebook_summary_link = Link(column,
-                                      rel='GradeBookByAssignment', 
+                                      rel='GradeBookByAssignment',
                                       elements=('Summary',))
 
         ext_links = external.setdefault(LINKS, [])

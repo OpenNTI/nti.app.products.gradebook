@@ -13,7 +13,8 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.common.history import get_most_recent_history_item
+
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.app.products.gradebook.grades import PersistentGrade
@@ -111,14 +112,8 @@ def grade_for_history_item(item):
 def history_item_for_grade(grade):
     user = IUser(grade, None)
     course = ICourseInstance(grade, None)
-    history = component.queryMultiAdapter((course, user),
-                                          IUsersCourseAssignmentHistory)
-    if history is not None:
-        assg_id = grade.__parent__.AssignmentId  # by definition
-        try:
-            return history[assg_id]
-        except KeyError:
-            raise TypeError("No history for grade")
+    # FIXME: Need a different way to do this with multiple submissions
+    return get_most_recent_history_item(user, course, grade.__parent__.AssignmentId)
 
 
 @component.adapter(IGrade)

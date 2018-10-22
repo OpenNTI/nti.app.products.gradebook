@@ -28,6 +28,8 @@ from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.app.assessment.common.history import get_most_recent_history_item
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
@@ -289,7 +291,7 @@ class GradeBookEntry(SchemaConfigured,
 
     @property
     def DueDate(self):
-        asg = component.queryUtility(IQAssignment, 
+        asg = component.queryUtility(IQAssignment,
                                      name=self.assignmentId or '')
         course = ICourseInstance(self, None)
         return get_assignment_due_date(asg, course)
@@ -573,7 +575,6 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
                  placeholder=_NotGiven,
                  forced_placeholder_usernames=None):
 
-        from nti.app.assessment.adapters import _history_for_user_in_course
         from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
         column = self.context
@@ -601,29 +602,23 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
             if not IUser.providedBy(user):
                 continue
             username_that_submitted = user.username  # go back to canonical
-            history = _history_for_user_in_course(course, user, create=False)
-            try:
-                item = history[assignment_id]
+            # TODO: Do we need this view at all?
+            # TODO: This is approximate
+            history_item = get_most_recent_history_item(user, course, assignment_id)
+            if history_item is not None:
                 if self.as_summary:
-                    item = IUsersCourseAssignmentHistoryItemSummary(item)
-            except (KeyError, TypeError):
+                    history_item = IUsersCourseAssignmentHistoryItemSummary(history_item)
+                yield (username_that_submitted, history_item)
+            else:
                 if placeholder is not _NotGiven:
                     yield (username_that_submitted, placeholder)
-                else:
-                    # Hopefully only seen during migration;
-                    # in production this is an issue
-                    logger.exception(
-                        "Mismatch between recorded submission and history submission for %s",
-                        username_that_submitted)
-            else:
-                yield (username_that_submitted, item)
 
     def items(self,
               usernames=_NotGiven,
               placeholder=_NotGiven,
               forced_placeholder_usernames=None):
         """
-        Return an iterator over the items (username, historyitem)
+        Return an iterator over the items (username, submission_container)
         that make up this object. This is just like iterating over
         this object normally, except the option of filtering.
 
@@ -644,7 +639,6 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
                 iteration faster if you know that only some subset of the usernames
                 will actually be looked at (e.g., a particular numerical range).
         """
-
         if placeholder is not _NotGiven and usernames is _NotGiven:
             raise ValueError("Placeholder only makes sense if usernames is given")
 

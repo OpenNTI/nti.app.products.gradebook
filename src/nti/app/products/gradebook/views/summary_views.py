@@ -15,15 +15,15 @@ from datetime import datetime
 
 import nameparser
 
-from zope import component
-
 from zope.cachedescriptors.property import Lazy
 
 from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
+from nti.app.assessment.common.history import get_user_submission_count
+from nti.app.assessment.common.history import get_most_recent_history_item
+
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -73,9 +73,8 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 
 
 def _get_history_item(course, user, assignment_id):
-    history = component.getMultiAdapter((course, user),
-                                        IUsersCourseAssignmentHistory)
-    return history.get(assignment_id)
+    # TODO: this is probably not the most accurate...
+    return get_most_recent_history_item(user, course, assignment_id)
 
 
 class UserGradeSummary(object):
@@ -162,8 +161,9 @@ class UserGradeSummary(object):
 
     @Lazy
     def history_item(self):
-        # We always want to return this if possible, even
-        # if we do not have a grade.
+        # We always want to return this if possible, even if we do not have a
+        # grade.
+        # XXX: We're pinned to the most recent history item here.
         result = None
         if self.grade_entry is not None:
             assignment_id = self.grade_entry.AssignmentId
@@ -207,27 +207,23 @@ class UserGradeBookSummary(UserGradeSummary):
         overdue_count = 0
         ungraded_count = 0
         today = datetime.utcnow()
-        user_histories = component.queryMultiAdapter((course, user),
-                                                     IUsersCourseAssignmentHistory)
+        for assignment in assignments:
+            grade = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
+            user_grade = grade.get(user.username) if grade is not None else None
+            submission_count = get_user_submission_count(user, course, assignment.ntiid)
 
-        if user_histories is not None:
-            for assignment in assignments:
-                grade = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
-                user_grade = grade.get(user.username) if grade is not None else None
-                history_item = user_histories.get(assignment.ntiid)
+            # Submission but no grade
+            if      submission_count \
+                and (user_grade is None or user_grade.value is None):
+                ungraded_count += 1
 
-                # Submission but no grade
-                if      history_item is not None \
-                    and (user_grade is None or user_grade.value is None):
-                    ungraded_count += 1
-
-                # No submission (and we expect one) and past due
-                no_submit = assignment.no_submit or not assignment.parts
-                if not no_submit and history_item is None:
-                    context = IQAssignmentDateContext(course)
-                    due_date = context.of(assignment).available_for_submission_ending
-                    if due_date and today > due_date:
-                        overdue_count += 1
+            # No submission (and we expect one) and past due
+            no_submit = assignment.no_submit or not assignment.parts
+            if not no_submit and not submission_count:
+                context = IQAssignmentDateContext(course)
+                due_date = context.of(assignment).available_for_submission_ending
+                if due_date and today > due_date:
+                    overdue_count += 1
         return overdue_count, ungraded_count
 
     @Lazy

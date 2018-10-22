@@ -15,8 +15,9 @@ from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.app.assessment.interfaces import IObjectRegradeEvent
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+
+from nti.app.assessment.common.history import get_most_recent_history_item
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy
 
@@ -53,11 +54,10 @@ def _grade_modified(grade, unused_event=None):
     if course is None:
         # not yet
         return
-    history = component.getMultiAdapter((course, user),
-                                        IUsersCourseAssignmentHistory)
-    if entry.AssignmentId in history:
-        item = history[entry.assignmentId]
-        item.updateLastModIfGreater(grade.lastModified)
+    history_item = get_most_recent_history_item(user, course, entry.assignmentId)
+    # TODO: What do we do here? Be nice to have deterministic
+    # grade -> history_item.
+    history_item.updateLastModIfGreater(grade.lastModified)
 
 
 @component.adapter(IUsersCourseAssignmentHistoryItem, IObjectAddedEvent)

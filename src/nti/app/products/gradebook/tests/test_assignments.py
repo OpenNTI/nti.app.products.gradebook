@@ -207,13 +207,14 @@ class TestAssignments(ApplicationLayerTest):
                                status=201)
 
         # submit
-        self.testapp.post_json(submit_href, ext_obj, status=201)
+        res = self.testapp.post_json(submit_href, ext_obj, status=201)
+        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # The student has no edit link for the grade
-        history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
         history_res = self.testapp.get(history_path)
-        assert_that(history_res.json_body['Items'].values(),
-                    contains(has_entry('Grade', has_entry('Links', has_length(1)))))
+        history_item = history_res.json_body
+        assert_that(history_item,
+                    has_entry('Grade', has_entry('Links', has_length(1))))
 
         # because this grade was not auto-graded, the student has no notable
         # mention of it
@@ -312,10 +313,8 @@ class TestAssignments(ApplicationLayerTest):
 
         # And in the student's history, visible to both
         for env in instructor_environ, {}:
-            res = self.testapp.get(history_path,  extra_environ=env)
-            assert_that(res.json_body, has_entry('Items', has_entry(self.assignment_id,
-                                                                    has_entry('Grade',
-                                                                              has_entry('value', 90)))))
+            res = self.testapp.get(history_path, extra_environ=env)
+            assert_that(res.json_body, has_entry('Grade', has_entry('value', 90)))
 
         # A non-submittable part can be directly graded by the professor
         final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/'
@@ -324,7 +323,7 @@ class TestAssignments(ApplicationLayerTest):
         res = self.testapp.put_json(path, grade,
                                     extra_environ=instructor_environ)
         __traceback_info__ = res.json_body
-        final_assignment_id = res.json_body['AssignmentId']
+        final_href = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # And it is now in the gradebook part...
         path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/'
@@ -339,16 +338,13 @@ class TestAssignments(ApplicationLayerTest):
 
         # ...as well as the student's history (for both the instructor and professor)
         for env in instructor_environ, {}:
-            history_res = self.testapp.get(history_path,  extra_environ=env)
+            history_res = self.testapp.get(final_href, extra_environ=env)
             assert_that(history_res.json_body,
-                        has_entry('Items',
-                                  has_entry(final_assignment_id,
-                                            has_entries('Grade',
-                                                        has_entry('value', "75 -"),
-                                                        'SyntheticSubmission', True))))
+                        has_entries('Grade', has_entry('value', "75 -"),
+                                             'SyntheticSubmission', True))
 
             # Both of them can leave feedback on it
-            history_feedback_container_href = history_res.json_body['Items'][final_assignment_id]['Feedback']['href']
+            history_feedback_container_href = history_res.json_body['Feedback']['href']
 
             from nti.app.assessment.feedback import UsersCourseAssignmentHistoryItemFeedback
             feedback = UsersCourseAssignmentHistoryItemFeedback(
@@ -360,11 +356,9 @@ class TestAssignments(ApplicationLayerTest):
                                          ext_feedback,
                                          extra_environ=env,
                                          status=201)
-            history_res = self.testapp.get(history_path,  extra_environ=env)
+            history_res = self.testapp.get(final_href, extra_environ=env)
             assert_that(history_res.json_body,
-                        has_entry('Items', has_entry(final_assignment_id,
-                                                     has_entry('Feedback',
-                                                               has_entry('Items', has_item(has_entry('body', ['Some feedback'])))))))
+                         has_entry('Feedback', has_entry('Items', has_item(has_entry('body', ['Some feedback'])))))
 
         # The instructor cannot do this for users that don't exist...
         self.testapp.put_json(final_grade_path + 'foo@bar', grade, extra_environ=instructor_environ,
@@ -373,9 +367,9 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.put_json(final_grade_path + 'user@not_enrolled', grade, extra_environ=instructor_environ,
                               status=404)
 
-        # The instructor can download the gradebook as csv and it has
-        # the grade in it.
-        #  setup profile names
+        # The instructor can download the gradebook as csv and it has the
+        # grade in it.
+        # setup profile names
         with mock_dataserver.mock_db_trans(self.ds):
             from nti.dataserver.users.interfaces import IFriendlyNamed
             prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
@@ -641,6 +635,7 @@ class TestAssignments(ApplicationLayerTest):
         assert_that([x[0] for x in sum_res.json_body['Items']],
                     contains_inanyorder('sjohnson@nextthought.com', 'aaa@nextthought.com'))
 
+        # first item, container, first submission
         sj_hist_oid = sum_res.json_body['Items'][0][1]['OID']
 
         sum_res = self.testapp.get(sum_link,
@@ -685,6 +680,7 @@ class TestAssignments(ApplicationLayerTest):
         assert_that(sum_res.json_body, has_entry('Items', has_length(1)))
         assert_that([x[0] for x in sum_res.json_body['Items']],
                     is_(['sjohnson@nextthought.com']))
+
         sum_res = self.testapp.get(sum_link,
                                    {'filter': 'LegacyEnrollmentStatusOpen',
                                     'sortOn': 'username',
@@ -816,7 +812,7 @@ class TestAssignments(ApplicationLayerTest):
         history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
         history_res = self.testapp.get(history_path)
 
-        grade = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1']['Grade']
+        grade = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1']['Items'].values()[0]['Grade']
         self.testapp.delete(grade['href'], extra_environ=instructor_environ)
 
         sum_res = self.testapp.get(sum_link,
@@ -1015,14 +1011,14 @@ class TestAssignments(ApplicationLayerTest):
         notable_res = self.fetch_user_recursive_notable_ugd()
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 0))
 
-        self.testapp.post_json(submit_href, ext_obj, status=201)
-        history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
+        res = self.testapp.post_json(submit_href, ext_obj, status=201)
+        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
         history_res = self.testapp.get(history_path)
         # We were half right
-        assert_that(history_res.json_body['Items'].values(),
-                    contains(has_entry('Grade', has_entries('value', 10.0,
-                                                            'AutoGrade', 10.0,
-                                                            'AutoGradeMax', 20.0))))
+        assert_that(history_res.json_body,
+                    has_entry('Grade', has_entries('value', 10.0,
+                                                    'AutoGrade', 10.0,
+                                                    'AutoGradeMax', 20.0)))
 
         # Because it auto-grades, we have a notable item
         notable_res = self.fetch_user_recursive_notable_ugd()
@@ -1068,7 +1064,8 @@ class TestAssignments(ApplicationLayerTest):
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
-        self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+        res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # It shows up as a notable item for the student
         notable_res = self.fetch_user_recursive_notable_ugd()
@@ -1077,10 +1074,11 @@ class TestAssignments(ApplicationLayerTest):
         # If the instructor deletes it...
         # (delete indirectly by resetting the submission to be sure the right
         # event chain works)
-        history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
+        #history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com/UserCourseAssignmentHistoryItem' % COURSE_NTIID
         history_res = self.testapp.get(history_path)
+        submission = history_res.json_body
 
-        submission = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
+        #submission = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
         self.testapp.delete(submission['href'],
                             extra_environ=instructor_environ)
 
@@ -1103,13 +1101,13 @@ class TestAssignments(ApplicationLayerTest):
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
-        self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+        res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
+        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # ...the student sees a history item
-        history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com' % COURSE_NTIID
         history_res = self.testapp.get(history_path)
+        history_item = history_res.json_body
 
-        history_item = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
         history_lm = history_item['Last Modified']
         history_item['Grade']['value']
 
@@ -1118,7 +1116,8 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.put_json(path, grade, extra_environ=instructor_environ)
 
         history_res = self.testapp.get(history_path)
-        history_item2 = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
+        history_item2 = history_res.json_body
+        #history_item2 = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
 
         history_item['Last Modified']
         history_item['Grade']['value']
