@@ -812,7 +812,7 @@ class TestAssignments(ApplicationLayerTest):
         history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/CLC 3403/AssignmentHistories/sjohnson@nextthought.com'
         history_res = self.testapp.get(history_path)
 
-        grade = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1']['Items'].values()[0]['Grade']
+        grade = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.assignment1']['Items'][0]['Grade']
         self.testapp.delete(grade['href'], extra_environ=instructor_environ)
 
         sum_res = self.testapp.get(sum_link,
