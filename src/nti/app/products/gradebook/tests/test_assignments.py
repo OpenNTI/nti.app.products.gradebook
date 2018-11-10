@@ -207,6 +207,10 @@ class TestAssignments(ApplicationLayerTest):
                                status=201)
 
         # submit
+        assignment_res = self.testapp.get(submit_href)
+        start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                     'Commence')
+        self.testapp.post(start_href)
         res = self.testapp.post_json(submit_href, ext_obj, status=201)
         history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 
@@ -455,7 +459,15 @@ class TestAssignments(ApplicationLayerTest):
                                extra_environ=jmadden_environ)
 
         # submit for both students
+        assignment_res = self.testapp.get(submit_href)
+        start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                     'Commence')
+        self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj, status=201)
+        assignment_res = self.testapp.get(submit_href, extra_environ=jmadden_environ)
+        start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                     'Commence')
+        self.testapp.post(start_href, extra_environ=jmadden_environ)
         self.testapp.post_json(submit_href, ext_obj,
                                status=201,
                                extra_environ=jmadden_environ)
@@ -608,7 +620,10 @@ class TestAssignments(ApplicationLayerTest):
         # Now both students submit
         for uname, env in (('sjohnson@nextthought.com', None),
                            ('aaa@nextthought.com', jmadden_environ)):
-
+            assignment_res = self.testapp.get(submit_href, extra_environ=env)
+            start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                         'Commence')
+            self.testapp.post(start_href, extra_environ=env)
             self.testapp.post_json(submit_href, ext_obj,
                                    extra_environ=env,
                                    status=201)
@@ -892,6 +907,10 @@ class TestAssignments(ApplicationLayerTest):
 
         ext_obj = to_external_object(submission)
 
+        assignment_res = self.testapp.get(submit_href)
+        start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                     'Commence')
+        self.testapp.post(start_href)
         res = self.testapp.post_json(submit_href, ext_obj, status=422)
         assert_that(res.json_body,
                     has_entry('message', "Assignment already submitted"))
@@ -1011,6 +1030,10 @@ class TestAssignments(ApplicationLayerTest):
         notable_res = self.fetch_user_recursive_notable_ugd()
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 0))
 
+        assignment_res = self.testapp.get(submit_href)
+        start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                     'Commence')
+        self.testapp.post(start_href)
         res = self.testapp.post_json(submit_href, ext_obj, status=201)
         history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
         history_res = self.testapp.get(history_path)

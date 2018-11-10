@@ -22,8 +22,6 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.externalization.externalization import to_external_object
 
-from nti.coremetadata.interfaces import SYSTEM_USER_ID
-
 from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLayer
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -52,7 +50,7 @@ class TestPredictes(ApplicationLayerTest):
         qs_submission = QuestionSetSubmission(questionSetId=self.question_set_id)
         submission = AssignmentSubmission(assignmentId=self.assignment_id,
                                           parts=(qs_submission,))
-        
+
         data = (self.assignment_id, COURSE_NTIID)
         submit_href = '/dataserver2/Objects/%s?ntiid=%s' % data
 
@@ -66,6 +64,10 @@ class TestPredictes(ApplicationLayerTest):
                                COURSE_NTIID,
                                status=201)
 
+        assignment_res = self.testapp.get(submit_href)
+        start_href = self.require_link_href_with_rel(assignment_res.json_body,
+                                                     'Commence')
+        self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj, status=201)
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
