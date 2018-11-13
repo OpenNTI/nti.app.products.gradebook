@@ -9,13 +9,15 @@ Views and other functions related to grades and gradebook.
 from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 from datetime import datetime
 
 import nameparser
 
+from zope import interface
+
 from zope.cachedescriptors.property import Lazy
+
+from zope.location.interfaces import ILocation
 
 from pyramid.view import view_config
 
@@ -65,6 +67,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+logger = __import__('logging').getLogger(__name__)
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
