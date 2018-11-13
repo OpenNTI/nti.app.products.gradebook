@@ -25,7 +25,7 @@ from pyramid import httpexceptions as hexec
 
 from pyramid.view import view_config
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -134,7 +134,7 @@ class GradeBookPutView(AbstractAuthenticatedView,
                     username)
 
         # Not ideal that we return this here.
-        history_item = IUsersCourseAssignmentHistoryItem(grade)
+        history_item = IUsersCourseAssignmentHistoryItemContainer(grade)
         return history_item
 
 

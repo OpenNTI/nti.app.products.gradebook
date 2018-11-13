@@ -16,6 +16,7 @@ from zope import interface
 from nti.app.assessment.common.history import get_most_recent_history_item
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
 
 from nti.app.products.gradebook.grades import PersistentGrade
 
@@ -114,6 +115,13 @@ def history_item_for_grade(grade):
     course = ICourseInstance(grade, None)
     # FIXME: Need a different way to do this with multiple submissions
     return get_most_recent_history_item(user, course, grade.__parent__.AssignmentId)
+
+
+@component.adapter(IGrade)
+@interface.implementer(IUsersCourseAssignmentHistoryItemContainer)
+def history_item_container_for_grade(grade):
+    history_item = IUsersCourseAssignmentHistoryItem(grade)
+    return history_item.__parent__
 
 
 @component.adapter(IGrade)
