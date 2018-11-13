@@ -986,8 +986,17 @@ class TestAssignments(ApplicationLayerTest):
         grade = {'Username': 'sjohnson@nextthought.com',
                  'AssignmentId': assignment_id,
                  'value': 10}
-        grade_res = self.testapp.post_json(grade_path, grade, extra_environ=instructor_environ)
-        item_rel = self.require_link_href_with_rel(grade_res.json_body, 'edit')
+        grade2 = dict(grade)
+        grade2['value'] = 100
+        grade3 = dict(grade)
+        grade3['value'] = 10
+        self.testapp.post_json(grade_path, grade, extra_environ=instructor_environ)
+        self.testapp.post_json(grade_path, grade2, extra_environ=instructor_environ)
+        grade_res = self.testapp.post_json(grade_path, grade3, extra_environ=instructor_environ)
+        grade_res = grade_res.json_body
+        # Validate we only have a single placeholder item
+        assert_that(grade_res['Items'], has_length(1))
+        reset_rel = self.require_link_href_with_rel(grade_res, 'Reset')
 
         # Grade without submission is incomplete
         validate_incompletion()
@@ -1001,7 +1010,7 @@ class TestAssignments(ApplicationLayerTest):
         validate_incompletion()
 
         # Now reset
-        self.testapp.delete(item_rel, extra_environ=instructor_environ)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
         validate_incompletion()
 
         # Submitting is complete
