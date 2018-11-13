@@ -138,24 +138,24 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 
     assignment_history = component.getMultiAdapter((course, submission.creator),
                                                    IUsersCourseAssignmentHistory)
-
-    try:
+    submission_container = assignment_history.get(assignmentId)
+    if not submission_container:
         assignment_history.recordSubmission(submission, pending)
-        # at this point a place holder grade is created we don't return it
+        # At this point a place holder grade is created we don't return it
         # to indicate to callers of this function that they need to get
         # the grade from the entry
-    except KeyError:
-        # In case there is already a submission (but no grade)
-        # we need to deal with creating the grade object ourself.
-        # This code path hits if a grade is deleted
-        grade = clazz()
-        save_in_container(entry, username, grade)
-    else:
+
         # We don't want this phony-submission showing up as course activity
         # See nti.app.assessment.subscribers
         activity = ICourseInstanceActivity(course)
         # pylint: disable=too-many-function-args
         activity.remove(submission)
+    else:
+        # In case there is already a submission (but no grade)
+        # we need to deal with creating the grade object ourself.
+        # This code path hits if a grade is deleted
+        grade = clazz()
+        save_in_container(entry, username, grade)
     return grade
 
 
