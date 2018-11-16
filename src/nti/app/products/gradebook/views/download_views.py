@@ -49,6 +49,8 @@ from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalList
 
+from nti.namedfile.file import safe_filename
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 StudentName = namedtuple('StudentName',
@@ -293,7 +295,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         writer.writerows(rows)
 
         filename = self._get_filename(course)
-        content_disposition = 'attachment; filename="%s"' % filename
+        content_disposition = 'attachment; filename="%s"' % safe_filename(filename)
         self.request.response.body = buf.getvalue()
         self.request.response.content_disposition = content_disposition
         self.request.response.content_type = DEFAULT_CONTENT_TYPE
