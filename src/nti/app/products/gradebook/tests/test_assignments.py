@@ -12,7 +12,6 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_key
-from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import not_none
 from hamcrest import has_entry
@@ -23,6 +22,8 @@ from hamcrest import has_property
 from hamcrest import greater_than
 from hamcrest import contains_inanyorder
 does_not = is_not
+
+import fudge
 
 from nti.testing.time import time_monotonically_increases
 
@@ -936,7 +937,11 @@ class TestAssignments(ApplicationLayerTest):
         self.fetch_by_ntiid(ntiid)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-    def test_20_autograde_policy(self):
+    @fudge.patch('nti.app.assessment.completion.get_policy_completion_passing_percent')
+    @fudge.patch('nti.app.products.gradebook.completion.get_auto_grade_policy')
+    def test_20_autograde_policy(self, mock_passing_perc, mock_auto_grade):
+        mock_passing_perc.is_callable().returns(None)
+        mock_auto_grade.is_callable().returns({'total_points': 20})
         # This only works in the OU environment because that's where the
         # purchasables are
         extra_env = self.testapp.extra_environ or {}
@@ -954,7 +959,7 @@ class TestAssignments(ApplicationLayerTest):
         question_id1 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
         question_id2 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
-        def validate_completion(complete=True):
+        def validate_completion(complete=True, success=True):
             progress_check = not_none if complete else none
             completed_length = 1 if complete else 0
             with mock_dataserver.mock_db_trans(self.ds):
@@ -970,6 +975,9 @@ class TestAssignments(ApplicationLayerTest):
                                                                   IPrincipalCompletedItemContainer)
                 assert_that(principal_container, not_none())
                 assert_that(principal_container, has_length(completed_length))
+                if completed_length:
+                    completed_item = tuple(principal_container.values())[0]
+                    assert_that(completed_item.Success, is_(success))
 
         def validate_incompletion():
             validate_completion(complete=False)
@@ -1049,14 +1057,16 @@ class TestAssignments(ApplicationLayerTest):
         # We were half right
         assert_that(history_res.json_body,
                     has_entry('Grade', has_entries('value', 10.0,
-                                                    'AutoGrade', 10.0,
-                                                    'AutoGradeMax', 20.0)))
+                                                   'AutoGrade', 10.0,
+                                                   'AutoGradeMax', 20.0)))
 
         # Because it auto-grades, we have a notable item
         notable_res = self.fetch_user_recursive_notable_ugd()
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 1))
         assert_that(notable_res.json_body['Items'][0]['Item'],
                     has_entry('Creator', 'system'))
+
+        validate_completion()
 
         with mock_dataserver.mock_db_trans(self.ds):
             course = find_object_with_ntiid(COURSE_NTIID)
@@ -1067,7 +1077,7 @@ class TestAssignments(ApplicationLayerTest):
                                                    IProgress)
             assert_that(progress, not_none())
             assert_that(progress.AbsoluteProgress, is_(10.0))
-            assert_that(progress.MaxPossibleProgress, none())
+            assert_that(progress.MaxPossibleProgress, is_(20))
             assert_that(progress.LastModified, not_none())
             assert_that(progress.HasProgress, is_(True))
 
@@ -1081,6 +1091,31 @@ class TestAssignments(ApplicationLayerTest):
             assert_that(completed_item.Item, is_(assignment))
             assert_that(completed_item.Principal.id, is_(user.username))
             assert_that(completed_item.CompletedDate, not_none())
+
+        # Validate required perc (user gets 10/20 pts)
+        mock_passing_perc.is_callable().returns(.6)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        self.testapp.post(start_href)
+        self.testapp.post_json(submit_href, ext_obj)
+        validate_completion(success=False)
+
+        mock_passing_perc.is_callable().returns(.01)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        self.testapp.post(start_href)
+        self.testapp.post_json(submit_href, ext_obj)
+        validate_completion(success=True)
+
+        mock_passing_perc.is_callable().returns(.5)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        self.testapp.post(start_href)
+        self.testapp.post_json(submit_href, ext_obj)
+        validate_completion(success=True)
+
+        mock_passing_perc.is_callable().returns(1.0)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        self.testapp.post(start_href)
+        self.testapp.post_json(submit_href, ext_obj)
+        validate_completion(success=False)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_instructor_grade_is_ugd_notable_to_student(self):
