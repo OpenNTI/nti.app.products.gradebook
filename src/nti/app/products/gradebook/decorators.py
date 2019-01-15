@@ -19,6 +19,11 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
+from nti.app.assessment.common.history import get_most_recent_history_item
+
+from nti.app.assessment.common.policy import get_auto_grade_policy
+from nti.app.assessment.common.policy import get_policy_completion_passing_percent
+
 from nti.app.assessment.common.submissions import get_submissions
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
@@ -33,9 +38,13 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.contentlibrary.interfaces import IContentPackage
 
+from nti.contenttypes.completion.interfaces import ICompletionContextCompletedItem
+from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
 
 from nti.contenttypes.courses.utils import is_course_instructor
 
@@ -54,11 +63,12 @@ from nti.links.links import Link
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.traversal.traversal import find_interface
-from nti.app.assessment.common.history import get_most_recent_history_item
 
 LINKS = StandardExternalFields.LINKS
 CLASS = StandardExternalFields.CLASS
+ITEMS = StandardExternalFields.ITEMS
 MIME_TYPE = StandardExternalFields.MIMETYPE
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -303,3 +313,61 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
         ext_links.append(link_to_bulk_history)
         ext_links.append(link_to_summ_history)
         ext_links.append(gradebook_summary_link)
+
+
+@component.adapter(ICompletionContextCompletedItem)
+@interface.implementer(IExternalMappingDecorator)
+class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    For a course completed item, return the assignment metadata, including
+    assigment pass/fail info.
+    """
+
+    def _predicate(self, unused_context, unused_result):
+        return bool(self._is_authenticated)
+
+    def get_assignments(self, course):
+        catalog = ICourseAssignmentCatalog(course)
+        return tuple(catalog.iter_assignments(True))
+
+    def build_completion_meta(self, user, assignment, course, gradebook, completed_item):
+        result = {}
+        result['AssignmentTitle'] = assignment.title
+        result['AssignmentNTIID'] = assignment.ntiid
+        result['CompletionDate'] = completed_item.CompletedDate
+        result['Success'] = completed_item.Success
+        result['CompletionRequiredPassingPercentage'] = get_policy_completion_passing_percent(assignment,
+                                                                                              course)
+        auto_grade_policy = get_auto_grade_policy(assignment, course)
+        result['AssignmentTotalPoints'] = auto_grade_policy.get('total_points') if auto_grade_policy else None
+        column = gradebook.getColumnForAssignmentId(assignment.ntiid)
+        grade = column.get(user.username)
+        result['UserPointsReceived'] = getattr(grade, 'value', None)
+        return result
+
+    def _do_decorate_external(self, context, result):
+        progress = context.__parent__
+        course = progress.CompletionContext
+        if not ICourseInstance.providedBy(course):
+            return
+        user = context.user
+        result['AssignmentCompletionMetadata'] = meta_data = {}
+        meta_data[ITEMS] = items = []
+        principal_container = component.queryMultiAdapter((user, course),
+                                                          IPrincipalCompletedItemContainer)
+        gradebook = IGradeBook(course)
+        success_count = fail_count = 0
+        for assignment in self.get_assignments(course):
+            completed_item = principal_container.get_completed_item(assignment)
+            if completed_item is not None:
+                completion_meta = self.build_completion_meta(user, assignment,
+                                                             course, gradebook,
+                                                             completed_item)
+                if completion_meta['Success']:
+                    success_count += 1
+                else:
+                    fail_count += 1
+                items.append(completion_meta)
+        meta_data[ITEM_COUNT] = len(items)
+        meta_data['SuccessCount'] = success_count
+        meta_data['FailCount'] = fail_count

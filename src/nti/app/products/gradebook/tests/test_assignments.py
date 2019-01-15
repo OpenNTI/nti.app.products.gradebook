@@ -35,6 +35,9 @@ from zope import lifecycleevent
 
 from pyramid.interfaces import IAuthenticationPolicy
 
+from nti.app.contenttypes.completion import COMPLETION_POLICY_VIEW_NAME
+from nti.app.contenttypes.completion import COMPLETION_REQUIRED_VIEW_NAME
+
 from nti.app.products.gradebook import assignments
 from nti.app.products.gradebook import interfaces as grades_interfaces
 
@@ -46,7 +49,13 @@ from nti.assessment.submission import AssignmentSubmission
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contenttypes.completion.interfaces import IProgress
+from nti.contenttypes.completion.interfaces import ICompletableItemProvider
+from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
+from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
 from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
+from nti.contenttypes.completion.interfaces import ICompletableItemDefaultRequiredPolicy
+
+from nti.contenttypes.completion.policies import CompletableItemAggregateCompletionPolicy
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -936,12 +945,31 @@ class TestAssignments(ApplicationLayerTest):
                                   nttype=ntiids.TYPE_OID)
         self.fetch_by_ntiid(ntiid)
 
+    def _set_completion_policy(self, instructor_environ):
+        # Course completion policy, 100%
+        aggregate_mimetype = CompletableItemAggregateCompletionPolicy.mime_type
+        full_data = {u'MimeType': aggregate_mimetype}
+        course_res = self.testapp.get('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403').json_body
+        policy_url = self.require_link_href_with_rel(course_res,
+                                                     COMPLETION_POLICY_VIEW_NAME)
+        return self.testapp.put_json(policy_url, full_data, extra_environ=instructor_environ).json_body
+
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.assessment.completion.get_policy_completion_passing_percent')
+    @fudge.patch('nti.app.products.gradebook.decorators.get_policy_completion_passing_percent')
     @fudge.patch('nti.app.products.gradebook.completion.get_auto_grade_policy')
-    def test_20_autograde_policy(self, mock_passing_perc, mock_auto_grade):
+    @fudge.patch('nti.app.products.gradebook.decorators.get_auto_grade_policy')
+    def test_20_autograde_policy(self, mock_passing_perc, mock_passing_perc2, mock_auto_grade, mock_auto_grade2):
         mock_passing_perc.is_callable().returns(None)
+        mock_passing_perc2.is_callable().returns(None)
+
+        def update_passing_perc(value):
+            mock_passing_perc.is_callable().returns(value)
+            mock_passing_perc2.is_callable().returns(value)
+
         mock_auto_grade.is_callable().returns({'total_points': 20})
+        mock_auto_grade2.is_callable().returns({'total_points': 20})
+
         # This only works in the OU environment because that's where the
         # purchasables are
         extra_env = self.testapp.extra_environ or {}
@@ -959,7 +987,7 @@ class TestAssignments(ApplicationLayerTest):
         question_id1 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
         question_id2 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
-        def validate_completion(complete=True, success=True):
+        def validate_completion(complete=True, success=True, enroll_record_href=None, passing_percentage=None):
             progress_check = not_none if complete else none
             completed_length = 1 if complete else 0
             with mock_dataserver.mock_db_trans(self.ds):
@@ -978,6 +1006,23 @@ class TestAssignments(ApplicationLayerTest):
                 if completed_length:
                     completed_item = tuple(principal_container.values())[0]
                     assert_that(completed_item.Success, is_(success))
+            if enroll_record_href and complete:
+                enroll_res = self.testapp.get(enroll_record_href).json_body
+                course_completed_res = enroll_res['CourseProgress'].get('CompletedItem')
+                assert_that(course_completed_res, not_none())
+                assignment_meta = course_completed_res.get('AssignmentCompletionMetadata')
+                assert_that(assignment_meta, not_none())
+                assert_that(assignment_meta['Items'], has_length(1))
+                assert_that(assignment_meta['SuccessCount'], is_(1 if success else 0))
+                assert_that(assignment_meta['FailCount'], is_(1 if not success else 0))
+                assignment_meta = assignment_meta['Items'][0]
+                assert_that(assignment_meta['AssignmentTitle'], is_(assignment.title))
+                assert_that(assignment_meta['AssignmentNTIID'], is_(assignment.ntiid))
+                assert_that(assignment_meta['CompletionDate'], not_none())
+                assert_that(assignment_meta['Success'], is_(success))
+                assert_that(assignment_meta['CompletionRequiredPassingPercentage'], is_(passing_percentage))
+                assert_that(assignment_meta['UserPointsReceived'], is_(10.0))
+                assert_that(assignment_meta['AssignmentTotalPoints'], is_(20))
 
         def validate_incompletion():
             validate_completion(complete=False)
@@ -986,6 +1031,12 @@ class TestAssignments(ApplicationLayerTest):
 
         # Grades/excused
         instructor_environ = self._make_extra_environ(username='harp4162')
+        # Course completion on, require assignment
+        policy_res = self._set_completion_policy(instructor_environ)
+        required_url = self.require_link_href_with_rel(policy_res,
+                                                       COMPLETION_REQUIRED_VIEW_NAME)
+        self.testapp.put_json(required_url, {u'ntiid': assignment_id},
+                              extra_environ=instructor_environ)
         grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/SetGrade'
         trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
         path = trivial_grade_path + 'sjohnson@nextthought.com'
@@ -1040,9 +1091,10 @@ class TestAssignments(ApplicationLayerTest):
         assert_that(ext_obj,
                     has_entry('MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
         # Make sure we're enrolled
-        self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-                               COURSE_NTIID,
-                               status=201)
+        enroll_record = self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
+                                               COURSE_NTIID)
+        enroll_record = enroll_record.json_body
+        enroll_record_href = enroll_record['href']
         # Make sure we have no notable items
         notable_res = self.fetch_user_recursive_notable_ugd()
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 0))
@@ -1093,29 +1145,29 @@ class TestAssignments(ApplicationLayerTest):
             assert_that(completed_item.CompletedDate, not_none())
 
         # Validate required perc (user gets 10/20 pts)
-        mock_passing_perc.is_callable().returns(.6)
+        update_passing_perc(.6)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
         self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj)
-        validate_completion(success=False)
+        validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=.6)
 
-        mock_passing_perc.is_callable().returns(.01)
+        update_passing_perc(.01)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
         self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj)
-        validate_completion(success=True)
+        validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.01)
 
-        mock_passing_perc.is_callable().returns(.5)
+        update_passing_perc(.5)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
         self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj)
-        validate_completion(success=True)
+        validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.5)
 
-        mock_passing_perc.is_callable().returns(1.0)
+        update_passing_perc(1.0)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
         self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj)
-        validate_completion(success=False)
+        validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=1.0)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_instructor_grade_is_ugd_notable_to_student(self):
