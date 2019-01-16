@@ -49,11 +49,7 @@ from nti.assessment.submission import AssignmentSubmission
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contenttypes.completion.interfaces import IProgress
-from nti.contenttypes.completion.interfaces import ICompletableItemProvider
-from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
-from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
 from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
-from nti.contenttypes.completion.interfaces import ICompletableItemDefaultRequiredPolicy
 
 from nti.contenttypes.completion.policies import CompletableItemAggregateCompletionPolicy
 
@@ -1010,7 +1006,7 @@ class TestAssignments(ApplicationLayerTest):
                 enroll_res = self.testapp.get(enroll_record_href).json_body
                 course_completed_res = enroll_res['CourseProgress'].get('CompletedItem')
                 assert_that(course_completed_res, not_none())
-                assignment_meta = course_completed_res.get('AssignmentCompletionMetadata')
+                assignment_meta = course_completed_res.get('CompletionMetadata')
                 assert_that(assignment_meta, not_none())
                 assert_that(assignment_meta['Items'], has_length(1))
                 assert_that(assignment_meta['SuccessCount'], is_(1 if success else 0))
@@ -1022,7 +1018,7 @@ class TestAssignments(ApplicationLayerTest):
                 assert_that(assignment_meta['Success'], is_(success))
                 assert_that(assignment_meta['CompletionRequiredPassingPercentage'], is_(passing_percentage))
                 assert_that(assignment_meta['UserPointsReceived'], is_(10.0))
-                assert_that(assignment_meta['AssignmentTotalPoints'], is_(20))
+                assert_that(assignment_meta['TotalPoints'], is_(20))
 
         def validate_incompletion():
             validate_completion(complete=False)

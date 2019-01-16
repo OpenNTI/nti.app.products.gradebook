@@ -332,6 +332,7 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def build_completion_meta(self, user, assignment, course, gradebook, completed_item):
         result = {}
+        result['MimeType'] = 'application/vnd.nextthought.assignmentcompletionmetadata'
         result['AssignmentTitle'] = assignment.title
         result['AssignmentNTIID'] = assignment.ntiid
         result['CompletionDate'] = completed_item.CompletedDate
@@ -339,7 +340,7 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
         result['CompletionRequiredPassingPercentage'] = get_policy_completion_passing_percent(assignment,
                                                                                               course)
         auto_grade_policy = get_auto_grade_policy(assignment, course)
-        result['AssignmentTotalPoints'] = auto_grade_policy.get('total_points') if auto_grade_policy else None
+        result['TotalPoints'] = auto_grade_policy.get('total_points') if auto_grade_policy else None
         column = gradebook.getColumnForAssignmentId(assignment.ntiid)
         grade = column.get(user.username)
         result['UserPointsReceived'] = getattr(grade, 'value', None)
@@ -351,7 +352,7 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
         if not ICourseInstance.providedBy(course):
             return
         user = context.user
-        result['AssignmentCompletionMetadata'] = meta_data = {}
+        meta_data = result.setdefault('CompletionMetadata', {})
         meta_data[ITEMS] = items = []
         principal_container = component.queryMultiAdapter((user, course),
                                                           IPrincipalCompletedItemContainer)
