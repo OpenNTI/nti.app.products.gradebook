@@ -983,8 +983,8 @@ class TestAssignments(ApplicationLayerTest):
         question_id1 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
         question_id2 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
-        def validate_completion(complete=True, success=True, enroll_record_href=None, passing_percentage=None):
-            progress_check = not_none if complete else none
+        def validate_completion(progress=True, complete=True, success=True, enroll_record_href=None, passing_percentage=None):
+            progress_check = not_none if progress else none
             completed_length = 1 if complete else 0
             with mock_dataserver.mock_db_trans(self.ds):
                 course = find_object_with_ntiid(COURSE_NTIID)
@@ -1021,7 +1021,7 @@ class TestAssignments(ApplicationLayerTest):
                 assert_that(assignment_meta['TotalPoints'], is_(20))
 
         def validate_incompletion():
-            validate_completion(complete=False)
+            validate_completion(progress=False, complete=False)
 
         validate_incompletion()
 
@@ -1164,6 +1164,16 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.post(start_href)
         self.testapp.post_json(submit_href, ext_obj)
         validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=1.0)
+
+        # Without total_points, we should have an incomplete state (no
+        # completion state). This is what should occur for non auto-graded
+        # assignments with a required passing percent.
+        mock_auto_grade.is_callable().returns(None)
+        mock_auto_grade2.is_callable().returns(None)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        self.testapp.post(start_href)
+        self.testapp.post_json(submit_href, ext_obj)
+        validate_completion(progress=True, complete=False, enroll_record_href=enroll_record_href)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_instructor_grade_is_ugd_notable_to_student(self):
