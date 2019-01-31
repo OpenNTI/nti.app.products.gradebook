@@ -30,7 +30,6 @@ from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
-from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -138,7 +137,9 @@ def update_grade_progress(grade, unused_event=None):
         return
     assignment = find_object_with_ntiid(grade.AssignmentId)
     course = ICourseInstance(grade)
-    notify(UserProgressUpdatedEvent(assignment,
+    # Do the removed event since we want to recalculate progress
+    # after this step.
+    notify(UserProgressRemovedEvent(assignment,
                                     user,
                                     course))
 
