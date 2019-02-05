@@ -337,10 +337,14 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
         result['AssignmentNTIID'] = assignment.ntiid
         result['CompletionDate'] = completed_item.CompletedDate
         result['Success'] = completed_item.Success
-        result['CompletionRequiredPassingPercentage'] = get_policy_completion_passing_percent(assignment,
-                                                                                              course)
+        passing_percent = get_policy_completion_passing_percent(assignment, course)
+        result['CompletionRequiredPassingPercentage'] = passing_percent
         auto_grade_policy = get_auto_grade_policy(assignment, course)
-        result['TotalPoints'] = auto_grade_policy.get('total_points') if auto_grade_policy else None
+        total_points = auto_grade_policy.get('total_points') if auto_grade_policy else None
+        result['TotalPoints'] = total_points
+        if passing_percent is not None and total_points is not None:
+            result['CompletionRequiredPassingPoints'] = passing_percent * total_points
+
         column = gradebook.getColumnForAssignmentId(assignment.ntiid)
         grade = column.get(user.username)
         result['UserPointsReceived'] = getattr(grade, 'value', None)
