@@ -914,13 +914,12 @@ class TestAssignments(ApplicationLayerTest):
         ext_obj = to_external_object(submission)
 
         assignment_res = self.testapp.get(submit_href)
-        start_href = self.require_link_href_with_rel(assignment_res.json_body,
-                                                     'Commence')
-        self.testapp.post(start_href)
-        res = self.testapp.post_json(submit_href, ext_obj, status=422)
+        self.forbid_link_with_rel(assignment_res.json_body,
+                                  'Commence')
+        res = self.testapp.post_json(submit_href, ext_obj, status=403)
         assert_that(res.json_body,
-                    has_entry('message', "Assignment already submitted"))
-        assert_that(res.json_body, has_entry('code', "NotUnique"))
+                    has_entry('message', "Assignment is not available for submission."))
+        assert_that(res.json_body, has_entry('code', "CannotSubmitAssignmentError"))
 
         # ... this didn't cause an activity item to be added for the instructor
         activity_link = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/CourseActivity'
