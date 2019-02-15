@@ -41,6 +41,8 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contenttypes.completion.interfaces import ICompletionContextCompletedItem
 from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
 
+from nti.contenttypes.completion.utils import get_indexed_completed_items
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -291,6 +293,18 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
             # mostly tests
             return
 
+        context_ntiids = []
+        entry_ntiid = ICourseCatalogEntry(course).ntiid
+        course_ntiid = getattr(course, 'ntiid', '')
+        context_ntiids.append(entry_ntiid)
+        if course_ntiid:
+            context_ntiids.append(course_ntiid)
+
+        completed_items = get_indexed_completed_items(items=(assignment.ntiid,),
+                                                      contexts=context_ntiids,
+                                                      success=True)
+
+        external['UserCompletionCount'] = len(completed_items)
         external['GradeSubmittedCount'] = len(column)
 
         submissions = get_submissions(assignment, course)
