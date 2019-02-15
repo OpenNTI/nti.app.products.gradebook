@@ -1080,7 +1080,7 @@ class TestAssignments(ApplicationLayerTest):
         validate_incompletion()
 
         # Submitting is complete
-        submit_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
+        submit_href = assignment_href = '/dataserver2/Objects/%s?ntiid=%s' % (assignment_id, COURSE_NTIID)
 
         # Get one correct and one incorrect
         qs1_submission = QuestionSetSubmission(questionSetId=qs_id1,
@@ -1163,14 +1163,30 @@ class TestAssignments(ApplicationLayerTest):
                             assert_that(q_part, does_not(has_item('assessedValue')))
                             assert_that(q_part, has_entry('solutions', none()))
 
+        # Clean slate, check assignment info decoration
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        assignment_res = self.testapp.get(assignment_href,
+                                          extra_environ=instructor_environ)
+        assignment_res = assignment_res.json_body
+        base_grade_submitted_count = assignment_res['GradeSubmittedCount']
+        base_user_completion_count = assignment_res['UserCompletionCount']
+        base_submitted_population_count = assignment_res['GradeSubmittedStudentPopulationCount']
+        def validate_instructor_assignment_data(complete=False):
+            complete_count = 1 if complete else 0
+            assignment_res = self.testapp.get(assignment_href,
+                                              extra_environ=instructor_environ)
+            assignment_res = assignment_res.json_body
+            assert_that(assignment_res['GradeSubmittedCount'], is_(base_grade_submitted_count + 1))
+            assert_that(assignment_res['UserCompletionCount'], is_(base_user_completion_count + complete_count))
+            assert_that(assignment_res['GradeSubmittedStudentPopulationCount'], is_(base_submitted_population_count))
 
         # Validate required perc (user gets 10/20 pts)
         update_passing_perc(.6)
-        self.testapp.post(reset_rel, extra_environ=instructor_environ)
         self.testapp.post(start_href, extra_environ=extra_env)
         submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
         validate_solutions_stripped(submit_res, complete=False)
         validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=.6)
+        validate_instructor_assignment_data(complete=False)
 
         update_passing_perc(.01)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
@@ -1178,6 +1194,7 @@ class TestAssignments(ApplicationLayerTest):
         submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
         validate_solutions_stripped(submit_res, complete=True)
         validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.01)
+        validate_instructor_assignment_data(complete=True)
 
         update_passing_perc(.5)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
@@ -1185,6 +1202,7 @@ class TestAssignments(ApplicationLayerTest):
         submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
         validate_solutions_stripped(submit_res, complete=True)
         validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.5)
+        validate_instructor_assignment_data(complete=True)
 
         update_passing_perc(1.0)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
@@ -1192,6 +1210,7 @@ class TestAssignments(ApplicationLayerTest):
         submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
         validate_solutions_stripped(submit_res, complete=False)
         validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=1.0)
+        validate_instructor_assignment_data(complete=False)
 
         # Without total_points, we should have an incomplete state (no
         # completion state). This is what should occur for non auto-graded
