@@ -944,7 +944,7 @@ class TestAssignments(ApplicationLayerTest):
         # Course completion policy, 100%
         aggregate_mimetype = CompletableItemAggregateCompletionPolicy.mime_type
         full_data = {u'MimeType': aggregate_mimetype}
-        course_res = self.testapp.get('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403').json_body
+        course_res = self.testapp.get('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403', extra_environ=instructor_environ).json_body
         policy_url = self.require_link_href_with_rel(course_res,
                                                      COMPLETION_POLICY_VIEW_NAME)
         return self.testapp.put_json(policy_url, full_data, extra_environ=instructor_environ).json_body
@@ -954,9 +954,13 @@ class TestAssignments(ApplicationLayerTest):
     @fudge.patch('nti.app.products.gradebook.decorators.get_policy_completion_passing_percent')
     @fudge.patch('nti.app.products.gradebook.completion.get_auto_grade_policy')
     @fudge.patch('nti.app.products.gradebook.decorators.get_auto_grade_policy')
-    def test_20_autograde_policy(self, mock_passing_perc, mock_passing_perc2, mock_auto_grade, mock_auto_grade2):
+    @fudge.patch('nti.app.assessment.decorators.assignment.get_policy_max_submissions')
+    def test_20_autograde_policy(self, mock_passing_perc, mock_passing_perc2, mock_auto_grade, mock_auto_grade2, mock_max_submissions):
         mock_passing_perc.is_callable().returns(None)
         mock_passing_perc2.is_callable().returns(None)
+        # We want to validate submissions with multi submissions strip solutions/etc
+        # if not successfully completed.
+        mock_max_submissions.is_callable().returns(2)
 
         def update_passing_perc(value):
             mock_passing_perc.is_callable().returns(value)
@@ -965,11 +969,19 @@ class TestAssignments(ApplicationLayerTest):
         mock_auto_grade.is_callable().returns({'total_points': 20})
         mock_auto_grade2.is_callable().returns({'total_points': 20})
 
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(username='jason')
         # This only works in the OU environment because that's where the
         # purchasables are
-        extra_env = self.testapp.extra_environ or {}
+        extra_env = self._make_extra_environ(username='jason')
         extra_env.update({'HTTP_ORIGIN': 'http://janux.ou.edu'})
         self.testapp.extra_environ = extra_env
+
+        # Make sure we're enrolled
+        enroll_record = self.testapp.post_json('/dataserver2/users/jason/Courses/EnrolledCourses',
+                                               COURSE_NTIID, extra_environ=extra_env, status=201)
+        enroll_record = enroll_record.json_body
+        enroll_record_href = enroll_record['href']
 
         # XXX: Dirty registration of an autograde policy
         from nti.app.products.gradebook.autograde_policies import TrivialFixedScaleAutoGradePolicy
@@ -989,7 +1001,7 @@ class TestAssignments(ApplicationLayerTest):
                 course = find_object_with_ntiid(COURSE_NTIID)
                 course = ICourseInstance(course)
                 assignment = find_object_with_ntiid(assignment_id)
-                user = User.get_user('sjohnson@nextthought.com')
+                user = User.get_user('jason')
                 progress = component.queryMultiAdapter((user, assignment, course),
                                                        IProgress)
                 assert_that(progress, progress_check())
@@ -1034,10 +1046,10 @@ class TestAssignments(ApplicationLayerTest):
                               extra_environ=instructor_environ)
         grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/SetGrade'
         trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
-        path = trivial_grade_path + 'sjohnson@nextthought.com'
+        path = trivial_grade_path + 'jason'
         excuse_path = '%s/excuse' % path
         unexcuse_path = '%s/unexcuse' % path
-        grade = {'Username': 'sjohnson@nextthought.com',
+        grade = {'Username': 'jason',
                  'AssignmentId': assignment_id,
                  'value': 10}
         grade2 = dict(grade)
@@ -1085,22 +1097,19 @@ class TestAssignments(ApplicationLayerTest):
         del ext_obj['Class']
         assert_that(ext_obj,
                     has_entry('MimeType', 'application/vnd.nextthought.assessment.assignmentsubmission'))
-        # Make sure we're enrolled
-        enroll_record = self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
-                                               COURSE_NTIID)
-        enroll_record = enroll_record.json_body
-        enroll_record_href = enroll_record['href']
         # Make sure we have no notable items
-        notable_res = self.fetch_user_recursive_notable_ugd()
+        notable_res = self.fetch_user_recursive_notable_ugd(username='jason',
+                                                            extra_environ=extra_env)
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 0))
 
-        assignment_res = self.testapp.get(submit_href)
+        assignment_res = self.testapp.get(submit_href, extra_environ=extra_env)
         start_href = self.require_link_href_with_rel(assignment_res.json_body,
                                                      'Commence')
-        self.testapp.post(start_href)
-        res = self.testapp.post_json(submit_href, ext_obj, status=201)
+
+        self.testapp.post(start_href, extra_environ=extra_env)
+        res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env, status=201)
         history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
-        history_res = self.testapp.get(history_path)
+        history_res = self.testapp.get(history_path, extra_environ=extra_env)
         # We were half right
         assert_that(history_res.json_body,
                     has_entry('Grade', has_entries('value', 10.0,
@@ -1108,7 +1117,8 @@ class TestAssignments(ApplicationLayerTest):
                                                    'AutoGradeMax', 20.0)))
 
         # Because it auto-grades, we have a notable item
-        notable_res = self.fetch_user_recursive_notable_ugd()
+        notable_res = self.fetch_user_recursive_notable_ugd(username='jason',
+                                                            extra_environ=extra_env)
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 1))
         assert_that(notable_res.json_body['Items'][0]['Item'],
                     has_entry('Creator', 'system'))
@@ -1119,7 +1129,7 @@ class TestAssignments(ApplicationLayerTest):
             course = find_object_with_ntiid(COURSE_NTIID)
             course = ICourseInstance(course)
             assignment = find_object_with_ntiid(assignment_id)
-            user = User.get_user('sjohnson@nextthought.com')
+            user = User.get_user('jason')
             progress = component.queryMultiAdapter((user, assignment, course),
                                                    IProgress)
             assert_that(progress, not_none())
@@ -1139,29 +1149,48 @@ class TestAssignments(ApplicationLayerTest):
             assert_that(completed_item.Principal.id, is_(user.username))
             assert_that(completed_item.CompletedDate, not_none())
 
+        def validate_solutions_stripped(submit_res, complete=False):
+            """
+            Validate solutions and correctness are stripped when
+            """
+            for part in submit_res.get('parts'):
+                for question in part.get('questions'):
+                    for q_part in question.get('parts'):
+                        if complete:
+                            assert_that(q_part, has_item('assessedValue'))
+                            assert_that(q_part, has_entry('solutions', not_none()))
+                        else:
+                            assert_that(q_part, does_not(has_item('assessedValue')))
+                            assert_that(q_part, has_entry('solutions', none()))
+
+
         # Validate required perc (user gets 10/20 pts)
         update_passing_perc(.6)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
-        self.testapp.post(start_href)
-        self.testapp.post_json(submit_href, ext_obj)
+        self.testapp.post(start_href, extra_environ=extra_env)
+        submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
+        validate_solutions_stripped(submit_res, complete=False)
         validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=.6)
 
         update_passing_perc(.01)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
-        self.testapp.post(start_href)
-        self.testapp.post_json(submit_href, ext_obj)
+        self.testapp.post(start_href, extra_environ=extra_env)
+        submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
+        validate_solutions_stripped(submit_res, complete=True)
         validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.01)
 
         update_passing_perc(.5)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
-        self.testapp.post(start_href)
-        self.testapp.post_json(submit_href, ext_obj)
+        self.testapp.post(start_href, extra_environ=extra_env)
+        submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
+        validate_solutions_stripped(submit_res, complete=True)
         validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.5)
 
         update_passing_perc(1.0)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
-        self.testapp.post(start_href)
-        self.testapp.post_json(submit_href, ext_obj)
+        self.testapp.post(start_href, extra_environ=extra_env)
+        submit_res = self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env).json_body
+        validate_solutions_stripped(submit_res, complete=False)
         validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=1.0)
 
         # Without total_points, we should have an incomplete state (no
@@ -1170,8 +1199,8 @@ class TestAssignments(ApplicationLayerTest):
         mock_auto_grade.is_callable().returns(None)
         mock_auto_grade2.is_callable().returns(None)
         self.testapp.post(reset_rel, extra_environ=instructor_environ)
-        self.testapp.post(start_href)
-        self.testapp.post_json(submit_href, ext_obj)
+        self.testapp.post(start_href, extra_environ=extra_env)
+        self.testapp.post_json(submit_href, ext_obj, extra_environ=extra_env)
         validate_completion(progress=True, complete=False, enroll_record_href=enroll_record_href)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
