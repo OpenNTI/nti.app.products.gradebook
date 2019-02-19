@@ -952,12 +952,14 @@ class TestAssignments(ApplicationLayerTest):
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.assessment.completion.get_policy_completion_passing_percent')
     @fudge.patch('nti.app.products.gradebook.decorators.get_policy_completion_passing_percent')
+    @fudge.patch('nti.app.products.gradebook.completion.get_policy_completion_passing_percent')
     @fudge.patch('nti.app.products.gradebook.completion.get_auto_grade_policy')
     @fudge.patch('nti.app.products.gradebook.decorators.get_auto_grade_policy')
     @fudge.patch('nti.app.assessment.decorators.assignment.get_policy_max_submissions')
-    def test_20_autograde_policy(self, mock_passing_perc, mock_passing_perc2, mock_auto_grade, mock_auto_grade2, mock_max_submissions):
+    def test_20_autograde_policy(self, mock_passing_perc, mock_passing_perc2, mock_passing_perc3, mock_auto_grade, mock_auto_grade2, mock_max_submissions):
         mock_passing_perc.is_callable().returns(None)
         mock_passing_perc2.is_callable().returns(None)
+        mock_passing_perc3.is_callable().returns(None)
         # We want to validate submissions with multi submissions strip solutions/etc
         # if not successfully completed.
         mock_max_submissions.is_callable().returns(2)
@@ -965,6 +967,7 @@ class TestAssignments(ApplicationLayerTest):
         def update_passing_perc(value):
             mock_passing_perc.is_callable().returns(value)
             mock_passing_perc2.is_callable().returns(value)
+            mock_passing_perc3.is_callable().returns(value)
 
         mock_auto_grade.is_callable().returns({'total_points': 20})
         mock_auto_grade2.is_callable().returns({'total_points': 20})
@@ -994,7 +997,8 @@ class TestAssignments(ApplicationLayerTest):
         question_id1 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.1"
         question_id2 = u"tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.naq.qid.ttichigo.2"
 
-        def validate_completion(progress=True, complete=True, success=True, enroll_record_href=None, passing_percentage=None):
+        def validate_completion(progress=True, complete=True, success=True,
+                                enroll_record_href=None, passing_percentage=None, points_received=10.0):
             progress_check = not_none if progress else none
             completed_length = 1 if complete else 0
             with mock_dataserver.mock_db_trans(self.ds):
@@ -1028,7 +1032,7 @@ class TestAssignments(ApplicationLayerTest):
                 assert_that(assignment_meta['CompletionDate'], not_none())
                 assert_that(assignment_meta['Success'], is_(success))
                 assert_that(assignment_meta['CompletionRequiredPassingPercentage'], is_(passing_percentage))
-                assert_that(assignment_meta['UserPointsReceived'], is_(10.0))
+                assert_that(assignment_meta['UserPointsReceived'], is_(points_received))
                 assert_that(assignment_meta['TotalPoints'], is_(20))
 
         def validate_incompletion():
@@ -1211,6 +1215,17 @@ class TestAssignments(ApplicationLayerTest):
         validate_solutions_stripped(submit_res, complete=False)
         validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=1.0)
         validate_instructor_assignment_data(complete=False)
+
+        # A grade without a submission, but *with* a required passing percent
+        # should calculate completion
+        update_passing_perc(.5)
+        self.testapp.post(reset_rel, extra_environ=instructor_environ)
+        grade4 = dict(grade)
+        grade4['value'] = 5
+        self.testapp.post_json(grade_path, grade4, extra_environ=instructor_environ)
+        validate_completion(success=False, enroll_record_href=enroll_record_href, passing_percentage=.5, points_received=5)
+        self.testapp.post_json(grade_path, grade, extra_environ=instructor_environ)
+        validate_completion(success=True, enroll_record_href=enroll_record_href, passing_percentage=.5)
 
         # Without total_points, we should have an incomplete state (no
         # completion state). This is what should occur for non auto-graded

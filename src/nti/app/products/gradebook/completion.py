@@ -19,6 +19,7 @@ from zope import interface
 from nti.app.assessment.common.history import get_most_recent_history_item
 
 from nti.app.assessment.common.policy import get_auto_grade_policy
+from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
@@ -73,16 +74,13 @@ def _assignment_progress(user, assignment, course):
     """
     Calculate the :class:`IProgress` for this user, assignment, course.
     """
-    submission = None
     progress_date = None
     is_synth = False
     try:
         item = get_most_recent_history_item(user, course, assignment.ntiid)
         if item is not None:
             is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
-            if not is_synth:
-                submission = item.Submission
-                progress_date = item.created
+            progress_date = item.created
     except KeyError:
         pass
 
@@ -92,10 +90,15 @@ def _assignment_progress(user, assignment, course):
     grade = grade.get(user.username) if grade is not None else None
     excused_grade = IExcusedGrade.providedBy(grade)
 
-    # No progress if no grade on a no_submit or no submission on a
-    # submittable assignment (and not an excused grade).
+    # We cannot calculate progress if:
+    # * passing percent required and no grade (synth or not)
+    # * no passing percent and submittable, but not non-synth submission
+    # * no grade on a no_submit
     is_no_submit = _is_assignment_no_submit(assignment)
-    if     (   (submission is None and not is_no_submit) \
+    passing_percent = get_policy_completion_passing_percent(assignment, course)
+    if     (   (grade is None and passing_percent is not None) \
+            or (    (progress_date is None or is_synth) \
+                and not is_no_submit and passing_percent is None) \
             or (grade is None and is_no_submit)) \
         and not excused_grade:
         return
@@ -114,6 +117,12 @@ def _assignment_progress(user, assignment, course):
             total_points = policy.get('total_points') or None
         except AttributeError:
             pass
+
+    if passing_percent is not None and excused_grade:
+        # For excused grade, we make points equal total_points required
+        # XXX: This is a yuk approach. Maybe we have a field for
+        # forced completion.
+        grade_val = total_points
 
     progress = Progress(NTIID=assignment.ntiid,
                         AbsoluteProgress=grade_val,
