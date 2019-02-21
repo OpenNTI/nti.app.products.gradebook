@@ -49,7 +49,7 @@ get_or_create_assignment_part = create_assignment_part
 
 
 def create_assignment_entry(course, assignment, displayName,
-                            order=1, _book=None):
+                            order=1, _book=None, reset_entry_location=False):
     book = _book if _book is not None else IGradeBook(course)
 
     assignmentId = assignment.__name__
@@ -68,11 +68,18 @@ def create_assignment_entry(course, assignment, displayName,
     elif entry.displayName != displayName:
         entry.displayName = displayName
 
+    if reset_entry_location:
+        entry = book.getColumnForAssignmentId(assignmentId)
+        part = get_or_create_assignment_part(course,
+                                             assignment.category_name)
+        part.pop(entry.__name__, None)
+        part[INameChooser(part).chooseName(displayName, entry)] = entry
+
     return entry
 get_or_create_assignment_entry = create_assignment_entry
 
 
-def synchronize_gradebook(context):
+def synchronize_gradebook(context, reset_entry_location=False):
     """
     Makes the gradebook for the course match the assignments for the course.
 
@@ -106,7 +113,8 @@ def synchronize_gradebook(context):
             displayName = assignment.title
         else:
             displayName = u'Assignment %s' % ordinal
-        create_assignment_entry(course, assignment, displayName, ordinal, book)
+        create_assignment_entry(course, assignment, displayName,
+                                ordinal, book, reset_entry_location=reset_entry_location)
 
     # Now drop entries that don't correspond to existing assignments
     # and that don't have grades

@@ -202,7 +202,7 @@ class SynchronizeAllCourseGradebooksView(AbstractAuthenticatedView):
         for entry in catalog.iterCatalogEntries():
             course_count += 1
             items.append(entry.ntiid)
-            synchronize_gradebook(entry)
+            synchronize_gradebook(entry, reset_entry_location=True)
         result[ITEM_COUNT] = course_count
         result[ITEMS] = items
         return result

@@ -13,11 +13,7 @@ from datetime import datetime
 
 import nameparser
 
-from zope import interface
-
 from zope.cachedescriptors.property import Lazy
-
-from zope.location.interfaces import ILocation
 
 from pyramid.view import view_config
 
@@ -35,6 +31,7 @@ from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
 from nti.app.products.gradebook.grading.utils import calculate_predicted_grade
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.interfaces import IGradeBook
