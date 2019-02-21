@@ -55,9 +55,9 @@ class TestAdminViews(ApplicationLayerTest):
         res = self.testapp.post(href, status=200)
         assert_that(res.json_body,
                     has_entry('Items',
-                              has_entries('default',  [u'Main Title'],
-                                          'no_submit', [u'Final Grade'],
-                                          'quizzes', [u'Main Title', u'Trivial Test'])))
+                              has_entries('default',  [u'Main_Title'],
+                                          'no_submit', [u'Final_Grade'],
+                                          'quizzes', [u'Main_Title', u'Trivial_Test'])))
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_rebuild_grade_catalog(self):

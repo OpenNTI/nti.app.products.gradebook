@@ -26,6 +26,8 @@ from zope.cachedescriptors.property import CachedProperty
 
 from zope.container.contained import Contained
 
+from zope.container.interfaces import INameChooser
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.app.assessment.common.history import get_most_recent_history_item
@@ -42,6 +44,7 @@ from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySum
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
+from nti.containers.containers import AbstractNTIIDSafeNameChooser
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -664,3 +667,12 @@ class _DefaultGradeBookEntrySubmittedAssignmentHistory(Contained):
 class _DefaultGradeBookEntrySubmittedAssignmentHistorySummaries(_DefaultGradeBookEntrySubmittedAssignmentHistory):
     __name__ = 'SubmittedAssignmentHistorySummaries'
     as_summary = True
+
+
+@component.adapter(IGradeBookPart)
+@interface.implementer(INameChooser)
+class _GradeBookPartNameChooser(AbstractNTIIDSafeNameChooser):
+    """
+    Handles NTIID-safe name choosing for gradebook entry.
+    """
+    leaf_iface = IGradeBookPart

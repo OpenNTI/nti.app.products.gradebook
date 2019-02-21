@@ -323,6 +323,7 @@ NO_SUBMIT_PART_NAME = 'no_submit'
 
 #: Special final grade name
 FINAL_GRADE_NAME = 'Final Grade'
+FINAL_GRADE_NAMES = (FINAL_GRADE_NAME, 'Final_Grade')
 
 
 class IGradeBook(IContainer,

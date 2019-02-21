@@ -321,7 +321,7 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
         for part in self.gradebook.values():
             for part_name, entry in part.items():
                 if      part.__name__ == NO_SUBMIT_PART_NAME \
-                    and part_name == 'Final Grade':
+                    and part_name in FINAL_GRADE_NAMES:
                     return entry
         return None
 

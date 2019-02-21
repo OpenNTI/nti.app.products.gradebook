@@ -34,7 +34,7 @@ from nti.app.products.gradebook.grading.policies.interfaces import ICS1323Course
 
 from nti.app.products.gradebook.grading.utils import build_predicted_grade
 
-from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -243,7 +243,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
             part = getattr(entry, '__parent__', None)
             if      part is not None \
                 and part.__name__ == NO_SUBMIT_PART_NAME \
-                and name == FINAL_GRADE_NAME:
+                and name in FINAL_GRADE_NAMES:
                 continue
 
             weight = self._weights.get(assignmentId)
@@ -359,8 +359,8 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
             # drop lowest grades in the category
             # make sure we don't drop excused grades
             if category.DropLowest and category.DropLowest < grade_count:
-                logger.log(LOGLEVEL, 
-                           "%s have been dropped", 
+                logger.log(LOGLEVEL,
+                           "%s have been dropped",
                            grades[0:category.DropLowest])
                 grades = grades[category.DropLowest:]
                 drop_count += (grade_count - len(grades))

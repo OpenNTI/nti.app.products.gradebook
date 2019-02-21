@@ -32,7 +32,7 @@ from nti.app.products.gradebook.grading.utils import calculate_predicted_grade
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
-from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.appserver.pyramid_authorization import has_permission
@@ -136,10 +136,13 @@ class CurrentGradeView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         try:
             part = book[NO_SUBMIT_PART_NAME]
-            final_grade = part[FINAL_GRADE_NAME][user.username]
-            final_grade = None if is_none(final_grade.value) else final_grade
-            if final_grade is not None:
-                result['FinalGrade'] = final_grade
+            for final_grade_name in FINAL_GRADE_NAMES:
+                if final_grade_name in part:
+                    final_grade = part[final_grade_name][user.username]
+                    final_grade = None if is_none(final_grade.value) else final_grade
+                    if final_grade is not None:
+                        result['FinalGrade'] = final_grade
+                    break
         except KeyError:
             final_grade = None
 

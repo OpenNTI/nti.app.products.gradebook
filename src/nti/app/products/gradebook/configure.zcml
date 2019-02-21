@@ -35,6 +35,10 @@
         role="nti.roles.course_ta" />
 
 	<!-- Adapters -->
+    <adapter factory=".gradebook._GradeBookPartNameChooser"
+             for=".interfaces.IGradeBookPart"
+             provides="zope.container.interfaces.INameChooser"/>
+
 	<adapter factory=".gradebook.gradebook_for_course"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
 			 provides=".interfaces.IGradeBook" />
