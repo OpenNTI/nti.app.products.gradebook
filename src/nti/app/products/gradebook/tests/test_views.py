@@ -81,7 +81,7 @@ class TestViews(ApplicationLayerTest):
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'http://platform.ou.edu'
         instructor_environ = self._make_extra_environ(username='harp4162')
-        path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial%20Test/'
+        path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
 
         # We don't have a grade yet, so this returns a placeholder grade
         # without a value.
@@ -158,7 +158,7 @@ class TestViews(ApplicationLayerTest):
 
         # Should get a dict back with 'PredictedGrade'
         # if we have one.
-        grade_entry_path = course_path + '/GradeBook/quizzes/Trivial%20Test/sjohnson@nextthought.com'
+        grade_entry_path = course_path + '/GradeBook/quizzes/Trivial_Test/sjohnson@nextthought.com'
         grade = {'Class': 'Grade',
                  'value': 10}
         self.testapp.put_json(grade_entry_path, grade,
@@ -174,7 +174,7 @@ class TestViews(ApplicationLayerTest):
         # and 'FinalGrade' if we have both.
         grade = {'Class': 'Grade',
                  'value': 75}
-        final_grade_path = course_path + '/GradeBook/no_submit/Final Grade/sjohnson@nextthought.com'
+        final_grade_path = course_path + '/GradeBook/no_submit/Final_Grade/sjohnson@nextthought.com'
         self.testapp.put_json(final_grade_path, grade,
                               extra_environ=instructor_environ)
         res = self.testapp.get(current_grade_path)
@@ -196,7 +196,7 @@ class TestViews(ApplicationLayerTest):
         instructor_environ = self._make_extra_environ(username='harp4162')
 
         path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/contents.csv'
-        grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial%20Test/sjohnson@nextthought.com'
+        grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/sjohnson@nextthought.com'
         enroll_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses'
 
         self.testapp.post_json(enroll_path,

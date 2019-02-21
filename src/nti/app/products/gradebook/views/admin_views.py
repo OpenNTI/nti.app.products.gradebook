@@ -54,6 +54,7 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.users import User
 
@@ -179,6 +180,31 @@ class SynchronizeGradebookView(AbstractAuthenticatedView,
                 for entry_name in part.keys():
                     items[part_name].append(entry_name)
         result[ITEM_COUNT] = result[TOTAL] = len(items)
+        return result
+
+
+@view_config(context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               permission=nauth.ACT_NTI_ADMIN,
+               name='SynchronizeGradebook')
+class SynchronizeAllCourseGradebooksView(AbstractAuthenticatedView):
+    """
+    Synchronize the gradebook for all courses in this site.
+    """
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        items = []
+        course_count = 0
+        catalog = component.getUtility(ICourseCatalog)
+        for entry in catalog.iterCatalogEntries():
+            course_count += 1
+            items.append(entry.ntiid)
+            synchronize_gradebook(entry)
+        result[ITEM_COUNT] = course_count
+        result[ITEMS] = items
         return result
 
 

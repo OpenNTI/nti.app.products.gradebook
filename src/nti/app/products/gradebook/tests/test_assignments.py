@@ -67,9 +67,10 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from nti.externalization.tests import externalizes
+
+from nti.ntiids.ntiids import make_specific_safe
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 COURSE_NTIID = u'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.course_info'
 
@@ -105,7 +106,7 @@ class TestAssignments(ApplicationLayerTest):
                 part = book['quizzes']
                 assert_that(part, has_length(2))
 
-                assert_that(part, has_key('Main Title'))
+                assert_that(part, has_key('Main_Title'))
 
             # Changing the title changes the display name, but
             # not the key
@@ -119,7 +120,7 @@ class TestAssignments(ApplicationLayerTest):
                 assignments.synchronize_gradebook(law_course)
                 book = grades_interfaces.IGradeBook(law_course)
                 part = book['quizzes']
-                entry = part['Main Title']
+                entry = part['Main_Title']
                 assert_that(entry, has_property('displayName', 'New Title'))
             finally:
                 asg.title = u'Main Title'
@@ -179,7 +180,7 @@ class TestAssignments(ApplicationLayerTest):
                         title = urllib_parse.quote(title)
                         assert_that(href,
                                     is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/%s/%s/SubmittedAssignmentHistory'
-                                        % (asg.category_name, title)))
+                                        % (asg.category_name, make_specific_safe(asg.title))))
             finally:
                 component.provideUtility(old, provides=IAuthenticationPolicy)
                 assert_that(component.getUtility(IAuthenticationPolicy),
@@ -243,14 +244,14 @@ class TestAssignments(ApplicationLayerTest):
         sum_link = self.require_link_href_with_rel(res.json_body,
                                                   'GradeSubmittedAssignmentHistorySummaries')
         assert_that(sum_link,
-                    is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main%20Title/SubmittedAssignmentHistorySummaries'))
+                    is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main_Title/SubmittedAssignmentHistorySummaries'))
 
         self.testapp.get(sum_link, extra_environ=instructor_environ)
 
         bulk_link = self.require_link_href_with_rel(
             res.json_body, 'GradeSubmittedAssignmentHistory')
         assert_that(bulk_link,
-                    is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main%20Title/SubmittedAssignmentHistory'))
+                    is_('/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Main_Title/SubmittedAssignmentHistory'))
 
         # We can walk it down to just one user
         res = self.testapp.get(sum_link + '/' + self.extra_environ_default_user.lower())
@@ -304,7 +305,7 @@ class TestAssignments(ApplicationLayerTest):
         res = self.testapp.get(part_path,  extra_environ=instructor_environ)
         assert_that(res.json_body,
                     has_entry('Items',
-                              has_entry('Main Title',
+                              has_entry('Main_Title',
                                         has_entries('AssignmentId', self.assignment_id,
                                                     'Items', has_entry(self.extra_environ_default_user.lower(),
                                                                        has_entry('value', 90))))))
@@ -316,7 +317,7 @@ class TestAssignments(ApplicationLayerTest):
                     has_entry('Items',
                               has_entry('quizzes',
                                         has_entry('Items',
-                                                  has_entry('Main Title',
+                                                  has_entry('Main_Title',
                                                             has_entries('AssignmentId', self.assignment_id,
                                                                         'Items', has_entry(self.extra_environ_default_user.lower(),
                                                                                            has_entry('value', 90))))))))
@@ -327,7 +328,7 @@ class TestAssignments(ApplicationLayerTest):
             assert_that(res.json_body, has_entry('Grade', has_entry('value', 90)))
 
         # A non-submittable part can be directly graded by the professor
-        final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final Grade/'
+        final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final_Grade/'
         path = final_grade_path + 'sjohnson@nextthought.com'
         grade['value'] = "75 -"  # Use a string like the app typically sends
         res = self.testapp.put_json(path, grade,
@@ -340,7 +341,7 @@ class TestAssignments(ApplicationLayerTest):
         res = self.testapp.get(path,  extra_environ=instructor_environ)
         assert_that(res.json_body,
                     has_entry('Items',
-                              has_entry('Final Grade',
+                              has_entry('Final_Grade',
                                         has_entries('Class', 'GradeBookEntry',
                                                     'MimeType', 'application/vnd.nextthought.gradebook.gradebookentry',
                                                     'Items', has_entry(self.extra_environ_default_user.lower(),
@@ -872,7 +873,7 @@ class TestAssignments(ApplicationLayerTest):
 
         # If the instructor puts in a grade for something that the student could ordinarily
         # submit...
-        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
         path = trivial_grade_path + 'JaSoN'  # Notice we are mangling the case
         # Note the bad MimeType, but it doesn't matter
         grade = {"MimeType": "application/vnd.nextthought.courseware.grade",
@@ -1049,7 +1050,7 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.put_json(required_url, {u'ntiid': assignment_id},
                               extra_environ=instructor_environ)
         grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/SetGrade'
-        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
         path = trivial_grade_path + 'jason'
         excuse_path = '%s/excuse' % path
         unexcuse_path = '%s/unexcuse' % path
@@ -1247,7 +1248,7 @@ class TestAssignments(ApplicationLayerTest):
         instructor_environ = self._make_extra_environ(username='harp4162')
 
         # If the instructor puts in a grade...
-        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
@@ -1284,7 +1285,7 @@ class TestAssignments(ApplicationLayerTest):
         instructor_environ = self._make_extra_environ(username='harp4162')
 
         # If the instructor puts in a grade...
-        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
@@ -1323,7 +1324,7 @@ class TestAssignments(ApplicationLayerTest):
         instructor_environ = self._make_extra_environ(username='harp4162')
 
         # If the instructor puts in a grade...
-        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial Test/'
+        trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10

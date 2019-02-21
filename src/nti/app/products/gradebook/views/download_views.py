@@ -32,6 +32,7 @@ from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.utils import replace_username
@@ -178,7 +179,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         for part in gradebook.values():
             for name, entry in part.items():
                 if	    part.__name__ == NO_SUBMIT_PART_NAME \
-                    and name == 'Final Grade':
+                    and name in FINAL_GRADE_NAMES:
                     final_grade_entry = entry
                     continue
                 assignment = get_valid_assignment(entry, course)

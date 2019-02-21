@@ -24,7 +24,7 @@ from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IExcusedGrade
-from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAME
+from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.grading.utils import build_predicted_grade
@@ -104,7 +104,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
                 part = getattr(entry, '__parent__', None)
                 if      part is not None \
                     and part.__name__ == NO_SUBMIT_PART_NAME \
-                    and name == FINAL_GRADE_NAME:
+                    and name in FINAL_GRADE_NAMES:
                     continue
 
                 ntiid = grade.AssignmentId
