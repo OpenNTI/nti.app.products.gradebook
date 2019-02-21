@@ -188,7 +188,7 @@ class SynchronizeGradebookView(AbstractAuthenticatedView,
                renderer='rest',
                request_method='POST',
                permission=nauth.ACT_NTI_ADMIN,
-               name='SynchronizeGradebook')
+               name='SynchronizeGradebooks')
 class SynchronizeAllCourseGradebooksView(AbstractAuthenticatedView):
     """
     Synchronize the gradebook for all courses in this site.
