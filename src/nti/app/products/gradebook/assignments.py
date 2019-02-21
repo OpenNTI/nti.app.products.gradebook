@@ -72,7 +72,7 @@ def create_assignment_entry(course, assignment, displayName,
         entry = book.getColumnForAssignmentId(assignmentId)
         part = get_or_create_assignment_part(course,
                                              assignment.category_name)
-        part.pop(entry.__name__, None)
+        part._delitemf(entry.__name__, event=False)
         part[INameChooser(part).chooseName(displayName, entry)] = entry
 
     return entry
