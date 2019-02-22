@@ -261,10 +261,10 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
             # - or if we must accept most recent
             # Take the current grade if we want the highest graded submission
             # and our new grade is higher than the previous grade
-            numeric_grade_val = numeric_grade_val(grade.value)
+            numeric_val = numeric_grade_val(grade.value)
             if grade.value is None or overwrite or most_recent:
                 grade.value = grade.AutoGrade
-            elif not most_recent and grade.AutoGrade and grade.AutoGrade > numeric_grade_val:
+            elif not most_recent and grade.AutoGrade and grade.AutoGrade > numeric_val:
                 # We're configured to only override if our new grade is higher
                 grade.value = grade.AutoGrade
 
