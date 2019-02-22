@@ -7,6 +7,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from six import string_types
+from six import integer_types
+
 from ZODB.interfaces import IConnection
 
 from zope import component
@@ -51,6 +54,25 @@ from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import IUser
 
 logger = __import__('logging').getLogger(__name__)
+
+
+def numeric_grade_val(grade_val):
+    """
+    Convert the grade's possible char "number - letter" scheme to a number,
+    or None.
+    """
+    result = None
+    if isinstance(grade_val, string_types):
+        try:
+            if grade_val.endswith(' -'):
+                result = float(grade_val.split()[0])
+            else:
+                result = float(grade_val)
+        except ValueError:
+            pass
+    elif isinstance(grade_val, (integer_types, float)):
+        result = grade_val
+    return result
 
 
 def mark_btree_bucket_as_changed(grade):
@@ -239,9 +261,10 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
             # - or if we must accept most recent
             # Take the current grade if we want the highest graded submission
             # and our new grade is higher than the previous grade
+            numeric_grade_val = numeric_grade_val(grade.value)
             if grade.value is None or overwrite or most_recent:
                 grade.value = grade.AutoGrade
-            elif not most_recent and grade.AutoGrade and grade.AutoGrade > grade.value:
+            elif not most_recent and grade.AutoGrade and grade.AutoGrade > numeric_grade_val:
                 # We're configured to only override if our new grade is higher
                 grade.value = grade.AutoGrade
 
