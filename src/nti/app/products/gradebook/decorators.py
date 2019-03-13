@@ -174,7 +174,8 @@ class _UsersCourseAssignmentHistoryItemDecorator(Singleton):
         gradebook_entry = IGradeBookEntry(item)
         applicable_grade = get_applicable_user_grade(gradebook_entry, user)
         external['Grade'] = applicable_grade
-
+        grade_container = gradebook_entry.get(user.username)
+        external['MetaGrade'] = grade_container.MetaGrade
 
 
 @component.adapter(IGrade)

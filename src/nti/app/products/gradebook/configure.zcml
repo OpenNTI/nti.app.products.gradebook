@@ -143,6 +143,7 @@
 						 .interfaces.IGradeScheme
 						 .interfaces.IGradeBook
 						 .interfaces.IGradeBookPart
+						 .interfaces.IGradeContainer
 						 .interfaces.IGradeBookEntry
 						 .interfaces.ILetterGradeScheme
 						 .interfaces.IBooleanGradeScheme
