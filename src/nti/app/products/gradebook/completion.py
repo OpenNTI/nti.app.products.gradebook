@@ -19,9 +19,9 @@ from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 
-from nti.app.products.gradebook.utils.gradebook import numeric_grade_val
+from nti.app.products.gradebook.utils.gradebook import numeric_grade_val,\
+    get_applicable_user_grade
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
@@ -66,9 +66,10 @@ def _assignment_progress(user, assignment, course):
 
     gradebook = IGradeBook(course)
     # pylint: disable=too-many-function-args
-    grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
-    grade = grade.get(user.username) if grade is not None else None
-    excused_grade = IExcusedGrade.providedBy(grade)
+    entry = gradebook.getColumnForAssignmentId(assignment.ntiid)
+    grade_container = entry.get(user.username) if entry is not None else None
+    excused_grade = grade_container.excused
+    grade = get_applicable_user_grade(entry, user)
 
     # We cannot calculate progress if:
     # * passing percent required and no grade (synth or not)

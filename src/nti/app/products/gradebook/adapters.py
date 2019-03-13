@@ -13,11 +13,10 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
-from nti.app.assessment.common.history import get_most_recent_history_item
-
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.interfaces import IGrade
@@ -97,22 +96,26 @@ def grade_for_history_item(item):
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is not None and user is not None:
         grade_container = entry.get(user.username)
-        if grade_container is None:
-            # Always dummy up a grade (at the right location in
-            # the hierarchy) so that we have an 'edit' link if
-            # necessary
+        # Always dummy up a grade (at the right location in
+        # the hierarchy) so that we have an 'edit' link if
+        # necessary
 
-            # Is this still needed with the GradeContainer
+        # XXX: Is this still needed with the GradeContainer
+        if grade_container is None:
+            grade_container = GradeContainer()
+            grade_container.__parent__ = entry
+
+        for grade in grade_container.values():
+            if grade.HistoryItemNTIID == item.ntiid:
+                result = grade
+                break
+
+        if result is None:
             result = PersistentGrade()
             result.createdTime = 0
             result.lastModified = 0
             result.__parent__ = grade_container
             result.__name__ = user.username
-        else:
-            for grade in grade_container.values():
-                if grade.HistoryItemNTIID == item.ntiid:
-                    result = grade
-                    break
         return result
 
 

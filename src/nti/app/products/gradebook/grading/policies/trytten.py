@@ -38,7 +38,6 @@ from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 
 from nti.app.products.gradebook.utils import MetaGradeBookObject
 
@@ -259,7 +258,7 @@ class CS1323CourseGradingPolicy(DefaultCourseGradingPolicy):
                 continue
 
             correctness = None
-            excused = IExcusedGrade.providedBy(grade)
+            excused = grade.__parent__.Excused
             is_late = self._is_late(assignmentId, now)
 
             value = grade.value

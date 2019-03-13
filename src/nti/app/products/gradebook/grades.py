@@ -104,6 +104,10 @@ class Grade(CreatedModDateTrackingObject,
             return self.__parent__.AssignmentId
 
     @property
+    def HistoryItemNTIID(self):
+        return self.__name__
+
+    @property
     def Username(self):
         if self.__parent__ is not None:
             return self.__parent__.__name__

@@ -31,7 +31,6 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
@@ -268,7 +267,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                     # how to do so in a D2L import-compatible way, but we've seen text
                     # exported values (from our system) anyway, which are probably not
                     # imported into D2L.
-                    if IExcusedGrade.providedBy(user_grade):
+                    if user_grade.__parent__.Excused:
                         grade_val = _(u'Excused')
                     else:
                         grade_val = _tx_grade(grade_val)

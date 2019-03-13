@@ -27,14 +27,13 @@ from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
-from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PersistentGrade, GradeContainer
 
 from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
 
 from nti.app.products.gradebook.grading.policies.simple import SimpleTotalingGradingPolicy
 
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
 
@@ -82,16 +81,16 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         factory = find_factory_for(ext)
         obj = factory()
         update_from_external_object(obj, ext)
-        
+
     @WithMockDSTrans
     @fudge.patch('nti.contenttypes.courses.grading.policies.get_assignment',
                  'nti.app.products.gradebook.grading.policies.simple.get_assignment_policies',
                  'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_all_assignments_for_user',
                  'nti.app.products.gradebook.grading.utils.get_presentation_scheme')
     def test_simple_grade_predictor_policy(self,
-                                           mock_ga, 
-                                           mock_gap, 
-                                           mock_get_assignments, 
+                                           mock_ga,
+                                           mock_gap,
+                                           mock_get_assignments,
                                            mock_presentation):
 
         connection = mock_dataserver.current_transaction
@@ -113,8 +112,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         set_grading_policy_for_course(course, policy)
         mock_gap.is_callable().with_args().returns(cap)
         mock_get_assignments.is_callable().with_args().returns(assignments)
-        
-        # Use the numeric grade scheme to check grades 
+
+        # Use the numeric grade scheme to check grades
         presentation_scheme = NumericGradeScheme()
         mock_presentation.is_callable().with_args().returns(presentation_scheme)
 
@@ -135,7 +134,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
             grade = PersistentGrade()
             grade.value = 5.5
             grade.username = u'cald3307'
-            entry[u'cald3307'] = grade
+            grade.__parent__ = container = GradeContainer()
+            entry[u'cald3307'] = container
 
         # If no points available, we return None even
         # if there happen to be grades in the gradebook.
@@ -164,8 +164,9 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'a3'
         part[u'early_and_ungraded'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -179,9 +180,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'a4'
         part[u'non_numeric_grade'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = u'non-numeric grade, but has 1 number in it'
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade(u'cald3307')
         assert_that(grade.correctness, is_(73))
@@ -198,15 +200,16 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         part[u'excused'] = entry
         grade = PersistentGrade()
         grade.value = 100
-        interface.alsoProvides(grade, IExcusedGrade)
+        grade.__parent__ = container = GradeContainer()
+        grade.__parent__.Excused = True
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
         assert_that(grade.points_available, is_(15))
         assert_that(grade.points_earned, is_(11))
-        
+
         # A grade without an entry in the course policy
         # should be ignored.
         part = GradeBookPart()
@@ -215,9 +218,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'id_to_missing_assignment'
         part[u'excused'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = 100
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -234,9 +238,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'negative_grade'
         part[u'negative_grade'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = -12  # We now have -1 points for the course
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(0))
@@ -253,9 +258,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'extra_credit_grade'
         part[u'extra_credit'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = 100
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(100))
@@ -270,11 +276,11 @@ class TestSimpleGradingPolicy(unittest.TestCase):
                  'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._is_due',
                  'nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._has_questions',
                  'nti.app.products.gradebook.grading.utils.get_presentation_scheme')
-    def test_simple_grade_predictor_for_late_assignments(self, 
-                                                         mock_ga, 
-                                                         mock_gap, 
-                                                         mock_get_assignments, 
-                                                         mock_is_due, 
+    def test_simple_grade_predictor_for_late_assignments(self,
+                                                         mock_ga,
+                                                         mock_gap,
+                                                         mock_get_assignments,
+                                                         mock_is_due,
                                                          mock_has_questions,
                                                          mock_presentation):
 
@@ -319,7 +325,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         a6.ntiid = u'tag:nextthought.com,2011-10:ungraded'
         assignments.append(a6)
         mock_get_assignments.is_callable().with_args().returns(assignments)
-        
+
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(0))
         assert_that(grade.points_available, is_(10))
@@ -334,9 +340,10 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'tag:nextthought.com,2011-10:due_and_failed'
         part[u'failed'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = 0
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
         # We have earned 0 points out of a possible 10.
         # While this assignment is only worth 5 points,
         # the unsubmitted assignment (due_and_passed) is
@@ -346,7 +353,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         assert_that(grade.correctness, is_(0))
         assert_that(grade.points_available, is_(10))
         assert_that(grade.points_earned, is_(0))
-        
+
         # This should also be counted because it's due.
         part = GradeBookPart()
         book[u'passed'] = part
@@ -354,15 +361,16 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'tag:nextthought.com,2011-10:due_and_passed'
         part[u'passed'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = 5
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
         # We have earned 5 points out of a possible 10.
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
         assert_that(grade.points_available, is_(10))
         assert_that(grade.points_earned, is_(5))
-        
+
         # If the student has not been graded, but has submitted
         # the assignment, we ignore it instead of counting as a 0.
         part = GradeBookPart()
@@ -386,10 +394,11 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         entry.assignmentId = u'tag:nextthought.com,2011-10:excused'
         part[u'excused'] = entry
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = 100
-        interface.alsoProvides(grade, IExcusedGrade)
+        container.Excused = True
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
@@ -405,18 +414,18 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         cap['tag:nextthought.com,2011-10:unsubmitted'] = {
             'auto_grade': {'total_points': 5}
         }
-        
+
         part = GradeBookPart()
         book[u'unsubmitted'] = part
         entry = GradeBookEntry()
         entry.assignmentId = u'tag:nextthought.com,2011-10:unsubmitted'
         part[u'unsubmitted'] = entry
-        
+
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(33))
         assert_that(grade.points_available, is_(15))
         assert_that(grade.points_earned, is_(5))
-        
+
         # Check that a no-submit grade does not affect
         # the total if it is not graded.
         cap['tag:nextthought.com,2011-10:no-submit'] = {
@@ -433,29 +442,30 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         assert_that(grade.correctness, is_(33))
         assert_that(grade.points_available, is_(15))
         assert_that(grade.points_earned, is_(5))
-        
+
         # But if we grade it, it should be counted normally.
-        # We now expect to have earned 10 out of 20 points. 
+        # We now expect to have earned 10 out of 20 points.
         grade = PersistentGrade()
+        grade.__parent__ = container = GradeContainer()
         grade.value = 5
         grade.username = u'cald3307'
-        entry[u'cald3307'] = grade
+        entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
         assert_that(grade.points_available, is_(20))
         assert_that(grade.points_earned, is_(10))
-        
+
     def test_assignment_has_questions(self):
-        
+
         assignment = QAssignment()
         simple_policy = SimpleTotalingGradingPolicy()
-        
-        # This assignment has no questions yet, so it 
+
+        # This assignment has no questions yet, so it
         # should be considered no-submit.
         no_submit = simple_policy._has_questions(assignment)
         assert_that(no_submit, is_(False))
-        
+
         # If we add a part, a question set, and a question,
         # it shouldn't be no-submit anymore.
         part = QAssignmentPart(
@@ -463,6 +473,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
                     questions=[QQuestion(
                         parts=[QMathPart()])]))
         assignment.parts = [part]
-        
+
         no_submit = simple_policy._has_questions(assignment)
         assert_that(no_submit, is_(True))
