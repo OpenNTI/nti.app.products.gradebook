@@ -72,7 +72,6 @@ class Grade(CreatedModDateTrackingObject,
 
     grade = alias('value')
     username = alias('Username')
-    Username = alias('__name__')
     assignmentId = alias('AssignmentId')
 
     # Right now, we inherit the 'creator' property
@@ -103,6 +102,11 @@ class Grade(CreatedModDateTrackingObject,
     def AssignmentId(self):
         if self.__parent__ is not None:
             return self.__parent__.AssignmentId
+
+    @property
+    def Username(self):
+        if self.__parent__ is not None:
+            return self.__parent__.__name__
 
     # Since we're not persistent, the regular use of CachedProperty fails
     @property
@@ -194,6 +198,7 @@ class GradeContainer(PersistentCreatedModDateTrackingObject,
     __external_can_create__ = False
 
     assignmentId = alias('AssignmentId')
+    username = alias('Username')
 
     @property
     def Items(self):
@@ -206,6 +211,10 @@ class GradeContainer(PersistentCreatedModDateTrackingObject,
     def AssignmentId(self):
         if self.__parent__ is not None:
             return self.__parent__.AssignmentId
+
+    @property
+    def Username(self):
+        return self.__name__
 
 #     @property
 #     def creator(self):

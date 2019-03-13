@@ -381,14 +381,10 @@ class GradeBookPart(SchemaConfigured,
         return False
 
     def iter_grades(self, username):
-        course = ICourseInstance(self)
         username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
-                highest_grade = not is_most_recent_submission_priority(entry.AssignmentId,
-                                                                       course)
-                grade = get_applicable_user_grade(entry, username,
-                                                  highest_grade=highest_grade)
+                grade = get_applicable_user_grade(entry, username)
                 if grade is not None:
                     yield grade
 

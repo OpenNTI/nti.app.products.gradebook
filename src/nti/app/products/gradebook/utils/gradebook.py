@@ -31,7 +31,8 @@ from nti.app.products.gradebook.assignments import synchronize_gradebook
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
 
-from nti.app.products.gradebook.grades import PersistentGrade, GradeContainer
+from nti.app.products.gradebook.grades import GradeContainer
+from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.grading import IGradeBookGradingPolicy
 
@@ -75,7 +76,7 @@ def numeric_grade_val(grade_val):
     return result
 
 
-def get_applicable_user_grade(gradebook_entry, user, highest_grade=True):
+def get_applicable_user_grade(gradebook_entry, user, highest_grade=None):
     """
     Find the applicable grade for this user and gradebook entry. For multiple
     grades, this implies we prefer:
@@ -88,6 +89,10 @@ def get_applicable_user_grade(gradebook_entry, user, highest_grade=True):
     username = getattr(user, 'username', user)
     grade_container = gradebook_entry.get(username)
     if grade_container is not None:
+        if highest_grade is None:
+            course = ICourseInstance(gradebook_entry)
+            highest_grade = not is_most_recent_submission_priority(gradebook_entry.AssignmentId,
+                                                                   course)
         # Meta grade superseeds all (instructor set)
         result = grade_container.MetaGrade
         if result is None and grade_container:

@@ -35,6 +35,7 @@ from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.dataserver.users.users import User
 
 from nti.traversal.traversal import find_interface
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -95,26 +96,30 @@ def grade_for_history_item(item):
     # pylint: disable=too-many-function-args
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is not None and user is not None:
-        grade = entry.get(user.username)
-        if grade is None:
+        grade_container = entry.get(user.username)
+        if grade_container is None:
             # Always dummy up a grade (at the right location in
             # the hierarchy) so that we have an 'edit' link if
             # necessary
-            grade = PersistentGrade()
-            grade.createdTime = 0
-            grade.lastModified = 0
-            grade.__parent__ = entry
-            grade.__name__ = user.username
-        return grade
+
+            # Is this still needed with the GradeContainer
+            result = PersistentGrade()
+            result.createdTime = 0
+            result.lastModified = 0
+            result.__parent__ = grade_container
+            result.__name__ = user.username
+        else:
+            for grade in grade_container.values():
+                if grade.HistoryItemNTIID == item.ntiid:
+                    result = grade
+                    break
+        return result
 
 
 @component.adapter(IGrade)
 @interface.implementer(IUsersCourseAssignmentHistoryItem)
 def history_item_for_grade(grade):
-    user = IUser(grade, None)
-    course = ICourseInstance(grade, None)
-    # FIXME: Need a different way to do this with multiple submissions
-    return get_most_recent_history_item(user, course, grade.__parent__.AssignmentId)
+    return find_object_with_ntiid(grade.HistoryItemNTIID)
 
 
 @component.adapter(IGrade)
@@ -127,7 +132,7 @@ def history_item_container_for_grade(grade):
 @component.adapter(IGrade)
 @interface.implementer(IUser)
 def grade_to_user(grade):
-    return User.get_user(grade.__name__)
+    return User.get_user(grade.username)
 
 
 @component.adapter(IGrade)

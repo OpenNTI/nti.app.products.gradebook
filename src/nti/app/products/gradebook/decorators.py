@@ -19,8 +19,6 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
-from nti.app.assessment.common.history import get_most_recent_history_item
-
 from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
@@ -30,9 +28,11 @@ from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
+
+from nti.app.products.gradebook.utils.gradebook import get_applicable_user_grade
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
@@ -50,9 +50,7 @@ from nti.contenttypes.courses.interfaces import ICourseAssignmentCatalog
 
 from nti.contenttypes.courses.utils import is_course_instructor
 
-from nti.dataserver.users.users import User
-
-from nti.externalization.externalization import to_external_object
+from nti.coremetadata.interfaces import IUser
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -63,6 +61,8 @@ from nti.externalization.singleton import Singleton
 from nti.links.links import Link
 
 from nti.mimetype.mimetype import MIME_BASE
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
@@ -166,9 +166,14 @@ class _CourseInstanceGradebookLinkDecorator(AbstractAuthenticatedRequestAwareDec
 class _UsersCourseAssignmentHistoryItemDecorator(Singleton):
 
     def decorateExternalObject(self, item, external):
-        grade = IGrade(item, None)
-        if grade is not None:
-            external['Grade'] = to_external_object(grade)
+        item_grade = IGrade(item, None)
+        user = IUser(item_grade, None)
+        external['HistoryItemGrade'] = item_grade
+        # To retain BWC, 'Grade' has always been the applicable grade
+        # for this assignment, course, and user.
+        gradebook_entry = IGradeBookEntry(item)
+        applicable_grade = get_applicable_user_grade(gradebook_entry, user)
+        external['Grade'] = applicable_grade
 
 
 
@@ -180,12 +185,7 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
         return bool(self._is_authenticated and context.AssignmentId)
 
     def _do_decorate_external(self, context, result):
-        user = User.get_user(context.Username) if context.Username else None
-        course = find_interface(context, ICourseInstance, strict=False)
-        # FIXME: We probably need a way to get from a accepted grade to a
-        # submission
-        # This should currently work for bwc.
-        item = get_most_recent_history_item(user, course, context.AssignmentId)
+        item = find_object_with_ntiid(context.HistoryItemNTIID)
         if item is not None:
             links = result.setdefault(LINKS, [])
             link = Link(item, rel='AssignmentHistoryItem')
@@ -200,12 +200,14 @@ class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
         return bool(self._is_authenticated)
 
     def _do_decorate_external(self, context, result):
+        # FIXME: This link is deprecated; this should now be a field on the
+        # grade container.
         user = self.remoteUser
         course = find_interface(context, ICourseInstance, strict=False)
-        result['IsExcused'] = bool(IExcusedGrade.providedBy(context))
+        result['IsExcused'] = context.__parent__.Excused
         if is_course_instructor(course, user):
             links = result.setdefault(LINKS, [])
-            rel = 'excuse' if not IExcusedGrade.providedBy(context) else 'unexcuse'
+            rel = 'excuse' if not context.__parent__.Excused else 'unexcuse'
             link = Link(context, elements=(rel,), rel=rel, method='POST')
             links.append(link)
 
@@ -360,7 +362,7 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
             result['CompletionRequiredPassingPoints'] = passing_percent * total_points
 
         column = gradebook.getColumnForAssignmentId(assignment.ntiid)
-        grade = column.get(user.username)
+        grade = get_applicable_user_grade(column, user)
         result['UserPointsReceived'] = getattr(grade, 'value', None)
         return result
 
