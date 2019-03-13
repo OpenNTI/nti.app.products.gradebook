@@ -19,9 +19,13 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
 
+from zope.container.ordered import OrderedContainer
+
+from zope.location.interfaces import ISublocations
+
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGrade, IGradeContainer
 
 from nti.base.interfaces import ICreated
 
@@ -38,6 +42,7 @@ from nti.dataserver.authorization_acl import ace_denying_all
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
@@ -175,6 +180,49 @@ class PersistentGrade(Grade, PersistentPropertyHolder):
     def containerId(self):
         if self.__parent__ is not None:
             return self.__parent__.NTIID
+
+
+@interface.implementer(IGradeContainer,
+                       ISublocations)
+class GradeContainer(PersistentCreatedModDateTrackingObject,
+                     OrderedContainer,
+                     Contained,
+                     SchemaConfigured):
+
+    createDirectFieldProperties(IGradeContainer)
+
+    __external_can_create__ = False
+
+    assignmentId = alias('AssignmentId')
+
+    @property
+    def Items(self):
+        return list(self.values())
+
+    def sublocations(self):
+        return tuple(self.values())
+
+    @property
+    def AssignmentId(self):
+        if self.__parent__ is not None:
+            return self.__parent__.AssignmentId
+
+#     @property
+#     def creator(self):
+#         return self.__parent__.creator
+#
+#     @creator.setter
+#     def creator(self, nv):
+#         pass
+
+    def reset(self, event=True):
+        keys = list(self)
+        for k in keys:
+            if event:
+                del self[k]  # pylint: disable=unsupported-delete-operation
+            else:
+                self._delitemf(k)
+    clear = reset
 
 
 @interface.implementer(IPredictedGrade, IContentTypeAware)

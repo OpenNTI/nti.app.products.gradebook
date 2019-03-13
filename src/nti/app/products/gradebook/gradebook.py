@@ -41,6 +41,8 @@ from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
 
+from nti.app.products.gradebook.utils.gradebook import get_applicable_user_grade
+
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
@@ -68,6 +70,8 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import SchemaConfigured
 
 from nti.traversal.traversal import find_interface
+from nti.app.assessment.common.policy import get_policy_submission_priority,\
+    is_most_recent_submission_priority
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -377,17 +381,16 @@ class GradeBookPart(SchemaConfigured,
         return False
 
     def iter_grades(self, username):
+        course = ICourseInstance(self)
         username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
-                try:
-                    grade = entry[username]
+                highest_grade = not is_most_recent_submission_priority(entry.AssignmentId,
+                                                                       course)
+                grade = get_applicable_user_grade(entry, username,
+                                                  highest_grade=highest_grade)
+                if grade is not None:
                     yield grade
-                except KeyError:
-                    # in alpha we have seen key errors even though
-                    # the membership check has been made
-                    logger.exception("Could not find grade for %s in entry %s",
-                                     username, entry.__name__)
 
     def iter_usernames(self):
         seen = set()

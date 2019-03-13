@@ -38,7 +38,6 @@ from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
 
 from nti.app.products.gradebook.utils import remove_from_container
@@ -116,7 +115,8 @@ class GradeBookPutView(AbstractAuthenticatedView,
         record_grade_without_submission(gradebook_entry,
                                         user,
                                         assignment_ntiid)
-        grade = gradebook_entry.get(username)
+        grade_container = gradebook_entry.get(username)
+        grade = grade_container.MetaGrade
 
         # Check our if-modified-since header
         self._check_object_unmodified_since(grade)
@@ -178,6 +178,9 @@ class GradePutView(AbstractAuthenticatedView,
 class ExcuseGradeView(AbstractAuthenticatedView,
                       ModeledContentUploadRequestUtilsMixin,
                       ModeledContentEditRequestUtilsMixin):
+    """
+    Deprecated: the container itself should hold excused state.
+    """
 
     content_predicate = IGrade.providedBy
 
@@ -186,10 +189,11 @@ class ExcuseGradeView(AbstractAuthenticatedView,
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
 
-        if not IExcusedGrade.providedBy(theObject):
-            interface.alsoProvides(theObject, IExcusedGrade)
-            theObject.updateLastMod()
-            notify(ObjectModifiedEvent(theObject))
+        grade_container = self.context.__parent__
+
+        grade_container.Excused = True
+        grade_container.updateLastMod()
+        notify(ObjectModifiedEvent(grade_container))
         return theObject
 
 
@@ -200,6 +204,9 @@ class ExcuseGradeView(AbstractAuthenticatedView,
              name="excuse",
              request_method='POST')
 class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
+    """
+    Deprecated: the container itself should hold excused state.
+    """
 
     def _do_call(self):
         entry = self.request.context.__parent__
@@ -229,6 +236,9 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
 class UnexcuseGradeView(AbstractAuthenticatedView,
                         ModeledContentUploadRequestUtilsMixin,
                         ModeledContentEditRequestUtilsMixin):
+    """
+    Deprecated: the container itself should hold excused state.
+    """
 
     content_predicate = IGrade.providedBy
 
@@ -237,10 +247,12 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
 
-        if IExcusedGrade.providedBy(theObject):
-            interface.noLongerProvides(theObject, IExcusedGrade)
-            theObject.updateLastMod()
-            notify(ObjectModifiedEvent(theObject))
+        grade_container = theObject.__parent__
+
+        if grade_container.Excused:
+            grade_container.Excused = False
+            grade_container.updateLastMod()
+            notify(ObjectModifiedEvent(grade_container))
 
             user = IUser(theObject, None)
             # Tests

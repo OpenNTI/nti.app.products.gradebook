@@ -31,7 +31,7 @@ from nti.app.products.gradebook.assignments import synchronize_gradebook
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
 
-from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PersistentGrade, GradeContainer
 
 from nti.app.products.gradebook.grading import IGradeBookGradingPolicy
 
@@ -72,6 +72,38 @@ def numeric_grade_val(grade_val):
             pass
     elif isinstance(grade_val, (integer_types, float)):
         result = grade_val
+    return result
+
+
+def get_applicable_user_grade(gradebook_entry, user, highest_grade=True):
+    """
+    Find the applicable grade for this user and gradebook entry. For multiple
+    grades, this implies we prefer:
+
+    * The instructor-set MetaGrade
+    * The most recent grade if that is the assignment policy config
+    * The highest grade if that is the assignment policy config
+    """
+    result = None
+    username = getattr(user, 'username', user)
+    grade_container = gradebook_entry.get(username)
+    if grade_container is not None:
+        # Meta grade superseeds all (instructor set)
+        result = grade_container.MetaGrade
+        if result is None and grade_container:
+            # If no meta, determine our applicable grade
+            if not highest_grade:
+                # Most recent is latest in container
+                result = tuple(grade_container.values())[-1]
+            else:
+                # Find the highest grade
+                for grade in grade_container.values():
+                    if result is None:
+                        # First pass
+                        result = grade
+                    elif numeric_grade_val(result.value) < numeric_grade_val(grade.value):
+                        # This grade is higher than our current return value
+                        result = grade
     return result
 
 
@@ -138,10 +170,14 @@ def remove_from_container(container, key, event=False):
 
 def record_grade_without_submission(entry, user, assignmentId=None,
                                     clazz=PersistentGrade):
+    """
+    Create a grade and store as the MetaGrade on the grade container.
+    """
     # canonicalize the username in the event case got mangled
     username = user.username
     assignmentId = assignmentId or entry.AssignmentId
 
+    # XXX: With our new grade container, do we need placeholder submissions?
     # We insert the history item, which the user himself normally does
     # but cannot in this case. This implicitly creates the grade.
     # This is very similar to what nti.app.assessment.adapters
@@ -176,8 +212,20 @@ def record_grade_without_submission(entry, user, assignmentId=None,
         # In case there is already a submission (but no grade)
         # we need to deal with creating the grade object ourself.
         # This code path hits if a grade is deleted
+
+        # FIXME: I think this can go away. Views should either be editing
+        # existing grades or explicitly setting the MetaGrade for a
+        # user's grade container.
+        if username in entry:
+            grade_container = entry[username]
+        else:
+            grade_container = GradeContainer()
+            # XXX: Why no event?
+            save_in_container(entry, user.username, grade_container)
+
         grade = clazz()
-        save_in_container(entry, username, grade)
+        grade.__parent__ = grade_container
+        grade_container.MetaGrade = grade
     return grade
 
 
@@ -226,9 +274,10 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
     if it exists (if the policy specifies we accept the `highest_grade`
     submission).
 
-    # FIXME: what do we want overwrite to do here for multi_submissions? I think
-    # this arg is no longer relevant (nti_grade_assignments) or only relevant for
-    # single submissions.
+    Now that we have multiple submissions, we'll store this new grade *in addition*
+    to any existing grades that are already in play. We'll rely on any submission
+    constraints to also apply to constraining our grade container size (e.g. we will
+    not concern ourselves with that here).
 
     :returns the grade object if exists
     """
@@ -237,10 +286,19 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         user = IUser(item)
         username = user.username
         if username in entry:
+            grade_container = entry[username]
+        else:
+            grade_container = GradeContainer()
+            # XXX: Why no event?
+            save_in_container(entry, user.username, grade_container)
+
+        if item.ntiid in grade_container:
+            # XX: Should this even be possible?
             grade = entry[username]
         else:
             grade = PersistentGrade()
             grade.username = username
+            grade_container[item.ntiid] = grade
 
         # If there is an auto-grading policy for the course instance,
         # then let it convert the auto-assessed part of the submission
@@ -271,10 +329,11 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         if not getattr(grade, 'creator', None):
             grade.creator = SYSTEM_USER_NAME
 
-        if username in entry:
+        if item.ntiid in grade_container:
             lifecycleevent.modified(grade)
         else:
             # Finally after we finish filling it in, publish it
-            save_in_container(entry, user.username, grade)
+            # XXX: Why no event?
+            save_in_container(grade_container, item.ntiid, grade)
         return grade
     return None

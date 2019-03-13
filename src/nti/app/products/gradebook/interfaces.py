@@ -19,6 +19,7 @@ from zope.container.constraints import containers
 
 from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
+from zope.container.interfaces import IOrderedContainer
 
 from zope.interface.interface import taggedValue
 
@@ -46,6 +47,7 @@ from nti.property.property import alias
 from nti.schema.field import Int
 from nti.schema.field import Date
 from nti.schema.field import Dict
+from nti.schema.field import List
 from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import TextLine
@@ -171,13 +173,12 @@ class IGradeBookEntry(IContainer,
                       IContained,
                       IShouldHaveTraversablePath):
     """
-    A 'column' in the gradebook. This contains a grade entry
-    for each student in the course once they've completed
-    the corresponding assignment.
+    A 'column' in the gradebook. This contains a grade container
+    for each student in the course once they have a submission.
     """
 
     containers('.IGradeBookPart')
-    contains('.IGrade')
+    contains('.IGradeContainer')
     __parent__.required = False
 
     Name = ValidTextLine(title=u"entry name", required=False)
@@ -196,7 +197,7 @@ class IGradeBookEntry(IContainer,
     DueDate = Date(title=u"The date on which the assignment is due", required=False,
                    readonly=True)
 
-    Items = Dict(title=u"For externalization only, a copy of the {username: grade} contents}",
+    Items = Dict(title=u"For externalization only, a copy of the {username: grade_container} contents}",
                  description=u"For expedience and while while we expect these to be relatively small, "
                  u"we inline them",
                  readonly=True)
@@ -297,17 +298,17 @@ class IGradeBookPart(IContainer,
 
     def remove_user(username):
         """
-        remove the grades for the specififed user from this part
+        remove the grades for the specified user from this part
         """
 
     def has_grades(username):
         """
-        returns true if there are grades for the specififed user in this part
+        returns true if there are grades for the specified user in this part
         """
 
     def iter_grades(username):
         """
-        returns an iterator for the specififed user's grades
+        returns an iterator for the specified user's applicable grades
         """
 
     def iter_usernames():
@@ -348,17 +349,17 @@ class IGradeBook(IContainer,
 
     def remove_user(username):
         """
-        remove the grades for the specififed user from this grade book
+        remove the grades for the specified user from this grade book
         """
 
     def has_grades(username):
         """
-        returns true if there are grades for the specififed user in this grade book
+        returns true if there are grades for the specified user in this grade book
         """
 
     def iter_grades(username):
         """
-        returns an iterator for the specififed user's grades
+        returns an iterator for the specified user's applicable grades
         """
 
     def iter_usernames():
@@ -385,13 +386,9 @@ class IGrade(IContained,
              IShouldHaveTraversablePath):
     """
     A single grade for a single user.
-
-    Note that due to the large number of these, implementations
-    should NOT typically be persistent; updating consists
-    of replacing the pickle entirely.
     """
 
-    containers(IGradeBookEntry)
+    containers('.IGradeContainer')
     __parent__.required = False
 
     Username = ValidTextLine(title=u"Username",
@@ -404,10 +401,43 @@ class IGrade(IContained,
                               description=u"This comes from the entry containing it.",
                               required=False)
 
+    HistoryItemNTIID = ValidNTIID(title=u"The history item this is for",
+                                  required=True)
+
     value = _grade_property()
 
     AutoGrade = _grade_property()
     AutoGradeMax = _grade_property()
+
+
+class IGradeContainer(ILastModified,
+                      IContained,
+                      IOrderedContainer,
+                      IShouldHaveTraversablePath):
+    """
+    An container for storing one or more :class:`IGrade` objects for a user,
+    course, and assignment.
+    """
+
+    containers(IGradeBookEntry)
+    __parent__.required = False
+
+    Items = List(title=u'For externalization only, a copy of the grade items',
+                 readonly=True)
+
+    MetaGrade = Object(IGrade,
+                       description=u"""A :class:`.IGrade`, set by an instructor as an override
+                       or replacement for earned grades by the user.""",
+                       title=u"The meta grade",
+                       required=False)
+
+    Excused = Bool(title=u"Excuse the submission for this user",
+                   description=u"Excuse the submission for this user",
+                   default=False)
+
+    AssignmentId = ValidNTIID(title=u"The assignment this is for",
+                              description=u"This comes from the entry containing it.",
+                              required=False)
 
 
 class IGradeWithoutSubmission(IGrade):
@@ -415,9 +445,11 @@ class IGradeWithoutSubmission(IGrade):
 IGradeWithoutSubmission.setTaggedValue('_ext_is_marker_interface', True)
 
 
+
 class IExcusedGrade(IGrade):
     """
-    Marker interface for an Excused grade
+    Marker interface for an Excused grade.
+    Deprecated: prefer Excused attribute on :class:`IGradeContainer`
     """
 IExcusedGrade.setTaggedValue('_ext_is_marker_interface', True)
 
