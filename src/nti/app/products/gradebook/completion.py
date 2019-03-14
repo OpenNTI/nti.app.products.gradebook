@@ -59,6 +59,7 @@ def _assignment_progress(user, assignment, course):
     try:
         item = get_most_recent_history_item(user, course, assignment.ntiid)
         if item is not None:
+            # XXX: Should be removing synth submissions from the system
             is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
             progress_date = item.created
     except KeyError:
