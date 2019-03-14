@@ -457,6 +457,7 @@ class GradeBookPart(SchemaConfigured,
         return self.displayName
 
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
@@ -507,6 +508,8 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
     as a main traversal mechanism because of the possibility of blocking
     student submissions and the wide-ranging consequences of interfering
     with traversal.
+
+    XXX: Is this still necessary with our grade container?
     """
 
     def traverse(self, name, furtherPath):  # pylint: disable=arguments-differ
@@ -524,7 +527,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
             course_enrollments = ICourseEnrollments(course)
             # pylint: disable=too-many-function-args
             if course_enrollments.get_enrollment_for_principal(user):
-                result = GradeWithoutSubmission()
+                result = GradeContainer()
                 result.__parent__ = self.context
                 result.__name__ = name
                 return result

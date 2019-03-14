@@ -323,7 +323,7 @@ class GradeDeleteView(UGDDeleteView):
     """
 
     def _do_delete_object(self, context):
-        # delete the grade from its container (column, GradeBookEntry)
+        # delete the grade from its grade container
         # One would think that if we got here it's because
         # there is actually a grade recorded so `del` would be
         # safe; one would be wrong. That's because of
