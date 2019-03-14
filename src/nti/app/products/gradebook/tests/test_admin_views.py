@@ -18,6 +18,7 @@ does_not = is_not
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade as Grade
 
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -77,8 +78,10 @@ class TestAdminViews(ApplicationLayerTest):
             entry = GradeBookEntry()
             gbp[u'myquestion'] = entry
             entry.assignmentId = u'myquestion'
-            g = Grade(username=u'ichigo', grade=85.0)
-            entry[u'ichigo'] = g
+            grade = Grade(grade=85.0)
+            grade_container = GradeContainer()
+            entry[u'ichigo'] = grade_container
+            grade_container["tag:nextthought.com,2011-10:history_item_ntiid"] = grade
 
         href = '/dataserver2/CourseAdmin/@@RemoveGhostCourseGradeData'
         res = self.testapp.post(href, status=200)

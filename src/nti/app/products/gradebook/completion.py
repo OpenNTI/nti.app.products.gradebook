@@ -69,7 +69,7 @@ def _assignment_progress(user, assignment, course):
     # pylint: disable=too-many-function-args
     entry = gradebook.getColumnForAssignmentId(assignment.ntiid)
     grade_container = entry.get(user.username) if entry is not None else None
-    excused_grade = grade_container.excused
+    excused_grade = getattr(grade_container, 'Excused', False)
     grade = get_applicable_user_grade(entry, user)
 
     # We cannot calculate progress if:

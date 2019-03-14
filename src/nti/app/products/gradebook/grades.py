@@ -85,9 +85,6 @@ class Grade(CreatedModDateTrackingObject,
         if 'grade' in kwargs and 'value' not in kwargs:
             kwargs['value'] = kwargs['grade']
             del kwargs['grade']
-        if 'username' in kwargs and 'Username' not in kwargs:
-            kwargs['Username'] = kwargs['username']
-            del kwargs['username']
         super(Grade, self).__init__(*args, **kwargs)
 
     @Lazy

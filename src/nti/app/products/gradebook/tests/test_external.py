@@ -20,6 +20,7 @@ from nti.app.products.gradebook.gradebook import GradeBook
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade as Grade
 
 from nti.app.products.gradebook.gradescheme import LetterGradeScheme
@@ -46,7 +47,10 @@ class TestExternal(unittest.TestCase):
         return usr
 
     def test_grade(self):
-        g = Grade(username=u'nt@nti.com', grade=85.0)
+        grade_container = GradeContainer()
+        grade_container.__name__ = 'nt@nti.com'
+        grade = Grade(grade=85.0)
+        grade_container["tag:nextthought.com,2011-10:history_item_ntiid"] = grade
         ext = externalization.to_external_object(g)
         assert_that(ext, has_entry('Class', 'Grade'))
         assert_that(ext, has_entry('value', is_(85.0)))
