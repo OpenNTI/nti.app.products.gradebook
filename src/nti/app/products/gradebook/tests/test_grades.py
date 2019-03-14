@@ -24,10 +24,13 @@ import time
 import pickle
 import unittest
 
+from zope import interface
+
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.app.products.gradebook.grades import Grade
 from nti.app.products.gradebook.grades import GradeWeakRef
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 from nti.app.products.gradebook.grades import PredictedGrade
 
@@ -80,9 +83,13 @@ class TestGrades(unittest.TestCase):
         assert_that(calling(GradeWeakRef).with_args(Grade()),
                     raises(TypeError))
 
+        grade_container = _GradeContainer()
         grade = Grade()
-        grade.__name__ = u'foo@bar'
-        column = grade.__parent__ = _GradeBookEntry()
+        column = _GradeBookEntry()
+        grade_container.__parent__ = column
+        column[u'foo@bar'] = grade_container
+        grade.__parent__ = grade_container
+        grade.__name__ = 'tag:nextthought.com,2011-10:due_and_passed'
 
         wref = GradeWeakRef(grade)
         assert_that(wref, validly_provides(IWeakRef))
@@ -96,7 +103,7 @@ class TestGrades(unittest.TestCase):
         # No part in gradebook yet, cannot resolve
         assert_that(wref(), is_(none()))
 
-        column[grade.Username] = grade
+        grade_container['tag:nextthought.com,2011-10:due_and_passed'] = grade
         assert_that(wref(), is_(same_instance(grade)))
 
         assert_that(pickle.loads(pickle.dumps(wref)), is_(wref))
@@ -141,11 +148,16 @@ class TestGrades(unittest.TestCase):
 
 class _GradeBookEntry(GradeBookEntry):
 
-    def __conform__(self, unused_iface):
-        return _CheapWref(self)
+    def __conform__(self, iface):
+        if iface == IWeakRef:
+            return _CheapWref(self)
 
 
-from zope import interface
+class _GradeContainer(GradeContainer):
+
+    def __conform__(self, iface):
+        if iface == IWeakRef:
+            return _CheapWref(self)
 
 
 @interface.implementer(IWeakRef)

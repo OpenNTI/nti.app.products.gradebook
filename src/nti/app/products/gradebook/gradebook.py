@@ -41,8 +41,6 @@ from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
 
-from nti.app.products.gradebook.utils.gradebook import get_applicable_user_grade
-
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssignmentDateContext
 
@@ -381,6 +379,8 @@ class GradeBookPart(SchemaConfigured,
         return False
 
     def iter_grades(self, username):
+        # FIXME: rethink this
+        from nti.app.products.gradebook.utils.gradebook import get_applicable_user_grade
         username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:

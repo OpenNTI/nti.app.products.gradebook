@@ -139,35 +139,35 @@ class GradeWeakRef(object):
     grade.
     """
 
-    __slots__ = ('_part_wref', '_username')
+    __slots__ = ('_part_wref', '_key')
 
     def __init__(self, grade):
-        if grade.__parent__ is None or not grade.Username:
+        if grade.__parent__ is None or not grade.__name__:
             raise TypeError("Too soon, grade has no parent or username")
-        self._username = grade.Username
+        self._key = grade.__name__
         self._part_wref = IWeakRef(grade.__parent__)
 
     def __call__(self):
         part = self._part_wref()
         if part is not None:
-            return part.get(self._username)
+            return part.get(self._key)
 
     def __eq__(self, other):
         # pylint: disable=protected-access
         try:
             return self is other \
-                or (self._username, self._part_wref) == (other._username, other._part_wref)
+                or (self._key, self._part_wref) == (other._key, other._part_wref)
         except AttributeError:
             return NotImplemented
 
     def __hash__(self):
-        return hash((self._username, self._part_wref))
+        return hash((self._key, self._part_wref))
 
     def __getstate__(self):
-        return self._part_wref, self._username
+        return self._part_wref, self._key
 
     def __setstate__(self, state):
-        self._part_wref, self._username = state
+        self._part_wref, self._key = state
 
 
 @interface.implementer(ICreated, IContentTypeAware)
