@@ -34,8 +34,9 @@ from nti.dataserver.interfaces import IStreamChangeEvent
 
 from nti.dataserver.users.users import User
 
-from nti.traversal.traversal import find_interface
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -49,7 +50,20 @@ def _GradeToGradeEntry(grade):
 @interface.implementer(IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)
 def _AssignmentHistoryItem2GradeBookEntry(item):
-    assignmentId = item.__name__  # by definition
+    assignmentId = item.__parent____name__
+    course = ICourseInstance(item, None)
+    # get gradebook entry definition
+    gradebook = IGradeBook(course, None)
+    if gradebook is not None:
+        # pylint: disable=too-many-function-args
+        return gradebook.getColumnForAssignmentId(assignmentId)
+    return None
+
+
+@interface.implementer(IGradeBookEntry)
+@component.adapter(IUsersCourseAssignmentHistoryItemContainer)
+def _item_container_to_gradebook_entry(item):
+    assignmentId = item.__name__
     course = ICourseInstance(item, None)
     # get gradebook entry definition
     gradebook = IGradeBook(course, None)

@@ -16,14 +16,15 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.app.assessment.interfaces import IObjectRegradeEvent
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
 
 from nti.app.products.gradebook.utils import remove_from_container
 
-from nti.app.products.gradebook.utils.gradebook import find_entry_for_item
 from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_history_item
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -71,11 +72,24 @@ def _assignment_history_item_removed(item, unused_event=None):
     """
     Remove associated grade with this history item.
     """
-    entry = find_entry_for_item(item)
-    if entry is not None:
-        item = IGrade(item)
+    grade = IGrade(item, None)
+    if grade is not None:
         try:
-            remove_from_container(entry, item.__name__)
+            remove_from_container(grade.__parent__, grade.__name__)
+        except KeyError:
+            pass
+
+
+@component.adapter(IUsersCourseAssignmentHistoryItemContainer, IObjectRemovedEvent)
+def _assignment_history_item_container_removed(item_container, unused_event=None):
+    """
+    Remove all grades for this user and assignment when the history item container
+    goes away (reset).
+    """
+    entry = IGradeBookEntry(item_container, None)
+    if entry is not None:
+        try:
+            remove_from_container(entry, item_container.__name__)
         except KeyError:
             pass
 

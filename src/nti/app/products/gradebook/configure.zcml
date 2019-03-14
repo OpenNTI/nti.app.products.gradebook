@@ -51,6 +51,10 @@
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGradeBookEntry" />
 
+	<adapter factory=".adapters._item_container_to_gradebook_entry"
+             for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemContainer"
+             provides=".interfaces.IGradeBookEntry" />
+
 	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides=".interfaces.ISubmittedAssignmentHistory"/>
 
