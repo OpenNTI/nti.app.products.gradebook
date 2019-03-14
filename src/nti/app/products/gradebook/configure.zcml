@@ -61,6 +61,9 @@
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGrade" />
 
+    <adapter factory=".adapters._as_course"
+             for=".interfaces.IGradeContainer" />
+
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBook" />
 
@@ -86,6 +89,7 @@
 	<adapter factory=".adapters.grade_to_user" />
 	<adapter factory=".adapters.history_item_for_grade" />
 	<adapter factory=".adapters.history_item_container_for_grade" />
+	<adapter factory=".adapters.grade_container_to_user" />
 
 	<subscriber factory=".adapters._trusted_context_from_grade"
 				provides="nti.appserver.interfaces.ITrustedTopLevelContainerContextProvider"

@@ -25,11 +25,13 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.security.management import queryInteraction
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
+from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -40,6 +42,8 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.users import User
+
+from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -143,6 +147,22 @@ def update_grade_progress(grade, unused_event=None):
     notify(UserProgressRemovedEvent(assignment,
                                     user,
                                     course))
+
+
+@component.adapter(IGradeContainer, IObjectModifiedFromExternalEvent)
+def _excused_grade_handler(grade_container, event):
+    """
+    If excused state is updated, update the user's progress.
+    """
+    if      event.external_value \
+        and (   'excused' in event.external_value \
+             or 'Excused' in event.external_value):
+        assignment = find_object_with_ntiid(grade_container.AssignmentId)
+        user = IUser(grade_container)
+        course = ICourseInstance(grade_container)
+        notify(UserProgressUpdatedEvent(assignment,
+                                        user,
+                                        course))
 
 
 @component.adapter(IGrade, IGradeRemovedEvent)

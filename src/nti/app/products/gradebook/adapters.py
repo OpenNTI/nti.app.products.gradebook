@@ -21,6 +21,7 @@ from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
 
 from nti.appserver.interfaces import ITrustedTopLevelContainerContextProvider
@@ -136,6 +137,12 @@ def history_item_container_for_grade(grade):
 @interface.implementer(IUser)
 def grade_to_user(grade):
     return User.get_user(grade.username)
+
+
+@component.adapter(IGradeContainer)
+@interface.implementer(IUser)
+def grade_container_to_user(grade_container):
+    return User.get_user(grade_container.username)
 
 
 @component.adapter(IGrade)
