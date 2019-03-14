@@ -67,7 +67,8 @@ def _get_entry_change_storage(entry):
     return annotes[_CHANGE_KEY]
 
 
-def _do_store_grade_created_event(grade, _):
+def _do_store_grade_created_event(grade, unused_event):
+    # FIXME Does this need to change (migration?) with multiple grades?
     storage = _get_entry_change_storage(grade.__parent__)
     if grade.Username in storage:
         change_event = storage[grade.Username]

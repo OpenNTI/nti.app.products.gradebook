@@ -86,6 +86,7 @@ def calculate_grades(context,
             except KeyError:
                 grade_container = GradeContainer()
                 entry[username] = grade_container
+            grade.__parent__ = grade_container
             grade_container.MetaGrade = grade
     return result
 
