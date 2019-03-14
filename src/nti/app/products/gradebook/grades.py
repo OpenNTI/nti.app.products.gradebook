@@ -143,7 +143,7 @@ class GradeWeakRef(object):
 
     def __init__(self, grade):
         if grade.__parent__ is None or not grade.__name__:
-            raise TypeError("Too soon, grade has no parent or username")
+            raise TypeError("Too soon, grade has no parent or key")
         self._key = grade.__name__
         self._part_wref = IWeakRef(grade.__parent__)
 

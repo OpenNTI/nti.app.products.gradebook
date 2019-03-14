@@ -20,8 +20,8 @@ from nti.app.assessment.common.policy import get_policy_completion_passing_perce
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 
-from nti.app.products.gradebook.utils.gradebook import numeric_grade_val,\
-    get_applicable_user_grade
+from nti.app.products.gradebook.gradebook import numeric_grade_val
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IPlaceholderAssignmentSubmission

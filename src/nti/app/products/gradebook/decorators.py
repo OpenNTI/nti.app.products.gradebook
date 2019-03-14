@@ -22,6 +22,8 @@ from zope.security.management import checkPermission
 from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
+
 from nti.app.assessment.common.submissions import get_submissions
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
@@ -31,8 +33,6 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
-
-from nti.app.products.gradebook.utils.gradebook import get_applicable_user_grade
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 

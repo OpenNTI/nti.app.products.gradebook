@@ -32,6 +32,8 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.app.assessment.common.history import get_most_recent_history_item
 
+from nti.app.assessment.common.policy import is_most_recent_submission_priority
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
@@ -68,10 +70,63 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import SchemaConfigured
 
 from nti.traversal.traversal import find_interface
-from nti.app.assessment.common.policy import get_policy_submission_priority,\
-    is_most_recent_submission_priority
 
 logger = __import__('logging').getLogger(__name__)
+
+
+def numeric_grade_val(grade_val):
+    """
+    Convert the grade's possible char "number - letter" scheme to a number,
+    or None.
+    """
+    result = None
+    if isinstance(grade_val, six.string_types):
+        try:
+            if grade_val.endswith(' -'):
+                result = float(grade_val.split()[0])
+            else:
+                result = float(grade_val)
+        except ValueError:
+            pass
+    elif isinstance(grade_val, (six.integer_types, float)):
+        result = grade_val
+    return result
+
+
+def get_applicable_user_grade(gradebook_entry, user, highest_grade=None):
+    """
+    Find the applicable grade for this user and gradebook entry. For multiple
+    grades, this implies we prefer:
+
+    * The instructor-set MetaGrade
+    * The most recent grade if that is the assignment policy config
+    * The highest grade if that is the assignment policy config
+    """
+    result = None
+    username = getattr(user, 'username', user)
+    grade_container = gradebook_entry.get(username)
+    if grade_container is not None:
+        if highest_grade is None:
+            course = ICourseInstance(gradebook_entry)
+            highest_grade = not is_most_recent_submission_priority(gradebook_entry.AssignmentId,
+                                                                   course)
+        # Meta grade superseeds all (instructor set)
+        result = grade_container.MetaGrade
+        if result is None and grade_container:
+            # If no meta, determine our applicable grade
+            if not highest_grade:
+                # Most recent is latest in container
+                result = tuple(grade_container.values())[-1]
+            else:
+                # Find the highest grade
+                for grade in grade_container.values():
+                    if result is None:
+                        # First pass
+                        result = grade
+                    elif numeric_grade_val(result.value) < numeric_grade_val(grade.value):
+                        # This grade is higher than our current return value
+                        result = grade
+    return result
 
 
 @interface.implementer(IContentTypeAware)
@@ -379,8 +434,6 @@ class GradeBookPart(SchemaConfigured,
         return False
 
     def iter_grades(self, username):
-        # FIXME: rethink this
-        from nti.app.products.gradebook.utils.gradebook import get_applicable_user_grade
         username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
