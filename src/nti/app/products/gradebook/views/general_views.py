@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
-from zope import interface
 from zope import lifecycleevent
 
 from zope.annotation import IAnnotations
@@ -72,6 +71,10 @@ class GradeBookPutView(AbstractAuthenticatedView,
     """
     Allows end users to set arbitrary grades in the gradebook,
     returning the assignment history item.
+
+    Any edits directly on the gradebook end up being stored as the
+    grade container MetaGrade, which takes precedence over all
+    other grades for this user and assignment.
     """
 
     def _do_call(self):
@@ -112,11 +115,9 @@ class GradeBookPutView(AbstractAuthenticatedView,
                              None)
 
         # This will create our grade and assignment history, if necessary.
-        record_grade_without_submission(gradebook_entry,
-                                        user,
-                                        assignment_ntiid)
-        grade_container = gradebook_entry.get(username)
-        grade = grade_container.MetaGrade
+        grade = record_grade_without_submission(gradebook_entry,
+                                                user,
+                                                assignment_ntiid)
 
         # Check our if-modified-since header
         self._check_object_unmodified_since(grade)
@@ -213,16 +214,7 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
         username = self.request.context.__name__
         user = User.get_user(username)
         grade = record_grade_without_submission(entry, user)
-
-        if grade is not None:
-            # place holder grade was inserted
-            self.request.context = grade
-        else:
-            # This inserted the 'real' grade. To actually
-            # updated it with the given values, let the super
-            # class do the work
-            self.request.context = entry[username]
-
+        self.request.context = grade
         result = super(ExcuseGradeWithoutSubmissionView, self)._do_call()
         return result
 
@@ -274,6 +266,8 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 class GradeWithoutSubmissionPutView(GradePutView):
     """
     Called to put to a grade that doesn't yet exist.
+
+    This should store a MetaGrade for our user and assignment.
     """
 
     # : We don't want extra catching of key errors
@@ -287,7 +281,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
         grade = record_grade_without_submission(entry, user)
         if grade is not None:
-            # # place holder grade was inserted
+            # place holder grade was inserted (MetaGrade)
             self.request.context = grade
         else:
             # This inserted the 'real' grade. To actually

@@ -402,7 +402,7 @@ class IGrade(IContained,
                               required=False)
 
     HistoryItemNTIID = ValidNTIID(title=u"The history item this is for",
-                                  required=True)
+                                  required=False)
 
     value = _grade_property()
 

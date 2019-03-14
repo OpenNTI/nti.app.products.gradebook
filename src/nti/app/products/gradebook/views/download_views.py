@@ -30,6 +30,8 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.gradebook import MessageFactory as _
 
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
@@ -274,7 +276,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 row.append(grade_val)
 
             if final_grade_entry:
-                final_grade = final_grade_entry.get(username)
+                final_grade = get_applicable_user_grade(final_grade_entry, username)
             else:
                 final_grade = None
             row.append(_tx_grade(final_grade.value) if final_grade else 0)

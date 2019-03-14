@@ -20,14 +20,13 @@ import unittest
 
 import fudge
 
-from zope import interface
-
 from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
-from nti.app.products.gradebook.grades import PersistentGrade, GradeContainer
+from nti.app.products.gradebook.grades import GradeContainer
+from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotalingGradingPolicy
 

@@ -106,26 +106,30 @@ def get_applicable_user_grade(gradebook_entry, user, highest_grade=None):
     username = getattr(user, 'username', user)
     grade_container = gradebook_entry.get(username)
     if grade_container is not None:
-        if highest_grade is None:
-            course = ICourseInstance(gradebook_entry)
-            highest_grade = not is_most_recent_submission_priority(gradebook_entry.AssignmentId,
-                                                                   course)
         # Meta grade superseeds all (instructor set)
         result = grade_container.MetaGrade
         if result is None and grade_container:
-            # If no meta, determine our applicable grade
-            if not highest_grade:
-                # Most recent is latest in container
-                result = tuple(grade_container.values())[-1]
-            else:
-                # Find the highest grade
-                for grade in grade_container.values():
-                    if result is None:
-                        # First pass
-                        result = grade
-                    elif numeric_grade_val(result.value) < numeric_grade_val(grade.value):
-                        # This grade is higher than our current return value
-                        result = grade
+            # Simple, fast case
+            if len(grade_container) == 1:
+                result = tuple(grade_container.values())[0]
+            if result is None:
+                if highest_grade is None:
+                    course = ICourseInstance(gradebook_entry)
+                    highest_grade = not is_most_recent_submission_priority(gradebook_entry.AssignmentId,
+                                                                       course)
+                # If no meta, determine our applicable grade
+                if not highest_grade:
+                    # Most recent is latest in container
+                    result = tuple(grade_container.values())[-1]
+                else:
+                    # Find the highest grade
+                    for grade in grade_container.values():
+                        if result is None:
+                            # First pass
+                            result = grade
+                        elif numeric_grade_val(result.value) < numeric_grade_val(grade.value):
+                            # This grade is higher than our current return value
+                            result = grade
     return result
 
 

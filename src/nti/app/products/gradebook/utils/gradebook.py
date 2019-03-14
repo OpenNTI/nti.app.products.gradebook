@@ -9,8 +9,6 @@ from __future__ import absolute_import
 
 from ZODB.interfaces import IConnection
 
-from zope import component
-from zope import interface
 from zope import lifecycleevent
 
 from zope.event import notify
@@ -19,26 +17,21 @@ from zope.location.location import locate
 
 from nti.app.assessment.common.policy import is_most_recent_submission_priority
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
-
-from nti.app.products.courseware.interfaces import ICourseInstanceActivity
 
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
 
+from nti.app.products.gradebook.gradebook import numeric_grade_val
+
 from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 
+from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import GradeRemovedEvent
-
-from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
-
-from nti.assessment.submission import AssignmentSubmission
-
-from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
@@ -122,55 +115,16 @@ def record_grade_without_submission(entry, user, assignmentId=None,
     username = user.username
     assignmentId = assignmentId or entry.AssignmentId
 
-    # XXX: With our new grade container, do we need placeholder submissions?
-    # We insert the history item, which the user himself normally does
-    # but cannot in this case. This implicitly creates the grade.
-    # This is very similar to what nti.app.assessment.adapters
-    # does for the student, just with fewer constraints...
-    # The handling for a previously deleted grade is
-    # what the subscriber does...this whole thing should be simplified
-    submission = AssignmentSubmission()
-    submission.assignmentId = assignmentId
-    submission.creator = user
-    interface.alsoProvides(submission, IPlaceholderAssignmentSubmission)
-
-    grade = None
-    course = ICourseInstance(entry)
-    pending = QAssignmentSubmissionPendingAssessment(assignmentId=assignmentId,
-                                                     parts=[])
-
-    assignment_history = component.getMultiAdapter((course, submission.creator),
-                                                   IUsersCourseAssignmentHistory)
-    submission_container = assignment_history.get(assignmentId)
-    if not submission_container:
-        assignment_history.recordSubmission(submission, pending)
-        # At this point a place holder grade is created we don't return it
-        # to indicate to callers of this function that they need to get
-        # the grade from the entry
-
-        # We don't want this phony-submission showing up as course activity
-        # See nti.app.assessment.subscribers
-        activity = ICourseInstanceActivity(course)
-        # pylint: disable=too-many-function-args
-        activity.remove(submission)
+    if username in entry:
+        grade_container = entry[username]
     else:
-        # In case there is already a submission (but no grade)
-        # we need to deal with creating the grade object ourself.
-        # This code path hits if a grade is deleted
+        grade_container = GradeContainer()
+        # XXX: Why no event?
+        save_in_container(entry, user.username, grade_container)
 
-        # FIXME: I think this can go away. Views should either be editing
-        # existing grades or explicitly setting the MetaGrade for a
-        # user's grade container.
-        if username in entry:
-            grade_container = entry[username]
-        else:
-            grade_container = GradeContainer()
-            # XXX: Why no event?
-            save_in_container(entry, user.username, grade_container)
-
-        grade = clazz()
-        grade.__parent__ = grade_container
-        grade_container.MetaGrade = grade
+    grade = clazz()
+    grade.__parent__ = grade_container
+    grade_container.MetaGrade = grade
     return grade
 
 
@@ -239,7 +193,7 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
 
         if item.ntiid in grade_container:
             # XX: Should this even be possible?
-            grade = entry[username]
+            grade = grade_container[username]
         else:
             grade = PersistentGrade()
             grade.username = username

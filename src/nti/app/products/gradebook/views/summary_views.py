@@ -22,9 +22,12 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.assessment.common.history import get_user_submission_count
 from nti.app.assessment.common.history import get_most_recent_history_item
 
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
 
 from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
 
@@ -74,7 +77,6 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 
 
 def _get_history_item(course, user, assignment_id):
-    # TODO: this is probably not the most accurate...
     return get_most_recent_history_item(user, course, assignment_id)
 
 
@@ -125,7 +127,8 @@ class UserGradeSummary(object):
     def user_grade_entry(self):
         result = None
         if self.grade_entry is not None:
-            result = self.grade_entry.get(self.user.username)
+            result = get_applicable_user_grade(self.grade_entry,
+                                               self.user.username)
         return result
 
     @Lazy
@@ -162,11 +165,19 @@ class UserGradeSummary(object):
 
     @Lazy
     def history_item(self):
-        # We always want to return this if possible, even if we do not have a
-        # grade.
-        # XXX: We're pinned to the most recent history item here.
-        result = None
-        if self.grade_entry is not None:
+        """
+        Not sure if this is useful anymore now that we have multiple submissions.
+        We probably want to only expose the history item container here.
+
+        We always want to return this if possible, even if we do not have a
+        grade.
+        Prefer the authenticate history item for our given grade. We may have
+        history items without grades or a MetaGrade (instructor set). In this
+        case, we simply select the most recent history item.
+        """
+        result = IUsersCourseAssignmentHistoryItem(self.user_grade_entry, None)
+        if result is None and self.grade_entry is not None:
+            #
             assignment_id = self.grade_entry.AssignmentId
             result = _get_history_item(self.course, self.user, assignment_id)
         return result
