@@ -112,21 +112,6 @@ class Grade(CreatedModDateTrackingObject,
         if self.__parent__ is not None:
             return self.__parent__.__name__
 
-    # Since we're not persistent, the regular use of CachedProperty fails
-    @property
-    def __acl__(self):
-        acl = acl_from_aces()
-        course = ICourseInstance(self, None)
-        if course is not None:
-            # pylint: disable=not-an-iterable
-            acl.extend(ace_allowing(i, ALL_PERMISSIONS)
-                       for i in course.instructors or ())
-        # This will become conditional on whether we are published
-        if self.Username:
-            acl.append(ace_allowing(self.Username, ACT_READ))
-        acl.append(ace_denying_all())
-        return acl
-
 
 @interface.implementer(IWeakRef)
 @component.adapter(IGrade)
@@ -236,6 +221,20 @@ class GradeContainer(PersistentCreatedModDateTrackingObject,
             else:
                 self._delitemf(k)
     clear = reset
+
+    @property
+    def __acl__(self):
+        acl = acl_from_aces()
+        course = ICourseInstance(self, None)
+        if course is not None:
+            # pylint: disable=not-an-iterable
+            acl.extend(ace_allowing(i, ALL_PERMISSIONS)
+                       for i in course.instructors or ())
+        # This will become conditional on whether we are published (?)
+        if self.Username:
+            acl.append(ace_allowing(self.Username, ACT_READ))
+        acl.append(ace_denying_all())
+        return acl
 
 
 @interface.implementer(IPredictedGrade, IContentTypeAware)
