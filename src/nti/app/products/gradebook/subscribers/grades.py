@@ -31,7 +31,6 @@ from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
-from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -160,7 +159,7 @@ def _excused_grade_handler(grade_container, event):
         assignment = find_object_with_ntiid(grade_container.AssignmentId)
         user = IUser(grade_container)
         course = ICourseInstance(grade_container)
-        notify(UserProgressUpdatedEvent(assignment,
+        notify(UserProgressRemovedEvent(assignment,
                                         user,
                                         course))
 
@@ -177,4 +176,20 @@ def _on_grade_removed(unused_grade, event):
     notify(UserProgressRemovedEvent(assignment,
                                     event.user,
                                     event.course))
+
+
+@component.adapter(IGradeContainer, IObjectRemovedEvent)
+def _on_grade_container_removed(grade_container, unused_event):
+    # Specific event because we want item out of container at this point
+    if queryInteraction() is None:
+        return
+    # Tests
+    user = IUser(grade_container, None)
+    if user is None:
+        return
+    assignment = find_object_with_ntiid(grade_container.AssignmentId)
+    course = ICourseInstance(grade_container)
+    notify(UserProgressRemovedEvent(assignment,
+                                    user,
+                                    course))
 
