@@ -24,8 +24,6 @@ from pyramid import httpexceptions as hexec
 
 from pyramid.view import view_config
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
@@ -134,9 +132,8 @@ class GradeBookPutView(AbstractAuthenticatedView,
                     assignment_ntiid,
                     username)
 
-        # Not ideal that we return this here.
-        history_item = IUsersCourseAssignmentHistoryItemContainer(grade)
-        return history_item
+        # We used to return the history item here
+        return grade
 
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,

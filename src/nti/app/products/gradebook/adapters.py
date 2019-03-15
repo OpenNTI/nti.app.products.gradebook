@@ -143,8 +143,9 @@ def history_item_for_grade(grade):
 @component.adapter(IGrade)
 @interface.implementer(IUsersCourseAssignmentHistoryItemContainer)
 def history_item_container_for_grade(grade):
-    history_item = IUsersCourseAssignmentHistoryItem(grade)
-    return history_item.__parent__
+    history_item = IUsersCourseAssignmentHistoryItem(grade, None)
+    if history_item is not None:
+        return history_item.__parent__
 
 
 @component.adapter(IGrade)
