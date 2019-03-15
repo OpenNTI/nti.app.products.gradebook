@@ -1289,6 +1289,7 @@ class TestAssignments(ApplicationLayerTest):
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
+        # FIXME need a submission or mock-up
         res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
         history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
 

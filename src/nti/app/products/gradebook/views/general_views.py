@@ -40,7 +40,6 @@ from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
 
-from nti.app.products.gradebook.utils import remove_from_container
 from nti.app.products.gradebook.utils import record_grade_without_submission
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
@@ -368,9 +367,17 @@ class GradeDeleteView(UGDDeleteView):
         # ..gradebook.GradeBookEntryWithoutSubmissionTraversable which
         # dummies up a grade for anyone that asks. So if we can't find
         # it, follow the contract and let a 404 error be raised
+
+        # We used to hide events here; I'm unsure why.
+        container = context.__parent__
         try:
-            remove_from_container(context.__parent__, context.__name__)
+            del container[context.__name__]
         except KeyError:
-            return None
+            if context.__name__ == 'MetaGrade':
+                container.MetaGrade = None
+                result = True
+            else:
+                result = False
         else:
-            return True
+            result = True
+        return result

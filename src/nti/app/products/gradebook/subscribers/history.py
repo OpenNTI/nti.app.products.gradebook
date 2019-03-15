@@ -75,7 +75,7 @@ def _assignment_history_item_removed(item, unused_event=None):
     grade = IGrade(item, None)
     if grade is not None:
         try:
-            remove_from_container(grade.__parent__, grade.__name__)
+            del grade.__parent__[grade.__name__]
         except KeyError:
             pass
 
