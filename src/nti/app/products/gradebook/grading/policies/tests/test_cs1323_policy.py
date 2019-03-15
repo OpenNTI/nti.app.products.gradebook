@@ -160,7 +160,6 @@ class TestCS1323GradingPolicy(unittest.TestCase):
 
             grade = PersistentGrade()
             grade.value = 5
-            grade.username = u'cald3307'
             grade.__parent__ = container = GradeContainer()
             entry[u'cald3307'] = container
             container['ntiid'] = grade

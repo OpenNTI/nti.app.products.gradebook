@@ -132,7 +132,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
 
             grade = PersistentGrade()
             grade.value = 5.5
-            grade.username = u'cald3307'
             grade.__parent__ = container = GradeContainer()
             entry[u'cald3307'] = container
 
@@ -164,7 +163,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         part[u'early_and_ungraded'] = entry
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
@@ -181,7 +179,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = u'non-numeric grade, but has 1 number in it'
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade(u'cald3307')
@@ -201,7 +198,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.value = 100
         grade.__parent__ = container = GradeContainer()
         grade.__parent__.Excused = True
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
@@ -219,7 +215,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 100
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
@@ -239,7 +234,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = -12  # We now have -1 points for the course
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
@@ -259,7 +253,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 100
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
@@ -341,7 +334,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 0
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
         # We have earned 0 points out of a possible 10.
         # While this assignment is only worth 5 points,
@@ -362,7 +354,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 5
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
         # We have earned 5 points out of a possible 10.
         grade = policy.grade('cald3307')
@@ -396,7 +387,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = 100
         container.Excused = True
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')
@@ -447,7 +437,6 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 5
-        grade.username = u'cald3307'
         entry[u'cald3307'] = container
 
         grade = policy.grade('cald3307')

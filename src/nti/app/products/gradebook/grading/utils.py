@@ -77,7 +77,6 @@ def calculate_grades(context,
         if grade_scheme is not None:
             value = grade_scheme.fromCorrectness(correctness)
         grade = PersistentGrade(value=value)
-        grade.username = username
         result[username] = grade
         # if entry is available save it
         if entry is not None:

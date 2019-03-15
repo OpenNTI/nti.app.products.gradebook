@@ -196,7 +196,6 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
             grade = grade_container[username]
         else:
             grade = PersistentGrade()
-            grade.username = username
             grade_container[item.ntiid] = grade
 
         # If there is an auto-grading policy for the course instance,

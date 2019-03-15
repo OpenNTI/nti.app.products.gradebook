@@ -72,7 +72,7 @@ def _get_entry_change_storage(entry):
 
 def _do_store_grade_created_event(grade, unused_event):
     # FIXME Does this need to change (migration?) with multiple grades?
-    storage = _get_entry_change_storage(grade.__parent__)
+    storage = _get_entry_change_storage(grade.__parent__.__parent__)
     if grade.Username in storage:
         change_event = storage[grade.Username]
         change_event.updateLastMod()
@@ -101,12 +101,16 @@ def _do_store_grade_created_event(grade, unused_event):
     # Now store it, firing events to index, etc. Remember this
     # only happens if the name and parent aren't already
     # set (which they will be because they were copied from grade)
-    del change.__name__
+    try:
+        del change.__name__
+    except AttributeError:
+        pass
     del change.__parent__
     # Define it as top-level content for indexing purposes
     change.__is_toplevel_content__ = True
+    #change.__name__ = grade.Username
     storage[grade.Username] = change
-    assert change.__parent__ is _get_entry_change_storage(grade.__parent__)
+    assert change.__parent__ is _get_entry_change_storage(grade.__parent__.__parent__)
     assert change.__name__ == grade.Username
     return change
 

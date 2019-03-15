@@ -37,6 +37,7 @@ from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
 
 from nti.app.products.gradebook.utils import remove_from_container
@@ -138,15 +139,52 @@ class GradeBookPutView(AbstractAuthenticatedView,
         history_item = IUsersCourseAssignmentHistoryItemContainer(grade)
         return history_item
 
+@view_config(route_name='objects.generic.traversal',
+             permission=nauth.ACT_UPDATE,
+             renderer='rest',
+             context=IGradeContainer,
+             request_method='PUT')
+class GradePutView(AbstractAuthenticatedView,
+                   ModeledContentUploadRequestUtilsMixin,
+                   ModeledContentEditRequestUtilsMixin):
+    """
+    When PUTing a grade to the container, this stores the MetaGrade,
+    which superseeds all other grade values in the container.
+    """
+
+    content_predicate = IGrade.providedBy
+
+    def _do_call(self):
+        params = CaseInsensitiveDict(self.readInput())
+        new_grade_value = params.get('Value')
+        gradebook_entry = self.context.__parent__
+        user = IUser(self.context)
+        # This will create our meta grade, if necessary.
+        grade = record_grade_without_submission(gradebook_entry,
+                                                user,
+                                                self.context.AssignmentId)
+
+        # Check our if-modified-since header
+        self._check_object_unmodified_since(grade)
+        grade.creator = self.getRemoteUser().username
+        grade.value = new_grade_value
+        notify(ObjectModifiedEvent(grade))
+
+        logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
+                    self.getRemoteUser(),
+                    self.context.AssignmentId,
+                    self.context.Username)
+        return grade
+
 
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
              context=IGrade,
              request_method='PUT')
-class GradePutView(AbstractAuthenticatedView,
-                   ModeledContentUploadRequestUtilsMixin,
-                   ModeledContentEditRequestUtilsMixin):
+class GradeContainerPutView(AbstractAuthenticatedView,
+                            ModeledContentUploadRequestUtilsMixin,
+                            ModeledContentEditRequestUtilsMixin):
 
     content_predicate = IGrade.providedBy
 
