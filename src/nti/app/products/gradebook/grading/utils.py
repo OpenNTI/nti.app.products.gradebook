@@ -86,6 +86,8 @@ def calculate_grades(context,
                 grade_container = GradeContainer()
                 entry[username] = grade_container
             grade.__parent__ = grade_container
+            grade.__name__ = u'MetaGrade'
+            grade.HistoryItemNTIID = None
             grade_container.MetaGrade = grade
     return result
 

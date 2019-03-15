@@ -100,7 +100,7 @@ class Grade(CreatedModDateTrackingObject,
         if self.__parent__ is not None:
             return self.__parent__.AssignmentId
 
-    @property
+    @Lazy
     def HistoryItemNTIID(self):
         return self.__name__
 

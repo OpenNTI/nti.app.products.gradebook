@@ -144,9 +144,9 @@ class GradeBookPutView(AbstractAuthenticatedView,
              renderer='rest',
              context=IGradeContainer,
              request_method='PUT')
-class GradePutView(AbstractAuthenticatedView,
-                   ModeledContentUploadRequestUtilsMixin,
-                   ModeledContentEditRequestUtilsMixin):
+class GradeContainerPutView(AbstractAuthenticatedView,
+                            ModeledContentUploadRequestUtilsMixin,
+                            ModeledContentEditRequestUtilsMixin):
     """
     When PUTing a grade to the container, this stores the MetaGrade,
     which superseeds all other grade values in the container.
@@ -182,9 +182,9 @@ class GradePutView(AbstractAuthenticatedView,
              renderer='rest',
              context=IGrade,
              request_method='PUT')
-class GradeContainerPutView(AbstractAuthenticatedView,
-                            ModeledContentUploadRequestUtilsMixin,
-                            ModeledContentEditRequestUtilsMixin):
+class GradePutView(AbstractAuthenticatedView,
+                   ModeledContentUploadRequestUtilsMixin,
+                   ModeledContentEditRequestUtilsMixin):
 
     content_predicate = IGrade.providedBy
 
