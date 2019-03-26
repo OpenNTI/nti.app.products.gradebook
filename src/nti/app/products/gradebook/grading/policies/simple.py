@@ -22,9 +22,11 @@ from nti.app.products.gradebook.grading.policies.interfaces import ISimpleTotali
 
 from nti.app.products.gradebook.gradescheme import NumericGradeScheme
 
-from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
+
+from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
 
 from nti.app.products.gradebook.grading.utils import build_predicted_grade
 
@@ -98,7 +100,7 @@ class SimpleTotalingGradingPolicy(DefaultCourseGradingPolicy):
             gradebook_assignment_ids.add(grade.AssignmentId)
             excused = grade.__parent__.Excused
             if not excused:
-                entry = grade.__parent__
+                entry = IGradeBookEntry(grade)
                 name = getattr(entry, 'Name', None)
                 part = getattr(entry, '__parent__', None)
                 if      part is not None \

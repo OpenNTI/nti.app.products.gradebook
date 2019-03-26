@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -25,6 +24,8 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.gradebook import MessageFactory as _
+
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
 
 from nti.app.products.gradebook.grading import VIEW_CURRENT_GRADE
 
@@ -50,6 +51,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalDict
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def is_none(value):
@@ -138,11 +141,14 @@ class CurrentGradeView(AbstractAuthenticatedView):
             part = book[NO_SUBMIT_PART_NAME]
             for final_grade_name in FINAL_GRADE_NAMES:
                 if final_grade_name in part:
-                    final_grade = part[final_grade_name][user.username]
-                    final_grade = None if is_none(final_grade.value) else final_grade
+                    final_entry = part[final_grade_name]
+                    # There should only be one grade here...
+                    final_grade = get_applicable_user_grade(final_entry, user)
                     if final_grade is not None:
-                        result['FinalGrade'] = final_grade
-                    break
+                        final_grade = None if is_none(final_grade.value) else final_grade
+                        if final_grade is not None:
+                            result['FinalGrade'] = final_grade
+                            break
         except KeyError:
             final_grade = None
 

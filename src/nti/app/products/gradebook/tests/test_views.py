@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
 from hamcrest import not_
+from hamcrest import none
 from hamcrest import has_entry
 from hamcrest import has_item
 from hamcrest import has_key
@@ -72,7 +74,6 @@ class TestViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_grade_excuse_views(self):
-
         # Make sure we're enrolled
         self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses',
                                COURSE_NTIID,
@@ -83,30 +84,28 @@ class TestViews(ApplicationLayerTest):
         instructor_environ = self._make_extra_environ(username='harp4162')
         path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
 
-        # We don't have a grade yet, so this returns a placeholder grade
-        # without a value.
+        # We don't have a grade yet, so this returns the empty grade container
         res = self.testapp.get(path + 'sjohnson@nextthought.com/',
                                extra_environ=instructor_environ)
-        assert_that(res.json_body, has_entry('value', None))
+        assert_that(res.json_body, has_entry('Items', has_length(0)))
+        assert_that(res.json_body, has_entry('Class', is_('GradeContainer')))
 
         # We don't have a grade submission yet, but we should still
-        # be able to excuse the grade. A placeholder grade gets created
-        # and excused, and we can verify the returned object is excused.
-        # The value is still None.
+        # be able to excuse the grade.
         self.testapp.post(path + 'sjohnson@nextthought.com/excuse',
                           extra_environ=instructor_environ)
         res = self.testapp.get(path + 'sjohnson@nextthought.com',
                                extra_environ=instructor_environ)
-        assert_that(res.json_body, has_entry('IsExcused', True))
-        assert_that(res.json_body, has_entry('value', None))
+        assert_that(res.json_body, has_entry('Excused', True))
+        assert_that(res.json_body, has_entry('MetaGrade', none()))
 
-        # We can also unexcuse this placeholder grade.
+        # We can also unexcuse
         self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse',
                           extra_environ=instructor_environ)
         res = self.testapp.get(path + 'sjohnson@nextthought.com',
                                extra_environ=instructor_environ)
-        assert_that(res.json_body, has_entry('IsExcused', False))
-        assert_that(res.json_body, has_entry('value', None))
+        assert_that(res.json_body, has_entry('Excused', False))
+        assert_that(res.json_body, has_entry('MetaGrade', none()))
 
         # A non-instructor should not be able to excuse or unexcuse a grade.
         res = self.testapp.post(path + 'sjohnson@nextthought.com/excuse',
@@ -114,17 +113,37 @@ class TestViews(ApplicationLayerTest):
         res = self.testapp.post(path + 'sjohnson@nextthought.com/unexcuse',
                                 extra_environ=environ, status=403)
 
-        # Even though we have a placeholder grade in place, we should be able to
-        # set its value normally if we assign a grade.
-        grade_path = path + 'sjohnson@nextthought.com'
+        # Set a meta grades
+        container_path = path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
-        self.testapp.put_json(grade_path, grade,
+        self.testapp.put_json(container_path, grade,
                               extra_environ=instructor_environ)
         res = self.testapp.get(path + 'sjohnson@nextthought.com',
                                extra_environ=instructor_environ)
-        assert_that(res.json_body, has_entry('IsExcused', False))
-        assert_that(res.json_body, has_entry('value', 10))
+        assert_that(res.json_body, has_entry('Excused', False))
+        grade = res.json_body['MetaGrade']
+        assert_that(grade, has_entry('IsExcused', False))
+        assert_that(grade, has_entry('value', 10))
+
+        # Excuse as attribute
+        self.testapp.put_json(container_path, {'Excused': True},
+                              extra_environ=instructor_environ)
+        res = self.testapp.get(path + 'sjohnson@nextthought.com',
+                               extra_environ=instructor_environ)
+        assert_that(res.json_body, has_entry('Excused', True))
+        grade = res.json_body['MetaGrade']
+        assert_that(grade, has_entry('IsExcused', True))
+        assert_that(grade, has_entry('value', 10))
+
+        self.testapp.put_json(container_path, {'Excused': False},
+                              extra_environ=instructor_environ)
+        res = self.testapp.get(path + 'sjohnson@nextthought.com',
+                               extra_environ=instructor_environ)
+        assert_that(res.json_body, has_entry('Excused', False))
+        grade = res.json_body['MetaGrade']
+        assert_that(grade, has_entry('IsExcused', False))
+        assert_that(grade, has_entry('value', 10))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.products.gradebook.grading.policies.simple.SimpleTotalingGradingPolicy._get_total_points_for_assignment')

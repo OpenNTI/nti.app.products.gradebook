@@ -80,12 +80,15 @@ def get_valid_assignment(entry, course):
 class GradebookDownloadView(AbstractAuthenticatedView):
     """
     Provides a downloadable table of all the assignments
-    present in the gradebook. There is a column
-    for each assignment and a row for each user.
+    present in the gradebook. There is a column for each assignment
+    and a row for each user.
 
     A query param `LegacyEnrollmentStatus` can be set to
     either 'ForCredit' or 'Open' to restrict the results to that
     subset of students.
+
+    For multiple grades, we return the actual applicable grade for
+    the user, course, and assignment.
 
     .. note:: This is hardcoded to export in D2L compatible format.
             (https://php.radford.edu/~knowledge/lore/attachment.php?id=57)

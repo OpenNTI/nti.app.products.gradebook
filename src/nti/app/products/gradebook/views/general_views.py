@@ -145,7 +145,7 @@ class GradeContainerPutView(AbstractAuthenticatedView,
                             ModeledContentEditRequestUtilsMixin):
     """
     When PUTing a grade to the container, this stores the MetaGrade,
-    which superseeds all other grade values in the container.
+    which supersedes all other grade values in the container.
     """
 
     content_predicate = IGrade.providedBy
@@ -207,7 +207,7 @@ class GradePutView(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
-             context=IGrade,
+             context=IGradeContainer,
              name="excuse",
              request_method='POST')
 class ExcuseGradeView(AbstractAuthenticatedView,
@@ -223,9 +223,7 @@ class ExcuseGradeView(AbstractAuthenticatedView,
         theObject = self.request.context
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
-
-        grade_container = self.context.__parent__
-
+        grade_container = self.context
         grade_container.Excused = True
         grade_container.updateLastMod()
         notify(ObjectModifiedEvent(grade_container))
@@ -248,7 +246,7 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
         username = self.request.context.__name__
         user = User.get_user(username)
         grade = record_grade_without_submission(entry, user)
-        self.request.context = grade
+        self.request.context = grade.__parent__
         result = super(ExcuseGradeWithoutSubmissionView, self)._do_call()
         return result
 
@@ -256,7 +254,7 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
-             context=IGrade,
+             context=IGradeContainer,
              name="unexcuse",
              request_method='POST')
 class UnexcuseGradeView(AbstractAuthenticatedView,
@@ -272,8 +270,7 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
         theObject = self.request.context
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
-
-        grade_container = theObject.__parent__
+        grade_container = theObject
 
         if grade_container.Excused:
             grade_container.Excused = False

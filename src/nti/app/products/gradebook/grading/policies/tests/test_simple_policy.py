@@ -59,6 +59,9 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
+#: A mock history item ntiid for testing
+HISTORY_ITEM_NTIID = u'tag:nextthought.com,2011-10:history_item_oid'
+
 
 class TestSimpleGradingPolicy(unittest.TestCase):
 
@@ -134,6 +137,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
             grade.value = 5.5
             grade.__parent__ = container = GradeContainer()
             entry[u'cald3307'] = container
+            container[HISTORY_ITEM_NTIID] = grade
 
         # If no points available, we return None even
         # if there happen to be grades in the gradebook.
@@ -164,6 +168,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -180,6 +185,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = u'non-numeric grade, but has 1 number in it'
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade(u'cald3307')
         assert_that(grade.correctness, is_(73))
@@ -199,6 +205,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.__parent__.Excused = True
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -216,6 +223,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = 100
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(73))
@@ -235,6 +243,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = -12  # We now have -1 points for the course
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(0))
@@ -254,6 +263,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = 100
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(100))
@@ -334,6 +344,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 0
+        container[HISTORY_ITEM_NTIID] = grade
         entry[u'cald3307'] = container
         # We have earned 0 points out of a possible 10.
         # While this assignment is only worth 5 points,
@@ -355,6 +366,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = 5
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
         # We have earned 5 points out of a possible 10.
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
@@ -388,6 +400,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.value = 100
         container.Excused = True
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))
@@ -438,6 +451,7 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade.__parent__ = container = GradeContainer()
         grade.value = 5
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))

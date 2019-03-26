@@ -44,13 +44,13 @@ logger = __import__('logging').getLogger(__name__)
 @component.adapter(IGrade)
 @interface.implementer(IGradeBookEntry)
 def _GradeToGradeEntry(grade):
-    return grade.__parent__
+    return grade.__parent__.__parent__
 
 
 @interface.implementer(IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)
 def _AssignmentHistoryItem2GradeBookEntry(item):
-    assignmentId = item.__parent____name__
+    assignmentId = item.__parent__.__name__
     course = ICourseInstance(item, None)
     # get gradebook entry definition
     gradebook = IGradeBook(course, None)

@@ -497,8 +497,8 @@ from nti.traversal.traversal import ContainerAdapterTraversable
 class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
     """
     Entries that cannot be submitted by students auto-generate
-    :class:`.GradeWithoutSubmission` objects (that they own but do not contain)
-    when directly traversed to during request processing.
+    :class:`.GradeContainer` objects when directly traversed to during request
+    processing.
 
     We do this at request traversal time, rather than as part of the
     the get/__getitem__ method of the class, to not break any of the container
@@ -517,7 +517,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
             return super(GradeBookEntryWithoutSubmissionTraversable, self).traverse(name, furtherPath)
         except KeyError:
             # Check first for items in the container and named adapters.
-            # Only if that fails do we dummy up a grade,
+            # Only if that fails do we dummy up a grade container,
             # and only then if there is a real user by that name
             # who is enrolled in this course.
             user = User.get_user(name)
@@ -530,6 +530,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
                 result = GradeContainer()
                 result.__parent__ = self.context
                 result.__name__ = name
+                self.context[name] = result
                 return result
             raise
 
