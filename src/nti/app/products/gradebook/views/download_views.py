@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -21,6 +20,7 @@ from zope import component
 from pyramid.view import view_config
 
 from nti.app.assessment.common.policy import get_policy_excluded
+from nti.app.assessment.common.policy import is_most_recent_submission_priority
 
 from nti.app.assessment.common.utils import get_available_for_submission_beginning
 
@@ -190,13 +190,16 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 assignment_key = (assignment.ntiid, assignment.title)
                 sort_key = self._get_sort_key(entry, course)
                 seen_assignment_keys_to_start_time[assignment_key] = sort_key
-                for username, grade in entry.items():
+                highest_grade = not is_most_recent_submission_priority(assignment, course)
+                for username in entry:
+                    user = User.get_user(username)
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
                     # This should not be possible anymore
                     if assignment_key in user_dict:
                         raise ValueError("Two entries in different part with same name")
-                    user_dict[assignment_key] = grade
+                    user_dict[assignment_key] = get_applicable_user_grade(entry, user,
+                                                                          highest_grade=highest_grade)
 
         sorted_assignment_keys = sorted(seen_assignment_keys_to_start_time,
                                         key=seen_assignment_keys_to_start_time.get)

@@ -110,6 +110,7 @@ def grade_for_history_item(item):
     # pylint: disable=too-many-function-args
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is not None and user is not None:
+        result = None
         grade_container = entry.get(user.username)
         # Always dummy up a grade (at the right location in
         # the hierarchy) so that we have an 'edit' link if
