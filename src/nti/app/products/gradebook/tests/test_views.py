@@ -177,10 +177,10 @@ class TestViews(ApplicationLayerTest):
 
         # Should get a dict back with 'PredictedGrade'
         # if we have one.
-        grade_entry_path = course_path + '/GradeBook/quizzes/Trivial_Test/sjohnson@nextthought.com'
+        container_path = course_path + '/GradeBook/quizzes/Trivial_Test/sjohnson@nextthought.com'
         grade = {'Class': 'Grade',
                  'value': 10}
-        self.testapp.put_json(grade_entry_path, grade,
+        self.testapp.put_json(container_path, grade,
                               extra_environ=instructor_environ)
 
         res = self.testapp.get(current_grade_path)
@@ -202,10 +202,10 @@ class TestViews(ApplicationLayerTest):
                     has_entry('PointsEarned', 10))
         assert_that(res.json_body, has_key('FinalGrade'))
 
-        # If we delete the PredictedGrade and then call
+        # If we delete the PredictedGrade (MetaGrade) and then call
         # CurrentGrade again, we should get just a FinalGrade
         # back in the dictionary.
-        self.testapp.delete(grade_entry_path, extra_environ=instructor_environ)
+        self.testapp.delete('%s/MetaGrade' % container_path, extra_environ=instructor_environ)
         res = self.testapp.get(current_grade_path)
         assert_that(res.json_body, has_key('FinalGrade'))
         assert_that(res.json_body, not_(has_key('PredictedGrade')))

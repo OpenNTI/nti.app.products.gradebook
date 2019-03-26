@@ -153,24 +153,31 @@ class GradeContainerPutView(AbstractAuthenticatedView,
     def _do_call(self):
         params = CaseInsensitiveDict(self.readInput())
         new_grade_value = params.get('Value')
-        gradebook_entry = self.context.__parent__
-        user = IUser(self.context)
-        # This will create our meta grade, if necessary.
-        grade = record_grade_without_submission(gradebook_entry,
-                                                user,
-                                                self.context.AssignmentId)
-
-        # Check our if-modified-since header
-        self._check_object_unmodified_since(grade)
-        grade.creator = self.getRemoteUser().username
-        grade.value = new_grade_value
-        notify(ObjectModifiedEvent(grade))
-
-        logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
+        if new_grade_value:
+            # If we have a grade value, we are posting a MetaGrade to this
+            # container
+            gradebook_entry = self.context.__parent__
+            user = IUser(self.context)
+            # This will create our meta grade, if necessary.
+            grade = record_grade_without_submission(gradebook_entry,
+                                                    user,
+                                                    self.context.AssignmentId)
+            grade.creator = self.getRemoteUser().username
+            grade.value = new_grade_value
+            # Check our if-modified-since header
+            self._check_object_unmodified_since(grade)
+            notify(ObjectModifiedEvent(grade))
+            logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
                     self.getRemoteUser(),
                     self.context.AssignmentId,
                     self.context.Username)
-        return grade
+            # BWC in this code path, return the grade.
+            result = grade
+        else:
+            # ...otherwise we're changing our container (e.g. excused).
+            self.updateContentObject(self.context, params)
+            result = self.context
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',
