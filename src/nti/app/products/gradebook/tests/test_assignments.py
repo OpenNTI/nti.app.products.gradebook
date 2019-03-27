@@ -884,15 +884,15 @@ class TestAssignments(ApplicationLayerTest):
                     has_entry('MimeType', 'application/vnd.nextthought.grade'))
         assert_that(res.json_body, has_entry('value', '324 -'))
 
+        grade_href = res.json_body['href']
         excuse_ref = self.require_link_href_with_rel(res.json_body, 'excuse')
-        res = self.testapp.post(excuse_ref, extra_environ=instructor_environ,
-                                status=200)
-        assert_that(res.json_body, has_entry('IsExcused', is_(True)))
+        res = self.testapp.post(excuse_ref, extra_environ=instructor_environ)
+        assert_that(res.json_body, has_entry('Excused', is_(True)))
 
+        res = self.testapp.get(grade_href, extra_environ=instructor_environ)
         unexcuse_ref = self.require_link_href_with_rel(res.json_body, 'unexcuse')
-        res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ,
-                                status=200)
-        assert_that(res.json_body, has_entry('IsExcused', is_(False)))
+        res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ)
+        assert_that(res.json_body, has_entry('Excused', is_(False)))
 
         # ... the student can no longer submit
         assignment_id = u"tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test"
@@ -1066,6 +1066,7 @@ class TestAssignments(ApplicationLayerTest):
         grade_res = grade_res.json_body
         # No longer any placeholder, but a grade
         assert_that(grade_res['HistoryItemNTIID'], none())
+
         # We now decorate a reset rel on the grade
         reset_rel = self.require_link_href_with_rel(grade_res, 'Reset')
 
@@ -1120,6 +1121,7 @@ class TestAssignments(ApplicationLayerTest):
                     has_entry('Grade', has_entries('value', 10.0,
                                                    'AutoGrade', 10.0,
                                                    'AutoGradeMax', 20.0)))
+        reset_rel = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/jason/Reset'
 
         # Because it auto-grades, we have a notable item
         notable_res = self.fetch_user_recursive_notable_ugd(username='jason',

@@ -18,6 +18,7 @@ from nti.app.assessment import VIEW_RESET_EVALUATION
 from nti.app.assessment.views.reset_views import UserHistoryItemResetView
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeContainer
 
 from nti.dataserver.authorization import ACT_READ
 
@@ -32,6 +33,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 @view_config(context=IGrade)
+@view_config(context=IGradeContainer)
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
                name=VIEW_RESET_EVALUATION,
@@ -53,7 +55,10 @@ class GradeResetView(UserHistoryItemResetView):
         # Must clear the grade container here since we may not have submissions
         # In the assessment container version of this, subscribers take care
         # of grade entries once the history item container is reset.
-        grade_container = self.context.__parent__
+        if IGrade.providedBy(self.context):
+            grade_container = self.context.__parent__
+        else:
+            grade_container = self.context
         grade_container.reset()
         return result
 

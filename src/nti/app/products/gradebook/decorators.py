@@ -230,7 +230,8 @@ class _GradeEditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             link = Link(context, rel='edit', method='POST')
             links.append(link)
             # Also expose the reset rel on the grade
-            link = Link(context, rel=VIEW_RESET_EVALUATION, method='POST')
+            link = Link(context, rel=VIEW_RESET_EVALUATION,
+                        elements=(VIEW_RESET_EVALUATION,), method='POST')
             links.append(link)
 
 

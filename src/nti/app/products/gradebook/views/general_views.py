@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from requests.structures import CaseInsensitiveDict
 
@@ -46,15 +45,11 @@ from nti.assessment.interfaces import IQAssignment
 
 from nti.coremetadata.interfaces import IUser
 
-from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
 
-from nti.ntiids.ntiids import find_object_with_ntiid
+logger = __import__('logging').getLogger(__name__)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -230,10 +225,7 @@ class ExcuseGradeView(AbstractAuthenticatedView,
         theObject = self.request.context
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
-        grade_container = self.context
-        grade_container.Excused = True
-        grade_container.updateLastMod()
-        notify(ObjectModifiedEvent(grade_container))
+        self.updateContentObject(self.context, {'Excused': True})
         return theObject
 
 
@@ -278,21 +270,8 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
         grade_container = theObject
-
         if grade_container.Excused:
-            grade_container.Excused = False
-            grade_container.updateLastMod()
-            notify(ObjectModifiedEvent(grade_container))
-
-            user = IUser(theObject, None)
-            # Tests
-            if user is None:
-                return
-            assignment = find_object_with_ntiid(theObject.AssignmentId)
-            course = ICourseInstance(theObject)
-            notify(UserProgressRemovedEvent(assignment,
-                                            user,
-                                            course))
+            self.updateContentObject(grade_container, {'Excused': False})
         return theObject
 
 
@@ -376,6 +355,7 @@ class GradeDeleteView(UGDDeleteView):
             if context.__name__ == 'MetaGrade':
                 container.MetaGrade = None
                 result = True
+                lifecycleevent.removed(context)
             else:
                 result = False
         else:

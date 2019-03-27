@@ -14,6 +14,7 @@ from persistent import Persistent
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
 
@@ -222,6 +223,10 @@ class GradeContainer(PersistentCreatedModDateTrackingObject,
                 del self[k]  # pylint: disable=unsupported-delete-operation
             else:
                 self._delitemf(k)
+        meta_grade = self.MetaGrade
+        self.MetaGrade = None
+        if meta_grade is not None:
+            lifecycleevent.removed(meta_grade)
     clear = reset
 
     @property
@@ -238,6 +243,21 @@ class GradeContainer(PersistentCreatedModDateTrackingObject,
         acl.append(ace_denying_all())
         return acl
 
+    def __getitem__(self, key):
+        try:
+            return OrderedContainer.__getitem__(self, key)
+        except KeyError:
+            # Allow easy navigation to our meta grade
+            if key == 'MetaGrade':
+                return self.MetaGrade
+            raise
+
+    def get(self, key, default=None):
+        if key == 'MetaGrade':
+            result = self.MetaGrade
+        else:
+            result = super(GradeContainer, self).get(key, default=default)
+        return result
 
 @interface.implementer(IPredictedGrade, IContentTypeAware)
 class PredictedGrade(object):
