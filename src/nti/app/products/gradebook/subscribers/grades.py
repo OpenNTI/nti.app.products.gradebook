@@ -25,6 +25,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.security.management import queryInteraction
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
 from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
 
@@ -72,7 +73,8 @@ def _get_entry_change_storage(entry):
 
 def _do_store_grade_created_event(grade, unused_event):
     # FIXME Does this need to change (migration?) with multiple grades?
-    storage = _get_entry_change_storage(grade.__parent__.__parent__)
+    entry = IGradeBookEntry(grade)
+    storage = _get_entry_change_storage(entry)
     if grade.Username in storage:
         change_event = storage[grade.Username]
         change_event.updateLastMod()
@@ -110,7 +112,7 @@ def _do_store_grade_created_event(grade, unused_event):
     change.__is_toplevel_content__ = True
     #change.__name__ = grade.Username
     storage[grade.Username] = change
-    assert change.__parent__ is _get_entry_change_storage(grade.__parent__.__parent__)
+    assert change.__parent__ is storage
     assert change.__name__ == grade.Username
     return change
 
@@ -128,7 +130,8 @@ def _store_grade_created_event(grade, event):
 @component.adapter(IGrade, IObjectRemovedEvent)
 def _remove_grade_event(grade, unused_event=None):
     try:
-        storage = _get_entry_change_storage(grade.__parent__)
+        entry = IGradeBookEntry(grade)
+        storage = _get_entry_change_storage(entry)
         del storage[grade.Username]
     except KeyError:
         pass

@@ -109,6 +109,11 @@ class Grade(CreatedModDateTrackingObject,
         if self.__parent__ is not None:
             return self.__parent__.__name__
 
+    @property
+    def __acl__(self):
+        # Return our container acl ot override the default created acl
+        return self.__parent__.__acl__
+
 
 @interface.implementer(IWeakRef)
 @component.adapter(IGrade)

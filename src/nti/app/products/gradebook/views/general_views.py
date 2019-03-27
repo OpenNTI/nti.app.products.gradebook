@@ -353,8 +353,7 @@ class GradebookDeleteView(UGDDeleteView):
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              request_method='DELETE',
-             context=IGrade,
-             permission=nauth.ACT_DELETE)
+             context=IGrade)
 class GradeDeleteView(UGDDeleteView):
     """
     Instructors can delete an individual grade.
