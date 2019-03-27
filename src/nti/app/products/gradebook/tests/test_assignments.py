@@ -914,8 +914,11 @@ class TestAssignments(ApplicationLayerTest):
         ext_obj = to_external_object(submission)
 
         assignment_res = self.testapp.get(submit_href)
-        self.forbid_link_with_rel(assignment_res.json_body,
-                                  'Commence')
+        # XXX: We used to disallow submissions once the instructor set a grade,
+        # due to submission limits. Now that we no longer have placeholder
+        # submissions this does not apply anymore. What do we want to do?
+        self.require_link_href_with_rel(assignment_res.json_body,
+                                        'Commence')
         res = self.testapp.post_json(submit_href, ext_obj, status=403)
         assert_that(res.json_body,
                     has_entry('message', "Assignment is not available for submission."))
@@ -1255,21 +1258,15 @@ class TestAssignments(ApplicationLayerTest):
         grade = {'Class': 'Grade'}
         grade['value'] = 10
         res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
-        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
+        grade_href = res.json_body['href']
+        self.forbid_link_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # It shows up as a notable item for the student
         notable_res = self.fetch_user_recursive_notable_ugd()
         assert_that(notable_res.json_body, has_entry('TotalItemCount', 1))
 
         # If the instructor deletes it...
-        # (delete indirectly by resetting the submission to be sure the right
-        # event chain works)
-        #history_path = '/dataserver2/users/sjohnson@nextthought.com/Courses/EnrolledCourses/%s/AssignmentHistories/sjohnson@nextthought.com/UserCourseAssignmentHistoryItem' % COURSE_NTIID
-        history_res = self.testapp.get(history_path)
-        submission = history_res.json_body
-
-        #submission = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
-        self.testapp.delete(submission['href'],
+        self.testapp.delete(grade_href,
                             extra_environ=instructor_environ)
 
         # The notable item is gone
@@ -1291,31 +1288,13 @@ class TestAssignments(ApplicationLayerTest):
         path = trivial_grade_path + 'sjohnson@nextthought.com'
         grade = {'Class': 'Grade'}
         grade['value'] = 10
-        # FIXME need a submission or mock-up
+        # No longer a placeholder submission
         res = self.testapp.put_json(path, grade, extra_environ=instructor_environ)
-        history_path = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
+        self.forbid_link_with_rel(res.json_body, 'AssignmentHistoryItem')
 
-        # ...the student sees a history item
-        history_res = self.testapp.get(history_path)
-        history_item = history_res.json_body
-
-        history_lm = history_item['Last Modified']
-        history_item['Grade']['value']
-
-        # If the instructor updates it
+        # Instructor updates it
         grade['value'] = 5
         self.testapp.put_json(path, grade, extra_environ=instructor_environ)
-
-        history_res = self.testapp.get(history_path)
-        history_item2 = history_res.json_body
-        #history_item2 = history_res.json_body['Items']['tag:nextthought.com,2011-10:OU-NAQ-CLC3403_LawAndJustice.naq.asg.trivial_test']
-
-        history_item['Last Modified']
-        history_item['Grade']['value']
-
-        # The date and data are modified
-        assert_that(history_item2, has_entries('Last Modified', greater_than(history_lm),
-                                               'Grade', has_entry('value', 5)))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_instructor_delete_grade(self):
