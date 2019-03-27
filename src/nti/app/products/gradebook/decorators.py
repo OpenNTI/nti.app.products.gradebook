@@ -203,15 +203,16 @@ class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
         return bool(self._is_authenticated)
 
     def _do_decorate_external(self, context, result):
-        # FIXME: This link is deprecated; this should now be a field on the
+        # XXX: This link is deprecated; this should now be a field on the
         # grade container.
         user = self.remoteUser
         course = find_interface(context, ICourseInstance, strict=False)
-        result['IsExcused'] = context.__parent__.Excused
+        grade_container = context.__parent__
+        result['IsExcused'] = grade_container.Excused
         if is_course_instructor(course, user):
             links = result.setdefault(LINKS, [])
-            rel = 'excuse' if not context.__parent__.Excused else 'unexcuse'
-            link = Link(context, elements=(rel,), rel=rel, method='POST')
+            rel = 'excuse' if not grade_container.Excused else 'unexcuse'
+            link = Link(grade_container, elements=(rel,), rel=rel, method='POST')
             links.append(link)
 
 

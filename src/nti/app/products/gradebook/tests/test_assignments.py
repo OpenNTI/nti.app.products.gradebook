@@ -884,13 +884,12 @@ class TestAssignments(ApplicationLayerTest):
                     has_entry('MimeType', 'application/vnd.nextthought.grade'))
         assert_that(res.json_body, has_entry('value', '324 -'))
 
-        href = res.json_body['href']
-        excuse_ref = href + "/excuse"
+        excuse_ref = self.require_link_href_with_rel(res.json_body, 'excuse')
         res = self.testapp.post(excuse_ref, extra_environ=instructor_environ,
                                 status=200)
         assert_that(res.json_body, has_entry('IsExcused', is_(True)))
 
-        unexcuse_ref = href + "/unexcuse"
+        unexcuse_ref = self.require_link_href_with_rel(res.json_body, 'unexcuse')
         res = self.testapp.post(unexcuse_ref, extra_environ=instructor_environ,
                                 status=200)
         assert_that(res.json_body, has_entry('IsExcused', is_(False)))
