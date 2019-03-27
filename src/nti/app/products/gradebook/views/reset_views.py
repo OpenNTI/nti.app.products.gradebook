@@ -60,6 +60,7 @@ class GradeResetView(UserHistoryItemResetView):
         else:
             grade_container = self.context
         grade_container.reset()
+        del grade_container.__parent__[grade_container.__name__]
         return result
 
     @Lazy
