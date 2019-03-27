@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 import operator
@@ -48,6 +47,8 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
 
+from nti.dataserver.users import User
+
 from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -57,6 +58,10 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.ntiids.oids import to_external_ntiid_oid
+from nti.app.assessment.common.policy import is_most_recent_submission_priority
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
+
+logger = __import__('logging').getLogger(__name__)
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -400,14 +405,18 @@ class SubmittedAssignmentHistoryGetView(AbstractAuthenticatedView,
         return items_iter
 
     def _do_sort_gradeValue(self, filter_usernames, sort_reverse):
+        course = ICourseInstance(self.context)
+        highest_grade = not is_most_recent_submission_priority(self.grade_column.AssignmentId,
+                                                               course)
         def grade_key(item):
             # Users who have no value for their grade, typically
             # a blank string from the UI, we want to sort to the end
             # as a group.
-            # TODO: Not sure how this interacts with the placeholders for
-            # people entirely missing a value
-            grade = item[1]
-            value = grade.value
+            username = item[0]
+            user = User.get_user(username)
+            grade = get_applicable_user_grade(self.grade_column, user,
+                                              highest_grade=highest_grade)
+            value = grade.value if grade is not None else None
             if value is None:
                 value = 'ZZZZZZZZZZZ'
             if isinstance(value, string_types) and not value.strip():

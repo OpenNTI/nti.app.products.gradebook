@@ -1065,8 +1065,9 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.post_json(grade_path, grade2, extra_environ=instructor_environ)
         grade_res = self.testapp.post_json(grade_path, grade3, extra_environ=instructor_environ)
         grade_res = grade_res.json_body
-        # No longer any placeholder
+        # No longer any placeholder, but a grade
         assert_that(grade_res['HistoryItemNTIID'], none())
+        # We now decorate a reset rel on the grade
         reset_rel = self.require_link_href_with_rel(grade_res, 'Reset')
 
         # Grade without submission is incomplete

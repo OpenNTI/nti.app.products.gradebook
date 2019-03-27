@@ -19,6 +19,8 @@ from zope import interface
 from zope.security.management import NoInteraction
 from zope.security.management import checkPermission
 
+from nti.app.assessment import VIEW_RESET_EVALUATION
+
 from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
@@ -225,6 +227,9 @@ class _GradeEditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         if is_course_instructor(course, self.remoteUser):
             links = result.setdefault(LINKS, [])
             link = Link(context, rel='edit', method='POST')
+            links.append(link)
+            # Also expose the reset rel on the grade
+            link = Link(context, rel=VIEW_RESET_EVALUATION, method='POST')
             links.append(link)
 
 
