@@ -527,10 +527,12 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
             course_enrollments = ICourseEnrollments(course)
             # pylint: disable=too-many-function-args
             if course_enrollments.get_enrollment_for_principal(user):
+                # These may get persisted; use username to ensure case is accurate
+                # for permission checking (principals are case-sensitive...).
                 result = GradeContainer()
                 result.__parent__ = self.context
-                result.__name__ = name
-                self.context[name] = result
+                result.__name__ = user.username
+                self.context[user.username] = result
                 return result
             raise
 

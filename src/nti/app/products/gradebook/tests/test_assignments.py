@@ -70,6 +70,8 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.externalization.tests import externalizes
 
+from nti.ntiids import ntiids
+
 from nti.ntiids.ntiids import make_specific_safe
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -915,11 +917,13 @@ class TestAssignments(ApplicationLayerTest):
         # ... and can be fetched directly
         oid = notable_res.json_body['Items'][0]['OID']
 
-        from nti.ntiids import ntiids
-
         ntiid = ntiids.make_ntiid(provider='ignored',
                                   specific=oid,
                                   nttype=ntiids.TYPE_OID)
+        # If this fails, it is likely due to an ACL issue
+        # In one case, this was due to a case-sensitivity issue wrt ACL
+        # principals (via Username on grade container) and effective_principals.
+        # (also painful to sort out).
         self.fetch_by_ntiid(ntiid)
 
     def _set_completion_policy(self, instructor_environ):
