@@ -87,7 +87,10 @@ def _assignment_progress(user, assignment, course):
 
     if progress_date is None:
         # We're here because of grade value or excused grade.
-        progress_date = grade.lastModified
+        if grade is not None:
+            progress_date = grade.lastModified
+        else:
+            progress_date = grade_container.lastModified
 
     grade_val = getattr(grade, 'value', None)
     grade_val = numeric_grade_val(grade_val)
