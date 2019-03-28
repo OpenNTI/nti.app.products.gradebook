@@ -315,7 +315,7 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
                                                       success=True)
 
         external['UserCompletionCount'] = len(completed_items)
-        external['GradeSubmittedCount'] = len(column)
+        external['GradeSubmittedCount'] = len([x for x in column.values() if x.has_grade()])
 
         submissions = get_submissions(assignment, course)
         external['GradeAssignmentSubmittedCount'] = len(submissions or ())

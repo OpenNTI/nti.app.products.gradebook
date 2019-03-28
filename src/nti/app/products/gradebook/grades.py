@@ -101,7 +101,7 @@ class Grade(CreatedModDateTrackingObject,
         if self.__parent__ is not None:
             return self.__parent__.AssignmentId
 
-    @Lazy
+    @property
     def HistoryItemNTIID(self):
         return self.__name__
 
@@ -258,6 +258,13 @@ class GradeContainer(PersistentCreatedModDateTrackingObject,
         else:
             result = super(GradeContainer, self).get(key, default=default)
         return result
+
+    def has_grade(self):
+        """
+        Return a bool whether we have a grade in this container or not.
+        """
+        return self.MetaGrade is not None or len(self)
+
 
 @interface.implementer(IPredictedGrade, IContentTypeAware)
 class PredictedGrade(object):

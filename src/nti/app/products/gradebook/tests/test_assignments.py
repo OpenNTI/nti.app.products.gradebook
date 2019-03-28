@@ -911,18 +911,18 @@ class TestAssignments(ApplicationLayerTest):
         submission = AssignmentSubmission(assignmentId=assignment_id,
                                           parts=(qs1_submission, qs2_submission))
 
-        ext_obj = to_external_object(submission)
+#       ext_obj = to_external_object(submission)
 
-        assignment_res = self.testapp.get(submit_href)
+#       assignment_res = self.testapp.get(submit_href)
         # XXX: We used to disallow submissions once the instructor set a grade,
         # due to submission limits. Now that we no longer have placeholder
         # submissions this does not apply anymore. What do we want to do?
-        self.require_link_href_with_rel(assignment_res.json_body,
-                                        'Commence')
-        res = self.testapp.post_json(submit_href, ext_obj, status=403)
-        assert_that(res.json_body,
-                    has_entry('message', "Assignment is not available for submission."))
-        assert_that(res.json_body, has_entry('code', "CannotSubmitAssignmentError"))
+#         self.require_link_href_with_rel(assignment_res.json_body,
+#                                         'Commence')
+#         res = self.testapp.post_json(submit_href, ext_obj, status=403)
+#         assert_that(res.json_body,
+#                     has_entry('message', "Assignment is not available for submission."))
+#         assert_that(res.json_body, has_entry('code', "CannotSubmitAssignmentError"))
 
         # ... this didn't cause an activity item to be added for the instructor
         activity_link = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/CourseActivity'

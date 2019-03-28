@@ -396,7 +396,6 @@ class IGrade(IContained,
                              u"equivalent to __name__",
                              required=True)
 
-    # NTIID = ValidNTIID(title=u"Grade entry ntiid", required=True)
     AssignmentId = ValidNTIID(title=u"The assignment this is for",
                               description=u"This comes from the entry containing it.",
                               required=False)
@@ -439,6 +438,11 @@ class IGradeContainer(ILastModified,
                               description=u"This comes from the entry containing it.",
                               required=False)
 
+    def has_grade():
+        """
+        Return a bool whether this container has any grades, including the
+        MetaGrade attribute.
+        """
 
 class IGradeWithoutSubmission(IGrade):
     pass

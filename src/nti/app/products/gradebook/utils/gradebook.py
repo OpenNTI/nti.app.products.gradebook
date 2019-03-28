@@ -124,9 +124,8 @@ def record_grade_without_submission(entry, user, assignmentId=None,
 
     grade = clazz()
     grade.__parent__ = grade_container
-    grade.__name__ = u'MetaGrade'
-    grade.HistoryItemNTIID = None
     grade_container.MetaGrade = grade
+    grade.__name__ = u'MetaGrade'
     return grade
 
 
