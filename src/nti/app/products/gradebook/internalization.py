@@ -24,7 +24,6 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.gradebook import MessageFactory as _
 
-from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IMetaGrade
 from nti.app.products.gradebook.interfaces import ISubmissionGrade
 from nti.app.products.gradebook.interfaces import ILetterGradeScheme
@@ -52,8 +51,6 @@ class _GradeObjectUpdater(InterfaceObjectIO):
                                                                  'HistoryItemNTIID'})
     )
 
-    _ext_iface_upper_bound = IGrade
-
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         result = False
         if 'Username' in parsed and self._ext_replacement().Username is None:
@@ -68,13 +65,15 @@ class _GradeObjectUpdater(InterfaceObjectIO):
 @component.adapter(ISubmissionGrade)
 @interface.implementer(IInternalObjectUpdater)
 class _SubmissionGradeObjectUpdater(_GradeObjectUpdater):
-    pass
+
+    _ext_iface_upper_bound = ISubmissionGrade
 
 
 @component.adapter(IMetaGrade)
 @interface.implementer(IInternalObjectUpdater)
 class _MetaGradeObjectUpdater(_GradeObjectUpdater):
-    pass
+
+    _ext_iface_upper_bound = IMetaGrade
 
 
 @component.adapter(ILetterGradeScheme)

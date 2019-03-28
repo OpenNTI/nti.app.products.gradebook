@@ -344,8 +344,8 @@ class TestSimpleGradingPolicy(unittest.TestCase):
         grade = PersistentGrade()
         grade.__parent__ = container = GradeContainer()
         grade.value = 0
-        container[HISTORY_ITEM_NTIID] = grade
         entry[u'cald3307'] = container
+        container[HISTORY_ITEM_NTIID] = grade
         # We have earned 0 points out of a possible 10.
         # While this assignment is only worth 5 points,
         # the unsubmitted assignment (due_and_passed) is
