@@ -149,6 +149,8 @@
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.IGrade
 						 .interfaces.IGradeScheme
+						 .interfaces.IMetaGrade
+						 .interfaces.ISubmissionGrade
 						 .interfaces.IGradeBook
 						 .interfaces.IGradeBookPart
 						 .interfaces.IGradeContainer
@@ -161,9 +163,13 @@
 		modules=".gradebook .grades .gradescheme" />
 
 	<!-- Internalization -->
-	<adapter factory=".internalization._GradeObjectUpdater"
-			 for=".interfaces.IGrade"
+	<adapter factory=".internalization._MetaGradeObjectUpdater"
+			 for=".interfaces.IMetaGrade"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._SubmissionGradeObjectUpdater"
+             for=".interfaces.ISubmissionGrade"
+             provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<adapter factory=".internalization._LetterGradeSchemeObjectUpdater"
 			 for=".interfaces.ILetterGradeScheme"

@@ -18,7 +18,7 @@ from nti.app.products.gradebook.assignments import create_assignment_part
 
 from nti.app.products.gradebook.grades import PredictedGrade
 from nti.app.products.gradebook.grades import GradeContainer
-from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PersistentMetaGrade
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
@@ -76,7 +76,7 @@ def calculate_grades(context,
         # if there is a grade scheme convert value
         if grade_scheme is not None:
             value = grade_scheme.fromCorrectness(correctness)
-        grade = PersistentGrade(value=value)
+        grade = PersistentMetaGrade(value=value)
         result[username] = grade
         # if entry is available save it
         if entry is not None:

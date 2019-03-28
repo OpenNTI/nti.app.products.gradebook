@@ -27,6 +27,7 @@ from nti.app.products.gradebook.gradebook import numeric_grade_val
 
 from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PersistentMetaGrade
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
@@ -107,7 +108,7 @@ def remove_from_container(container, key, event=False):
 
 
 def record_grade_without_submission(entry, user, assignmentId=None,
-                                    clazz=PersistentGrade):
+                                    clazz=PersistentMetaGrade):
     """
     Create a grade and store as the MetaGrade on the grade container.
     """

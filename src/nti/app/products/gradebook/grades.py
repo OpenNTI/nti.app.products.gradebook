@@ -26,7 +26,10 @@ from zope.location.interfaces import ISublocations
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.app.products.gradebook.interfaces import IGrade, IGradeContainer
+from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IMetaGrade
+from nti.app.products.gradebook.interfaces import ISubmissionGrade
+from nti.app.products.gradebook.interfaces import IGradeContainer
 
 from nti.base.interfaces import ICreated
 
@@ -63,11 +66,10 @@ logger = __import__('logging').getLogger(__name__)
 
 
 @WithRepr
-@interface.implementer(IGrade)
 @EqHash('username', 'assignmentId', 'value')
-class Grade(CreatedModDateTrackingObject,
-            SchemaConfigured,
-            Contained):
+class AbstractGrade(CreatedModDateTrackingObject,
+                    SchemaConfigured,
+                    Contained):
 
     createDirectFieldProperties(IGrade)
 
@@ -86,7 +88,7 @@ class Grade(CreatedModDateTrackingObject,
         if 'grade' in kwargs and 'value' not in kwargs:
             kwargs['value'] = kwargs['grade']
             del kwargs['grade']
-        super(Grade, self).__init__(*args, **kwargs)
+        super(AbstractGrade, self).__init__(*args, **kwargs)
 
     @Lazy
     def createdTime(self):  # pylint: disable=method-hidden
@@ -112,8 +114,21 @@ class Grade(CreatedModDateTrackingObject,
 
     @property
     def __acl__(self):
-        # Return our container acl ot override the default created acl
+        # Return our container acl to override the default created acl
         return self.__parent__.__acl__
+
+
+@interface.implementer(ISubmissionGrade)
+class Grade(AbstractGrade):
+
+    @property
+    def HistoryItemNTIID(self):
+        return self.__name__
+
+
+@interface.implementer(IMetaGrade)
+class MetaGrade(AbstractGrade):
+    pass
 
 
 @interface.implementer(IWeakRef)
@@ -170,6 +185,27 @@ class PersistentGrade(Grade, PersistentPropertyHolder):
 
     def __init__(self, *args, **kwargs):
         Grade.__init__(self, *args, **kwargs)
+        PersistentPropertyHolder.__init__(self)
+
+    @property
+    def containerId(self):
+        if self.__parent__ is not None:
+            return self.__parent__.NTIID
+
+
+@interface.implementer(ICreated, IContentTypeAware)
+class PersistentMetaGrade(MetaGrade, PersistentPropertyHolder):
+
+    # order of inheritance matters; if Persistent is first,
+    # we can't have our own __setstate__; only subclasses can
+
+    __external_class_name__ = "MetaGrade"
+
+    parameters = {}
+    mimeType = mime_type = 'application/vnd.nextthought.metagrade'
+
+    def __init__(self, *args, **kwargs):
+        MetaGrade.__init__(self, *args, **kwargs)
         PersistentPropertyHolder.__init__(self)
 
     @property

@@ -19,7 +19,6 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
-from hamcrest import greater_than
 from hamcrest import contains_inanyorder
 does_not = is_not
 
@@ -64,6 +63,8 @@ from nti.app.products.gradebook.tests import InstructedCourseApplicationTestLaye
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -308,7 +309,8 @@ class TestAssignments(ApplicationLayerTest):
                               has_entry('Main_Title',
                                         has_entries('AssignmentId', self.assignment_id,
                                                     'Items', has_entry(self.extra_environ_default_user.lower(),
-                                                                       has_entry('value', 90))))))
+                                                                       has_entry('Items',
+                                                                                 has_item(has_entry('value', 90))))))))
 
         # ...or through the book
         book_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook'
@@ -320,7 +322,8 @@ class TestAssignments(ApplicationLayerTest):
                                                   has_entry('Main_Title',
                                                             has_entries('AssignmentId', self.assignment_id,
                                                                         'Items', has_entry(self.extra_environ_default_user.lower(),
-                                                                                           has_entry('value', 90))))))))
+                                                                                           has_entry('Items',
+                                                                                                    has_item(has_entry('value', 90))))))))))
 
         # And in the student's history, visible to both
         for env in instructor_environ, {}:
@@ -330,46 +333,23 @@ class TestAssignments(ApplicationLayerTest):
         # A non-submittable part can be directly graded by the professor
         final_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/Final_Grade/'
         path = final_grade_path + 'sjohnson@nextthought.com'
-        grade['value'] = "75 -"  # Use a string like the app typically sends
+        # Use a string like the app typically sends
+        grade['value'] = "75 -"
         res = self.testapp.put_json(path, grade,
                                     extra_environ=instructor_environ)
         __traceback_info__ = res.json_body
-        final_href = self.require_link_href_with_rel(res.json_body, 'AssignmentHistoryItem')
+        self.forbid_link_with_rel(res.json_body, 'AssignmentHistoryItem')
 
         # And it is now in the gradebook part...
         path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/no_submit/'
-        res = self.testapp.get(path,  extra_environ=instructor_environ)
+        res = self.testapp.get(path, extra_environ=instructor_environ)
         assert_that(res.json_body,
                     has_entry('Items',
                               has_entry('Final_Grade',
                                         has_entries('Class', 'GradeBookEntry',
                                                     'MimeType', 'application/vnd.nextthought.gradebook.gradebookentry',
                                                     'Items', has_entry(self.extra_environ_default_user.lower(),
-                                                                       has_entry('value', "75 -"))))))
-
-        # ...as well as the student's history (for both the instructor and professor)
-        for env in instructor_environ, {}:
-            history_res = self.testapp.get(final_href, extra_environ=env)
-            assert_that(history_res.json_body,
-                        has_entries('Grade', has_entry('value', "75 -"),
-                                             'SyntheticSubmission', True))
-
-            # Both of them can leave feedback on it
-            history_feedback_container_href = history_res.json_body['Feedback']['href']
-
-            from nti.app.assessment.feedback import UsersCourseAssignmentHistoryItemFeedback
-            feedback = UsersCourseAssignmentHistoryItemFeedback(
-                body=[u'Some feedback']
-            )
-            ext_feedback = to_external_object(feedback)
-            __traceback_info__ = ext_feedback
-            res = self.testapp.post_json(history_feedback_container_href,
-                                         ext_feedback,
-                                         extra_environ=env,
-                                         status=201)
-            history_res = self.testapp.get(final_href, extra_environ=env)
-            assert_that(history_res.json_body,
-                         has_entry('Feedback', has_entry('Items', has_item(has_entry('body', ['Some feedback'])))))
+                                                                       has_entry('MetaGrade', has_entry('value', "75 -")))))))
 
         # The instructor cannot do this for users that don't exist...
         self.testapp.put_json(final_grade_path + 'foo@bar', grade, extra_environ=instructor_environ,
@@ -382,7 +362,6 @@ class TestAssignments(ApplicationLayerTest):
         # grade in it.
         # setup profile names
         with mock_dataserver.mock_db_trans(self.ds):
-            from nti.dataserver.users.interfaces import IFriendlyNamed
             prof = IFriendlyNamed(User.get_user('sjohnson@nextthought.com'))
             prof.realname = u'Steve Johnson\u0107'
             lifecycleevent.modified(prof.__parent__)
@@ -881,7 +860,7 @@ class TestAssignments(ApplicationLayerTest):
         res = self.testapp.put_json(path, grade,
                                     extra_environ=instructor_environ)
         assert_that(res.json_body,
-                    has_entry('MimeType', 'application/vnd.nextthought.grade'))
+                    has_entry('MimeType', 'application/vnd.nextthought.metagrade'))
         assert_that(res.json_body, has_entry('value', '324 -'))
 
         grade_href = res.json_body['href']
@@ -1068,7 +1047,9 @@ class TestAssignments(ApplicationLayerTest):
         grade_res = self.testapp.post_json(grade_path, grade3, extra_environ=instructor_environ)
         grade_res = grade_res.json_body
         # No longer any placeholder, but a grade
-        assert_that(grade_res['HistoryItemNTIID'], none())
+        assert_that(grade_res, does_not(has_item('HistoryItemNTIID')))
+        assert_that(grade_res, has_entries('Class', 'MetaGrade',
+                                           'MimeType', 'application/vnd.nextthought.metagrade'))
 
         # We now decorate a reset rel on the grade
         reset_rel = self.require_link_href_with_rel(grade_res, 'Reset')

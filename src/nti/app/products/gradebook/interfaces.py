@@ -385,7 +385,7 @@ class IGrade(IContained,
              ILastModified,
              IShouldHaveTraversablePath):
     """
-    A single grade for a single user.
+    A grade not tied to a particular user history item.
     """
 
     containers('.IGradeContainer')
@@ -400,13 +400,25 @@ class IGrade(IContained,
                               description=u"This comes from the entry containing it.",
                               required=False)
 
-    HistoryItemNTIID = ValidNTIID(title=u"The history item this is for",
-                                  required=False)
-
     value = _grade_property()
 
     AutoGrade = _grade_property()
     AutoGradeMax = _grade_property()
+
+
+class ISubmissionGrade(IGrade):
+    """
+    A single grade for a single user, tied to a submission.
+    """
+
+    HistoryItemNTIID = ValidNTIID(title=u"The history item this is for",
+                                  required=False)
+
+
+class IMetaGrade(IGrade):
+    """
+    A single grade for a single user, not tied to any submission.
+    """
 
 
 class IGradeContainer(ILastModified,
@@ -424,7 +436,7 @@ class IGradeContainer(ILastModified,
     Items = List(title=u'For externalization only, a copy of the grade items',
                  readonly=True)
 
-    MetaGrade = Object(IGrade,
+    MetaGrade = Object(IMetaGrade,
                        description=u"""A :class:`.IGrade`, set by an instructor as an override
                        or replacement for earned grades by the user.""",
                        title=u"The meta grade",
@@ -443,6 +455,7 @@ class IGradeContainer(ILastModified,
         Return a bool whether this container has any grades, including the
         MetaGrade attribute.
         """
+
 
 class IGradeWithoutSubmission(IGrade):
     pass
