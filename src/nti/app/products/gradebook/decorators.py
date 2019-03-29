@@ -173,11 +173,12 @@ class _UsersCourseAssignmentHistoryItemDecorator(Singleton):
         external['HistoryItemGrade'] = item_grade
         # To retain BWC, 'Grade' has always been the applicable grade
         # for this assignment, course, and user.
-        gradebook_entry = IGradeBookEntry(item)
-        applicable_grade = get_applicable_user_grade(gradebook_entry, user)
-        external['Grade'] = applicable_grade
-        grade_container = gradebook_entry.get(user.username)
-        external['MetaGrade'] = grade_container.MetaGrade
+        gradebook_entry = IGradeBookEntry(item, None)
+        if gradebook_entry is not None:
+            applicable_grade = get_applicable_user_grade(gradebook_entry, user)
+            external['Grade'] = applicable_grade
+            grade_container = gradebook_entry.get(user.username)
+            external['MetaGrade'] = grade_container.MetaGrade
 
 
 @component.adapter(IGrade)

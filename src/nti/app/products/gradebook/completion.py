@@ -70,7 +70,7 @@ def _assignment_progress(user, assignment, course):
     entry = gradebook.getColumnForAssignmentId(assignment.ntiid)
     grade_container = entry.get(user.username) if entry is not None else None
     excused_grade = getattr(grade_container, 'Excused', False)
-    grade = get_applicable_user_grade(entry, user)
+    grade = get_applicable_user_grade(entry, user) if entry is not None else None
 
     # We cannot calculate progress if:
     # * passing percent required and no grade (synth or not)
