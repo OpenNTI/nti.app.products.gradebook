@@ -24,7 +24,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.security.management import queryInteraction
 
-from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGrade, IMetaGrade
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
 from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
@@ -72,14 +72,34 @@ def _get_entry_change_storage(entry):
 
 
 def _do_store_grade_created_event(grade, unused_event):
-    # FIXME Does this need to change (migration?) with multiple grades?
+    """
+    Grade change events are stored as an annotation on the gradebook entry.
+    Each user will have a change container, keyed by the assignment history
+    ntiid (or MetaGrade).
+    """
     entry = IGradeBookEntry(grade)
     storage = _get_entry_change_storage(entry)
+
     if grade.Username in storage:
-        change_event = storage[grade.Username]
+        change_container = storage[grade.Username]
+    else:
+        change_container = CaseInsensitiveLastModifiedBTreeContainer()
+        change_container.__name__ = grade.Username
+        change_container.__parent__ = entry
+        storage[grade.Username] = change_container
+
+    try:
+        change_key = grade.HistoryItemNTIID
+    except AttributeError:
+        change_key = u'MetaGrade'
+        assert IMetaGrade.providedBy(grade)
+
+    if change_key in change_container:
+        change_event = change_container[change_key]
         change_event.updateLastMod()
         notify(ObjectModifiedEvent(change_event))
         return
+
     change = Change(Change.CREATED, grade)
     # Set the time to now. Since grades are created
     # at assignment submission time, we rely on the
@@ -93,9 +113,8 @@ def _do_store_grade_created_event(grade, unused_event):
         change.creator = SYSTEM_USER_NAME
         grade.creator = SYSTEM_USER_NAME
 
-    # Give the change a sharedWith value of the target
-    # username; that way it gets indexed cheaply as directed
-    # to the user.
+    # Give the change a sharedWith value of the target username; that way it
+    # gets indexed cheaply as directed to the user.
     # NOTE: See __acl__ on the grade object; this
     # may change if we have a richer publishing workflow
     change.sharedWith = (grade.Username,)
@@ -111,9 +130,9 @@ def _do_store_grade_created_event(grade, unused_event):
     # Define it as top-level content for indexing purposes
     change.__is_toplevel_content__ = True
     #change.__name__ = grade.Username
-    storage[grade.Username] = change
-    assert change.__parent__ is storage
-    assert change.__name__ == grade.Username
+    change_container[change_key] = change
+    assert change.__parent__ is change_container
+    assert change.__name__ == change_key
     return change
 
 
@@ -132,7 +151,13 @@ def _remove_grade_event(grade, unused_event=None):
     try:
         entry = IGradeBookEntry(grade)
         storage = _get_entry_change_storage(entry)
-        del storage[grade.Username]
+        change_container = storage[grade.Username]
+        try:
+            change_key = grade.HistoryItemNTIID
+        except AttributeError:
+            change_key = 'MetaGrade'
+            assert IMetaGrade.providedBy(grade)
+        del change_container[change_key]
     except KeyError:
         pass
 

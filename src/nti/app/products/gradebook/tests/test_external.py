@@ -52,7 +52,7 @@ class TestExternal(unittest.TestCase):
         grade_container.__parent__ = GradeBookEntry()
         grade = Grade(grade=85.0)
         grade.__parent__ = grade_container
-        grade_container["tag:nextthought.com,2011-10:history_item_ntiid"] = grade
+        grade_container[u"tag:nextthought.com,2011-10:history_item_ntiid"] = grade
         ext = externalization.to_external_object(grade)
         assert_that(ext, has_entry('Class', 'Grade'))
         assert_that(ext, has_entry('value', is_(85.0)))
@@ -64,6 +64,7 @@ class TestExternal(unittest.TestCase):
         factory = internalization.find_factory_for(ext)
         newgrade = factory()
         newgrade.__parent__ = grade_container
+        grade_container[u"tag:nextthought.com,2011-10:history_item_ntiid2"] = newgrade
 
         internalization.update_from_external_object(newgrade, ext)
         assert_that(newgrade, has_property('value', is_(85.0)))
