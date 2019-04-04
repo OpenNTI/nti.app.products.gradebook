@@ -207,23 +207,11 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         assignmentId = item.Submission.assignmentId
         policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
         if policy is not None:
-            # Check priority
-            most_recent = is_most_recent_submission_priority(assignmentId, course)
+            previous_grade = grade.AutoGrade
             autograde_res = policy.autograde(item.pendingAssessment)
             if autograde_res is not None:
                 grade.AutoGrade, grade.AutoGradeMax = autograde_res
-
-            # Take our current grade if we do not have a current grade
-            # - or if they are equal (grade.value = previous_grade.AutoGrade) (now removed)
-            # - or forced
-            # - or if we must accept most recent
-            # Take the current grade if we want the highest graded submission
-            # and our new grade is higher than the previous grade
-            numeric_val = numeric_grade_val(grade.value)
-            if grade.value is None or overwrite or most_recent:
-                grade.value = grade.AutoGrade
-            elif not most_recent and grade.AutoGrade and grade.AutoGrade > numeric_val:
-                # We're configured to only override if our new grade is higher
+            if grade.value is None or grade.value == previous_grade or overwrite:
                 grade.value = grade.AutoGrade
 
         if not getattr(grade, 'creator', None):
