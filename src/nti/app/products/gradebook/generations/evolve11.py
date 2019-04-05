@@ -48,6 +48,8 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users import User
 
+from nti.ntiids.oids import to_external_ntiid_oid
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -68,10 +70,7 @@ class MockDataserver(object):
 def _get_change_object(entry, grade):
     # These should all exist at this point (if they have a value)
     storage = _get_entry_change_storage(entry)
-    try:
-        change_container = storage[grade.Username]
-    except KeyError:
-        from IPython.terminal.debugger import set_trace;set_trace()
+    change_container = storage[grade.Username]
 
     try:
         change_key = grade.HistoryItemNTIID
@@ -98,16 +97,29 @@ def store_meta_grade(grade_container, grade, entry):
         _copy_dates(change_object, grade)
 
 
-def _cleanup_entry_change_storage(entry, seen_entries):
+def _cleanup_entry_change_storage(entry, seen_entries, entry_ntiid_to_oids):
     """
     Cleanup our entry change storage. We're going to create new grades during
     this migration, and, once the events are fired, we're going to have new
     change events. We'll want a clean slate so that we know our change storage
     is in the correct state once grade events start firing.
     """
-    if entry.ntiid in seen_entries:
+    entry_oid = to_external_ntiid_oid(entry)
+    if entry_oid in seen_entries:
         return
-    seen_entries.add(entry.ntiid)
+    seen_entries.add(entry_oid)
+    if entry.ntiid in entry_ntiid_to_oids:
+        # Welp, we have gradebook entries with duplicate NTIIDs, which is
+        # derived by lienage up through a course.
+        # Prod example: Course admin levels are distinct, but
+        # assignments etc are re-used in different courses.
+        # - oc.nextthought.com/Courses/Fall2015/CMSC 1313/Sections/01'
+        # - oc.nextthought.com/Courses/Fall2016/CMSC 1313/Sections/01'
+        entry_ntiid_to_oids[entry.ntiid].append(entry_oid)
+        logger.warn('Duplicate gradebook entry ntiids (%s) (%s)',
+                    entry.ntiid, entry_ntiid_to_oids[entry.ntiid])
+    else:
+        entry_ntiid_to_oids[entry.ntiid] = [entry_oid]
     change_storage = _get_entry_change_storage(entry)
     change_storage.clear()
 
@@ -136,6 +148,7 @@ def do_evolve(context, generation=generation):
         index = metadata_catalog['mimeType']
 
         seen_entries = set()
+        entry_ntiid_to_oids = dict()
         MIME_TYPES = ('application/vnd.nextthought.grade',)
         item_intids = index.apply({'any_of': MIME_TYPES})
         for doc_id in item_intids or ():
@@ -161,7 +174,9 @@ def do_evolve(context, generation=generation):
                     # Idempotent
                     continue
 
-                _cleanup_entry_change_storage(gradebook_entry, seen_entries)
+                _cleanup_entry_change_storage(gradebook_entry,
+                                              seen_entries,
+                                              entry_ntiid_to_oids)
                 grade_container = GradeContainer()
                 # Remove grade (no event)
                 gradebook_entry._delitemf(grade.__name__, event=False)

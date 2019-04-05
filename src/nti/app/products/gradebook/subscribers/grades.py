@@ -79,7 +79,6 @@ def _do_store_grade_created_event(grade, unused_event):
     """
     entry = IGradeBookEntry(grade)
     storage = _get_entry_change_storage(entry)
-
     if grade.Username in storage:
         change_container = storage[grade.Username]
     else:
