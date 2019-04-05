@@ -244,7 +244,6 @@ def evolve(context):
     """
     Evolve to generation 11 to put all grades into the new GradeContainer.
 
-    XXX: Do we need to migrate change storage
     XXX: Do we need to remove placeholder submissions
     """
     do_evolve(context)
