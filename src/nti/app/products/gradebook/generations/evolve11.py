@@ -66,9 +66,13 @@ class MockDataserver(object):
 
 
 def _get_change_object(entry, grade):
-    # These should all exist at this point
+    # These should all exist at this point (if they have a value)
     storage = _get_entry_change_storage(entry)
-    change_container = storage[grade.Username]
+    try:
+        change_container = storage[grade.Username]
+    except KeyError:
+        from IPython.terminal.debugger import set_trace;set_trace()
+
     try:
         change_key = grade.HistoryItemNTIID
     except AttributeError:
@@ -77,7 +81,7 @@ def _get_change_object(entry, grade):
 
 
 def _copy_dates(target_object, source_object):
-    target_object.LastModified = source_object.LastModified
+    target_object.lastModified = source_object.lastModified
     target_object.createdTime = source_object.createdTime
 
 
@@ -87,10 +91,11 @@ def store_meta_grade(grade_container, grade, entry):
     grade_container.MetaGrade = meta_grade
     meta_grade.__name__ = u'MetaGrade'
     assert meta_grade.__parent__ is grade_container
-    notify(ObjectModifiedEvent(grade))
+    notify(ObjectModifiedEvent(meta_grade))
     _copy_dates(meta_grade, grade)
-    change_object = _get_change_object(entry, grade)
-    _copy_dates(change_object, grade)
+    if meta_grade.value is not None:
+        change_object = _get_change_object(entry, meta_grade)
+        _copy_dates(change_object, grade)
 
 
 def _cleanup_entry_change_storage(entry, seen_entries):
@@ -202,8 +207,9 @@ def do_evolve(context, generation=generation):
                                                                          overwrite=True)
                         notify(ObjectModifiedEvent(new_grade))
                         _copy_dates(new_grade, grade)
-                        change_object = _get_change_object(gradebook_entry, grade)
-                        _copy_dates(change_object, grade)
+                        if new_grade.value is not None:
+                            change_object = _get_change_object(gradebook_entry, new_grade)
+                            _copy_dates(change_object, grade)
                         grades_assessed += 1
                         new_grades.append(new_grade)
 
