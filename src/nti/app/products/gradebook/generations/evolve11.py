@@ -26,6 +26,8 @@ from zope.lifecycleevent import ObjectModifiedEvent
 
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 
+from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
+
 from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentMetaGrade
 
@@ -124,6 +126,21 @@ def _cleanup_entry_change_storage(entry, seen_entries, entry_ntiid_to_oids):
     change_storage.clear()
 
 
+def _assess_history_item(item, course):
+    """
+    Assess our history item, if possible and return the grade_val defined
+    by our policy or None.
+    """
+    grade_val = None
+    assignmentId = item.Submission.assignmentId
+    policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
+    if policy is not None:
+        autograde_res = policy.autograde(item.pendingAssessment)
+        if autograde_res is not None:
+            grade_val, unused_max = autograde_res
+    return grade_val
+
+
 def do_evolve(context, generation=generation):
     logger.info("Grade container evolution %s started", generation)
 
@@ -151,6 +168,7 @@ def do_evolve(context, generation=generation):
         entry_ntiid_to_oids = dict()
         MIME_TYPES = ('application/vnd.nextthought.grade',)
         item_intids = index.apply({'any_of': MIME_TYPES})
+        logger.info('%s grade items found for migration', len(item_intids))
         for doc_id in item_intids or ():
             item = intids.queryObject(doc_id)
             if IGrade.providedBy(item):
@@ -206,7 +224,6 @@ def do_evolve(context, generation=generation):
                     meta_grade_count += 1
                     store_meta_grade(grade_container, grade, gradebook_entry)
                 else:
-                    new_grades = []
                     for history_item in submission_container.values():
                         if IPlaceholderAssignmentSubmission.providedBy(history_item.Submission):
                             continue
@@ -216,21 +233,33 @@ def do_evolve(context, generation=generation):
                         # XXX: This will emit non-harmful warning messages about auto-grading
                         # non-auto-grading types. This is expected.
 
-                        # We should have no events here
-                        # This should always be a new grade
-                        new_grade = set_grade_by_assignment_history_item(history_item,
-                                                                         overwrite=True)
-                        notify(ObjectModifiedEvent(new_grade))
-                        _copy_dates(new_grade, grade)
-                        if new_grade.value is not None:
-                            change_object = _get_change_object(gradebook_entry, new_grade)
-                            _copy_dates(change_object, grade)
+                        # Now get assessed grade val and see if it matches
+                        grade_val = _assess_history_item(history_item, course)
+                        if      grade_val == grade.value \
+                            or (grade_val is None and len(submission_container) == 1):
+                            # This is a non-auto-gradable assignment with only one submission.
+                            # Thus, this is the grade for our submission.
+                            # OR this grade matches the assigned grade.
+                            # This should not fire events (unsure why); no other work
+                            # should need to be taken.
+                            save_in_container(grade_container, history_item.ntiid, grade)
+                        else:
+                            # This should hopefully be relatively rare. Assess and store
+                            # a grade for this history item.
+                            # We should have no events here
+                            # This should always be a new grade
+                            new_grade = set_grade_by_assignment_history_item(history_item,
+                                                                             overwrite=True)
+                            notify(ObjectModifiedEvent(new_grade))
+                            _copy_dates(new_grade, history_item)
+                            if new_grade.value is not None:
+                                change_object = _get_change_object(gradebook_entry, new_grade)
+                                _copy_dates(change_object, history_item)
                         grades_assessed += 1
-                        new_grades.append(new_grade)
 
-                    grade_values = [x.value for x in new_grades]
-                    if grade.value not in grade_values:
-                        # We have a MetaGrade; this is also the case if we just have a
+                    if grade not in tuple(grade_container.values()):
+                        # The stored grade does not match any assessed grades; thus we
+                        # have a MetaGrade. This is also the case if we just have a
                         # placeholder submission
                         meta_grade_count += 1
                         store_meta_grade(grade_container, grade, gradebook_entry)

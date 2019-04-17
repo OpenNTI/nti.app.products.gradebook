@@ -15,15 +15,11 @@ from zope.event import notify
 
 from zope.location.location import locate
 
-from nti.app.assessment.common.policy import is_most_recent_submission_priority
-
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
-
-from nti.app.products.gradebook.gradebook import numeric_grade_val
 
 from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
