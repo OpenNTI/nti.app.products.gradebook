@@ -60,10 +60,18 @@ def _remove_placeholder_submissions(intids):
             and IPlaceholderAssignmentSubmission.providedBy(item.Submission):
             removed_count += 1
             user = IUser(item, None)
+            if item.Assignment is None:
+                # XXX: This is likely a history item without a creator (due to the
+                # deleted user. Now this object is in a weird, invalid state (see
+                # assessment evolve45.py).
+                # Ideally, I think we'd want to remove all of these objects for
+                # deleted users.
+                logger.info('History item without a user (%s) (%s)', item.ntiid, item.__parent__.__name__)
+                continue
             logger.info('Deleting placeholder submission (%s) (%s) (%s)',
                         item.ntiid,
                         getattr(user, 'username', user),
-                        item.Assignment.ntiid)
+                        item.assignmentId)
             del item.__parent__[item.__name__]
     return removed_count
 
