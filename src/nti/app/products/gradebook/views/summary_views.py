@@ -220,14 +220,16 @@ class UserGradeBookSummary(UserGradeSummary):
         ungraded_count = 0
         today = datetime.utcnow()
         for assignment in assignments:
-            grade = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
-            user_grade = grade.get(user.username) if grade is not None else None
+            grade_entry = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
+            user_grade_container = grade_entry.get(user.username) if grade_entry is not None else None
             submission_count = get_user_submission_count(user, course, assignment.ntiid)
 
-            # Submission but no grade
+            # Calculate submissions without grades (and MetaGrades)
             if      submission_count \
-                and (user_grade is None or user_grade.value is None):
-                ungraded_count += 1
+                and user_grade_container \
+                and user_grade_container.MetaGrade is None:
+                grade_val_count = len([x for x in user_grade_container.values() if x.value is not None])
+                ungraded_count += submission_count - grade_val_count
 
             # No submission (and we expect one) and past due
             no_submit = assignment.no_submit or not assignment.parts

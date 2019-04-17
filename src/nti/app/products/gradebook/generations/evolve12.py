@@ -60,7 +60,7 @@ def _remove_placeholder_submissions(intids):
             and IPlaceholderAssignmentSubmission.providedBy(item.Submission):
             removed_count += 1
             user = IUser(item, None)
-            if item.Assignment is None:
+            if user is None:
                 # XXX: This is likely a history item without a creator (due to the
                 # deleted user. Now this object is in a weird, invalid state (see
                 # assessment evolve45.py).
