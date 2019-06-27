@@ -371,7 +371,7 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
             return
         user = context.user
         meta_data = result.setdefault('CompletionMetadata', {})
-        meta_items = meta_data.setdefault('ITEMS', [])
+        meta_items = meta_data.setdefault(ITEMS, [])
         principal_container = component.queryMultiAdapter((user, course),
                                                           IPrincipalCompletedItemContainer)
         gradebook = IGradeBook(course)
