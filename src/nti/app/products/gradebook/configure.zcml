@@ -127,6 +127,10 @@
 			 for=".interfaces.IGradeBookEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
+	<adapter factory=".gradebook.GradeBookEntryWithoutSubmissionTraversable"
+             for=".interfaces.IGradeBookEntry"
+             provides="zope.traversing.interfaces.ITraversable" />
+
     <!-- Completion -->
     <adapter factory=".completion._assignment_progress"
              for="nti.dataserver.interfaces.IUser
