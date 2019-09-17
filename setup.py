@@ -1,10 +1,6 @@
 import codecs
-import platform
 from setuptools import setup
 from setuptools import find_packages
-
-py_impl = getattr(platform, 'python_implementation', lambda: None)
-IS_PYPY = py_impl() == 'PyPy'
 
 entry_points = {
     'console_scripts': [
@@ -64,7 +60,7 @@ setup(
         # 'fastnumbers' module if it is installed. This gives up to an
         # extra 30% boost in speed over the previous performance
         # enhancements.
-        'fastnumbers' if not IS_PYPY else '',
+        'fastnumbers ; platform_python_implementation == "CPython"',
         'natsort',
         'nti.app.assessment',
         'nti.app.client_preferences',
