@@ -4,15 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
-from zope import interface
 from zope import lifecycleevent
 
 from zope.annotation import IAnnotations
@@ -25,8 +23,6 @@ from pyramid import httpexceptions as hexec
 
 from pyramid.view import view_config
 
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
@@ -38,10 +34,9 @@ from nti.app.products.gradebook import MessageFactory as _
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
+from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
 
-from nti.app.products.gradebook.utils import remove_from_container
 from nti.app.products.gradebook.utils import record_grade_without_submission
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
@@ -50,15 +45,11 @@ from nti.assessment.interfaces import IQAssignment
 
 from nti.coremetadata.interfaces import IUser
 
-from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
 
-from nti.ntiids.ntiids import find_object_with_ntiid
+logger = __import__('logging').getLogger(__name__)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -73,6 +64,10 @@ class GradeBookPutView(AbstractAuthenticatedView,
     """
     Allows end users to set arbitrary grades in the gradebook,
     returning the assignment history item.
+
+    Any edits directly on the gradebook end up being stored as the
+    grade container MetaGrade, which takes precedence over all
+    other grades for this user and assignment.
     """
 
     def _do_call(self):
@@ -113,10 +108,9 @@ class GradeBookPutView(AbstractAuthenticatedView,
                              None)
 
         # This will create our grade and assignment history, if necessary.
-        record_grade_without_submission(gradebook_entry,
-                                        user,
-                                        assignment_ntiid)
-        grade = gradebook_entry.get(username)
+        grade = record_grade_without_submission(gradebook_entry,
+                                                user,
+                                                assignment_ntiid)
 
         # Check our if-modified-since header
         self._check_object_unmodified_since(grade)
@@ -133,9 +127,52 @@ class GradeBookPutView(AbstractAuthenticatedView,
                     assignment_ntiid,
                     username)
 
-        # Not ideal that we return this here.
-        history_item = IUsersCourseAssignmentHistoryItemContainer(grade)
-        return history_item
+        # We used to return the history item here
+        return grade
+
+@view_config(route_name='objects.generic.traversal',
+             permission=nauth.ACT_UPDATE,
+             renderer='rest',
+             context=IGradeContainer,
+             request_method='PUT')
+class GradeContainerPutView(AbstractAuthenticatedView,
+                            ModeledContentUploadRequestUtilsMixin,
+                            ModeledContentEditRequestUtilsMixin):
+    """
+    When PUTing a grade to the container, this stores the MetaGrade,
+    which supersedes all other grade values in the container.
+    """
+
+    content_predicate = IGrade.providedBy
+
+    def _do_call(self):
+        params = CaseInsensitiveDict(self.readInput())
+        new_grade_value = params.get('Value')
+        if new_grade_value:
+            # If we have a grade value, we are posting a MetaGrade to this
+            # container
+            gradebook_entry = self.context.__parent__
+            user = IUser(self.context)
+            # This will create our meta grade, if necessary.
+            grade = record_grade_without_submission(gradebook_entry,
+                                                    user,
+                                                    self.context.AssignmentId)
+            grade.creator = self.getRemoteUser().username
+            grade.value = new_grade_value
+            # Check our if-modified-since header
+            self._check_object_unmodified_since(grade)
+            notify(ObjectModifiedEvent(grade))
+            logger.info("'%s' updated gradebook assignment '%s' for user '%s'",
+                    self.getRemoteUser(),
+                    self.context.AssignmentId,
+                    self.context.Username)
+            # BWC in this code path, return the grade.
+            result = grade
+        else:
+            # ...otherwise we're changing our container (e.g. excused).
+            self.updateContentObject(self.context, params)
+            result = self.context
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -172,12 +209,15 @@ class GradePutView(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
-             context=IGrade,
+             context=IGradeContainer,
              name="excuse",
              request_method='POST')
 class ExcuseGradeView(AbstractAuthenticatedView,
                       ModeledContentUploadRequestUtilsMixin,
                       ModeledContentEditRequestUtilsMixin):
+    """
+    Deprecated: the container itself should hold excused state.
+    """
 
     content_predicate = IGrade.providedBy
 
@@ -185,11 +225,7 @@ class ExcuseGradeView(AbstractAuthenticatedView,
         theObject = self.request.context
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
-
-        if not IExcusedGrade.providedBy(theObject):
-            interface.alsoProvides(theObject, IExcusedGrade)
-            theObject.updateLastMod()
-            notify(ObjectModifiedEvent(theObject))
+        self.updateContentObject(self.context, {'Excused': True})
         return theObject
 
 
@@ -200,22 +236,16 @@ class ExcuseGradeView(AbstractAuthenticatedView,
              name="excuse",
              request_method='POST')
 class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
+    """
+    Deprecated: the container itself should hold excused state.
+    """
 
     def _do_call(self):
         entry = self.request.context.__parent__
         username = self.request.context.__name__
         user = User.get_user(username)
         grade = record_grade_without_submission(entry, user)
-
-        if grade is not None:
-            # place holder grade was inserted
-            self.request.context = grade
-        else:
-            # This inserted the 'real' grade. To actually
-            # updated it with the given values, let the super
-            # class do the work
-            self.request.context = entry[username]
-
+        self.request.context = grade.__parent__
         result = super(ExcuseGradeWithoutSubmissionView, self)._do_call()
         return result
 
@@ -223,12 +253,15 @@ class ExcuseGradeWithoutSubmissionView(ExcuseGradeView):
 @view_config(route_name='objects.generic.traversal',
              permission=nauth.ACT_UPDATE,
              renderer='rest',
-             context=IGrade,
+             context=IGradeContainer,
              name="unexcuse",
              request_method='POST')
 class UnexcuseGradeView(AbstractAuthenticatedView,
                         ModeledContentUploadRequestUtilsMixin,
                         ModeledContentEditRequestUtilsMixin):
+    """
+    Deprecated: the container itself should hold excused state.
+    """
 
     content_predicate = IGrade.providedBy
 
@@ -236,21 +269,9 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
         theObject = self.request.context
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
-
-        if IExcusedGrade.providedBy(theObject):
-            interface.noLongerProvides(theObject, IExcusedGrade)
-            theObject.updateLastMod()
-            notify(ObjectModifiedEvent(theObject))
-
-            user = IUser(theObject, None)
-            # Tests
-            if user is None:
-                return
-            assignment = find_object_with_ntiid(theObject.AssignmentId)
-            course = ICourseInstance(theObject)
-            notify(UserProgressRemovedEvent(assignment,
-                                            user,
-                                            course))
+        grade_container = theObject
+        if grade_container.Excused:
+            self.updateContentObject(grade_container, {'Excused': False})
         return theObject
 
 
@@ -262,6 +283,8 @@ class UnexcuseGradeView(AbstractAuthenticatedView,
 class GradeWithoutSubmissionPutView(GradePutView):
     """
     Called to put to a grade that doesn't yet exist.
+
+    This should store a MetaGrade for our user and assignment.
     """
 
     # : We don't want extra catching of key errors
@@ -275,7 +298,7 @@ class GradeWithoutSubmissionPutView(GradePutView):
 
         grade = record_grade_without_submission(entry, user)
         if grade is not None:
-            # # place holder grade was inserted
+            # place holder grade was inserted (MetaGrade)
             self.request.context = grade
         else:
             # This inserted the 'real' grade. To actually
@@ -309,24 +332,32 @@ class GradebookDeleteView(UGDDeleteView):
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              request_method='DELETE',
-             context=IGrade,
-             permission=nauth.ACT_DELETE)
+             context=IGrade)
 class GradeDeleteView(UGDDeleteView):
     """
     Instructors can delete an individual grade.
     """
 
     def _do_delete_object(self, context):
-        # delete the grade from its container (column, GradeBookEntry)
+        # delete the grade from its grade container
         # One would think that if we got here it's because
         # there is actually a grade recorded so `del` would be
         # safe; one would be wrong. That's because of
         # ..gradebook.GradeBookEntryWithoutSubmissionTraversable which
         # dummies up a grade for anyone that asks. So if we can't find
         # it, follow the contract and let a 404 error be raised
+
+        # We used to hide events here; I'm unsure why.
+        container = context.__parent__
         try:
-            remove_from_container(context.__parent__, context.__name__)
+            del container[context.__name__]
         except KeyError:
-            return None
+            if context.__name__ == 'MetaGrade':
+                container.MetaGrade = None
+                result = True
+                lifecycleevent.removed(context)
+            else:
+                result = False
         else:
-            return True
+            result = True
+        return result

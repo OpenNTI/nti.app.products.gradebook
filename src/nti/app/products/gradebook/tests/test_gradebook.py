@@ -21,6 +21,7 @@ import unittest
 
 from nti.app.products.gradebook.gradebook import GradeBook
 from nti.app.products.gradebook.gradebook import GradeBookPart
+from nti.app.products.gradebook.gradebook import GradeContainer
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.app.products.gradebook.interfaces import IGradeBook
@@ -60,13 +61,13 @@ class TestGradebook(unittest.TestCase):
         # Because it should be case insensitive for everything,
         # but we have existing objects that aren't. Sigh.
         gbe = GradeBookEntry()
-        grade = Grade()
+        grade_container = GradeContainer()
 
-        gbe['key'] = grade
+        gbe['key'] = grade_container
         assert_that('KEY', is_in(gbe))
 
-        assert_that(gbe.get('KEY'), is_(grade))
-        assert_that(gbe.__getitem__('KEY'), is_(grade))
+        assert_that(gbe.get('KEY'), is_(grade_container))
+        assert_that(gbe.__getitem__('KEY'), is_(grade_container))
 
     def test_gradebook_delete(self):
         book = GradeBook()
@@ -82,8 +83,11 @@ class TestGradebook(unittest.TestCase):
         entry.displayName = u'entry'
         part['entry'] = entry
 
+        grade_container = GradeContainer()
+        entry['ichigo'] = grade_container
+
         grade = Grade()
-        entry['ichigo'] = grade
+        grade_container['history_item_ntiid'] = grade
 
         assert_that(entry, has_key('ichigo'))
         assert_that(list(part.iter_usernames()), is_(['ichigo']))

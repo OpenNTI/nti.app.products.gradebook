@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -24,16 +25,22 @@ import time
 import pickle
 import unittest
 
+from zope import interface
+
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.app.products.gradebook.grades import Grade
 from nti.app.products.gradebook.grades import GradeWeakRef
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 from nti.app.products.gradebook.grades import PredictedGrade
+from nti.app.products.gradebook.grades import PersistentMetaGrade
 
 from nti.app.products.gradebook.gradescheme import LetterNumericGradeScheme
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IMetaGrade
+from nti.app.products.gradebook.interfaces import ISubmissionGrade
 
 from nti.externalization.externalization import to_external_object
 
@@ -50,9 +57,13 @@ class TestGrades(unittest.TestCase):
         now = time.time()
 
         grade = PersistentGrade()
-        grade.__name__ = u'foo@bar'
+        # Username comes from parent
+        container = GradeContainer()
+        grade.__parent__ = container
+        container.__name__ = u'foo@bar'
 
         assert_that(grade, validly_provides(IGrade))
+        assert_that(grade, validly_provides(ISubmissionGrade))
 
         assert_that(grade,
                     has_property('createdTime', grade.lastModified))
@@ -61,6 +72,27 @@ class TestGrades(unittest.TestCase):
 
         grade.createdTime = 1
         assert_that(grade, has_property('createdTime', 1))
+
+
+    def test_meta(self):
+        now = time.time()
+
+        grade = PersistentMetaGrade()
+        # Username comes from parent
+        container = GradeContainer()
+        grade.__parent__ = container
+        container.__name__ = u'foo@bar'
+
+        assert_that(grade, validly_provides(IMetaGrade))
+
+        assert_that(grade,
+                    has_property('createdTime', grade.lastModified))
+        assert_that(grade,
+                    has_property('lastModified', greater_than_or_equal_to(now)))
+
+        grade.createdTime = 1
+        assert_that(grade, has_property('createdTime', 1))
+
 
     def test_unpickle_old_state(self):
 
@@ -80,9 +112,13 @@ class TestGrades(unittest.TestCase):
         assert_that(calling(GradeWeakRef).with_args(Grade()),
                     raises(TypeError))
 
+        grade_container = _GradeContainer()
         grade = Grade()
-        grade.__name__ = u'foo@bar'
-        column = grade.__parent__ = _GradeBookEntry()
+        column = _GradeBookEntry()
+        grade_container.__parent__ = column
+        column[u'foo@bar'] = grade_container
+        grade.__parent__ = grade_container
+        grade.__name__ = 'tag:nextthought.com,2011-10:due_and_passed'
 
         wref = GradeWeakRef(grade)
         assert_that(wref, validly_provides(IWeakRef))
@@ -96,7 +132,7 @@ class TestGrades(unittest.TestCase):
         # No part in gradebook yet, cannot resolve
         assert_that(wref(), is_(none()))
 
-        column[grade.Username] = grade
+        grade_container['tag:nextthought.com,2011-10:due_and_passed'] = grade
         assert_that(wref(), is_(same_instance(grade)))
 
         assert_that(pickle.loads(pickle.dumps(wref)), is_(wref))
@@ -141,11 +177,16 @@ class TestGrades(unittest.TestCase):
 
 class _GradeBookEntry(GradeBookEntry):
 
-    def __conform__(self, unused_iface):
-        return _CheapWref(self)
+    def __conform__(self, iface):
+        if iface == IWeakRef:
+            return _CheapWref(self)
 
 
-from zope import interface
+class _GradeContainer(GradeContainer):
+
+    def __conform__(self, iface):
+        if iface == IWeakRef:
+            return _CheapWref(self)
 
 
 @interface.implementer(IWeakRef)

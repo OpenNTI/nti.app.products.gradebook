@@ -27,6 +27,8 @@ import fudge
 
 import simplejson
 
+from nti.app.products.gradebook.grades import GradeContainer
+
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
@@ -92,14 +94,14 @@ class TestCS1323GradingPolicy(unittest.TestCase):
         policy.grader = grader
 
         ext = to_external_object(policy)
-        assert_that(ext, has_entry('Grader', 
+        assert_that(ext, has_entry('Grader',
                                    has_entry('Groups', has_length(1))))
 
         factory = find_factory_for(ext)
         obj = factory()
         update_from_external_object(obj, ext)
 
-        assert_that(obj, has_property('Grader', 
+        assert_that(obj, has_property('Grader',
                                       has_property('Groups', has_length(1))))
 
     @property
@@ -158,8 +160,9 @@ class TestCS1323GradingPolicy(unittest.TestCase):
 
             grade = PersistentGrade()
             grade.value = 5
-            grade.username = u'cald3307'
-            entry[u'cald3307'] = grade
+            grade.__parent__ = container = GradeContainer()
+            entry[u'cald3307'] = container
+            container['ntiid'] = grade
 
         grade = policy.grade('cald3307')
         assert_that(grade.correctness, is_(50))

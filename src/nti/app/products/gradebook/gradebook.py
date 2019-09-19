@@ -32,6 +32,8 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.app.assessment.common.history import get_most_recent_history_item
 
+from nti.app.assessment.common.policy import is_most_recent_submission_priority
+
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
@@ -70,6 +72,65 @@ from nti.schema.schema import SchemaConfigured
 from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
+
+
+def numeric_grade_val(grade_val):
+    """
+    Convert the grade's possible char "number - letter" scheme to a number,
+    or None.
+    """
+    result = None
+    if isinstance(grade_val, six.string_types):
+        try:
+            if grade_val.endswith(' -'):
+                result = float(grade_val.split()[0])
+            else:
+                result = float(grade_val)
+        except ValueError:
+            pass
+    elif isinstance(grade_val, (six.integer_types, float)):
+        result = grade_val
+    return result
+
+
+def get_applicable_user_grade(gradebook_entry, user, highest_grade=None):
+    """
+    Find the applicable grade for this user and gradebook entry. For multiple
+    grades, this implies we prefer:
+
+    * The instructor-set MetaGrade
+    * The most recent grade if that is the assignment policy config
+    * The highest grade if that is the assignment policy config
+    """
+    result = None
+    username = getattr(user, 'username', user)
+    grade_container = gradebook_entry.get(username)
+    if grade_container is not None:
+        # Meta grade superseeds all (instructor set)
+        result = grade_container.MetaGrade
+        if result is None and grade_container:
+            # Simple, fast case
+            if len(grade_container) == 1:
+                result = tuple(grade_container.values())[0]
+            if result is None:
+                if highest_grade is None:
+                    course = ICourseInstance(gradebook_entry)
+                    highest_grade = not is_most_recent_submission_priority(gradebook_entry.AssignmentId,
+                                                                       course)
+                # If no meta, determine our applicable grade
+                if not highest_grade:
+                    # Most recent is latest in container
+                    result = tuple(grade_container.values())[-1]
+                else:
+                    # Find the highest grade
+                    for grade in grade_container.values():
+                        if result is None:
+                            # First pass
+                            result = grade
+                        elif numeric_grade_val(result.value) < numeric_grade_val(grade.value):
+                            # This grade is higher than our current return value
+                            result = grade
+    return result
 
 
 @interface.implementer(IContentTypeAware)
@@ -380,14 +441,9 @@ class GradeBookPart(SchemaConfigured,
         username = username.lower()
         for entry in tuple(self.values()):
             if username in entry:
-                try:
-                    grade = entry[username]
+                grade = get_applicable_user_grade(entry, username)
+                if grade is not None:
                     yield grade
-                except KeyError:
-                    # in alpha we have seen key errors even though
-                    # the membership check has been made
-                    logger.exception("Could not find grade for %s in entry %s",
-                                     username, entry.__name__)
 
     def iter_usernames(self):
         seen = set()
@@ -401,6 +457,7 @@ class GradeBookPart(SchemaConfigured,
         return self.displayName
 
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.interfaces import IGradeWithoutSubmission
@@ -440,8 +497,8 @@ from nti.traversal.traversal import ContainerAdapterTraversable
 class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
     """
     Entries that cannot be submitted by students auto-generate
-    :class:`.GradeWithoutSubmission` objects (that they own but do not contain)
-    when directly traversed to during request processing.
+    :class:`.GradeContainer` objects when directly traversed to during request
+    processing.
 
     We do this at request traversal time, rather than as part of the
     the get/__getitem__ method of the class, to not break any of the container
@@ -451,6 +508,8 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
     as a main traversal mechanism because of the possibility of blocking
     student submissions and the wide-ranging consequences of interfering
     with traversal.
+
+    XXX: Is this still necessary with our grade container?
     """
 
     def traverse(self, name, furtherPath):  # pylint: disable=arguments-differ
@@ -458,7 +517,7 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
             return super(GradeBookEntryWithoutSubmissionTraversable, self).traverse(name, furtherPath)
         except KeyError:
             # Check first for items in the container and named adapters.
-            # Only if that fails do we dummy up a grade,
+            # Only if that fails do we dummy up a grade container,
             # and only then if there is a real user by that name
             # who is enrolled in this course.
             user = User.get_user(name)
@@ -468,9 +527,12 @@ class GradeBookEntryWithoutSubmissionTraversable(ContainerAdapterTraversable):
             course_enrollments = ICourseEnrollments(course)
             # pylint: disable=too-many-function-args
             if course_enrollments.get_enrollment_for_principal(user):
-                result = GradeWithoutSubmission()
+                # These may get persisted; use username to ensure case is accurate
+                # for permission checking (principals are case-sensitive...).
+                result = GradeContainer()
                 result.__parent__ = self.context
-                result.__name__ = name
+                result.__name__ = user.username
+                self.context[user.username] = result
                 return result
             raise
 

@@ -20,6 +20,7 @@ from nti.app.products.gradebook.gradebook import GradeBook
 from nti.app.products.gradebook.gradebook import GradeBookPart
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade as Grade
 
 from nti.app.products.gradebook.gradescheme import LetterGradeScheme
@@ -46,22 +47,28 @@ class TestExternal(unittest.TestCase):
         return usr
 
     def test_grade(self):
-        g = Grade(username=u'nt@nti.com', grade=85.0)
-        ext = externalization.to_external_object(g)
+        grade_container = GradeContainer()
+        grade_container.__name__ = u'nt@nti.com'
+        grade_container.__parent__ = GradeBookEntry()
+        grade = Grade(grade=85.0)
+        grade.__parent__ = grade_container
+        grade_container[u"tag:nextthought.com,2011-10:history_item_ntiid"] = grade
+        ext = externalization.to_external_object(grade)
         assert_that(ext, has_entry('Class', 'Grade'))
         assert_that(ext, has_entry('value', is_(85.0)))
-        assert_that(ext, has_entry('Username', 'nt@nti.com'))
+        assert_that(ext, has_entry('Username', u'nt@nti.com'))
         assert_that(ext,
                     has_entry('MimeType', 'application/vnd.nextthought.grade'))
         assert_that(ext, has_entry('Last Modified', is_not(none())))
 
         factory = internalization.find_factory_for(ext)
         newgrade = factory()
-        newgrade.__parent__ = GradeBookEntry()
+        newgrade.__parent__ = grade_container
+        grade_container[u"tag:nextthought.com,2011-10:history_item_ntiid2"] = newgrade
 
         internalization.update_from_external_object(newgrade, ext)
         assert_that(newgrade, has_property('value', is_(85.0)))
-        assert_that(newgrade, has_property('Username', is_('nt@nti.com')))
+        assert_that(newgrade, has_property('Username', is_(u'nt@nti.com')))
 
     @WithMockDSTrans
     def test_gradebook(self):

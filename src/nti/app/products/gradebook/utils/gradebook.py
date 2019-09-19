@@ -7,42 +7,28 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from six import string_types
-from six import integer_types
-
 from ZODB.interfaces import IConnection
 
-from zope import component
-from zope import interface
 from zope import lifecycleevent
 
 from zope.event import notify
 
 from zope.location.location import locate
 
-from nti.app.assessment.common.policy import is_most_recent_submission_priority
-
-from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
-
-from nti.app.products.courseware.interfaces import ICourseInstanceActivity
 
 from nti.app.products.gradebook.assignments import synchronize_gradebook
 
 from nti.app.products.gradebook.autograde_policies import find_autograde_policy_for_assignment_in_course
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import PersistentMetaGrade
 
-from nti.app.products.gradebook.grading import IGradeBookGradingPolicy
+from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import GradeRemovedEvent
-
-from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
-
-from nti.assessment.submission import AssignmentSubmission
-
-from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
@@ -54,25 +40,6 @@ from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import IUser
 
 logger = __import__('logging').getLogger(__name__)
-
-
-def numeric_grade_val(grade_val):
-    """
-    Convert the grade's possible char "number - letter" scheme to a number,
-    or None.
-    """
-    result = None
-    if isinstance(grade_val, string_types):
-        try:
-            if grade_val.endswith(' -'):
-                result = float(grade_val.split()[0])
-            else:
-                result = float(grade_val)
-        except ValueError:
-            pass
-    elif isinstance(grade_val, (integer_types, float)):
-        result = grade_val
-    return result
 
 
 def mark_btree_bucket_as_changed(grade):
@@ -137,47 +104,25 @@ def remove_from_container(container, key, event=False):
 
 
 def record_grade_without_submission(entry, user, assignmentId=None,
-                                    clazz=PersistentGrade):
+                                    clazz=PersistentMetaGrade):
+    """
+    Create a grade and store as the MetaGrade on the grade container.
+    """
     # canonicalize the username in the event case got mangled
     username = user.username
     assignmentId = assignmentId or entry.AssignmentId
 
-    # We insert the history item, which the user himself normally does
-    # but cannot in this case. This implicitly creates the grade.
-    # This is very similar to what nti.app.assessment.adapters
-    # does for the student, just with fewer constraints...
-    # The handling for a previously deleted grade is
-    # what the subscriber does...this whole thing should be simplified
-    submission = AssignmentSubmission()
-    submission.assignmentId = assignmentId
-    submission.creator = user
-    interface.alsoProvides(submission, IPlaceholderAssignmentSubmission)
-
-    grade = None
-    course = ICourseInstance(entry)
-    pending = QAssignmentSubmissionPendingAssessment(assignmentId=assignmentId,
-                                                     parts=[])
-
-    assignment_history = component.getMultiAdapter((course, submission.creator),
-                                                   IUsersCourseAssignmentHistory)
-    submission_container = assignment_history.get(assignmentId)
-    if not submission_container:
-        assignment_history.recordSubmission(submission, pending)
-        # At this point a place holder grade is created we don't return it
-        # to indicate to callers of this function that they need to get
-        # the grade from the entry
-
-        # We don't want this phony-submission showing up as course activity
-        # See nti.app.assessment.subscribers
-        activity = ICourseInstanceActivity(course)
-        # pylint: disable=too-many-function-args
-        activity.remove(submission)
+    if username in entry:
+        grade_container = entry[username]
     else:
-        # In case there is already a submission (but no grade)
-        # we need to deal with creating the grade object ourself.
-        # This code path hits if a grade is deleted
-        grade = clazz()
-        save_in_container(entry, username, grade)
+        grade_container = GradeContainer()
+        # XXX: Why no event?
+        save_in_container(entry, user.username, grade_container)
+
+    grade = clazz()
+    grade.__parent__ = grade_container
+    grade_container.MetaGrade = grade
+    grade.__name__ = u'MetaGrade'
     return grade
 
 
@@ -226,9 +171,10 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
     if it exists (if the policy specifies we accept the `highest_grade`
     submission).
 
-    # FIXME: what do we want overwrite to do here for multi_submissions? I think
-    # this arg is no longer relevant (nti_grade_assignments) or only relevant for
-    # single submissions.
+    Now that we have multiple submissions, we'll store this new grade *in addition*
+    to any existing grades that are already in play. We'll rely on any submission
+    constraints to also apply to constraining our grade container size (e.g. we will
+    not concern ourselves with that here).
 
     :returns the grade object if exists
     """
@@ -237,10 +183,18 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         user = IUser(item)
         username = user.username
         if username in entry:
-            grade = entry[username]
+            grade_container = entry[username]
+        else:
+            grade_container = GradeContainer()
+            # XXX: Why no event?
+            save_in_container(entry, user.username, grade_container)
+
+        if item.ntiid in grade_container:
+            # XX: Should this even be possible?
+            grade = grade_container[username]
         else:
             grade = PersistentGrade()
-            grade.username = username
+            grade_container[item.ntiid] = grade
 
         # If there is an auto-grading policy for the course instance,
         # then let it convert the auto-assessed part of the submission
@@ -249,32 +203,21 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
         assignmentId = item.Submission.assignmentId
         policy = find_autograde_policy_for_assignment_in_course(course, assignmentId)
         if policy is not None:
-            # Check priority
-            most_recent = is_most_recent_submission_priority(assignmentId, course)
+            previous_grade = grade.AutoGrade
             autograde_res = policy.autograde(item.pendingAssessment)
             if autograde_res is not None:
                 grade.AutoGrade, grade.AutoGradeMax = autograde_res
-
-            # Take our current grade if we do not have a current grade
-            # - or if they are equal (grade.value = previous_grade.AutoGrade) (now removed)
-            # - or forced
-            # - or if we must accept most recent
-            # Take the current grade if we want the highest graded submission
-            # and our new grade is higher than the previous grade
-            numeric_val = numeric_grade_val(grade.value)
-            if grade.value is None or overwrite or most_recent:
-                grade.value = grade.AutoGrade
-            elif not most_recent and grade.AutoGrade and grade.AutoGrade > numeric_val:
-                # We're configured to only override if our new grade is higher
+            if grade.value is None or grade.value == previous_grade or overwrite:
                 grade.value = grade.AutoGrade
 
         if not getattr(grade, 'creator', None):
             grade.creator = SYSTEM_USER_NAME
 
-        if username in entry:
+        if item.ntiid in grade_container:
             lifecycleevent.modified(grade)
         else:
             # Finally after we finish filling it in, publish it
-            save_in_container(entry, user.username, grade)
+            # XXX: Why no event?
+            save_in_container(grade_container, item.ntiid, grade)
         return grade
     return None

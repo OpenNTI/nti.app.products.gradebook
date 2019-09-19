@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -21,6 +20,7 @@ from zope import component
 from pyramid.view import view_config
 
 from nti.app.assessment.common.policy import get_policy_excluded
+from nti.app.assessment.common.policy import is_most_recent_submission_priority
 
 from nti.app.assessment.common.utils import get_available_for_submission_beginning
 
@@ -30,8 +30,9 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.gradebook import MessageFactory as _
 
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
+
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
@@ -79,12 +80,15 @@ def get_valid_assignment(entry, course):
 class GradebookDownloadView(AbstractAuthenticatedView):
     """
     Provides a downloadable table of all the assignments
-    present in the gradebook. There is a column
-    for each assignment and a row for each user.
+    present in the gradebook. There is a column for each assignment
+    and a row for each user.
 
     A query param `LegacyEnrollmentStatus` can be set to
     either 'ForCredit' or 'Open' to restrict the results to that
     subset of students.
+
+    For multiple grades, we return the actual applicable grade for
+    the user, course, and assignment.
 
     .. note:: This is hardcoded to export in D2L compatible format.
             (https://php.radford.edu/~knowledge/lore/attachment.php?id=57)
@@ -189,13 +193,16 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 assignment_key = (assignment.ntiid, assignment.title)
                 sort_key = self._get_sort_key(entry, course)
                 seen_assignment_keys_to_start_time[assignment_key] = sort_key
-                for username, grade in entry.items():
+                highest_grade = not is_most_recent_submission_priority(assignment, course)
+                for username in entry:
+                    user = User.get_user(username)
                     username_data = self._get_student_name(username)
                     user_dict = usernames_to_assignment_dict[username_data]
                     # This should not be possible anymore
                     if assignment_key in user_dict:
                         raise ValueError("Two entries in different part with same name")
-                    user_dict[assignment_key] = grade
+                    user_dict[assignment_key] = get_applicable_user_grade(entry, user,
+                                                                          highest_grade=highest_grade)
 
         sorted_assignment_keys = sorted(seen_assignment_keys_to_start_time,
                                         key=seen_assignment_keys_to_start_time.get)
@@ -268,14 +275,14 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                     # how to do so in a D2L import-compatible way, but we've seen text
                     # exported values (from our system) anyway, which are probably not
                     # imported into D2L.
-                    if IExcusedGrade.providedBy(user_grade):
+                    if user_grade.__parent__.Excused:
                         grade_val = _(u'Excused')
                     else:
                         grade_val = _tx_grade(grade_val)
                 row.append(grade_val)
 
             if final_grade_entry:
-                final_grade = final_grade_entry.get(username)
+                final_grade = get_applicable_user_grade(final_grade_entry, username)
             else:
                 final_grade = None
             row.append(_tx_grade(final_grade.value) if final_grade else 0)

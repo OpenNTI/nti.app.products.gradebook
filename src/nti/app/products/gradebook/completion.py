@@ -19,9 +19,9 @@ from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
 from nti.app.products.gradebook.interfaces import IGradeBook
-from nti.app.products.gradebook.interfaces import IExcusedGrade
 
-from nti.app.products.gradebook.utils.gradebook import numeric_grade_val
+from nti.app.products.gradebook.gradebook import numeric_grade_val
+from nti.app.products.gradebook.gradebook import get_applicable_user_grade
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IPlaceholderAssignmentSubmission
@@ -59,6 +59,7 @@ def _assignment_progress(user, assignment, course):
     try:
         item = get_most_recent_history_item(user, course, assignment.ntiid)
         if item is not None:
+            # XXX: Should be removing synth submissions from the system
             is_synth = IPlaceholderAssignmentSubmission.providedBy(item.Submission)
             progress_date = item.created
     except KeyError:
@@ -66,9 +67,10 @@ def _assignment_progress(user, assignment, course):
 
     gradebook = IGradeBook(course)
     # pylint: disable=too-many-function-args
-    grade = gradebook.getColumnForAssignmentId(assignment.ntiid)
-    grade = grade.get(user.username) if grade is not None else None
-    excused_grade = IExcusedGrade.providedBy(grade)
+    entry = gradebook.getColumnForAssignmentId(assignment.ntiid)
+    grade_container = entry.get(user.username) if entry is not None else None
+    excused_grade = getattr(grade_container, 'Excused', False)
+    grade = get_applicable_user_grade(entry, user) if entry is not None else None
 
     # We cannot calculate progress if:
     # * passing percent required and no grade (synth or not)
@@ -85,7 +87,10 @@ def _assignment_progress(user, assignment, course):
 
     if progress_date is None:
         # We're here because of grade value or excused grade.
-        progress_date = grade.lastModified
+        if grade is not None:
+            progress_date = grade.lastModified
+        else:
+            progress_date = grade_container.lastModified
 
     grade_val = getattr(grade, 'value', None)
     grade_val = numeric_grade_val(grade_val)

@@ -51,6 +51,10 @@
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItem"
 			 provides=".interfaces.IGradeBookEntry" />
 
+	<adapter factory=".adapters._item_container_to_gradebook_entry"
+             for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemContainer"
+             provides=".interfaces.IGradeBookEntry" />
+
 	<adapter factory=".gradebook._DefaultGradeBookEntrySubmittedAssignmentHistory"
 			 provides=".interfaces.ISubmittedAssignmentHistory"/>
 
@@ -60,6 +64,9 @@
 	<!-- ... to containing course -->
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGrade" />
+
+    <adapter factory=".adapters._as_course"
+             for=".interfaces.IGradeContainer" />
 
 	<adapter factory=".adapters._as_course"
 			 for=".interfaces.IGradeBook" />
@@ -86,6 +93,7 @@
 	<adapter factory=".adapters.grade_to_user" />
 	<adapter factory=".adapters.history_item_for_grade" />
 	<adapter factory=".adapters.history_item_container_for_grade" />
+	<adapter factory=".adapters.grade_container_to_user" />
 
 	<subscriber factory=".adapters._trusted_context_from_grade"
 				provides="nti.appserver.interfaces.ITrustedTopLevelContainerContextProvider"
@@ -145,8 +153,11 @@
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.IGrade
 						 .interfaces.IGradeScheme
+						 .interfaces.IMetaGrade
+						 .interfaces.ISubmissionGrade
 						 .interfaces.IGradeBook
 						 .interfaces.IGradeBookPart
+						 .interfaces.IGradeContainer
 						 .interfaces.IGradeBookEntry
 						 .interfaces.ILetterGradeScheme
 						 .interfaces.IBooleanGradeScheme
@@ -156,9 +167,13 @@
 		modules=".gradebook .grades .gradescheme" />
 
 	<!-- Internalization -->
-	<adapter factory=".internalization._GradeObjectUpdater"
-			 for=".interfaces.IGrade"
+	<adapter factory=".internalization._MetaGradeObjectUpdater"
+			 for=".interfaces.IMetaGrade"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._SubmissionGradeObjectUpdater"
+             for=".interfaces.ISubmissionGrade"
+             provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<adapter factory=".internalization._LetterGradeSchemeObjectUpdater"
 			 for=".interfaces.ILetterGradeScheme"

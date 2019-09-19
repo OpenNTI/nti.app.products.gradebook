@@ -14,14 +14,22 @@ from persistent import Persistent
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
 
+from zope.container.ordered import OrderedContainer
+
+from zope.location.interfaces import ISublocations
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IMetaGrade
+from nti.app.products.gradebook.interfaces import ISubmissionGrade
+from nti.app.products.gradebook.interfaces import IGradeContainer
 
 from nti.base.interfaces import ICreated
 
@@ -38,6 +46,7 @@ from nti.dataserver.authorization_acl import ace_denying_all
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
@@ -57,17 +66,15 @@ logger = __import__('logging').getLogger(__name__)
 
 
 @WithRepr
-@interface.implementer(IGrade)
 @EqHash('username', 'assignmentId', 'value')
-class Grade(CreatedModDateTrackingObject,
-            SchemaConfigured,
-            Contained):
+class AbstractGrade(CreatedModDateTrackingObject,
+                    SchemaConfigured,
+                    Contained):
 
     createDirectFieldProperties(IGrade)
 
     grade = alias('value')
     username = alias('Username')
-    Username = alias('__name__')
     assignmentId = alias('AssignmentId')
 
     # Right now, we inherit the 'creator' property
@@ -81,10 +88,7 @@ class Grade(CreatedModDateTrackingObject,
         if 'grade' in kwargs and 'value' not in kwargs:
             kwargs['value'] = kwargs['grade']
             del kwargs['grade']
-        if 'username' in kwargs and 'Username' not in kwargs:
-            kwargs['Username'] = kwargs['username']
-            del kwargs['username']
-        super(Grade, self).__init__(*args, **kwargs)
+        super(AbstractGrade, self).__init__(*args, **kwargs)
 
     @Lazy
     def createdTime(self):  # pylint: disable=method-hidden
@@ -99,20 +103,32 @@ class Grade(CreatedModDateTrackingObject,
         if self.__parent__ is not None:
             return self.__parent__.AssignmentId
 
-    # Since we're not persistent, the regular use of CachedProperty fails
+    @property
+    def HistoryItemNTIID(self):
+        return self.__name__
+
+    @property
+    def Username(self):
+        if self.__parent__ is not None:
+            return self.__parent__.__name__
+
     @property
     def __acl__(self):
-        acl = acl_from_aces()
-        course = ICourseInstance(self, None)
-        if course is not None:
-            # pylint: disable=not-an-iterable
-            acl.extend(ace_allowing(i, ALL_PERMISSIONS)
-                       for i in course.instructors or ())
-        # This will become conditional on whether we are published
-        if self.Username:
-            acl.append(ace_allowing(self.Username, ACT_READ))
-        acl.append(ace_denying_all())
-        return acl
+        # Return our container acl to override the default created acl
+        return self.__parent__.__acl__
+
+
+@interface.implementer(ISubmissionGrade)
+class Grade(AbstractGrade):
+
+    @property
+    def HistoryItemNTIID(self):
+        return self.__name__
+
+
+@interface.implementer(IMetaGrade)
+class MetaGrade(AbstractGrade):
+    pass
 
 
 @interface.implementer(IWeakRef)
@@ -126,35 +142,35 @@ class GradeWeakRef(object):
     grade.
     """
 
-    __slots__ = ('_part_wref', '_username')
+    __slots__ = ('_part_wref', '_key')
 
     def __init__(self, grade):
-        if grade.__parent__ is None or not grade.Username:
-            raise TypeError("Too soon, grade has no parent or username")
-        self._username = grade.Username
+        if grade.__parent__ is None or not grade.__name__:
+            raise TypeError("Too soon, grade has no parent or key")
+        self._key = grade.__name__
         self._part_wref = IWeakRef(grade.__parent__)
 
     def __call__(self):
         part = self._part_wref()
         if part is not None:
-            return part.get(self._username)
+            return part.get(self._key)
 
     def __eq__(self, other):
         # pylint: disable=protected-access
         try:
             return self is other \
-                or (self._username, self._part_wref) == (other._username, other._part_wref)
+                or (self._key, self._part_wref) == (other._key, other._part_wref)
         except AttributeError:
             return NotImplemented
 
     def __hash__(self):
-        return hash((self._username, self._part_wref))
+        return hash((self._key, self._part_wref))
 
     def __getstate__(self):
-        return self._part_wref, self._username
+        return self._part_wref, self._key
 
     def __setstate__(self, state):
-        self._part_wref, self._username = state
+        self._part_wref, self._key = state
 
 
 @interface.implementer(ICreated, IContentTypeAware)
@@ -175,6 +191,115 @@ class PersistentGrade(Grade, PersistentPropertyHolder):
     def containerId(self):
         if self.__parent__ is not None:
             return self.__parent__.NTIID
+
+
+@interface.implementer(ICreated, IContentTypeAware)
+class PersistentMetaGrade(MetaGrade, PersistentPropertyHolder):
+
+    # order of inheritance matters; if Persistent is first,
+    # we can't have our own __setstate__; only subclasses can
+
+    __external_class_name__ = "MetaGrade"
+
+    parameters = {}
+    mimeType = mime_type = 'application/vnd.nextthought.metagrade'
+
+    def __init__(self, *args, **kwargs):
+        MetaGrade.__init__(self, *args, **kwargs)
+        PersistentPropertyHolder.__init__(self)
+
+    @property
+    def containerId(self):
+        if self.__parent__ is not None:
+            return self.__parent__.NTIID
+
+
+@interface.implementer(IGradeContainer,
+                       ISublocations)
+class GradeContainer(PersistentCreatedModDateTrackingObject,
+                     OrderedContainer,
+                     Contained,
+                     SchemaConfigured):
+
+    createDirectFieldProperties(IGradeContainer)
+
+    __external_can_create__ = False
+
+    assignmentId = alias('AssignmentId')
+    username = alias('Username')
+
+    @property
+    def Items(self):
+        return list(self.values())
+
+    def sublocations(self):
+        return tuple(self.values())
+
+    @property
+    def AssignmentId(self):
+        if self.__parent__ is not None:
+            return self.__parent__.AssignmentId
+
+    @property
+    def Username(self):
+        return self.__name__
+
+#     @property
+#     def creator(self):
+#         return self.__parent__.creator
+#
+#     @creator.setter
+#     def creator(self, nv):
+#         pass
+
+    def reset(self, event=True):
+        keys = list(self)
+        for k in keys:
+            if event:
+                del self[k]  # pylint: disable=unsupported-delete-operation
+            else:
+                self._delitemf(k)
+        meta_grade = self.MetaGrade
+        self.MetaGrade = None
+        if meta_grade is not None:
+            lifecycleevent.removed(meta_grade)
+    clear = reset
+
+    @property
+    def __acl__(self):
+        acl = acl_from_aces()
+        course = ICourseInstance(self, None)
+        if course is not None:
+            # pylint: disable=not-an-iterable
+            acl.extend(ace_allowing(i, ALL_PERMISSIONS)
+                       for i in course.instructors or ())
+        # This will become conditional on whether we are published (?)
+        if self.Username:
+            acl.append(ace_allowing(self.Username, ACT_READ))
+        acl.append(ace_denying_all())
+        return acl
+
+    def __getitem__(self, key):
+        try:
+            return OrderedContainer.__getitem__(self, key)
+        except KeyError:
+            # Allow easy navigation to our meta grade
+            if key == 'MetaGrade':
+                return self.MetaGrade
+            raise
+
+    def get(self, key, default=None):
+        if key == 'MetaGrade':
+            result = self.MetaGrade
+        else:
+            result = super(GradeContainer, self).get(key, default=default)
+        return result
+
+    def has_grade(self):
+        """
+        Return a bool whether we have a grade in this container or not.
+        """
+        return self.MetaGrade is not None or len(self)
 
 
 @interface.implementer(IPredictedGrade, IContentTypeAware)

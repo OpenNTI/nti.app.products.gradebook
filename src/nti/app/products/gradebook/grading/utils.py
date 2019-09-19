@@ -17,7 +17,8 @@ from zope.security.interfaces import IPrincipal
 from nti.app.products.gradebook.assignments import create_assignment_part
 
 from nti.app.products.gradebook.grades import PredictedGrade
-from nti.app.products.gradebook.grades import PersistentGrade
+from nti.app.products.gradebook.grades import GradeContainer
+from nti.app.products.gradebook.grades import PersistentMetaGrade
 
 from nti.app.products.gradebook.grading.interfaces import IGradeBookGradingPolicy
 
@@ -38,6 +39,8 @@ def calculate_grades(context,
                      grade_scheme=None,
                      entry_name=None,
                      verbose=False):
+    # XXX: This is only called from a script. Is it used anymore?
+    # We're also setting a grade below
     result = {}
     course = ICourseInstance(context)
     policy = find_grading_policy_for_course(course)
@@ -73,12 +76,18 @@ def calculate_grades(context,
         # if there is a grade scheme convert value
         if grade_scheme is not None:
             value = grade_scheme.fromCorrectness(correctness)
-        grade = PersistentGrade(value=value)
-        grade.username = username
+        grade = PersistentMetaGrade(value=value)
         result[username] = grade
         # if entry is available save it
         if entry is not None:
-            entry[username] = grade
+            try:
+                grade_container = entry[username]
+            except KeyError:
+                grade_container = GradeContainer()
+                entry[username] = grade_container
+            grade.__parent__ = grade_container
+            grade.__name__ = u'MetaGrade'
+            grade_container.MetaGrade = grade
     return result
 
 
@@ -95,7 +104,7 @@ def calculate_predicted_grade(user, policy, scheme=''):
     return predicted_grade
 
 
-def build_predicted_grade(policy, points_earned=None, points_available=None, 
+def build_predicted_grade(policy, points_earned=None, points_available=None,
                           raw_value=None, scheme=None):
 
     presentation_scheme = get_presentation_scheme(policy)

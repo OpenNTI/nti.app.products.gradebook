@@ -24,7 +24,9 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.security.management import queryInteraction
 
-from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IGrade, IMetaGrade
+from nti.app.products.gradebook.interfaces import IGradeBookEntry
+from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
@@ -40,6 +42,8 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.users import User
+
+from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -67,13 +71,34 @@ def _get_entry_change_storage(entry):
     return annotes[_CHANGE_KEY]
 
 
-def _do_store_grade_created_event(grade, _):
-    storage = _get_entry_change_storage(grade.__parent__)
+def _do_store_grade_created_event(grade, unused_event):
+    """
+    Grade change events are stored as an annotation on the gradebook entry.
+    Each user will have a change container, keyed by the assignment history
+    ntiid (or MetaGrade).
+    """
+    entry = IGradeBookEntry(grade)
+    storage = _get_entry_change_storage(entry)
     if grade.Username in storage:
-        change_event = storage[grade.Username]
+        change_container = storage[grade.Username]
+    else:
+        change_container = CaseInsensitiveLastModifiedBTreeContainer()
+        change_container.__name__ = grade.Username
+        change_container.__parent__ = entry
+        storage[grade.Username] = change_container
+
+    try:
+        change_key = grade.HistoryItemNTIID
+    except AttributeError:
+        change_key = u'MetaGrade'
+        assert IMetaGrade.providedBy(grade)
+
+    if change_key in change_container:
+        change_event = change_container[change_key]
         change_event.updateLastMod()
         notify(ObjectModifiedEvent(change_event))
         return
+
     change = Change(Change.CREATED, grade)
     # Set the time to now. Since grades are created
     # at assignment submission time, we rely on the
@@ -87,9 +112,8 @@ def _do_store_grade_created_event(grade, _):
         change.creator = SYSTEM_USER_NAME
         grade.creator = SYSTEM_USER_NAME
 
-    # Give the change a sharedWith value of the target
-    # username; that way it gets indexed cheaply as directed
-    # to the user.
+    # Give the change a sharedWith value of the target username; that way it
+    # gets indexed cheaply as directed to the user.
     # NOTE: See __acl__ on the grade object; this
     # may change if we have a richer publishing workflow
     change.sharedWith = (grade.Username,)
@@ -97,13 +121,17 @@ def _do_store_grade_created_event(grade, _):
     # Now store it, firing events to index, etc. Remember this
     # only happens if the name and parent aren't already
     # set (which they will be because they were copied from grade)
-    del change.__name__
+    try:
+        del change.__name__
+    except AttributeError:
+        pass
     del change.__parent__
     # Define it as top-level content for indexing purposes
     change.__is_toplevel_content__ = True
-    storage[grade.Username] = change
-    assert change.__parent__ is _get_entry_change_storage(grade.__parent__)
-    assert change.__name__ == grade.Username
+    #change.__name__ = grade.Username
+    change_container[change_key] = change
+    assert change.__parent__ is change_container
+    assert change.__name__ == change_key
     return change
 
 
@@ -120,8 +148,15 @@ def _store_grade_created_event(grade, event):
 @component.adapter(IGrade, IObjectRemovedEvent)
 def _remove_grade_event(grade, unused_event=None):
     try:
-        storage = _get_entry_change_storage(grade.__parent__)
-        del storage[grade.Username]
+        entry = IGradeBookEntry(grade)
+        storage = _get_entry_change_storage(entry)
+        change_container = storage[grade.Username]
+        try:
+            change_key = grade.HistoryItemNTIID
+        except AttributeError:
+            change_key = 'MetaGrade'
+            assert IMetaGrade.providedBy(grade)
+        del change_container[change_key]
     except KeyError:
         pass
 
@@ -144,6 +179,22 @@ def update_grade_progress(grade, unused_event=None):
                                     course))
 
 
+@component.adapter(IGradeContainer, IObjectModifiedFromExternalEvent)
+def _excused_grade_handler(grade_container, event):
+    """
+    If excused state is updated, update the user's progress.
+    """
+    if      event.external_value \
+        and (   'excused' in event.external_value \
+             or 'Excused' in event.external_value):
+        assignment = find_object_with_ntiid(grade_container.AssignmentId)
+        user = IUser(grade_container)
+        course = ICourseInstance(grade_container)
+        notify(UserProgressRemovedEvent(assignment,
+                                        user,
+                                        course))
+
+
 @component.adapter(IGrade, IGradeRemovedEvent)
 def _on_grade_removed(unused_grade, event):
     # Specific event because we want item out of container at this point
@@ -156,4 +207,20 @@ def _on_grade_removed(unused_grade, event):
     notify(UserProgressRemovedEvent(assignment,
                                     event.user,
                                     event.course))
+
+
+@component.adapter(IGradeContainer, IObjectRemovedEvent)
+def _on_grade_container_removed(grade_container, unused_event):
+    # Specific event because we want item out of container at this point
+    if queryInteraction() is None:
+        return
+    # Tests
+    user = IUser(grade_container, None)
+    if user is None:
+        return
+    assignment = find_object_with_ntiid(grade_container.AssignmentId)
+    course = ICourseInstance(grade_container)
+    notify(UserProgressRemovedEvent(assignment,
+                                    user,
+                                    course))
 

@@ -24,7 +24,8 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.gradebook import MessageFactory as _
 
-from nti.app.products.gradebook.interfaces import IGrade
+from nti.app.products.gradebook.interfaces import IMetaGrade
+from nti.app.products.gradebook.interfaces import ISubmissionGrade
 from nti.app.products.gradebook.interfaces import ILetterGradeScheme
 
 from nti.externalization.datastructures import InterfaceObjectIO
@@ -40,17 +41,15 @@ def raise_field_error(request, field, message):
     raise_json_error(request, hexc.HTTPUnprocessableEntity, data, exc_info[2])
 
 
-@component.adapter(IGrade)
-@interface.implementer(IInternalObjectUpdater)
 class _GradeObjectUpdater(InterfaceObjectIO):
 
-    # INterface object io doesn't seem to have a way to pull this
+    # Interface object io doesn't seem to have a way to pull this
     # info from the iface so we do it manually.
     _excluded_in_ivars_ = frozenset(
-        getattr(InterfaceObjectIO, '_excluded_in_ivars_').union({'AssignmentId', 'Username'})
+        getattr(InterfaceObjectIO, '_excluded_in_ivars_').union({'AssignmentId',
+                                                                 'Username',
+                                                                 'HistoryItemNTIID'})
     )
-
-    _ext_iface_upper_bound = IGrade
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         result = False
@@ -61,6 +60,20 @@ class _GradeObjectUpdater(InterfaceObjectIO):
             result = True
         result |= super(_GradeObjectUpdater, self).updateFromExternalObject(parsed, *args, **kwargs) or False
         return result
+
+
+@component.adapter(ISubmissionGrade)
+@interface.implementer(IInternalObjectUpdater)
+class _SubmissionGradeObjectUpdater(_GradeObjectUpdater):
+
+    _ext_iface_upper_bound = ISubmissionGrade
+
+
+@component.adapter(IMetaGrade)
+@interface.implementer(IInternalObjectUpdater)
+class _MetaGradeObjectUpdater(_GradeObjectUpdater):
+
+    _ext_iface_upper_bound = IMetaGrade
 
 
 @component.adapter(ILetterGradeScheme)

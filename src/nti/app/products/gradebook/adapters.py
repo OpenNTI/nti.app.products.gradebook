@@ -13,15 +13,15 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
-from nti.app.assessment.common.history import get_most_recent_history_item
-
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemContainer
 
+from nti.app.products.gradebook.grades import GradeContainer
 from nti.app.products.gradebook.grades import PersistentGrade
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeContainer
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
 
 from nti.appserver.interfaces import ITrustedTopLevelContainerContextProvider
@@ -34,6 +34,8 @@ from nti.dataserver.interfaces import IStreamChangeEvent
 
 from nti.dataserver.users.users import User
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
@@ -42,13 +44,26 @@ logger = __import__('logging').getLogger(__name__)
 @component.adapter(IGrade)
 @interface.implementer(IGradeBookEntry)
 def _GradeToGradeEntry(grade):
-    return grade.__parent__
+    return grade.__parent__.__parent__
 
 
 @interface.implementer(IGradeBookEntry)
 @component.adapter(IUsersCourseAssignmentHistoryItem)
 def _AssignmentHistoryItem2GradeBookEntry(item):
-    assignmentId = item.__name__  # by definition
+    assignmentId = item.__parent__.__name__
+    course = ICourseInstance(item, None)
+    # get gradebook entry definition
+    gradebook = IGradeBook(course, None)
+    if gradebook is not None:
+        # pylint: disable=too-many-function-args
+        return gradebook.getColumnForAssignmentId(assignmentId)
+    return None
+
+
+@interface.implementer(IGradeBookEntry)
+@component.adapter(IUsersCourseAssignmentHistoryItemContainer)
+def _item_container_to_gradebook_entry(item):
+    assignmentId = item.__name__
     course = ICourseInstance(item, None)
     # get gradebook entry definition
     gradebook = IGradeBook(course, None)
@@ -95,39 +110,55 @@ def grade_for_history_item(item):
     # pylint: disable=too-many-function-args
     entry = book.getColumnForAssignmentId(assignmentId)
     if entry is not None and user is not None:
-        grade = entry.get(user.username)
-        if grade is None:
-            # Always dummy up a grade (at the right location in
-            # the hierarchy) so that we have an 'edit' link if
-            # necessary
-            grade = PersistentGrade()
-            grade.createdTime = 0
-            grade.lastModified = 0
-            grade.__parent__ = entry
-            grade.__name__ = user.username
-        return grade
+        result = None
+        grade_container = entry.get(user.username)
+        # Always dummy up a grade (at the right location in
+        # the hierarchy) so that we have an 'edit' link if
+        # necessary
+
+        # XXX: Is this still needed with the GradeContainer
+        if grade_container is None:
+            grade_container = GradeContainer()
+            grade_container.__parent__ = entry
+
+        for grade in grade_container.values():
+            if grade.HistoryItemNTIID == item.ntiid:
+                result = grade
+                break
+
+        if result is None:
+            result = PersistentGrade()
+            result.createdTime = 0
+            result.lastModified = 0
+            result.__parent__ = grade_container
+            result.__name__ = user.username
+        return result
 
 
 @component.adapter(IGrade)
 @interface.implementer(IUsersCourseAssignmentHistoryItem)
 def history_item_for_grade(grade):
-    user = IUser(grade, None)
-    course = ICourseInstance(grade, None)
-    # FIXME: Need a different way to do this with multiple submissions
-    return get_most_recent_history_item(user, course, grade.__parent__.AssignmentId)
+    return find_object_with_ntiid(grade.HistoryItemNTIID)
 
 
 @component.adapter(IGrade)
 @interface.implementer(IUsersCourseAssignmentHistoryItemContainer)
 def history_item_container_for_grade(grade):
-    history_item = IUsersCourseAssignmentHistoryItem(grade)
-    return history_item.__parent__
+    history_item = IUsersCourseAssignmentHistoryItem(grade, None)
+    if history_item is not None:
+        return history_item.__parent__
 
 
 @component.adapter(IGrade)
 @interface.implementer(IUser)
 def grade_to_user(grade):
-    return User.get_user(grade.__name__)
+    return User.get_user(grade.username)
+
+
+@component.adapter(IGradeContainer)
+@interface.implementer(IUser)
+def grade_container_to_user(grade_container):
+    return User.get_user(grade_container.username)
 
 
 @component.adapter(IGrade)
