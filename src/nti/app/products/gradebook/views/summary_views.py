@@ -78,6 +78,27 @@ def _get_history_item(course, user, assignment_id):
     return get_most_recent_history_item(user, course, assignment_id)
 
 
+class _GradeBookEntryCachingSource(object):
+    """
+    Since we iterate over users and assignments below, fetch and
+    store entries by ntiid for these views.
+    """
+
+    def __init__(self, gradebook):
+        self.gradebook = gradebook
+        self.cache = dict()
+
+    def get_entry(self, ntiid):
+        try:
+            result = self.cache[ntiid]
+        except KeyError:
+            # This will iterate over all (non-deleted) entries in
+            # each part in the gradebook until it hits.
+            result = self.gradebook.getColumnForAssignmentId(ntiid)
+            self.cache[ntiid] = result
+        return result
+
+
 class UserGradeSummary(object):
     """
     A container for user grade summary info.  Most of these fields
@@ -188,10 +209,10 @@ class UserGradeBookSummary(UserGradeSummary):
 
     __class_name__ = 'UserGradeBookSummary'
 
-    def __init__(self, username, course, assignments, gradebook, grade_entry, grade_policy):
+    def __init__(self, username, course, assignments, gradebook_cache, grade_entry, grade_policy):
         super(UserGradeBookSummary, self).__init__(username, grade_entry, course)
         self.assignments = assignments
-        self.gradebook = gradebook
+        self.gradebook_cache = gradebook_cache
         self.grade_policy = grade_policy
 
     @Lazy
@@ -209,7 +230,7 @@ class UserGradeBookSummary(UserGradeSummary):
         ungraded_count = 0
         today = datetime.utcnow()
         for assignment in assignments:
-            grade = self.gradebook.getColumnForAssignmentId(assignment.ntiid)
+            grade = self.gradebook_cache.get_entry(assignment.ntiid)
             user_grade = grade.get(user.username) if grade is not None else None
             submission_count = get_user_submission_count(user, course, assignment.ntiid)
 
@@ -330,9 +351,14 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
                 self.final_grade_entry.AssignmentId)
         return result
 
+    @Lazy
+    def gradebook_cache(self):
+        # Cache entries for the life of this view
+        return _GradeBookEntryCachingSource(self.gradebook)
+
     def _get_summary_for_student(self, username):
         return UserGradeBookSummary(username, self.course, self.assignments,
-                                    self.gradebook, self.final_grade_entry,
+                                    self.gradebook_cache, self.final_grade_entry,
                                     self.grade_policy)
 
     def _get_summaries_for_usernames(self, student_names):
