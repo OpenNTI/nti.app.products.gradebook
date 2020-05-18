@@ -24,7 +24,7 @@ from nti.app.assessment.common.history import get_most_recent_history_item
 from nti.app.assessment.common.policy import get_auto_grade_policy
 from nti.app.assessment.common.policy import get_policy_completion_passing_percent
 
-from nti.app.assessment.common.submissions import get_submissions
+from nti.app.assessment.common.submissions import get_submission_intids_for_courses
 
 from nti.app.products.gradebook.interfaces import ACT_VIEW_GRADES
 
@@ -41,7 +41,7 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contenttypes.completion.interfaces import ICompletionContextCompletedItem
 from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
 
-from nti.contenttypes.completion.utils import get_indexed_completed_items
+from nti.contenttypes.completion.utils import get_indexed_completed_items_intids
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
@@ -300,14 +300,14 @@ class _InstructorDataForAssignment(AbstractAuthenticatedRequestAwareDecorator):
         if course_ntiid:
             context_ntiids.append(course_ntiid)
 
-        completed_items = get_indexed_completed_items(items=(assignment.ntiid,),
-                                                      contexts=context_ntiids,
-                                                      success=True)
+        completed_items = get_indexed_completed_items_intids(items=(assignment.ntiid,),
+                                                             contexts=context_ntiids,
+                                                             success=True)
 
         external['UserCompletionCount'] = len(completed_items)
         external['GradeSubmittedCount'] = len(column)
 
-        submissions = get_submissions(assignment, course)
+        submissions = get_submission_intids_for_courses(assignment, course)
         external['GradeAssignmentSubmittedCount'] = len(submissions or ())
         student_pop_count = self._get_student_population_count(course, assignment)
         external['GradeSubmittedStudentPopulationCount'] = student_pop_count
