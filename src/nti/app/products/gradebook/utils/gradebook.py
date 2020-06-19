@@ -46,7 +46,7 @@ from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseInstance, IDeletedCourse
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
@@ -205,7 +205,8 @@ def find_entry_for_item(item):
     # pylint: disable=too-many-function-args
     book = IGradeBook(course)
     entry = book.getColumnForAssignmentId(assignmentId)
-    if entry is None:
+    # Avoid syncing if deleted.
+    if entry is None and not IDeletedCourse.providedBy(course):
         # Typically during tests something is added
         synchronize_gradebook_and_verify_policy(course)
         entry = book.getColumnForAssignmentId(assignmentId)
