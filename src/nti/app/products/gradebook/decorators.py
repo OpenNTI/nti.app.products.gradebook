@@ -375,8 +375,8 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
         principal_container = component.queryMultiAdapter((user, course),
                                                           IPrincipalCompletedItemContainer)
         gradebook = IGradeBook(course)
-        success_count = result.setdefault('SuccessCount', 0)
-        fail_count = result.setdefault('FailCount', 0)
+        success_count = 0
+        fail_count = 0
         for assignment in self.get_assignments(course):
             completed_item = principal_container.get_completed_item(assignment)
             if completed_item is not None:
