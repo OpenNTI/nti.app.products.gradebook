@@ -210,7 +210,7 @@ def find_entry_for_item(item):
         # Typically during tests something is added
         synchronize_gradebook_and_verify_policy(course)
         entry = book.getColumnForAssignmentId(assignmentId)
-    if entry is None:
+    if entry is None and not IDeletedCourse.providedBy(course):
         # Also typically during tests.
         logger.warning("Assignment %s not found in course %s",
                        assignmentId, course)
