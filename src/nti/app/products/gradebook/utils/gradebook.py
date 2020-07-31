@@ -58,15 +58,16 @@ def remove_grade_from_entry(entry, key):
     Removes grade from the gradebook entry and sends a special
     event. This is useful for subscribers that want to trigger
     only *after* the grade is not in the container.
+
+    :raises KeyError: if the key is not found
     """
     # pylint: disable=protected-access
-    grade = entry.get(key)
-    user = IUser(grade, None)
-    course = ICourseInstance(grade, None)
-    assignment_id = getattr(grade, 'AssignmentId', None)
+    grade = entry[key]
+    user = IUser(grade)
+    course = ICourseInstance(grade)
+    assignment_id = grade.AssignmentId
     del entry[key]
-    if grade is not None:
-        notify(GradeRemovedEvent(grade, user, course, assignment_id))
+    notify(GradeRemovedEvent(grade, user, course, assignment_id))
 
 
 def numeric_grade_val(grade_val):
