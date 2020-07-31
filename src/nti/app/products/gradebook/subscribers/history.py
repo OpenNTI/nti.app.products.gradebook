@@ -23,9 +23,8 @@ from nti.app.products.gradebook.autograde_policies import find_autograde_policy
 
 from nti.app.products.gradebook.interfaces import IGrade
 
-from nti.app.products.gradebook.utils import remove_from_container
-
 from nti.app.products.gradebook.utils.gradebook import find_entry_for_item
+from nti.app.products.gradebook.utils.gradebook import remove_grade_from_entry
 from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_history_item
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -77,7 +76,7 @@ def _assignment_history_item_removed(item, unused_event=None):
         user = IUser(item, None)
         if user is not None:
             try:
-                remove_from_container(entry, user.username)
+                remove_grade_from_entry(entry, user.username)
             except KeyError:
                 pass
 

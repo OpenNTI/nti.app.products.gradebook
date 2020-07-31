@@ -10,8 +10,7 @@ from __future__ import absolute_import
 
 from zope import component
 
-from nti.app.products.gradebook.utils.gradebook import save_in_container
-from nti.app.products.gradebook.utils.gradebook import remove_from_container
+from nti.app.products.gradebook.utils.gradebook import remove_grade_from_entry
 from nti.app.products.gradebook.utils.gradebook import mark_btree_bucket_as_changed
 from nti.app.products.gradebook.utils.gradebook import record_grade_without_submission
 from nti.app.products.gradebook.utils.gradebook import set_grade_by_assignment_history_item

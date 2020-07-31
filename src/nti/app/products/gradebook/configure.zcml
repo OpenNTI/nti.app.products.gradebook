@@ -138,6 +138,11 @@
                   nti.contenttypes.courses.interfaces.ICourseInstance"
              provides="nti.contenttypes.completion.interfaces.IProgress" />
 
+    <!-- XXX: Added to a live database. Need to clean up unused data -->
+    <adapter factory="nti.dublincore.annotatableadapter.none_dublincore_adapter"
+             provides="zope.dublincore.interfaces.IWriteZopeDublinCore"
+             for=".interfaces.IGradeBookEntry" />
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
