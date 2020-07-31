@@ -10,15 +10,11 @@ from __future__ import absolute_import
 from six import string_types
 from six import integer_types
 
-from ZODB.interfaces import IConnection
-
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 
 from zope.event import notify
-
-from zope.location.location import locate
 
 from nti.app.assessment.common.policy import is_most_recent_submission_priority
 
@@ -46,7 +42,8 @@ from nti.assessment.assignment import QAssignmentSubmissionPendingAssessment
 
 from nti.contenttypes.courses.grading import find_grading_policy_for_course
 
-from nti.contenttypes.courses.interfaces import ICourseInstance, IDeletedCourse
+from nti.contenttypes.courses.interfaces import IDeletedCourse
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
@@ -54,6 +51,23 @@ from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import IUser
 
 logger = __import__('logging').getLogger(__name__)
+
+
+def remove_grade_from_entry(entry, key):
+    """
+    Removes grade from the gradebook entry and sends a special
+    event. This is useful for subscribers that want to trigger
+    only *after* the grade is not in the container.
+
+    :raises KeyError: if the key is not found
+    """
+    # pylint: disable=protected-access
+    grade = entry[key]
+    user = IUser(grade)
+    course = ICourseInstance(grade)
+    assignment_id = grade.AssignmentId
+    del entry[key]
+    notify(GradeRemovedEvent(grade, user, course, assignment_id))
 
 
 def numeric_grade_val(grade_val):
@@ -100,42 +114,6 @@ def mark_btree_bucket_as_changed(grade):
     return found
 
 
-def save_in_container(container, key, value, event=False):
-    # pylint: disable=protected-access,too-many-function-args
-    if event:
-        container[key] = value
-    else:
-        container._setitemf(key, value)
-        locate(value, parent=container, name=key)
-        IConnection(container).add(value)
-        lifecycleevent.added(value, container, key)
-        try:
-            container.updateLastMod()
-        except AttributeError:
-            pass
-        container._p_changed = True
-
-
-def remove_from_container(container, key, event=False):
-    # pylint: disable=protected-access
-    grade = container.get(key)
-    user = IUser(grade, None)
-    course = ICourseInstance(grade, None)
-    assignment_id = getattr(grade, 'AssignmentId', None)
-    if event:
-        del container[key]
-    else:
-        # _delitemf calls ObjectEventRemoved
-        container._delitemf(key)
-        try:
-            container.updateLastMod()
-        except AttributeError:
-            pass
-        container._p_changed = True
-    if grade is not None:
-        notify(GradeRemovedEvent(grade, user, course, assignment_id))
-
-
 def record_grade_without_submission(entry, user, assignmentId=None,
                                     clazz=PersistentGrade):
     # canonicalize the username in the event case got mangled
@@ -177,7 +155,11 @@ def record_grade_without_submission(entry, user, assignmentId=None,
         # we need to deal with creating the grade object ourself.
         # This code path hits if a grade is deleted
         grade = clazz()
-        save_in_container(entry, username, grade)
+        # This code used to overwrite our existing entry (via setitemf).
+        try:
+            entry[username] = grade
+        except KeyError:
+            pass
     return grade
 
 
@@ -276,6 +258,6 @@ def set_grade_by_assignment_history_item(item, overwrite=False):
             lifecycleevent.modified(grade)
         else:
             # Finally after we finish filling it in, publish it
-            save_in_container(entry, user.username, grade)
+            entry[user.username] = grade
         return grade
     return None

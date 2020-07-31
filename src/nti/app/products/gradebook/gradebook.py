@@ -69,6 +69,7 @@ from nti.schema.schema import SchemaConfigured
 
 from nti.traversal.traversal import find_interface
 
+
 logger = __import__('logging').getLogger(__name__)
 
 
