@@ -6,12 +6,15 @@ Views and other functions related to grades and gradebook.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from datetime import datetime
 
 import nameparser
+
+from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
@@ -19,9 +22,9 @@ from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.assessment.common.history import get_user_submission_count
 from nti.app.assessment.common.history import get_most_recent_history_item
 
+from nti.app.assessment.interfaces import IUsersCourseAssignmentHistory
 from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItemSummary
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -113,7 +116,7 @@ class UserGradeSummary(object):
         self.grade_entry = grade_entry
         self.course = course
 
-    @property
+    @Lazy
     def assignment_filter(self):
         return get_course_assessment_predicate_for_user(self.user,
                                                         self.course)
@@ -216,6 +219,22 @@ class UserGradeBookSummary(UserGradeSummary):
         self.grade_policy = grade_policy
 
     @Lazy
+    def _assignment_history_container(self):
+        return component.queryMultiAdapter((self.course, self.user),
+                                           IUsersCourseAssignmentHistory)
+
+    def _get_user_submission_count(self, assignment_ntiid):
+        """
+        Return the submission count for a user, course and assignment_ntiid.
+        """
+        result = 0
+        if self._assignment_history_container is not None:
+            submission_container = self._assignment_history_container.get(assignment_ntiid)
+            if submission_container:
+                result = len(submission_container)
+        return result
+
+    @Lazy
     def _user_stats(self):
         """
         Return overdue/ungraded stats for user.
@@ -232,20 +251,20 @@ class UserGradeBookSummary(UserGradeSummary):
         for assignment in assignments:
             grade = self.gradebook_cache.get_entry(assignment.ntiid)
             user_grade = grade.get(user.username) if grade is not None else None
-            submission_count = get_user_submission_count(user, course, assignment.ntiid)
+            submission_count = self._get_user_submission_count(assignment)
+            no_submit = assignment.no_submit or not assignment.parts
 
             # Submission but no grade
             if      submission_count \
                 and (user_grade is None or user_grade.value is None):
-                ungraded_count += 1
-
-            # No submission (and we expect one) and past due
-            no_submit = assignment.no_submit or not assignment.parts
-            if not no_submit and not submission_count:
-                context = IQAssignmentDateContext(course)
-                due_date = context.of(assignment).available_for_submission_ending
-                if due_date and today > due_date:
-                    overdue_count += 1
+                    ungraded_count += 1
+            elif    not no_submit \
+                and not submission_count:
+                    # No submission (and we expect one) and past due
+                    context = IQAssignmentDateContext(course)
+                    due_date = context.of(assignment).available_for_submission_ending
+                    if due_date and today > due_date:
+                        overdue_count += 1
         return overdue_count, ungraded_count
 
     @Lazy
@@ -261,6 +280,9 @@ class UserGradeBookSummary(UserGradeSummary):
 
     @Lazy
     def ungraded_count(self):
+        # XXX: For future perf improvments, if filtering by ungraded, we could
+        # just iterate over the submisison/gradebook looking for ungraded
+        # submissions (instead of over filtered assignments).
         return self._user_stats[1]
 
 
@@ -328,9 +350,13 @@ class GradeBookSummaryView(AbstractAuthenticatedView,
 
     @Lazy
     def assignments(self):
+        # As an performance improvment, ignore any non-published assignments.
+        # We do this here instead of checking if published for each user in a
+        # course.
         assignment_catalog = ICourseAssignmentCatalog(self.course)
         assignments = tuple(
-            asg for asg in assignment_catalog.iter_assignments(course_lineage=True)
+            asg for asg in assignment_catalog.iter_assignments(course_lineage=True,
+                                                               require_published=True)
         )
         return assignments
 
