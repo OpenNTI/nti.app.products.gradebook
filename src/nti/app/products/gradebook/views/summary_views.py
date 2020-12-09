@@ -251,7 +251,7 @@ class UserGradeBookSummary(UserGradeSummary):
         for assignment in assignments:
             grade = self.gradebook_cache.get_entry(assignment.ntiid)
             user_grade = grade.get(user.username) if grade is not None else None
-            submission_count = self._get_user_submission_count(assignment)
+            submission_count = self._get_user_submission_count(assignment.ntiid)
             no_submit = assignment.no_submit or not assignment.parts
 
             # Submission but no grade
