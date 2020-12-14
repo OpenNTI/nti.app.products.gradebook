@@ -160,6 +160,9 @@
 						 .interfaces.ITotalPointsGradeScheme"
 		modules=".gradebook .grades .gradescheme" />
 
+    <adapter factory=".grades._GradeLiveNotableExternalizer"
+             name="live_notable" />
+
 	<!-- Internalization -->
 	<adapter factory=".internalization._GradeObjectUpdater"
 			 for=".interfaces.IGrade"

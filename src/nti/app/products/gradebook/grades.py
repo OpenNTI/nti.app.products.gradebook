@@ -28,6 +28,7 @@ from nti.base.interfaces import ICreated
 from nti.contenttypes.courses.grading.interfaces import IPredictedGrade
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver.authorization import ACT_READ
 
@@ -38,6 +39,10 @@ from nti.dataserver.authorization_acl import ace_denying_all
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
+
+from nti.externalization.externalization import to_standard_external_dictionary
+
+from nti.externalization.interfaces import IExternalObject
 
 from nti.externalization.representation import WithRepr
 
@@ -236,3 +241,18 @@ from zope.deprecation import deprecated
 deprecated('Grades', 'No longer used')
 class Grades(Persistent):
     pass
+
+
+@interface.implementer(IExternalObject)
+@component.adapter(IGrade)
+class _GradeLiveNotableExternalizer(object):
+
+    def __init__(self, grade):
+        self.grade = grade
+
+    def toExternalObject(self, **kwargs):
+        extDict = to_standard_external_dictionary(self.grade, **kwargs)
+        entry = ICourseCatalogEntry(self.grade, None)
+        if entry is not None:
+            extDict['CatalogEntryNTIID'] = entry.ntiid
+        return extDict
