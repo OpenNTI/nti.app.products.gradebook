@@ -256,4 +256,6 @@ class _GradeLiveNotableExternalizer(object):
         if entry is not None:
             extDict['CatalogEntryNTIID'] = entry.ntiid
         extDict['AssignmentId'] = self.grade.AssignmentId
+        extDict['value'] = self.grade.value
+        extDict['Username'] = self.grade.Username
         return extDict

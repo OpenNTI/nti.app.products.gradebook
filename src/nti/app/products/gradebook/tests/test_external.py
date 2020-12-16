@@ -66,7 +66,7 @@ class TestExternal(unittest.TestCase):
         newgrade = Grade(username=u'nt@nti.com', grade=85.0)
         newgrade.__parent__ = entry = GradeBookEntry()
         entry.AssignmentId = u'assignment_id'
-        ext = externalization.to_external_object(newgrade, name='live_notable')
+        ext = externalization.to_external_object(newgrade, name='live_notable', decorate=False)
         assert_that(ext, has_entry('Class', 'Grade'))
         assert_that(ext, has_entry('value', is_(85.0)))
         assert_that(ext, has_entry('Username', 'nt@nti.com'))
