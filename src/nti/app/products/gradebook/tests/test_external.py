@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -62,6 +61,19 @@ class TestExternal(unittest.TestCase):
         internalization.update_from_external_object(newgrade, ext)
         assert_that(newgrade, has_property('value', is_(85.0)))
         assert_that(newgrade, has_property('Username', is_('nt@nti.com')))
+
+    def test_notable_grade(self):
+        newgrade = Grade(username=u'nt@nti.com', grade=85.0)
+        newgrade.__parent__ = entry = GradeBookEntry()
+        entry.AssignmentId = u'assignment_id'
+        ext = externalization.to_external_object(newgrade, name='live_notable')
+        assert_that(ext, has_entry('Class', 'Grade'))
+        assert_that(ext, has_entry('value', is_(85.0)))
+        assert_that(ext, has_entry('Username', 'nt@nti.com'))
+        assert_that(ext, has_entry('AssignmentId', 'assignment_id'))
+        assert_that(ext,
+                    has_entry('MimeType', 'application/vnd.nextthought.grade'))
+        assert_that(ext, has_entry('Last Modified', is_not(none())))
 
     @WithMockDSTrans
     def test_gradebook(self):

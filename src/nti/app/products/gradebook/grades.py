@@ -255,4 +255,5 @@ class _GradeLiveNotableExternalizer(object):
         entry = ICourseCatalogEntry(self.grade, None)
         if entry is not None:
             extDict['CatalogEntryNTIID'] = entry.ntiid
+        extDict['AssignmentId'] = self.grade.AssignmentId
         return extDict
