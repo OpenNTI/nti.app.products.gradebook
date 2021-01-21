@@ -194,6 +194,23 @@ class _GradeHistoryItemLinkDecorator(AbstractAuthenticatedRequestAwareDecorator)
 
 @component.adapter(IGrade)
 @interface.implementer(IExternalMappingDecorator)
+class _GradeValueStripperDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    For non-instructors, hide all grade values.
+    """
+
+    def _predicate(self, context, unused_result):
+        course = find_interface(context, ICourseInstance, strict=False)
+        return bool(    self._is_authenticated \
+                    and not is_course_instructor(course, self.remoteUser))
+
+    def _do_decorate_external(self, context, result):
+        for key in ('value', 'AutoGrade', 'AutoGradeMax'):
+            result.pop(key, None)
+
+
+@component.adapter(IGrade)
+@interface.implementer(IExternalMappingDecorator)
 class _ExcusedGradeDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _predicate(self, unused_context, unused_result):
