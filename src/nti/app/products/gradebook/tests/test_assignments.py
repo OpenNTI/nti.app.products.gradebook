@@ -33,6 +33,7 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from pyramid.interfaces import IRequest
 from pyramid.interfaces import IAuthenticationPolicy
 
 from nti.app.contenttypes.completion import COMPLETION_POLICY_VIEW_NAME
@@ -40,6 +41,8 @@ from nti.app.contenttypes.completion import COMPLETION_REQUIRED_VIEW_NAME
 
 from nti.app.products.gradebook import assignments
 from nti.app.products.gradebook import interfaces as grades_interfaces
+
+from nti.app.products.gradebook.decorators import _GradeValueStripperDecorator
 
 from nti.assessment.interfaces import IQAssignment
 from nti.assessment.submission import QuestionSubmission
@@ -56,6 +59,8 @@ from nti.contenttypes.completion.policies import CompletableItemAggregateComplet
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver.users.users import User
+
+from nti.externalization.interfaces import IExternalObjectDecorator
 
 from nti.externalization.externalization import to_external_object
 
@@ -1380,3 +1385,47 @@ class TestAssignments(ApplicationLayerTest):
         self.testapp.get(gb_href, extra_environ=instructor_environ)
 
         self.testapp.get(gb_href, extra_environ=normal_environ, status=403)
+
+    @WithSharedApplicationMockDS(users=('grade_stripped_user'), testapp=True, default_authenticate=True)
+    def test_grade_stripping(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            component.getGlobalSiteManager().registerSubscriptionAdapter(_GradeValueStripperDecorator,
+                                                                         (grades_interfaces.IGrade,IRequest),
+                                                                         IExternalObjectDecorator)
+        try:
+            # This only works in the OU environment because that's where the
+            # purchasables are
+            extra_env = self._make_extra_environ(username='grade_stripped_user')
+            extra_env.update({'HTTP_ORIGIN': 'http://janux.ou.edu'})
+            self.testapp.extra_environ = extra_env
+
+            # Make sure we're enrolled
+            self.testapp.post_json('/dataserver2/users/grade_stripped_user/Courses/EnrolledCourses',
+                                   COURSE_NTIID)
+
+            instructor_environ = self._make_extra_environ(username='harp4162')
+            instructor_environ['HTTP_ORIGIN'] = 'http://janux.ou.edu'
+
+            trivial_grade_path = '/dataserver2/users/CLC3403.ou.nextthought.com/LegacyCourses/CLC3403/GradeBook/quizzes/Trivial_Test/'
+            path = trivial_grade_path + 'grade_stripped_user'  # Notice we are mangling the case
+            grade = {"MimeType": "application/vnd.nextthought.courseware.grade",
+                     "tags": [], "value": "324 -"}
+
+            # Instructor can see grades
+            res = self.testapp.put_json(path, grade,
+                                        extra_environ=instructor_environ)
+            assert_that(res.json_body,
+                        has_entry('MimeType', 'application/vnd.nextthought.grade'))
+            assert_that(res.json_body, has_entry('value', '324 -'))
+            href = res.json_body['href']
+
+            # Enrolled user cannot
+            res = self.testapp.get(href).json_body
+            assert_that(res,
+                        has_entries('MimeType', 'application/vnd.nextthought.grade',
+                                    'value', none()))
+        finally:
+            with mock_dataserver.mock_db_trans(self.ds):
+                component.getGlobalSiteManager().unregisterSubscriptionAdapter(_GradeValueStripperDecorator,
+                                                                               (grades_interfaces.IGrade,IRequest),
+                                                                               IExternalObjectDecorator)
