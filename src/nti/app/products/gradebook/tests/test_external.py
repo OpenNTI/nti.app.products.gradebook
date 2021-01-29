@@ -12,6 +12,7 @@ from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
+does_not = is_not
 
 import unittest
 
@@ -68,12 +69,12 @@ class TestExternal(unittest.TestCase):
         entry.AssignmentId = u'assignment_id'
         ext = externalization.to_external_object(newgrade, name='live_notable', decorate=False)
         assert_that(ext, has_entry('Class', 'Grade'))
-        assert_that(ext, has_entry('value', is_(85.0)))
         assert_that(ext, has_entry('Username', 'nt@nti.com'))
         assert_that(ext, has_entry('AssignmentId', 'assignment_id'))
         assert_that(ext,
                     has_entry('MimeType', 'application/vnd.nextthought.grade'))
         assert_that(ext, has_entry('Last Modified', is_not(none())))
+        assert_that(ext, does_not(has_entry('value', is_(85.0))))
 
     @WithMockDSTrans
     def test_gradebook(self):
