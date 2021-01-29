@@ -251,11 +251,12 @@ class _GradeLiveNotableExternalizer(object):
         self.grade = grade
 
     def toExternalObject(self, **kwargs):
+        # Note: we do not include any grade value information here since
+        # we do not display it.
         extDict = to_standard_external_dictionary(self.grade, **kwargs)
         entry = ICourseCatalogEntry(self.grade, None)
         if entry is not None:
             extDict['CatalogEntryNTIID'] = entry.ntiid
         extDict['AssignmentId'] = self.grade.AssignmentId
-        extDict['value'] = self.grade.value
         extDict['Username'] = self.grade.Username
         return extDict
