@@ -244,6 +244,8 @@
 	<!-- Events -->
 	<include package=".subscribers" />
 
+	<include package=".notables" />
+
 	<!-- Grading -->
 	<include package=".grading" />
 
