@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import time
 
 from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
@@ -26,6 +27,7 @@ from zope.security.management import queryInteraction
 
 from nti.app.products.gradebook.interfaces import IGrade
 from nti.app.products.gradebook.interfaces import IGradeRemovedEvent
+from nti.app.products.gradebook.interfaces import IGradeChangeContainer
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
@@ -61,6 +63,7 @@ def _get_entry_change_storage(entry):
     changes = annotes.get(_CHANGE_KEY)
     if changes is None:
         changes = CaseInsensitiveLastModifiedBTreeContainer()
+        interface.alsoProvides(changes, IGradeChangeContainer)
         changes.__name__ = _CHANGE_KEY
         changes.__parent__ = entry
         annotes[_CHANGE_KEY] = changes

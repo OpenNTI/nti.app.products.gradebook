@@ -143,6 +143,10 @@
              provides="zope.dublincore.interfaces.IWriteZopeDublinCore"
              for=".interfaces.IGradeBookEntry" />
 
+    <adapter factory="nti.dublincore.annotatableadapter.none_dublincore_adapter"
+             provides="zope.dublincore.interfaces.IWriteZopeDublinCore"
+             for=".interfaces.IGradeChangeContainer" />
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />

@@ -12,17 +12,22 @@ from hamcrest import assert_that
 
 import unittest
 
+from zope import interface
+
 from zope.dublincore.interfaces import IWriteZopeDublinCore
 
 from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.app.products.gradebook.interfaces import IGradeBook
+from nti.app.products.gradebook.interfaces import IGradeChangeContainer
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.app.products.gradebook.gradebook import GradeBookEntry
 
 from nti.app.products.gradebook.tests import SharedConfiguringTestLayer
+
+from nti.containers.containers import LastModifiedBTreeContainer
 
 
 class TestAdapters(unittest.TestCase):
@@ -38,3 +43,8 @@ class TestAdapters(unittest.TestCase):
     def test_zdc_gradebook_entry(self):
         entry = GradeBookEntry()
         assert_that(IWriteZopeDublinCore(entry, None), none())
+
+    def test_zdc_grade_change_container(self):
+        container = LastModifiedBTreeContainer()
+        interface.alsoProvides(container, IGradeChangeContainer)
+        assert_that(IWriteZopeDublinCore(container, None), none())

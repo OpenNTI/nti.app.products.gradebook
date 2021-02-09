@@ -415,6 +415,11 @@ class IGradeWithoutSubmission(IGrade):
 IGradeWithoutSubmission.setTaggedValue('_ext_is_marker_interface', True)
 
 
+class IGradeChangeContainer(IContainer):
+    pass
+IGradeChangeContainer.setTaggedValue('_ext_is_marker_interface', True)
+
+
 class IExcusedGrade(IGrade):
     """
     Marker interface for an Excused grade
