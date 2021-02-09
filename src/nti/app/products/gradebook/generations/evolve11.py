@@ -60,6 +60,7 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
     mock_ds.root = ds_folder
     component.provideUtility(mock_ds, IDataserver)
 
+    count = 0
     with site(ds_folder):
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
@@ -75,9 +76,10 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
                 changes = annotes.get(_CHANGE_KEY)
                 if changes is not None:
                     interface.alsoProvides(changes, IGradeChangeContainer)
+                    count += 1
 
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
-    logger.info('Gradebook evolution %s done', generation)
+    logger.info('Gradebook evolution %s done (updated=%s)', generation, count)
 
 
 def evolve(context):
