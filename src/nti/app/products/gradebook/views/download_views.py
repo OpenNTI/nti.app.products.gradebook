@@ -50,6 +50,8 @@ from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalList
 
+from nti.mailer.interfaces import IEmailAddressable
+
 from nti.namedfile.file import safe_filename
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -215,7 +217,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         # First a header row. Note that we are allowed to use multiple columns
         # to identify students.
         headers = ['Username', 'External ID',
-                   'First Name', 'Last Name', 'Full Name']
+                   'First Name', 'Last Name', 'Full Name', 'Email']
         # Assignment names could theoretically have non-ascii chars
         for asg_tuple in sorted_assignment_keys:
             asg_name = _tx_string(asg_tuple[1])
@@ -256,8 +258,10 @@ class GradebookDownloadView(AbstractAuthenticatedView):
             firstname = key.firstName
             lastname = key.lastName
             realname = key.realname
+            email_addressable = IEmailAddressable(user, None)
+            email = email_addressable.email if email_addressable else None
 
-            data = (username, external_id, firstname, lastname, realname)
+            data = (username, external_id, firstname, lastname, realname, email)
             row = [_tx_string(x) for x in data]
             for assignment_key in sorted_assignment_keys:
                 grade_val = ""
