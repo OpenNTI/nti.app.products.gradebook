@@ -402,7 +402,7 @@ class TestAssignments(ApplicationLayerTest):
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
         assert_that(res.content_disposition,
                     is_('attachment; filename="CLC3403_full-grades.csv"'))
-        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,90,,,75,100,#\r\n'
+        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson\u0107,Steve Johnson\u0107,,90,,,75,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # He can filter it to Open and ForCredit subsets
@@ -416,7 +416,7 @@ class TestAssignments(ApplicationLayerTest):
                                extra_environ=instructor_environ)
         assert_that(res.content_disposition,
                     is_('attachment; filename="CLC3403_ForCredit-grades.csv"'))
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\n'
         assert_that(res.text, is_(csv_text))
 
     @WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
@@ -492,7 +492,7 @@ class TestAssignments(ApplicationLayerTest):
         csv_link = self.require_link_href_with_rel(gradebook_json,
                                                   'ExportContents')
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson,Steve Johnson,,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Johnson,Steve Johnson,,,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         #  If we switch names, they should still be sorted correctly.
@@ -508,7 +508,7 @@ class TestAssignments(ApplicationLayerTest):
 
         # download the gradebook again and check that the sorting is correct
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Johnson,Steve Johnson,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Johnson,Steve Johnson,,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # If both users have the same last name, should be sorted by first name.
@@ -524,7 +524,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof.__parent__)
             lifecycleevent.modified(prof)
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Madden,Steve Madden,,,,0,100,#\r\n'
+        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Steve,Madden,Steve Madden,,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # Switch names from the above scenario to make sure they're actually
@@ -539,7 +539,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof.__parent__)
             lifecycleevent.modified(prof)
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Madden,Steve Madden,,,,0,100,#\r\n'
+        csv_text = 'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,,0,100,#\r\naaa@nextthought.com,aaa@nextthought.com,Steve,Madden,Steve Madden,,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
         # If both names are identical, they should be sorted by username.
@@ -553,7 +553,7 @@ class TestAssignments(ApplicationLayerTest):
             lifecycleevent.modified(prof.__parent__)
             lifecycleevent.modified(prof)
         res = self.testapp.get(csv_link, extra_environ=instructor_environ)
-        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,0,100,#\r\n'
+        csv_text = u'Username,External ID,First Name,Last Name,Full Name,Email,Main Title Points Grade,Trivial Test Points Grade,Main Title Points Grade,Adjusted Final Grade Numerator,Adjusted Final Grade Denominator,End-of-Line Indicator\r\naaa@nextthought.com,aaa@nextthought.com,Jason,Madden,Jason Madden,,,,,0,100,#\r\nsjohnson@nextthought.com,sjohnson@nextthought.com,Jason,Madden,Jason Madden,,,,,0,100,#\r\n'
         assert_that(res.text, is_(csv_text))
 
     @WithSharedApplicationMockDS(users=('aaa@nextthought.com'),
