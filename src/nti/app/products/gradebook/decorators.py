@@ -408,3 +408,15 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
         meta_data[ITEM_COUNT] = len(meta_items)
         meta_data['SuccessCount'] = success_count
         meta_data['FailCount'] = fail_count
+
+
+@component.adapter(ICompletionContextCompletedItem)
+@interface.implementer(IExternalObjectDecorator)
+class CourseCompletedItemStrippingDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    For sites that do not want to display grade info, this strips
+    completion metadata.
+    """
+
+    def _do_decorate_external(self, context, result):
+        result.pop('CompletionMetadata', None)
