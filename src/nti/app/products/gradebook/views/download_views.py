@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -13,10 +12,11 @@ import csv
 import six
 import nameparser
 from six import StringIO
-from collections import namedtuple
 from collections import defaultdict
 
 from zope import component
+
+from zope.cachedescriptors.property import Lazy
 
 from pyramid.view import view_config
 
@@ -35,8 +35,6 @@ from nti.app.products.gradebook.interfaces import IExcusedGrade
 from nti.app.products.gradebook.interfaces import FINAL_GRADE_NAMES
 from nti.app.products.gradebook.interfaces import NO_SUBMIT_PART_NAME
 
-from nti.app.products.gradebook.utils import replace_username
-
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -45,6 +43,7 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IProfileDisplayableSupplementalFields
 
 from nti.dataserver.users.users import User
 
@@ -55,9 +54,6 @@ from nti.mailer.interfaces import IEmailAddressable
 from nti.namedfile.file import safe_filename
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-StudentName = namedtuple('StudentName',
-                         'firstName lastName username realname')
 
 
 def get_valid_assignment(entry, course):
@@ -87,10 +83,6 @@ class GradebookDownloadView(AbstractAuthenticatedView):
     A query param `LegacyEnrollmentStatus` can be set to
     either 'ForCredit' or 'Open' to restrict the results to that
     subset of students.
-
-    .. note:: This is hardcoded to export in D2L compatible format.
-            (https://php.radford.edu/~knowledge/lore/attachment.php?id=57)
-            Dialects would be easily possible.
     """
 
     @property
@@ -134,18 +126,23 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         result = '%s_%s-%s' % (base_name, filter_name, suffix)
         return result
 
-    def _get_student_name(self, username):
+    def _get_user_info_dict(self, username):
         user = User.get_user(username)
-        if user is None:
-            return StudentName('', '', username, '')
-        named_user = IUserProfile(user)
-        if named_user.realname and '@' not in named_user.realname:
-            human_name = nameparser.HumanName(named_user.realname)
-            last = human_name.last or ''
-            first = human_name.first or ''
-            return StudentName(first, last, named_user.username, named_user.realname)
-        else:
-            return StudentName('', '', named_user.username, named_user.realname)
+        firstname = lastname = realname = ''
+        if user is not None:
+            named_user = IUserProfile(user)
+            realname = named_user.realname
+            if named_user.realname and '@' not in named_user.realname:
+                human_name = nameparser.HumanName(named_user.realname)
+                lastname = human_name.last or ''
+                firstname = human_name.first or ''
+        result = {'firstName': firstname,
+                  'lastName': lastname,
+                  'username': username,
+                  'realname': realname}
+        if user is not None and self.supplemental_field_utility:
+            result.update(self.supplemental_field_utility.get_user_fields(user))
+        return result
 
     def _get_entry_start_date(self, entry, course):
         assignment = find_object_with_ntiid(entry.AssignmentId)
@@ -162,6 +159,31 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         entry_name = entry.displayName or 'Unknown'
         return (start_date is not None, start_date, entry_name)
 
+    @Lazy
+    def supplemental_field_utility(self):
+        return component.queryUtility(IProfileDisplayableSupplementalFields)
+
+    @Lazy
+    def _supplemental_ordered_fields(self):
+        return self.supplemental_field_utility \
+           and self.supplemental_field_utility.get_ordered_fields()
+
+    def _get_supplemental_header(self):
+        result = []
+        if self.supplemental_field_utility:
+            display_dict = self.supplemental_field_utility.get_field_display_values()
+            supp_fields = self.supplemental_field_utility.get_ordered_fields()
+            for supp_field in supp_fields:
+                result.append(display_dict.get(supp_field))
+        return result
+
+    def _get_supplemental_data(self, user_info_dict):
+        data = []
+        if self.supplemental_field_utility:
+            for supp_field in self._supplemental_ordered_fields:
+                data.append(user_info_dict.get(supp_field, ''))
+        return data
+
     def __call__(self):
         gradebook = self.request.context
         course = ICourseInstance(gradebook)
@@ -174,6 +196,7 @@ class GradebookDownloadView(AbstractAuthenticatedView):
         # it is keyed by the column name (as that's the only thing guaranteed
         # to be unique) and the value is a sortable key.
         usernames_to_assignment_dict = defaultdict(dict)
+        user_info_dicts = {}
         # (assignment_ntiid, assignment_title) -> data
         seen_assignment_keys_to_start_time = dict()
         final_grade_entry = None
@@ -192,8 +215,9 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                 sort_key = self._get_sort_key(entry, course)
                 seen_assignment_keys_to_start_time[assignment_key] = sort_key
                 for username, grade in entry.items():
-                    username_data = self._get_student_name(username)
-                    user_dict = usernames_to_assignment_dict[username_data]
+                    if username not in user_info_dicts:
+                        user_info_dicts[username] = self._get_user_info_dict(username)
+                    user_dict = usernames_to_assignment_dict[username]
                     # This should not be possible anymore
                     if assignment_key in user_dict:
                         raise ValueError("Two entries in different part with same name")
@@ -216,8 +240,8 @@ class GradebookDownloadView(AbstractAuthenticatedView):
 
         # First a header row. Note that we are allowed to use multiple columns
         # to identify students.
-        headers = ['Username', 'External ID',
-                   'First Name', 'Last Name', 'Full Name', 'Email']
+        headers = ['Username', 'First Name', 'Last Name', 'Full Name', 'Email']
+        headers.extend(self._get_supplemental_header())
         # Assignment names could theoretically have non-ascii chars
         for asg_tuple in sorted_assignment_keys:
             asg_name = _tx_string(asg_tuple[1])
@@ -246,27 +270,28 @@ class GradebookDownloadView(AbstractAuthenticatedView):
                         return _tx_string(value)
 
         # Sort by last name, then first name, then username
-        for key, user_dict in sorted(usernames_to_assignment_dict.items(),
-                                     key=lambda key: (key[0].lastName,
-                                                      key[0].firstName,
-                                                      key[0].username)):
-            username = key.username
+        for username, user_info_dict in sorted(user_info_dicts.items(),
+                                               key=lambda kv: (kv[1].get('lastName'),
+                                                               kv[1].get('firstName'),
+                                                               kv[1].get('username'))):
             user = User.get_user(username)
             if not user or not predicate(course, user):
                 continue
-            external_id = replace_username(username)
-            firstname = key.firstName
-            lastname = key.lastName
-            realname = key.realname
+            firstname = user_info_dict.get('firstName')
+            lastname = user_info_dict.get('lastName')
+            realname = user_info_dict.get('realname')
             email_addressable = IEmailAddressable(user, None)
             email = email_addressable.email if email_addressable else None
 
-            data = (username, external_id, firstname, lastname, realname, email)
+            data = [username, firstname, lastname, realname, email]
+            data.extend(self._get_supplemental_data(user_info_dict))
             row = [_tx_string(x) for x in data]
+
+            user_data_dict = usernames_to_assignment_dict.get(username)
             for assignment_key in sorted_assignment_keys:
                 grade_val = ""
-                if assignment_key in user_dict:
-                    user_grade = user_dict[assignment_key]
+                if assignment_key in user_data_dict:
+                    user_grade = user_data_dict[assignment_key]
                     grade_val = user_grade.value
                     # For CS1323, we need to expose Excused grades. It's not entirely clear
                     # how to do so in a D2L import-compatible way, but we've seen text
