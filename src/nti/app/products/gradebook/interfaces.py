@@ -55,17 +55,6 @@ from nti.schema.field import ValidTextLine
 #: View grades permission
 ACT_VIEW_GRADES = Permission('nti.actions.gradebook.view_grades')
 
-# NTIID values
-
-#: Gradebook NTIID type
-NTIID_TYPE_GRADE_BOOK = u'gradebook'
-
-#: Gradebook part NTIID type
-NTIID_TYPE_GRADE_BOOK_PART = u'gradebookpart'
-
-#: Gradebook entry NTIID type
-NTIID_TYPE_GRADE_BOOK_ENTRY = u'gradebookentry'
-
 
 class IGradeScheme(interface.Interface):
     """
@@ -339,11 +328,6 @@ class IGradeBook(IContainer,
     def getColumnForAssignmentId(assignmentId):
         """
         return the :IGradeBookEntry associated with the specified assignmentId
-        """
-
-    def get_entry_by_ntiid(ntiid):
-        """
-        return the :IGradeBookEntry associated with the specified ntiid
         """
 
     def remove_user(username):
