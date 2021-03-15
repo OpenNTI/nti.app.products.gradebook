@@ -225,11 +225,6 @@
 				for=".interfaces.IGrade
 					 pyramid.interfaces.IRequest"/>
 
-	<!-- NTIID Resolvers -->
-	<utility factory=".ntiids._GradeBookResolver" name="gradebook" />
-	<utility factory=".ntiids._GradeBookPartResolver" name="gradebookpart" />
-	<utility factory=".ntiids._GradeBookEntryResolver" name="gradebookentry" />
-
 	<!-- ACLs -->
 	<adapter factory=".acl._GradeBookACLProvider"
 			 for=".interfaces.IGradeBook"/>

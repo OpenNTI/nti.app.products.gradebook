@@ -9,6 +9,7 @@ from __future__ import print_function, absolute_import, division
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -92,8 +93,6 @@ class TestExternal(unittest.TestCase):
         assert_that(ext, has_entry('Creator', 'nt@nti.com'))
         assert_that(ext,
                     has_entry('MimeType', 'application/vnd.nextthought.gradebook'))
-        assert_that(ext,
-                    has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CS1330'))
 
     @WithMockDSTrans
     def test_gradebookpart(self):
@@ -117,8 +116,6 @@ class TestExternal(unittest.TestCase):
         # assert_that(ext, has_entry(u'TotalEntryWeight', 0.0))
         assert_that(ext,
                     has_entry('MimeType', 'application/vnd.nextthought.gradebookpart'))
-        assert_that(ext,
-                    has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebookpart-quizzes'))
 
     @WithMockDSTrans
     def test_gradebookentry(self):
@@ -146,8 +143,6 @@ class TestExternal(unittest.TestCase):
         assert_that(ext, has_entry('CreatedTime', is_not(none())))
         assert_that(ext,
                     has_entry('MimeType', 'application/vnd.nextthought.gradebookentry'))
-        assert_that(ext,
-                    has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebookentry-quizzes.quiz1'))
 
     @WithMockDSTrans
     def test_gradescheme(self):

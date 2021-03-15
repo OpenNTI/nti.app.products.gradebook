@@ -10,8 +10,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from pyramid.traversal import lineage
-
 import six
 
 from ZODB.interfaces import IConnection
@@ -35,9 +33,6 @@ from nti.app.assessment.common.history import get_most_recent_history_item
 from nti.app.products.gradebook.interfaces import IGradeBook
 from nti.app.products.gradebook.interfaces import IGradeBookPart
 from nti.app.products.gradebook.interfaces import IGradeBookEntry
-from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK
-from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK_PART
-from nti.app.products.gradebook.interfaces import NTIID_TYPE_GRADE_BOOK_ENTRY
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistory
 from nti.app.products.gradebook.interfaces import ISubmittedAssignmentHistorySummaries
 
@@ -57,7 +52,7 @@ from nti.externalization.representation import WithRepr
 
 from nti.mimetype.mimetype import MIME_BASE
 
-from nti.ntiids import ntiids
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
 
@@ -76,42 +71,15 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(IContentTypeAware)
 class _NTIIDMixin(object):
 
-    parameters = {}
-
-    _ntiid_type = None
-    _ntiid_include_self_name = False
-    _ntiid_default_provider = u'NextThought'
-
     @property
-    def _ntiid_provider(self):
-        return self._ntiid_default_provider
-
-    @property
-    def _ntiid_specific_part(self):
-        try:
-            parts = []
-            for location in lineage(self):
-                if IGradeBook.providedBy(location):
-                    continue
-                parts.append(ntiids.make_specific_safe(location.__name__))
-                if ICourseInstance.providedBy(location):
-                    break
-            parts.reverse()
-            result = None
-            if None not in parts:
-                result = '.'.join(parts)
-            return result
-        except AttributeError:  # Not ready yet
-            return None
-
-    @CachedProperty('_ntiid_provider', '_ntiid_specific_part')
     def NTIID(self):
-        provider = self._ntiid_provider
-        if provider and self._ntiid_specific_part:
-            return ntiids.make_ntiid(date=ntiids.DATE,
-                                     provider=provider,
-                                     nttype=self._ntiid_type,
-                                     specific=self._ntiid_specific_part)
+        try:
+            return self._v_ntiid
+        except AttributeError:
+            ntiid = to_external_ntiid_oid(self)
+            if ntiid is not None:
+                self._v_ntiid = ntiid
+            return ntiid
 
 
 @component.adapter(ICourseInstance)
@@ -122,8 +90,6 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
 
     mimeType = mime_type = MIME_BASE + '.gradebook'
 
-    _ntiid_type = NTIID_TYPE_GRADE_BOOK
-
     def getColumnForAssignmentId(self, assignmentId, check_name=False):
         for part in self.values():
             entry = part.get_entry_by_assignment(assignmentId,
@@ -132,16 +98,6 @@ class GradeBook(CheckingLastModifiedBTreeContainer,
                 return entry
         return None
     get_entry_by_assignment = getEntryByAssignment = getColumnForAssignmentId
-
-    def getEntryByNTIID(self, ntiid):
-        result = None
-        type_ = ntiids.get_type(ntiid)
-        if type_ == NTIID_TYPE_GRADE_BOOK_ENTRY:
-            specific = ntiids.get_specific(ntiid)
-            part, entry = specific.split('.')[-2:]
-            result = self.get(part, {}).get(entry)
-        return result
-    get_entry_by_ntiid = getEntryByNTIID
 
     def remove_user(self, username):
         result = 0
@@ -213,9 +169,6 @@ class GradeBookEntry(SchemaConfigured,
                      _NTIIDMixin):
 
     mimeType = mime_type = MIME_BASE + '.gradebookentry'
-
-    _ntiid_include_self_name = True
-    _ntiid_type = NTIID_TYPE_GRADE_BOOK_ENTRY
 
     createDirectFieldProperties(IGradeBookEntry)
 
@@ -324,9 +277,6 @@ class GradeBookPart(SchemaConfigured,
                     _NTIIDMixin):
 
     mimeType = mime_type = MIME_BASE + '.gradebookpart'
-
-    _ntiid_include_self_name = True
-    _ntiid_type = NTIID_TYPE_GRADE_BOOK_PART
 
     createDirectFieldProperties(IGradeBookPart)
 
