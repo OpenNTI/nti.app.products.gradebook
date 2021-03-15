@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -12,6 +11,7 @@ from hamcrest import not_
 from hamcrest import has_entry
 from hamcrest import has_item
 from hamcrest import has_key
+from hamcrest import not_none
 from hamcrest import has_length
 from hamcrest import assert_that
 
@@ -60,14 +60,14 @@ class TestViews(ApplicationLayerTest):
 
         res = self.testapp.get(path, extra_environ=environ)
         assert_that(res.json_body,
-                    has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
+                    has_entry('NTIID', not_none()))
         assert_that(res.json_body, has_entry('Items', has_length(3)))
 
         # As an admin, we can delete it...it will be reset on startup
         self.testapp.delete(gradebook_href, extra_environ=environ)
         res = self.testapp.get(path, extra_environ=environ)
         assert_that(res.json_body,
-                    has_entry('NTIID', 'tag:nextthought.com,2011-10:NextThought-gradebook-CLC3403'))
+                    has_entry('NTIID', not_none()))
         assert_that(res.json_body, has_entry('Items', has_length(0)))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)

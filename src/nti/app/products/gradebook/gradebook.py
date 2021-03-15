@@ -73,7 +73,13 @@ class _NTIIDMixin(object):
 
     @property
     def NTIID(self):
-        return to_external_ntiid_oid(self)
+        try:
+            return self._v_ntiid
+        except AttributeError:
+            ntiid = to_external_ntiid_oid(self)
+            if ntiid is not None:
+                self._v_ntiid = ntiid
+            return ntiid
 
 
 @component.adapter(ICourseInstance)
