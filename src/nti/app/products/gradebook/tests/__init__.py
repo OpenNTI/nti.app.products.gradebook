@@ -13,7 +13,7 @@ import os.path
 
 from zope import component
 
-from zope.component.interfaces import IComponents
+from zope.interface.interfaces import IComponents
 
 import ZODB
 
