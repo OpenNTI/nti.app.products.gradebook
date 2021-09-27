@@ -14,6 +14,7 @@ entry_points = {
 
 
 TESTS_REQUIRE = [
+    'nti.app.products.ou',
     'nti.app.testing',
     'nti.testing',
     'zope.dottedname',
@@ -64,6 +65,7 @@ setup(
         'natsort',
         'nti.app.assessment',
         'nti.app.client_preferences',
+        'nti.app.products.courseware',
         'nti.assessment',
         'nti.base',
         'nti.common',
